@@ -1,5 +1,5 @@
 {
-  "originHash" : "81aa589e83382ceceed0c7f9bca45e182522383381abd56ad6f5672b42c3623b",
+  "originHash" : "6fb708f65efdd6275739d2f08c34d39d4a1a4365f8938219b50b3bc983adbc46",
   "pins" : [
     {
       "identity" : "bodega",
@@ -69,8 +69,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/RevenueCat/purchases-ios-spm",
       "state" : {
-        "revision" : "21e33549780659771085e252093305d12c3b067d",
-        "version" : "5.52.0"
+        "revision" : "629a56ecef190469914b8f0914bf0446363eb09f",
+        "version" : "5.78.0"
       }
     },
     {
