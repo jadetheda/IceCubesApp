@@ -102,6 +102,9 @@ struct MediaUIZoomableContainer<Content: View>: View {
         _currentScale = scale
       }
 
+      deinit {
+      }
+
       func viewForZooming(in _: UIScrollView) -> UIView? {
         hostingController.view
       }
