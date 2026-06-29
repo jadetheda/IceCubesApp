@@ -22,7 +22,7 @@ jobs:
 
       - name: Build Unsigned App
         run: |
-                    xcodebuild clean build \
+          xcodebuild clean build \
             -project IceCubesApp.xcodeproj \
             -scheme IceCubesApp \
             -sdk iphoneos \
@@ -34,7 +34,7 @@ jobs:
 
       - name: Package to IPA
         run: |
-                    mkdir -p Payload
+          mkdir -p Payload
           APP_PATH=$(find build/Build/Products/Release-iphoneos -name "IceCubesApp.app" -type d | head -n 1)
           cp -r "$APP_PATH" Payload/
           zip -r IceCubesApp-Unsigned.ipa Payload
