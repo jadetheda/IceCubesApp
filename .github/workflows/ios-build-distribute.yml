@@ -1,0 +1,46 @@
+name: iOS Unsigned Build
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Unsigned IPA
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build Unsigned App
+        run: |
+                    xcodebuild clean build \
+            -project IceCubesApp.xcodeproj \
+            -scheme IceCubesApp \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Package to IPA
+        run: |
+                    mkdir -p Payload
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "IceCubesApp.app" -type d | head -n 1)
+          cp -r "$APP_PATH" Payload/
+          zip -r IceCubesApp-Unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IceCubesApp-Unsigned-IPA
+          path: IceCubesApp-Unsigned.ipa

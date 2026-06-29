@@ -23,29 +23,49 @@ actor TimelineDatasource {
     items
   }
 
-  func getFiltered() async -> [Status] {
+  func getFiltered(seen: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
+    
+    let actualSeen: Set<String>?
+    if let seen {
+        actualSeen = seen
+    } else if snapshot.hideReadPosts {
+        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+    } else {
+        actualSeen = nil
+    }
+    
     var filtered: [Status] = []
     for item in items {
       guard case .status(let status) = item else { continue }
-      if shouldShowStatus(status, filter: snapshot) {
+      if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
         filtered.append(status)
       }
     }
     return filtered
   }
 
-  func getFilteredItems() async -> [TimelineItem] {
+  func getFilteredItems(seen: Set<String>? = nil) async -> [TimelineItem] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
+    
+    let actualSeen: Set<String>?
+    if let seen {
+        actualSeen = seen
+    } else if snapshot.hideReadPosts {
+        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+    } else {
+        actualSeen = nil
+    }
+    
     var filtered: [TimelineItem] = []
     for item in items {
       switch item {
       case .gap:
         filtered.append(item)
       case .status(let status):
-        if shouldShowStatus(status, filter: snapshot) {
+        if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
           filtered.append(item)
         }
       }
@@ -53,11 +73,11 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFiltered(using snapshot: TimelineContentFilter.Snapshot) -> [Status] {
+  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> [Status] {
     var filtered: [Status] = []
     for item in items {
       guard case .status(let status) = item else { continue }
-      if shouldShowStatus(status, filter: snapshot) {
+      if shouldShowStatus(status, filter: snapshot, seen: seen) {
         filtered.append(status)
       }
     }
@@ -97,6 +117,15 @@ actor TimelineDatasource {
   }
 
   // MARK: - Status Operations
+
+  func hideReadPosts(seen: Set<String>) {
+    items.removeAll { item in
+      if case .status(let status) = item, seen.contains(status.id) {
+        return true
+      }
+      return false
+    }
+  }
 
   func indexOf(statusId: String) -> Int? {
     findStatusIndex(id: statusId)
@@ -173,7 +202,7 @@ actor TimelineDatasource {
 
   // MARK: - Private Helpers
 
-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot) -> Bool {
+  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> Bool {
     let isHidden = if let filterContext {
       status.isHidden(in: filterContext)
     } else {
@@ -192,6 +221,8 @@ actor TimelineDatasource {
 
     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
 
+    let isSeen = seen?.contains(status.id) ?? false
+
     return !isHidden
       && (showReplies || status.inReplyToId == nil
         || status.inReplyToAccountId == status.account.id)
@@ -200,5 +231,6 @@ actor TimelineDatasource {
       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
       && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
       && !(filter.hidePostsFromBots && isBotAuthored)
+      && !(filter.hideReadPosts && isSeen)
   }
 }

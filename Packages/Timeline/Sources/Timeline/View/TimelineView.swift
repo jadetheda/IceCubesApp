@@ -108,6 +108,17 @@ public struct TimelineView: View {
           .tint(theme.labelColor)
         }
       }
+      ToolbarItem(placement: .navigationBarTrailing) {
+        Button {
+          Task {
+            await viewModel.hideReadPosts()
+          }
+        } label: {
+          Image(systemName: "eye.slash")
+        }
+        .tint(theme.labelColor)
+        .accessibilityLabel("Hide read posts")
+      }
       TimelineToolbarTagGroupButton(timeline: $timeline)
     }
     .navigationBarTitleDisplayMode(.inline)
@@ -195,6 +206,9 @@ public struct TimelineView: View {
       refreshContentFilter()
     }
     .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
+      refreshContentFilter()
+    }
+    .onChange(of: contentFilter.hideReadPosts) { _, _ in
       refreshContentFilter()
     }
     .onChange(of: scenePhase) { _, newValue in

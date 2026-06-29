@@ -452,10 +452,48 @@ extension TimelineViewModel: GapLoadingFetcher {
         await cache.setLatestSeenStatuses(visibleStatuses, for: client, filter: timeline.id)
       }
     }
+
+    Task {
+      try? await Task.sleep(nanoseconds: 750_000_000) // 0.75s delay
+      if !Task.isCancelled {
+        if visibleStatuses.contains(where: { $0.id == status.id }) {
+          SeenPostsManager.shared.markAsSeen(id: status.id)
+        }
+      }
+    }
   }
 
   func statusDidDisappear(status: Status) {
     visibleStatuses.removeAll(where: { $0.id == status.id })
+  }
+
+  @MainActor
+  func hideReadPosts() async {
+    let seen = SeenPostsManager.shared.seenPosts
+    
+    let statuses = await datasource.get()
+    let lastId = statuses.last?.id
+    let offset = statuses.count
+
+    await datasource.hideReadPosts(seen: seen)
+    var items = await datasource.getFilteredItems(seen: seen)
+    
+    if items.count < 10, let client = client, let lastId = lastId {
+      do {
+        let newStatuses: [Status] = try await statusFetcher.fetchNextPage(
+          client: client,
+          timeline: timeline,
+          lastId: lastId,
+          offset: offset)
+        await datasource.append(contentOf: newStatuses)
+        StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+        items = await datasource.getFilteredItems(seen: seen)
+      } catch { }
+    }
+
+    withAnimation {
+      statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage) // nextPageState is approximate here
+    }
   }
 
   func loadGap(gap: TimelineGap) async {
