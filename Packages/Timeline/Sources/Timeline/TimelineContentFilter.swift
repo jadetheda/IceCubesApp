@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Env
 
 @MainActor
 @Observable public class TimelineContentFilter {
@@ -9,8 +10,10 @@ import SwiftUI
     public let showThreads: Bool
     public let showQuotePosts: Bool
     public let hidePostsWithMedia: Bool
+    public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
     public let hideReadPosts: Bool
+    public let hideSeenPostsIncludeBoosts: Bool
 
     public init(
       showBoosts: Bool,
@@ -18,16 +21,20 @@ import SwiftUI
       showThreads: Bool,
       showQuotePosts: Bool,
       hidePostsWithMedia: Bool,
+      hidePostsWithoutMedia: Bool,
       hidePostsFromBots: Bool,
-      hideReadPosts: Bool
+      hideReadPosts: Bool,
+      hideSeenPostsIncludeBoosts: Bool
     ) {
       self.showBoosts = showBoosts
       self.showReplies = showReplies
       self.showThreads = showThreads
       self.showQuotePosts = showQuotePosts
       self.hidePostsWithMedia = hidePostsWithMedia
+      self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
       self.hideReadPosts = hideReadPosts
+      self.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
     }
   }
 
@@ -37,6 +44,7 @@ import SwiftUI
     @AppStorage("timeline_show_threads") var showThreads: Bool = true
     @AppStorage("timeline_quote_posts") var showQuotePosts: Bool = true
     @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
+    @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
   }
@@ -73,6 +81,12 @@ import SwiftUI
       storage.hidePostsWithMedia = hidePostsWithMedia
     }
   }
+  
+  public var hidePostsWithoutMedia: Bool {
+    didSet {
+      storage.hidePostsWithoutMedia = hidePostsWithoutMedia
+    }
+  }
     
   public var hidePostsFromBots: Bool {
     didSet {
@@ -92,6 +106,7 @@ import SwiftUI
     showThreads = storage.showThreads
     showQuotePosts = storage.showQuotePosts
     hidePostsWithMedia = storage.hidePostsWithMedia
+    hidePostsWithoutMedia = storage.hidePostsWithoutMedia
     hidePostsFromBots = storage.hidePostsFromBots
     hideReadPosts = storage.hideReadPosts
   }
@@ -103,8 +118,10 @@ import SwiftUI
       showThreads: showThreads,
       showQuotePosts: showQuotePosts,
       hidePostsWithMedia: hidePostsWithMedia,
+      hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
-      hideReadPosts: hideReadPosts
+      hideReadPosts: hideReadPosts,
+      hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts
     )
   }
 }

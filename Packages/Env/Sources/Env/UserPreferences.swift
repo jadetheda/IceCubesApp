@@ -89,6 +89,8 @@ import SwiftUI
     @AppStorage("hide_seen_posts_include_boosts") public var hideSeenPostsIncludeBoosts: Bool = true
     @AppStorage("hide_seen_posts_is_toggle") public var hideSeenPostsIsToggle: Bool = true
 
+    @AppStorage("show_hide_posts_without_media_toggle") public var showHidePostsWithoutMediaToggle: Bool = false
+
     init() {
       prepareTranslationType()
     }
@@ -429,6 +431,12 @@ import SwiftUI
     }
   }
 
+  public var showHidePostsWithoutMediaToggle: Bool {
+    didSet {
+      storage.showHidePostsWithoutMediaToggle = showHidePostsWithoutMediaToggle
+    }
+  }
+
   public var fullTimelineFetch: Bool {
     didSet {
       storage.fullTimelineFetch = fullTimelineFetch
@@ -629,6 +637,7 @@ import SwiftUI
     hideSeenPostsRequireMediaLoaded = storage.hideSeenPostsRequireMediaLoaded
     hideSeenPostsIncludeBoosts = storage.hideSeenPostsIncludeBoosts
     hideSeenPostsIsToggle = storage.hideSeenPostsIsToggle
+    showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
 }
 

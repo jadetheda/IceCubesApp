@@ -221,8 +221,7 @@ actor TimelineDatasource {
 
     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
 
-    let prefs = MainActor.assumeIsolated { UserPreferences.shared }
-    let hideSeenPostsIncludeBoosts = prefs.hideSeenPostsIncludeBoosts
+    let hideSeenPostsIncludeBoosts = filter.hideSeenPostsIncludeBoosts
 
     var isSeen = seen?.contains(status.id) ?? false
     if hideSeenPostsIncludeBoosts, let reblog = status.reblog {
@@ -237,7 +236,8 @@ actor TimelineDatasource {
       && (showBoosts || status.reblog == nil)
       && (showThreads || status.inReplyToAccountId != status.account.id)
       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
-      && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
+      && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
+      && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
       && !(filter.hideReadPosts && isSeen)
   }
