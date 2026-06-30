@@ -16,7 +16,7 @@ import SwiftUI
   var pendingStatuses: [String] = [] {
     didSet {
       withAnimation(.default) {
-        pendingStatusesCount = pendingStatuses.count
+        pendingStatusesCount = pendingStatuses.filter { !SeenPostsManager.shared.isSeen(id: $0) }.count
       }
     }
   }
@@ -25,6 +25,12 @@ import SwiftUI
     if !disableUpdate, let index = pendingStatuses.firstIndex(of: status.id) {
       pendingStatuses.removeSubrange(index...(pendingStatuses.count - 1))
       HapticManager.shared.fireHaptic(.timeline)
+    }
+  }
+
+  func updateCount() {
+    withAnimation(.default) {
+      pendingStatusesCount = pendingStatuses.filter { !SeenPostsManager.shared.isSeen(id: $0) }.count
     }
   }
 

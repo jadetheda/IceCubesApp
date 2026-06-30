@@ -80,6 +80,15 @@ import SwiftUI
     @AppStorage("notifications-truncate-status-content")
     public var notificationsTruncateStatusContent: Bool = true
 
+    // Hide Seen Posts (Experimental)
+    @AppStorage("hide_seen_posts_enabled") public var hideSeenPostsEnabled: Bool = false
+    @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
+    @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
+    @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
+    @AppStorage("hide_seen_posts_require_media_loaded") public var hideSeenPostsRequireMediaLoaded: Bool = true
+    @AppStorage("hide_seen_posts_include_boosts") public var hideSeenPostsIncludeBoosts: Bool = true
+    @AppStorage("hide_seen_posts_is_toggle") public var hideSeenPostsIsToggle: Bool = true
+
     init() {
       prepareTranslationType()
     }
@@ -377,6 +386,49 @@ import SwiftUI
     }
   }
 
+  // Hide Seen Posts
+  public var hideSeenPostsEnabled: Bool {
+    didSet {
+      storage.hideSeenPostsEnabled = hideSeenPostsEnabled
+    }
+  }
+
+  public var hideSeenPostsThreshold: Double {
+    didSet {
+      storage.hideSeenPostsThreshold = hideSeenPostsThreshold
+    }
+  }
+
+  public var hideSeenPostsLikedOnly: Bool {
+    didSet {
+      storage.hideSeenPostsLikedOnly = hideSeenPostsLikedOnly
+    }
+  }
+
+  public var hideSeenPostsShowInHeader: Bool {
+    didSet {
+      storage.hideSeenPostsShowInHeader = hideSeenPostsShowInHeader
+    }
+  }
+
+  public var hideSeenPostsRequireMediaLoaded: Bool {
+    didSet {
+      storage.hideSeenPostsRequireMediaLoaded = hideSeenPostsRequireMediaLoaded
+    }
+  }
+
+  public var hideSeenPostsIncludeBoosts: Bool {
+    didSet {
+      storage.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
+    }
+  }
+
+  public var hideSeenPostsIsToggle: Bool {
+    didSet {
+      storage.hideSeenPostsIsToggle = hideSeenPostsIsToggle
+    }
+  }
+
   public var fullTimelineFetch: Bool {
     didSet {
       storage.fullTimelineFetch = fullTimelineFetch
@@ -570,6 +622,13 @@ import SwiftUI
     notificationsTruncateStatusContent = storage.notificationsTruncateStatusContent
     streamHomeTimeline = storage.streamHomeTimeline
     fullTimelineFetch = storage.fullTimelineFetch
+    hideSeenPostsEnabled = storage.hideSeenPostsEnabled
+    hideSeenPostsThreshold = storage.hideSeenPostsThreshold
+    hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly
+    hideSeenPostsShowInHeader = storage.hideSeenPostsShowInHeader
+    hideSeenPostsRequireMediaLoaded = storage.hideSeenPostsRequireMediaLoaded
+    hideSeenPostsIncludeBoosts = storage.hideSeenPostsIncludeBoosts
+    hideSeenPostsIsToggle = storage.hideSeenPostsIsToggle
   }
 }
 

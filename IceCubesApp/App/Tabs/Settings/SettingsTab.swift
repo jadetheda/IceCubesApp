@@ -41,6 +41,7 @@ struct SettingsTabs: View {
         socialKeyboardSection
         streamHomeTimelineSection
         timelineFetchSection
+        experimentalSection
         otherSections
         cacheSection
       }
@@ -280,6 +281,41 @@ struct SettingsTabs: View {
       }
     } footer: {
       Text("Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap.")
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
+  }
+
+  private var experimentalSection: some View {
+    @Bindable var preferences = preferences
+    return Section {
+      Toggle(isOn: $preferences.hideSeenPostsEnabled) {
+        Label("Hide Seen Posts", systemImage: "eye.slash")
+      }
+      if preferences.hideSeenPostsEnabled {
+        VStack(alignment: .leading) {
+          Text("Required time to be detected as seen: \(String(format: "%.1f", preferences.hideSeenPostsThreshold))s")
+          Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
+        }
+        Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
+          Text("Only detect liked posts as seen")
+        }
+        Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
+          Text("Show button in header")
+        }
+        Toggle(isOn: $preferences.hideSeenPostsRequireMediaLoaded) {
+          Text("Require media to be loaded")
+        }
+        Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
+          Text("Include boosts (hide if original seen)")
+        }
+        Toggle(isOn: $preferences.hideSeenPostsIsToggle) {
+          Text("Button acts as a state toggle instead of one-off action")
+        }
+      }
+    } header: {
+      Text("EXPERIMENTAL FEATURES")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)

@@ -108,16 +108,22 @@ public struct TimelineView: View {
           .tint(theme.labelColor)
         }
       }
-      ToolbarItem(placement: .navigationBarTrailing) {
-        Button {
-          Task {
-            await viewModel.hideReadPosts()
+      if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsShowInHeader {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button {
+            if UserPreferences.shared.hideSeenPostsIsToggle {
+              contentFilter.hideReadPosts.toggle()
+            } else {
+              Task {
+                await viewModel.hideReadPosts()
+              }
+            }
+          } label: {
+            Image(systemName: (UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye.slash.fill" : "eye.slash")
           }
-        } label: {
-          Image(systemName: "eye.slash")
+          .tint(theme.labelColor)
+          .accessibilityLabel("Hide read posts")
         }
-        .tint(theme.labelColor)
-        .accessibilityLabel("Hide read posts")
       }
       TimelineToolbarTagGroupButton(timeline: $timeline)
     }
@@ -210,6 +216,11 @@ public struct TimelineView: View {
     }
     .onChange(of: contentFilter.hideReadPosts) { _, _ in
       refreshContentFilter()
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .hideReadPosts)) { _ in
+      Task {
+        await viewModel.hideReadPosts()
+      }
     }
     .onChange(of: scenePhase) { _, newValue in
       switch newValue {

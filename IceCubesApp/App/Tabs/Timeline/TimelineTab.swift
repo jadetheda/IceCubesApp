@@ -120,6 +120,18 @@ struct TimelineTab: View {
   @ViewBuilder
   private var timelineFilterButton: some View {
     headerGroup
+    if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
+      Button {
+        if preferences.hideSeenPostsIsToggle {
+          TimelineContentFilter.shared.hideReadPosts.toggle()
+        } else {
+          NotificationCenter.default.post(name: .hideReadPosts, object: nil)
+        }
+      } label: {
+        Label((preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "eye.slash.fill" : "eye.slash")
+      }
+      Divider()
+    }
     timelineFiltersButtons
     if client.isAuth {
       listsFiltersButons

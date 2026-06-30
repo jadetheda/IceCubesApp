@@ -4,6 +4,7 @@ import NetworkClient
 import Observation
 import StatusKit
 import SwiftUI
+import Nuke
 
 @MainActor
 @Observable class TimelineViewModel {
@@ -401,7 +402,16 @@ extension TimelineViewModel: GapLoadingFetcher {
       await datasource.remove(after: lastVisible, safeOffset: 15)
     }
     await cache()
-    pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatuses.map(\.id), at: 0)
+    let prefs = UserPreferences.shared
+    let newStatusesIDs = newStatuses.filter { status in
+      var isSeen = SeenPostsManager.shared.isSeen(id: status.id)
+      if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+        isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
+      }
+      return !isSeen
+    }.map(\.id)
+
+    pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
 
     let items = await datasource.getFilteredItems()
 
@@ -454,10 +464,37 @@ extension TimelineViewModel: GapLoadingFetcher {
     }
 
     Task {
-      try? await Task.sleep(nanoseconds: 750_000_000) // 0.75s delay
+      let threshold = UserPreferences.shared.hideSeenPostsThreshold
+      try? await Task.sleep(nanoseconds: UInt64(threshold * 1_000_000_000))
       if !Task.isCancelled {
         if visibleStatuses.contains(where: { $0.id == status.id }) {
-          SeenPostsManager.shared.markAsSeen(id: status.id)
+          let prefs = UserPreferences.shared
+          
+          if prefs.hideSeenPostsRequireMediaLoaded && !status.mediaAttachments.isEmpty {
+            // Check if all media is in cache
+            let allCached = status.mediaAttachments.allSatisfy { attachment in
+              if let url = attachment.url {
+                return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
+              }
+              return true
+            }
+            if !allCached {
+              return
+            }
+          }
+          
+          var idToMark = status.id
+          if prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+             idToMark = reblog.id
+          }
+          
+          if !prefs.hideSeenPostsLikedOnly || status.favourited == true || (status.reblog?.favourited == true) {
+            SeenPostsManager.shared.markAsSeen(id: idToMark)
+            if prefs.hideSeenPostsIncludeBoosts {
+              SeenPostsManager.shared.markAsSeen(id: status.id)
+            }
+            pendingStatusesObserver.updateCount()
+          }
         }
       }
     }
@@ -730,7 +767,15 @@ extension TimelineViewModel {
       topStatus.createdAt.asDate < event.status.createdAt.asDate
     else { return }
 
-    pendingStatusesObserver.pendingStatuses.insert(event.status.id, at: 0)
+    let prefs = UserPreferences.shared
+    var isSeen = SeenPostsManager.shared.isSeen(id: event.status.id)
+    if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = event.status.reblog {
+      isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
+    }
+    
+    if !isSeen {
+      pendingStatusesObserver.pendingStatuses.insert(event.status.id, at: 0)
+    }
     await datasource.insert(event.status, at: 0)
     await cache()
     StatusDataControllerProvider.shared.updateDataControllers(for: [event.status], client: client)

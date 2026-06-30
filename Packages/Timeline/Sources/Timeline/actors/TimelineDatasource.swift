@@ -221,7 +221,15 @@ actor TimelineDatasource {
 
     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
 
-    let isSeen = seen?.contains(status.id) ?? false
+    let prefs = MainActor.assumeIsolated { UserPreferences.shared }
+    let hideSeenPostsIncludeBoosts = prefs.hideSeenPostsIncludeBoosts
+
+    var isSeen = seen?.contains(status.id) ?? false
+    if hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+      if seen?.contains(reblog.id) == true {
+        isSeen = true
+      }
+    }
 
     return !isHidden
       && (showReplies || status.inReplyToId == nil

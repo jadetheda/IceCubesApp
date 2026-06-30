@@ -33,8 +33,10 @@ public struct TimelineContentFilterView: View {
           Toggle(isOn: $contentFilter.hidePostsWithMedia) {
             Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
           }
-          Toggle(isOn: $contentFilter.hideReadPosts) {
-            Label("Hide read posts", systemImage: "eye.slash")
+          if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {
+            Toggle(isOn: $contentFilter.hideReadPosts) {
+              Label("Hide read posts", systemImage: "eye.slash")
+            }
           }
         }
 
