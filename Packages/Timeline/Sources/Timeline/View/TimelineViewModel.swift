@@ -514,7 +514,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     let lastId = statuses.last?.id
     let offset = statuses.count
 
-    await datasource.hideReadPosts(seen: seen)
+    await datasource.hideReadPosts(seen: seen, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
     var items = await datasource.getFilteredItems(seen: seen)
     
     if items.count < 10, let client = client, let lastId = lastId {

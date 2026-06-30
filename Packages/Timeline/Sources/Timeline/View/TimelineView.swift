@@ -16,6 +16,7 @@ public struct TimelineView: View {
   @Environment(StreamWatcher.self) private var watcher
   @Environment(MastodonClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
+  @Environment(UserPreferences.self) private var preferences
 
   private let canFilterTimeline: Bool
 
@@ -108,10 +109,10 @@ public struct TimelineView: View {
           .tint(theme.labelColor)
         }
       }
-      if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsShowInHeader {
+      if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button {
-            if UserPreferences.shared.hideSeenPostsIsToggle {
+            if preferences.hideSeenPostsIsToggle {
               contentFilter.hideReadPosts.toggle()
             } else {
               Task {
@@ -119,10 +120,10 @@ public struct TimelineView: View {
               }
             }
           } label: {
-            Image(systemName: (UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
+            Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
           }
           .tint(theme.labelColor)
-          .accessibilityLabel((UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
+          .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
         }
       }
       TimelineToolbarTagGroupButton(timeline: $timeline)
