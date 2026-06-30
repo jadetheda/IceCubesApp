@@ -8,6 +8,24 @@ import SwiftData
 import SwiftUI
 
 @MainActor
+struct ContentFilterOnChangeModifier: ViewModifier {
+  let contentFilter: TimelineContentFilter
+  let action: () -> Void
+
+  func body(content: Content) -> some View {
+    content
+      .onChange(of: contentFilter.showReplies) { _, _ in action() }
+      .onChange(of: contentFilter.showBoosts) { _, _ in action() }
+      .onChange(of: contentFilter.showThreads) { _, _ in action() }
+      .onChange(of: contentFilter.showQuotePosts) { _, _ in action() }
+      .onChange(of: contentFilter.hidePostsWithMedia) { _, _ in action() }
+      .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in action() }
+      .onChange(of: contentFilter.hidePostsFromBots) { _, _ in action() }
+      .onChange(of: contentFilter.hideReadPosts) { _, _ in action() }
+  }
+}
+
+@MainActor
 public struct TimelineView: View {
   @Environment(\.scenePhase) private var scenePhase
 
@@ -202,30 +220,7 @@ public struct TimelineView: View {
       guard oldValue != newValue, timeline != newValue else { return }
       timeline = newValue
     }
-    .onChange(of: contentFilter.showReplies) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.showBoosts) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.showThreads) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.showQuotePosts) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.hidePostsWithMedia) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
-      refreshContentFilter()
-    }
-    .onChange(of: contentFilter.hideReadPosts) { _, _ in
-      refreshContentFilter()
-    }
+    .modifier(ContentFilterOnChangeModifier(contentFilter: contentFilter, action: refreshContentFilter))
     .onReceive(NotificationCenter.default.publisher(for: .hideReadPosts)) { _ in
       Task {
         await viewModel.hideReadPosts()
