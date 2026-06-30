@@ -557,7 +557,7 @@ struct SettingsTabs: View {
 }
 
 /// Represents a complete snapshot of user preferences and saved instances.
-public struct AppExport: Codable {
+public struct AppExport: Codable, Sendable {
   public let userDefaults: [String: AnyCodable]
   public let tagGroups: [ExportedTagGroup]?
   public let localTimelines: [ExportedLocalTimeline]?
@@ -567,10 +567,28 @@ public struct AppExport: Codable {
     self.tagGroups = tagGroups
     self.localTimelines = localTimelines
   }
+
+  enum CodingKeys: String, CodingKey {
+    case userDefaults, tagGroups, localTimelines
+  }
+
+  nonisolated public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.userDefaults = try container.decode([String: AnyCodable].self, forKey: .userDefaults)
+    self.tagGroups = try container.decodeIfPresent([ExportedTagGroup].self, forKey: .tagGroups)
+    self.localTimelines = try container.decodeIfPresent([ExportedLocalTimeline].self, forKey: .localTimelines)
+  }
+
+  nonisolated public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(userDefaults, forKey: .userDefaults)
+    try container.encodeIfPresent(tagGroups, forKey: .tagGroups)
+    try container.encodeIfPresent(localTimelines, forKey: .localTimelines)
+  }
 }
 
 /// A Codable representation of the TagGroup model used for file export.
-public struct ExportedTagGroup: Codable {
+public struct ExportedTagGroup: Codable, Sendable {
   public let title: String
   public let symbolName: String
   public let tags: [String]
@@ -578,13 +596,13 @@ public struct ExportedTagGroup: Codable {
 }
 
 /// A Codable representation of the LocalTimeline model used for file export.
-public struct ExportedLocalTimeline: Codable {
+public struct ExportedLocalTimeline: Codable, Sendable {
   public let instance: String
   public let creationDate: Date
 }
 
 /// A type-erased wrapper to handle encoding/decoding mixed-type UserDefaults dictionaries.
-public enum AnyCodable: Codable {
+public enum AnyCodable: Codable, Sendable {
   case string(String)
   case integer(Int)
   case double(Double)
@@ -592,7 +610,7 @@ public enum AnyCodable: Codable {
   case array([AnyCodable])
   case dict([String: AnyCodable])
   
-  public init(from decoder: Decoder) throws {
+  nonisolated public init(from decoder: Decoder) throws {
     let container = try decoder.singleValueContainer()
     if let x = try? container.decode(Bool.self) { self = .boolean(x) }
     else if let x = try? container.decode(Int.self) { self = .integer(x) }
@@ -603,7 +621,7 @@ public enum AnyCodable: Codable {
     else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid AnyCodable value") }
   }
   
-  public func encode(to encoder: Encoder) throws {
+  nonisolated public func encode(to encoder: Encoder) throws {
     var container = encoder.singleValueContainer()
     switch self {
     case .string(let x): try container.encode(x)
@@ -637,7 +655,7 @@ public enum AnyCodable: Codable {
   }
 }
 
-public struct IceCubesDocument: FileDocument {
+public struct IceCubesDocument: FileDocument, Sendable {
   public static var readableContentTypes: [UTType] { [.json] }
   public var export: AppExport
 
@@ -645,16 +663,18 @@ public struct IceCubesDocument: FileDocument {
     self.export = export
   }
 
-  public init(configuration: ReadConfiguration) throws {
+  nonisolated public init(configuration: ReadConfiguration) throws {
     guard let data = configuration.file.regularFileContents else {
       throw CocoaError(.fileReadCorruptFile)
     }
-    self.export = try JSONDecoder().decode(AppExport.self, from: data)
+    let decoded = try JSONDecoder().decode(AppExport.self, from: data)
+    // we must initialize self.export in a nonisolated way, which should be fine for a struct.
+    // wait, FileDocument init is mutating if it's a struct!
+    self.export = decoded
   }
 
-  public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+  nonisolated public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
     let data = try JSONEncoder().encode(export)
     return .init(regularFileWithContents: data)
   }
 }
-
