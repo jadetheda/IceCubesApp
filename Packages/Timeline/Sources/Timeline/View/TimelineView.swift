@@ -76,6 +76,44 @@ public struct TimelineView: View {
     }
   }
 
+  @ToolbarContentBuilder
+  private var timelineToolbar: some ToolbarContent {
+    TimelineToolbarTitleView(timeline: $timeline, canFilterTimeline: canFilterTimeline)
+    if #available(iOS 26.0, *) {
+      ToolbarSpacer(placement: .topBarTrailing)
+    }
+    if viewModel.canStreamTimeline(timeline) {
+      ToolbarItem(placement: .navigationBarTrailing) {
+        Button {
+          viewModel.isStreamingTimeline.toggle()
+        } label: {
+          Image(
+            systemName: viewModel.isStreamingTimeline
+              ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+        }
+        .tint(theme.labelColor)
+      }
+    }
+    if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
+      ToolbarItem(placement: .navigationBarTrailing) {
+        Button {
+          if preferences.hideSeenPostsIsToggle {
+            contentFilter.hideReadPosts.toggle()
+          } else {
+            Task {
+              await viewModel.hideReadPosts()
+            }
+          }
+        } label: {
+          Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
+        }
+        .tint(theme.labelColor)
+        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
+      }
+    }
+    TimelineToolbarTagGroupButton(timeline: $timeline)
+  }
+
   private var timelineView: some View {
     ZStack(alignment: .top) {
       TimelineListView(
@@ -93,40 +131,7 @@ public struct TimelineView: View {
       }
     }
     .toolbar {
-      TimelineToolbarTitleView(timeline: $timeline, canFilterTimeline: canFilterTimeline)
-      if #available(iOS 26.0, *) {
-        ToolbarSpacer(placement: .topBarTrailing)
-      }
-      if viewModel.canStreamTimeline(timeline) {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button {
-            viewModel.isStreamingTimeline.toggle()
-          } label: {
-            Image(
-              systemName: viewModel.isStreamingTimeline
-                ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
-          }
-          .tint(theme.labelColor)
-        }
-      }
-      if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          Button {
-            if preferences.hideSeenPostsIsToggle {
-              contentFilter.hideReadPosts.toggle()
-            } else {
-              Task {
-                await viewModel.hideReadPosts()
-              }
-            }
-          } label: {
-            Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
-          }
-          .tint(theme.labelColor)
-          .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
-        }
-      }
-      TimelineToolbarTagGroupButton(timeline: $timeline)
+      timelineToolbar
     }
     .navigationBarTitleDisplayMode(.inline)
     .onAppear {
