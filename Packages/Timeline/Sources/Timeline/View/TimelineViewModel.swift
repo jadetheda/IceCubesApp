@@ -404,6 +404,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     await cache()
     let prefs = UserPreferences.shared
     let newStatusesIDs = newStatuses.filter { status in
+      guard prefs.hideSeenPostsEnabled else { return true }
       var isSeen = SeenPostsManager.shared.isSeen(id: status.id)
       if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
         isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
@@ -464,12 +465,13 @@ extension TimelineViewModel: GapLoadingFetcher {
     }
 
     Task {
-      let threshold = UserPreferences.shared.hideSeenPostsThreshold
+      let prefs = UserPreferences.shared
+      guard prefs.hideSeenPostsEnabled else { return }
+      
+      let threshold = prefs.hideSeenPostsThreshold
       try? await Task.sleep(nanoseconds: UInt64(threshold * 1_000_000_000))
       if !Task.isCancelled {
         if visibleStatuses.contains(where: { $0.id == status.id }) {
-          let prefs = UserPreferences.shared
-          
           if prefs.hideSeenPostsRequireMediaLoaded && !status.mediaAttachments.isEmpty {
             // Check if all media is in cache
             let allCached = status.mediaAttachments.allSatisfy { attachment in
@@ -768,9 +770,15 @@ extension TimelineViewModel {
     else { return }
 
     let prefs = UserPreferences.shared
-    var isSeen = SeenPostsManager.shared.isSeen(id: event.status.id)
-    if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = event.status.reblog {
-      isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
+    let isSeen: Bool
+    if prefs.hideSeenPostsEnabled {
+      var _isSeen = SeenPostsManager.shared.isSeen(id: event.status.id)
+      if !_isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = event.status.reblog {
+        _isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
+      }
+      isSeen = _isSeen
+    } else {
+      isSeen = false
     }
     
     if !isSeen {

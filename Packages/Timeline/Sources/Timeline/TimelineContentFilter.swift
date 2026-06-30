@@ -13,6 +13,7 @@ import Env
     public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
     public let hideReadPosts: Bool
+    public let hideSeenPostsEnabled: Bool
     public let hideSeenPostsIncludeBoosts: Bool
 
     public init(
@@ -24,6 +25,7 @@ import Env
       hidePostsWithoutMedia: Bool,
       hidePostsFromBots: Bool,
       hideReadPosts: Bool,
+      hideSeenPostsEnabled: Bool,
       hideSeenPostsIncludeBoosts: Bool
     ) {
       self.showBoosts = showBoosts
@@ -34,6 +36,7 @@ import Env
       self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
       self.hideReadPosts = hideReadPosts
+      self.hideSeenPostsEnabled = hideSeenPostsEnabled
       self.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
     }
   }
@@ -121,6 +124,7 @@ import Env
       hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
       hideReadPosts: hideReadPosts,
+      hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,
       hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts
     )
   }

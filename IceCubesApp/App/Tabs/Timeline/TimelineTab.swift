@@ -18,6 +18,7 @@ struct TimelineTab: View {
   @Environment(UserPreferences.self) private var preferences
   @Environment(MastodonClient.self) private var client
   @State private var routerPath = RouterPath()
+  @State private var contentFilter = TimelineContentFilter.shared
 
   @State private var didAppear: Bool = false
   @State private var selectedTagGroup: TagGroup?
@@ -123,20 +124,20 @@ struct TimelineTab: View {
     if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
       Button {
         if preferences.hideSeenPostsIsToggle {
-          TimelineContentFilter.shared.hideReadPosts.toggle()
+          contentFilter.hideReadPosts.toggle()
         } else {
           NotificationCenter.default.post(name: .hideReadPosts, object: nil)
         }
       } label: {
-        Label((preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "eye" : "eye.slash")
+        Label((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
       }
       Divider()
     }
     if preferences.showHidePostsWithoutMediaToggle {
       Button {
-        TimelineContentFilter.shared.hidePostsWithoutMedia.toggle()
+        contentFilter.hidePostsWithoutMedia.toggle()
       } label: {
-        Label(TimelineContentFilter.shared.hidePostsWithoutMedia ? "Show posts without media" : "Hide posts without media", systemImage: "photo.on.rectangle.angled")
+        Label(contentFilter.hidePostsWithoutMedia ? "Show posts without media" : "Hide posts without media", systemImage: "photo.on.rectangle.angled")
       }
       Divider()
     }
