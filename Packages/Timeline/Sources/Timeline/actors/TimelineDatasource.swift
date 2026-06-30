@@ -128,9 +128,15 @@ actor TimelineDatasource {
   // MARK: - Status Operations
 
   func hideReadPosts(seen: Set<String>) {
+    let hideSeenPostsIncludeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
     items.removeAll { item in
-      if case .status(let status) = item, seen.contains(status.id) {
-        return true
+      if case .status(let status) = item {
+        if seen.contains(status.id) {
+          return true
+        }
+        if hideSeenPostsIncludeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
+          return true
+        }
       }
       return false
     }

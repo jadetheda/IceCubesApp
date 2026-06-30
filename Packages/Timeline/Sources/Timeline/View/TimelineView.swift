@@ -211,6 +211,9 @@ public struct TimelineView: View {
     .onChange(of: contentFilter.hidePostsWithMedia) { _, _ in
       refreshContentFilter()
     }
+    .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in
+      refreshContentFilter()
+    }
     .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
       refreshContentFilter()
     }
