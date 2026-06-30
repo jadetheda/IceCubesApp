@@ -128,7 +128,15 @@ struct TimelineTab: View {
           NotificationCenter.default.post(name: .hideReadPosts, object: nil)
         }
       } label: {
-        Label((preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "eye.slash.fill" : "eye.slash")
+        Label((preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && TimelineContentFilter.shared.hideReadPosts) ? "eye" : "eye.slash")
+      }
+      Divider()
+    }
+    if preferences.showHidePostsWithoutMediaToggle {
+      Button {
+        TimelineContentFilter.shared.hidePostsWithoutMedia.toggle()
+      } label: {
+        Label(TimelineContentFilter.shared.hidePostsWithoutMedia ? "Show posts without media" : "Hide posts without media", systemImage: "photo.on.rectangle.angled")
       }
       Divider()
     }

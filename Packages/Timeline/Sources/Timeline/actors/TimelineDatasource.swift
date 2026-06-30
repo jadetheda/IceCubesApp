@@ -37,10 +37,13 @@ actor TimelineDatasource {
     }
     
     var filtered: [Status] = []
+    var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
-      if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+      let realId = status.reblog?.id ?? status.id
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
         filtered.append(status)
+        realIds.insert(realId)
       }
     }
     return filtered
@@ -60,13 +63,16 @@ actor TimelineDatasource {
     }
     
     var filtered: [TimelineItem] = []
+    var realIds: Set<String> = []
     for item in items {
       switch item {
       case .gap:
         filtered.append(item)
       case .status(let status):
-        if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+        let realId = status.reblog?.id ?? status.id
+        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
           filtered.append(item)
+          realIds.insert(realId)
         }
       }
     }
@@ -75,10 +81,13 @@ actor TimelineDatasource {
 
   func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> [Status] {
     var filtered: [Status] = []
+    var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
-      if shouldShowStatus(status, filter: snapshot, seen: seen) {
+      let realId = status.reblog?.id ?? status.id
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen) {
         filtered.append(status)
+        realIds.insert(realId)
       }
     }
     return filtered

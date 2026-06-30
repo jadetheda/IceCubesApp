@@ -317,34 +317,9 @@ struct SettingsTabs: View {
   }
 
   private var experimentalSection: some View {
-    @Bindable var preferences = preferences
-    return Section {
-      Toggle(isOn: $preferences.hideSeenPostsEnabled) {
-        Label("Hide Seen Posts", systemImage: "eye.slash")
-      }
-      if preferences.hideSeenPostsEnabled {
-        VStack(alignment: .leading) {
-          Text("Required time to be detected as seen: \(String(format: "%.1f", preferences.hideSeenPostsThreshold))s")
-          Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
-        }
-        Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
-          Text("Only detect liked posts as seen")
-        }
-        Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
-          Text("Show button in header")
-        }
-        Toggle(isOn: $preferences.hideSeenPostsRequireMediaLoaded) {
-          Text("Require media to be loaded")
-        }
-        Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
-          Text("Include boosts (hide if original seen)")
-        }
-        Toggle(isOn: $preferences.hideSeenPostsIsToggle) {
-          Text("Button acts as a state toggle instead of one-off action")
-        }
-      }
-      Toggle(isOn: $preferences.showHidePostsWithoutMediaToggle) {
-        Label("Media-Only Toggle in Timeline Menu", systemImage: "photo.on.rectangle.angled")
+    Section {
+      NavigationLink(destination: ExperimentalSettingsView()) {
+        Label("Experimental Features", systemImage: "flask")
       }
       Button("Export App Settings") {
         prepareExport()
@@ -676,5 +651,59 @@ public struct IceCubesDocument: FileDocument, Sendable {
   nonisolated public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
     let data = try JSONEncoder().encode(export)
     return .init(regularFileWithContents: data)
+  }
+}
+
+public struct ExperimentalSettingsView: View {
+  @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var preferences
+
+  public init() {}
+
+  public var body: some View {
+    @Bindable var preferences = preferences
+    Form {
+      Section {
+        Toggle(isOn: $preferences.hideSeenPostsEnabled) {
+          Label("Hide Seen Posts", systemImage: "eye.slash")
+        }
+        if preferences.hideSeenPostsEnabled {
+          VStack(alignment: .leading) {
+            Text("Required time to be detected as seen: \(String(format: "%.1f", preferences.hideSeenPostsThreshold))s")
+            Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
+          }
+          Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
+            Text("Only detect liked posts as seen")
+          }
+          Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
+            Text("Show button in header")
+          }
+          Toggle(isOn: $preferences.hideSeenPostsRequireMediaLoaded) {
+            Text("Require media to be loaded")
+          }
+          Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
+            Text("Include boosts (hide if original seen)")
+          }
+          Toggle(isOn: $preferences.hideSeenPostsIsToggle) {
+            Text("Button acts as a state toggle instead of one-off action")
+          }
+        }
+      } footer: {
+        Text("Automatically track which posts you have seen and allow hiding them from the timeline.")
+      }
+      .listRowBackground(theme.primaryBackgroundColor)
+      
+      Section {
+        Toggle(isOn: $preferences.showHidePostsWithoutMediaToggle) {
+          Label("Media-Only Toggle in Timeline Menu", systemImage: "photo.on.rectangle.angled")
+        }
+      } footer: {
+        Text("Allows hiding posts without media from the timeline filter menu.")
+      }
+      .listRowBackground(theme.primaryBackgroundColor)
+    }
+    .navigationTitle("Experimental Features")
+    .scrollContentBackground(.hidden)
+    .background(theme.secondaryBackgroundColor)
   }
 }

@@ -119,10 +119,10 @@ public struct TimelineView: View {
               }
             }
           } label: {
-            Image(systemName: (UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye.slash.fill" : "eye.slash")
+            Image(systemName: (UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
           }
           .tint(theme.labelColor)
-          .accessibilityLabel("Hide read posts")
+          .accessibilityLabel((UserPreferences.shared.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
         }
       }
       TimelineToolbarTagGroupButton(timeline: $timeline)
