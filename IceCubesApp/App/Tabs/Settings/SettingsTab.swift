@@ -664,6 +664,20 @@ public struct ExperimentalSettingsView: View {
     @Bindable var preferences = preferences
     Form {
       Section {
+        Toggle(isOn: $preferences.remoteMediaAutoFallback) {
+          Label("Auto fallback to remote media", systemImage: "photo.badge.arrow.down")
+        }
+        if preferences.remoteMediaAutoFallback {
+          VStack(alignment: .leading) {
+            Text("Auto fallback delay: \(String(format: \"%.1f\", preferences.remoteMediaAutoFallbackDelay))s")
+            Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
+          }
+        }
+        Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
+          Label("Always force remote media", systemImage: "photo.badge.exclamationmark")
+        }
+      }
+      Section {
         Toggle(isOn: $preferences.hideSeenPostsEnabled) {
           Label("Hide Seen Posts", systemImage: "eye.slash")
         }

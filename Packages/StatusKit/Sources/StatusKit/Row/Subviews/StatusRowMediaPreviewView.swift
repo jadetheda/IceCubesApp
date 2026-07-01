@@ -113,6 +113,7 @@ public struct StatusRowMediaPreviewView: View {
         displayData: data,
         onLoaded: { loadedAttachments.insert(attachement.id) }
       )
+      .id(data.url)
       .onTapGesture {
         if let index = attachments.firstIndex(where: { $0.id == attachement.id }) {
           tabAction(for: index)

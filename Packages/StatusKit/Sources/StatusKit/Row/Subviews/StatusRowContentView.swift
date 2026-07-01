@@ -9,13 +9,14 @@ struct StatusRowContentView: View {
   @Environment(\.isStatusFocused) private var isFocused
 
   @Environment(Theme.self) private var theme
+  @AppStorage("timeline_hide_status_text") private var hideTextInTimeline = false
 
   var viewModel: StatusRowViewModel
   var context: StatusRowView.Context = .timeline
 
   var body: some View {
     // AI- Check if we should hide the text entirely in timeline mode
-    let hideText = context == .timeline && UserDefaults.standard.bool(forKey: "timeline_hide_status_text")
+    let hideText = context == .timeline && hideTextInTimeline
     
     if !viewModel.finalStatus.spoilerText.asRawText.isEmpty && !hideText {
       @Bindable var viewModel = viewModel
