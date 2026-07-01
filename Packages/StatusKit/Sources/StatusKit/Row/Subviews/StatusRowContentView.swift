@@ -63,7 +63,8 @@ struct StatusRowContentView: View {
         HStack {
           StatusRowMediaPreviewView(
             attachments: viewModel.finalStatus.mediaAttachments,
-            sensitive: viewModel.finalStatus.sensitive)
+            sensitive: viewModel.finalStatus.sensitive,
+            useRemoteMedia: viewModel.useRemoteMedia)
           if theme.statusDisplayStyle == .compact {
             Spacer()
           }

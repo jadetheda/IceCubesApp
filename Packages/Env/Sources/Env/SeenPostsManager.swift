@@ -7,11 +7,12 @@ import SwiftUI
 @Observable
 public class SeenPostsManager {
   public static let shared = SeenPostsManager()
-
+  
   private let userDefaultsKey = "seen_posts_ids"
   private let maxSeenPosts = 5000
-
+  
   public private(set) var seenPosts: Set<String> = []
+  private var seenPostsQueue: [String] = []
 
   private init() {
     load()
@@ -24,6 +25,8 @@ public class SeenPostsManager {
   public func markAsSeen(id: String) {
     guard !seenPosts.contains(id) else { return }
     seenPosts.insert(id)
+    seenPostsQueue.append(id)
+    trimIfNeeded()
     scheduleSave()
   }
 
@@ -32,17 +35,31 @@ public class SeenPostsManager {
     for id in ids {
       if !seenPosts.contains(id) {
         seenPosts.insert(id)
+        seenPostsQueue.append(id)
         hasNew = true
       }
     }
     if hasNew {
+      trimIfNeeded()
       scheduleSave()
     }
   }
 
   public func clear() {
     seenPosts.removeAll()
+    seenPostsQueue.removeAll()
     save()
+  }
+
+  private func trimIfNeeded() {
+    if seenPostsQueue.count > maxSeenPosts {
+      let excess = seenPostsQueue.count - maxSeenPosts
+      let toRemove = seenPostsQueue.prefix(excess)
+      seenPostsQueue.removeFirst(excess)
+      for id in toRemove {
+        seenPosts.remove(id)
+      }
+    }
   }
 
   private var saveTask: Task<Void, Never>?
@@ -57,18 +74,12 @@ public class SeenPostsManager {
   }
 
   private func save() {
-    // If the set grows too large, trim it
-    var arrayToSave = Array(seenPosts)
-    if arrayToSave.count > maxSeenPosts {
-      // Just keep the last maxSeenPosts
-      arrayToSave = Array(arrayToSave.prefix(maxSeenPosts))
-      seenPosts = Set(arrayToSave)
-    }
-    UserDefaults.standard.set(arrayToSave, forKey: userDefaultsKey)
+    UserDefaults.standard.set(seenPostsQueue, forKey: userDefaultsKey)
   }
 
   private func load() {
     if let saved = UserDefaults.standard.array(forKey: userDefaultsKey) as? [String] {
+      seenPostsQueue = saved
       seenPosts = Set(saved)
     }
   }

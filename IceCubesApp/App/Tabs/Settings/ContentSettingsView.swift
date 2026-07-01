@@ -31,6 +31,12 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.animateEmojis) {
             Text("settings.other.animate-emojis")
         }
+        Toggle(isOn: $userPreferences.remoteMediaAutoFallback) {
+          Text("Auto fallback to remote media (10s)")
+        }
+        Toggle(isOn: $userPreferences.remoteMediaAlwaysForce) {
+          Text("Always force remote media")
+        }
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)

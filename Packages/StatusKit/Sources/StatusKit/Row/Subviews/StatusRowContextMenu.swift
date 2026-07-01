@@ -164,10 +164,18 @@ struct StatusRowContextMenu: View {
       Label("status.action.select-text", systemImage: "selection.pin.in.out")
     }
 
-    Button {
+Button {
       UIPasteboard.general.string = viewModel.url?.absoluteString
     } label: {
       Label("status.action.copy-link", systemImage: "link")
+    }
+
+    if !viewModel.useRemoteMedia && !viewModel.finalStatus.mediaAttachments.compactMap({ $0.remoteUrl }).isEmpty {
+      Button {
+        viewModel.useRemoteMedia = true
+      } label: {
+        Label("Load remote media", systemImage: "photo.badge.arrow.down")
+      }
     }
 
     if let lang = preferences.serverPreferences?.postLanguage

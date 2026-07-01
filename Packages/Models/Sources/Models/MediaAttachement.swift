@@ -50,6 +50,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
   public let url: URL?
   public let previewUrl: URL?
+  public let remoteUrl: URL?
   public let description: String?
   public let meta: MetaContainer?
 
@@ -59,6 +60,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       type: "image",
       url: url,
       previewUrl: url,
+      remoteUrl: nil,
       description: nil,
       meta: nil)
   }
@@ -69,6 +71,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       type: "video",
       url: url,
       previewUrl: url,
+      remoteUrl: nil,
       description: nil,
       meta: nil)
   }

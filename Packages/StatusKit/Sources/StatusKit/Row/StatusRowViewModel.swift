@@ -14,6 +14,7 @@ import SwiftUI
   let isRemote: Bool
   let showActions: Bool
   let textDisabled: Bool
+  var useRemoteMedia: Bool = false
   let finalStatus: AnyStatus
   let filterContext: Filter.Context?
 
@@ -157,6 +158,7 @@ import SwiftUI
     self.isRemote = isRemote
     self.showActions = showActions
     self.textDisabled = textDisabled
+    self.useRemoteMedia = UserPreferences.shared.remoteMediaAlwaysForce
     self.scrollToId = scrollToId
     self.filterContext = filterContext
     if let reblog = status.reblog {

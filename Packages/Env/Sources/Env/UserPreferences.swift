@@ -91,6 +91,11 @@ import SwiftUI
 
     @AppStorage("show_hide_posts_without_media_toggle") public var showHidePostsWithoutMediaToggle: Bool = false
 
+    @AppStorage("remote_media_auto_fallback") public var remoteMediaAutoFallback: Bool = true
+    @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
+    @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
+
+
     init() {
       prepareTranslationType()
     }

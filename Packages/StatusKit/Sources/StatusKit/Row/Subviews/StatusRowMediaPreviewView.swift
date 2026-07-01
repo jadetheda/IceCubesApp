@@ -12,15 +12,25 @@ public struct StatusRowMediaPreviewView: View {
   @Environment(\.isMediaCompact) private var isCompact: Bool
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
+  @State private var autoFallbackTriggered: Bool = false
+  @State private var loadedAttachments: Set<String> = []
+  @State private var loadTask: Task<Void, Never>?
+
+  private var effectiveUseRemoteMedia: Bool {
+    useRemoteMedia || autoFallbackTriggered || userPreferences.remoteMediaAlwaysForce
+  }
 
   public let attachments: [MediaAttachment]
   public let sensitive: Bool
+  public let useRemoteMedia: Bool
 
   @State private var isQuickLookLoading: Bool = false
 
-  public init(attachments: [MediaAttachment], sensitive: Bool) {
+  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false) {
     self.attachments = attachments
     self.sensitive = sensitive
+    self.useRemoteMedia = useRemoteMedia
   }
 
   #if targetEnvironment(macCatalyst)
@@ -52,7 +62,8 @@ public struct StatusRowMediaPreviewView: View {
           maxSize: imageMaxHeight == 300
             ? nil
             : CGSize(width: imageMaxHeight, height: imageMaxHeight),
-          sensitive: sensitive
+          sensitive: sensitive,
+          onLoaded: { loadedAttachments.insert(attachments[0].id) }
         )
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
@@ -70,15 +81,37 @@ public struct StatusRowMediaPreviewView: View {
         .scrollClipDisabled()
       }
     }
+    .onAppear {
+      if userPreferences.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
+        loadTask = Task {
+          try? await Task.sleep(nanoseconds: UInt64(userPreferences.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
+          if !Task.isCancelled {
+            if loadedAttachments.count < attachments.count {
+              autoFallbackTriggered = true
+            }
+          }
+        }
+      }
+    }
+    .onDisappear {
+      loadTask?.cancel()
+    }
+    .onChange(of: loadedAttachments) { _, newValue in
+      if newValue.count == attachments.count {
+        loadTask?.cancel()
+      }
+    }
+
   }
 
   @ViewBuilder
   private func makeAttachmentView(_ attachement: MediaAttachment) -> some View {
-    if let data = DisplayData(from: attachement) {
+    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia) {
       MediaPreview(
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
-        displayData: data
+        displayData: data,
+        onLoaded: { loadedAttachments.insert(attachement.id) }
       )
       .onTapGesture {
         if let index = attachments.firstIndex(where: { $0.id == attachement.id }) {
@@ -124,6 +157,7 @@ private struct MediaPreview: View {
   let sensitive: Bool
   let imageMaxHeight: CGFloat
   let displayData: DisplayData
+  var onLoaded: () -> Void = {}
 
   var body: some View {
     if let namespace = quickLook.namespace {
@@ -133,6 +167,7 @@ private struct MediaPreview: View {
           LazyResizableImage(url: displayData.previewUrl) { state in
             if let image = state.image {
               image
+                .onAppear { onLoaded() }
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .frame(
@@ -156,6 +191,7 @@ private struct MediaPreview: View {
           }
         case .av:
           MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url))
+            .onAppear { onLoaded() }
             .accessibilityAddTraits(.startsMediaSession)
         }
       }
@@ -328,13 +364,13 @@ private struct DisplayData: Identifiable, Hashable {
   let accessibilityText: String
   let isLandscape: Bool
 
-  init?(from attachment: MediaAttachment) {
-    guard let url = attachment.url else { return nil }
+  init?(from attachment: MediaAttachment, useRemoteMedia: Bool) {
+    let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
+    guard let url = resolvedUrl else { return nil }
     guard let type = attachment.supportedType else { return nil }
-
     id = attachment.id
     self.url = url
-    previewUrl = attachment.previewUrl ?? attachment.url
+    previewUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     description = attachment.description
     self.type = DisplayType(from: type)
     accessibilityText = Self.getAccessibilityString(from: attachment)
@@ -418,6 +454,7 @@ private struct FeaturedImagePreView: View {
   let attachment: MediaAttachment
   let maxSize: CGSize?
   let sensitive: Bool
+  var onLoaded: () -> Void = {}
 
   @Environment(\.isSecondaryColumn) private var isSecondaryColumn: Bool
   @Environment(QuickLook.self) private var quickLook
@@ -443,6 +480,7 @@ private struct FeaturedImagePreView: View {
                 LazyResizableImage(url: attachment.url) { state in
                   if let image = state.image {
                     image
+                      .onAppear { onLoaded() }
                       .resizable()
                       .scaledToFill()
                   } else {
@@ -451,6 +489,7 @@ private struct FeaturedImagePreView: View {
                 }
               case .gifv, .video, .audio:
                 MediaUIAttachmentVideoView(viewModel: .init(url: url))
+                  .onAppear { onLoaded() }
               default:
                 EmptyView()
               }

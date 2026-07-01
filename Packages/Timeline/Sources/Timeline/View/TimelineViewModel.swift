@@ -476,15 +476,18 @@ extension TimelineViewModel: GapLoadingFetcher {
       if !Task.isCancelled {
         if visibleStatuses.contains(where: { $0.id == status.id }) {
           if prefs.hideSeenPostsRequireMediaLoaded && !status.mediaAttachments.isEmpty {
-            // Check if all media is in cache
-            let allCached = status.mediaAttachments.allSatisfy { attachment in
-              if let url = attachment.url {
-                return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
+            // Check if image media is in cache. Wait up to 5 seconds.
+            var allCached = false
+            for _ in 0..<5 {
+              allCached = status.mediaAttachments.allSatisfy { attachment in
+                if attachment.supportedType != .image { return true }
+                if let url = attachment.url {
+                  return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
+                }
+                return true
               }
-              return true
-            }
-            if !allCached {
-              return
+              if allCached || !visibleStatuses.contains(where: { $0.id == status.id }) { break }
+              try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
           }
           
