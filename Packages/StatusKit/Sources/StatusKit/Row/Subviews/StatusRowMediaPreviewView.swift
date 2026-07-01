@@ -167,8 +167,8 @@ private struct MediaPreview: View {
           LazyResizableImage(url: displayData.previewUrl) { state in
             if let image = state.image {
               image
-                .onAppear { onLoaded() }
                 .resizable()
+                .onAppear { onLoaded() }
                 .aspectRatio(contentMode: .fill)
                 .frame(
                   width: displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5,
@@ -480,8 +480,8 @@ private struct FeaturedImagePreView: View {
                 LazyResizableImage(url: attachment.url) { state in
                   if let image = state.image {
                     image
-                      .onAppear { onLoaded() }
                       .resizable()
+                      .onAppear { onLoaded() }
                       .scaledToFill()
                   } else {
                     RoundedRectangle(cornerRadius: 10).fill(Color.gray)
