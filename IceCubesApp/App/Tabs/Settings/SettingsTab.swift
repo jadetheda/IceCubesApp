@@ -669,7 +669,7 @@ public struct ExperimentalSettingsView: View {
         }
         if preferences.remoteMediaAutoFallback {
           VStack(alignment: .leading) {
-            Text("Auto fallback delay: \(String(format: \"%.1f\", preferences.remoteMediaAutoFallbackDelay))s")
+            Text("Auto fallback delay: \(String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay))s")
             Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
           }
         }
