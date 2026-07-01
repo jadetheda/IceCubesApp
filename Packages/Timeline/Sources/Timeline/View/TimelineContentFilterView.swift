@@ -30,12 +30,37 @@ public struct TimelineContentFilterView: View {
           Toggle(isOn: $contentFilter.showQuotePosts) {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
-          Toggle(isOn: $contentFilter.hidePostsWithMedia) {
-            Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
-          }
           if UserPreferences.shared.showHidePostsWithoutMediaToggle {
-            Toggle(isOn: $contentFilter.hidePostsWithoutMedia) {
-              Label("Hide posts without media", systemImage: "photo.on.rectangle.angled")
+            Button {
+              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia {
+                // All posts -> Only posts with media (hide posts without media)
+                contentFilter.hidePostsWithoutMedia = true
+                contentFilter.hidePostsWithMedia = false
+              } else if contentFilter.hidePostsWithoutMedia {
+                // Only posts with media -> Only text posts (hide posts with media)
+                contentFilter.hidePostsWithoutMedia = false
+                contentFilter.hidePostsWithMedia = true
+              } else {
+                // Only text posts -> All posts
+                contentFilter.hidePostsWithoutMedia = false
+                contentFilter.hidePostsWithMedia = false
+              }
+            } label: {
+              HStack {
+                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia {
+                  Label("Show all posts", systemImage: "photo.on.rectangle.angled")
+                } else if contentFilter.hidePostsWithoutMedia {
+                  Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
+                } else {
+                  Label("Only text posts", systemImage: "text.alignleft")
+                }
+                Spacer()
+              }
+            }
+            .buttonStyle(.plain)
+          } else {
+            Toggle(isOn: $contentFilter.hidePostsWithMedia) {
+              Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
             }
           }
           if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {
