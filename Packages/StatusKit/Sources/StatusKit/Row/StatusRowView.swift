@@ -92,7 +92,7 @@ public struct StatusRowView: View {
               if !isCompact {
                 StatusRowHeaderView(viewModel: viewModel)
               }
-              StatusRowContentView(viewModel: viewModel)
+              StatusRowContentView(viewModel: viewModel, context: context)
                 .contentShape(Rectangle())
                 .onTapGesture {
                   guard !isFocused else { return }

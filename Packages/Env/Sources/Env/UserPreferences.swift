@@ -430,6 +430,23 @@ import SwiftUI
     }
   }
 
+
+  public var remoteMediaAutoFallback: Bool {
+    didSet {
+      storage.remoteMediaAutoFallback = remoteMediaAutoFallback
+    }
+  }
+  public var remoteMediaAutoFallbackDelay: Double {
+    didSet {
+      storage.remoteMediaAutoFallbackDelay = remoteMediaAutoFallbackDelay
+    }
+  }
+  public var remoteMediaAlwaysForce: Bool {
+    didSet {
+      storage.remoteMediaAlwaysForce = remoteMediaAlwaysForce
+    }
+  }
+
   public var hideSeenPostsIsToggle: Bool {
     didSet {
       storage.hideSeenPostsIsToggle = hideSeenPostsIsToggle
@@ -642,6 +659,9 @@ import SwiftUI
     hideSeenPostsRequireMediaLoaded = storage.hideSeenPostsRequireMediaLoaded
     hideSeenPostsIncludeBoosts = storage.hideSeenPostsIncludeBoosts
     hideSeenPostsIsToggle = storage.hideSeenPostsIsToggle
+    remoteMediaAutoFallback = storage.remoteMediaAutoFallback
+    remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
+    remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
 }

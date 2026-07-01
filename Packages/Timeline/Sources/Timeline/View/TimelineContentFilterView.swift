@@ -31,26 +31,37 @@ public struct TimelineContentFilterView: View {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
           if UserPreferences.shared.showHidePostsWithoutMediaToggle {
+            // AI- Added 4-way filter mode to toggle between All Posts, Only Media, Media (No Text), and Only Text
             Button {
-              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia {
-                // All posts -> Only posts with media (hide posts without media)
+              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText {
+                // All posts -> Only posts with media
                 contentFilter.hidePostsWithoutMedia = true
                 contentFilter.hidePostsWithMedia = false
-              } else if contentFilter.hidePostsWithoutMedia {
-                // Only posts with media -> Only text posts (hide posts with media)
+                contentFilter.hideStatusText = false
+              } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText {
+                // Only posts with media -> Only media (no text)
+                contentFilter.hidePostsWithoutMedia = true
+                contentFilter.hidePostsWithMedia = false
+                contentFilter.hideStatusText = true
+              } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText {
+                // Only media (no text) -> Only text posts
                 contentFilter.hidePostsWithoutMedia = false
                 contentFilter.hidePostsWithMedia = true
+                contentFilter.hideStatusText = false
               } else {
                 // Only text posts -> All posts
                 contentFilter.hidePostsWithoutMedia = false
                 contentFilter.hidePostsWithMedia = false
+                contentFilter.hideStatusText = false
               }
             } label: {
               HStack {
-                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia {
-                  Label("Show all posts", systemImage: "photo.on.rectangle.angled")
-                } else if contentFilter.hidePostsWithoutMedia {
+                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText {
+                  Label("Show all posts", systemImage: "line.3.horizontal")
+                } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText {
                   Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
+                } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText {
+                  Label("Only media (no text)", systemImage: "photo")
                 } else {
                   Label("Only text posts", systemImage: "text.alignleft")
                 }

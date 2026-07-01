@@ -11,15 +11,21 @@ struct StatusRowContentView: View {
   @Environment(Theme.self) private var theme
 
   var viewModel: StatusRowViewModel
+  var context: StatusRowView.Context = .timeline
 
   var body: some View {
-    if !viewModel.finalStatus.spoilerText.asRawText.isEmpty {
+    // AI- Check if we should hide the text entirely in timeline mode
+    let hideText = context == .timeline && UserDefaults.standard.bool(forKey: "timeline_hide_status_text")
+    
+    if !viewModel.finalStatus.spoilerText.asRawText.isEmpty && !hideText {
       @Bindable var viewModel = viewModel
       StatusRowSpoilerView(status: viewModel.finalStatus, displaySpoiler: $viewModel.displaySpoiler)
     }
 
     if !viewModel.displaySpoiler {
-      StatusRowTextView(viewModel: viewModel)
+      if !hideText {
+        StatusRowTextView(viewModel: viewModel)
+      }
       if !reasons.contains(.placeholder) {
         StatusRowTranslateView(viewModel: viewModel)
       }
