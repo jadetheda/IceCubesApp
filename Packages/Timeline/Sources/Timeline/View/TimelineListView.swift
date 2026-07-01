@@ -35,21 +35,40 @@ struct TimelineListView: View {
           }
         TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
         TimelineTagHeaderView(tag: $viewModel.tag)
-        switch viewModel.timeline {
-        case .remoteLocal:
-          StatusesListView(
-            fetcher: viewModel,
-            client: client,
-            routerPath: routerPath,
-            isRemote: true,
-            filterContext: timeline.filterContext)
-        default:
-          StatusesListView(
-            fetcher: viewModel,
-            client: client,
-            routerPath: routerPath,
-            filterContext: timeline.filterContext)
-            .environment(\.isHomeTimeline, timeline == .home)
+        if TimelineContentFilter.shared.isGalleryMode {
+          switch viewModel.timeline {
+          case .remoteLocal:
+            GalleryStatusesListView(
+              fetcher: viewModel,
+              client: client,
+              routerPath: routerPath,
+              isRemote: true,
+              filterContext: timeline.filterContext)
+          default:
+            GalleryStatusesListView(
+              fetcher: viewModel,
+              client: client,
+              routerPath: routerPath,
+              filterContext: timeline.filterContext)
+              .environment(\.isHomeTimeline, timeline == .home)
+          }
+        } else {
+          switch viewModel.timeline {
+          case .remoteLocal:
+            StatusesListView(
+              fetcher: viewModel,
+              client: client,
+              routerPath: routerPath,
+              isRemote: true,
+              filterContext: timeline.filterContext)
+          default:
+            StatusesListView(
+              fetcher: viewModel,
+              client: client,
+              routerPath: routerPath,
+              filterContext: timeline.filterContext)
+              .environment(\.isHomeTimeline, timeline == .home)
+          }
         }
       }
       .id(client.id)

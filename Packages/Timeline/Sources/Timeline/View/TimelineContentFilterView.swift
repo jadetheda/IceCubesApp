@@ -31,37 +31,49 @@ public struct TimelineContentFilterView: View {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
           if UserPreferences.shared.showHidePostsWithoutMediaToggle {
-            // AI- Added 4-way filter mode to toggle between All Posts, Only Media, Media (No Text), and Only Text
+            // AI- Added 5-way filter mode to toggle between All Posts, Only Media, Media (No Text), Gallery Mode, and Only Text
             Button {
-              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText {
+              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
                 // All posts -> Only posts with media
                 contentFilter.hidePostsWithoutMedia = true
                 contentFilter.hidePostsWithMedia = false
                 contentFilter.hideStatusText = false
-              } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText {
+                contentFilter.isGalleryMode = false
+              } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
                 // Only posts with media -> Only media (no text)
                 contentFilter.hidePostsWithoutMedia = true
                 contentFilter.hidePostsWithMedia = false
                 contentFilter.hideStatusText = true
-              } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText {
-                // Only media (no text) -> Only text posts
+                contentFilter.isGalleryMode = false
+              } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                // Only media (no text) -> Gallery Mode
+                contentFilter.hidePostsWithoutMedia = true
+                contentFilter.hidePostsWithMedia = false
+                contentFilter.hideStatusText = true
+                contentFilter.isGalleryMode = true
+              } else if contentFilter.isGalleryMode {
+                // Gallery Mode -> Only text posts
                 contentFilter.hidePostsWithoutMedia = false
                 contentFilter.hidePostsWithMedia = true
                 contentFilter.hideStatusText = false
+                contentFilter.isGalleryMode = false
               } else {
                 // Only text posts -> All posts
                 contentFilter.hidePostsWithoutMedia = false
                 contentFilter.hidePostsWithMedia = false
                 contentFilter.hideStatusText = false
+                contentFilter.isGalleryMode = false
               }
             } label: {
               HStack {
-                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText {
+                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
                   Label("Show all posts", systemImage: "line.3.horizontal")
-                } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText {
+                } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
                   Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
-                } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText {
+                } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
                   Label("Only media (no text)", systemImage: "photo")
+                } else if contentFilter.isGalleryMode {
+                  Label("Gallery mode", systemImage: "square.grid.2x2")
                 } else {
                   Label("Only text posts", systemImage: "text.alignleft")
                 }

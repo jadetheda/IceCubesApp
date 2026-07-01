@@ -13,6 +13,7 @@ import Env
     public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
     public let hideStatusText: Bool
+    public let isGalleryMode: Bool
     public let hideReadPosts: Bool
     public let hideSeenPostsEnabled: Bool
     public let hideSeenPostsIncludeBoosts: Bool
@@ -26,6 +27,7 @@ import Env
       hidePostsWithoutMedia: Bool,
       hidePostsFromBots: Bool,
       hideStatusText: Bool,
+      isGalleryMode: Bool,
       hideReadPosts: Bool,
       hideSeenPostsEnabled: Bool,
       hideSeenPostsIncludeBoosts: Bool
@@ -38,6 +40,7 @@ import Env
       self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
       self.hideStatusText = hideStatusText
+      self.isGalleryMode = isGalleryMode
       self.hideReadPosts = hideReadPosts
       self.hideSeenPostsEnabled = hideSeenPostsEnabled
       self.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
@@ -53,6 +56,7 @@ import Env
     @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_hide_status_text") var hideStatusText: Bool = false
+    @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
     @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
   }
 
@@ -101,6 +105,12 @@ import Env
     }
   }
     
+  public var isGalleryMode: Bool {
+    didSet {
+      storage.isGalleryMode = isGalleryMode
+    }
+  }
+    
   public var hidePostsFromBots: Bool {
     didSet {
       storage.hidePostsFromBots = hidePostsFromBots
@@ -122,6 +132,7 @@ import Env
     hidePostsWithoutMedia = storage.hidePostsWithoutMedia
     hidePostsFromBots = storage.hidePostsFromBots
     hideStatusText = storage.hideStatusText
+    isGalleryMode = storage.isGalleryMode
     hideReadPosts = storage.hideReadPosts
   }
 
@@ -135,6 +146,7 @@ import Env
       hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
       hideStatusText: hideStatusText,
+      isGalleryMode: isGalleryMode,
       hideReadPosts: hideReadPosts,
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,
       hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts

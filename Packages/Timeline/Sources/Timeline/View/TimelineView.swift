@@ -21,6 +21,7 @@ struct ContentFilterOnChangeModifier: ViewModifier {
       .onChange(of: contentFilter.hidePostsWithMedia) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in action() }
       .onChange(of: contentFilter.hideStatusText) { _, _ in action() }
+      .onChange(of: contentFilter.isGalleryMode) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsFromBots) { _, _ in action() }
       .onChange(of: contentFilter.hideReadPosts) { _, _ in action() }
   }
