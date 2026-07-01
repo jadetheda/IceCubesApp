@@ -275,3 +275,4 @@ struct NotificationsView: View {
 - Keep views focused and single-purpose
 - Use descriptive names for state enums
 - Write SwiftUI code that looks and feels like SwiftUI
+- **Swift String Interpolation Safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing \(\"%.1f\") will cause compiler crash (Exit Code 65). Always write \("%.1f").
