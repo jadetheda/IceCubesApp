@@ -100,8 +100,8 @@ public struct TimelineView: View {
     if #available(iOS 26.0, *) {
       ToolbarSpacer(placement: .topBarTrailing)
     }
-    ToolbarItemGroup(placement: .topBarTrailing) {
-      if viewModel.canStreamTimeline(timeline) {
+    if viewModel.canStreamTimeline(timeline) {
+      ToolbarItem(placement: .navigationBarTrailing) {
         Button {
           viewModel.isStreamingTimeline.toggle()
         } label: {
@@ -111,7 +111,9 @@ public struct TimelineView: View {
         }
         .tint(theme.labelColor)
       }
-      if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
+    }
+    if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
+      ToolbarItem(placement: .navigationBarTrailing) {
         Button {
           if preferences.hideSeenPostsIsToggle {
             contentFilter.hideReadPosts.toggle()
@@ -126,8 +128,8 @@ public struct TimelineView: View {
         .tint(theme.labelColor)
         .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
       }
-      TimelineToolbarTagGroupButton(timeline: $timeline)
     }
+    TimelineToolbarTagGroupButton(timeline: $timeline)
   }
 
   private var timelineView: some View {
