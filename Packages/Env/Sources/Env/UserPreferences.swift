@@ -34,6 +34,8 @@ import SwiftUI
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
 
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
+    @AppStorage("gallery_columns") public var galleryColumns: Int = 2
+    @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
 
     @AppStorage("haptic_tab") public var hapticTabSelectionEnabled = true
     @AppStorage("haptic_timeline") public var hapticTimelineEnabled = true
@@ -261,6 +263,24 @@ import SwiftUI
     }
   }
 
+  public var galleryColumns: Int {
+    get { storage.galleryColumns }
+    set {
+      storage.galleryColumns = newValue
+      galleryColumns = newValue
+    }
+  }
+
+  public var galleryCropToSquare: Bool {
+    get { storage.galleryCropToSquare }
+    set {
+      storage.galleryCropToSquare = newValue
+      galleryCropToSquare = newValue
+    }
+  }
+
+  public var galleryColumns: Int
+  public var galleryCropToSquare: Bool
   public var inAppBrowserReaderView: Bool {
     didSet {
       storage.inAppBrowserReaderView = inAppBrowserReaderView
@@ -625,6 +645,8 @@ import SwiftUI
     preferredTranslationType = storage.preferredTranslationType
     userDeeplAPIFree = storage.userDeeplAPIFree
     autoDetectPostLanguage = storage.autoDetectPostLanguage
+    galleryColumns = storage.galleryColumns
+    galleryCropToSquare = storage.galleryCropToSquare
     inAppBrowserReaderView = storage.inAppBrowserReaderView
     hapticTabSelectionEnabled = storage.hapticTabSelectionEnabled
     hapticTimelineEnabled = storage.hapticTimelineEnabled

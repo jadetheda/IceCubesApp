@@ -75,25 +75,26 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   @ViewBuilder
   private func makeGrid(for statuses: [Status]) -> some View {
     let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
-    let chunks = mediaStatuses.chunked(into: 3)
-    ForEach(0..<chunks.count, id: \.self) { rowIndex in
-      HStack(spacing: 4) {
-        ForEach(chunks[rowIndex]) { status in
-          GalleryMediaCell(mediaStatus: status, routerPath: routerPath)
-            .onAppear { fetcher.statusDidAppear(status: status.status) }
-            .onDisappear { fetcher.statusDidDisappear(status: status.status) }
-        }
-        // Fill empty spaces in the last row
-        if chunks[rowIndex].count < 3 {
-          ForEach(0..<(3 - chunks[rowIndex].count), id: \.self) { _ in
-            Color.clear.aspectRatio(1, contentMode: .fit)
+    let columns = UserPreferences.shared.galleryColumns
+    
+    // Distribute items into columns round-robin
+    var columnItems: [[MediaStatus]] = Array(repeating: [], count: columns)
+    for (index, status) in mediaStatuses.enumerated() {
+        columnItems[index % columns].append(status)
+    }
+    
+    HStack(alignment: .top, spacing: 4) {
+      ForEach(0..<columns, id: \.self) { colIndex in
+        LazyVStack(spacing: 4) {
+          ForEach(columnItems[colIndex]) { status in
+            GalleryMediaCell(mediaStatus: status, routerPath: routerPath)
+              .onAppear { fetcher.statusDidAppear(status: status.status) }
+              .onDisappear { fetcher.statusDidDisappear(status: status.status) }
           }
         }
       }
-      .listRowBackground(theme.primaryBackgroundColor)
-      .listRowInsets(EdgeInsets(top: 0, leading: 4, bottom: 4, trailing: 4))
-      .listRowSeparator(.hidden)
     }
+    .padding(.horizontal, 4)
   }
 }
 
@@ -111,6 +112,7 @@ struct GalleryMediaCell: View {
   let routerPath: RouterPath
   
   var body: some View {
+    let isSquare = UserPreferences.shared.galleryCropToSquare
     if let url = mediaStatus.attachment.url {
       Group {
         switch mediaStatus.attachment.supportedType {
@@ -134,7 +136,7 @@ struct GalleryMediaCell: View {
           EmptyView()
         }
       }
-      .aspectRatio(1, contentMode: .fill)
+      .modifier(GalleryAspectRatioModifier(isSquare: isSquare))
       .clipped()
       .contentShape(Rectangle())
       .onTapGesture {
@@ -142,4 +144,22 @@ struct GalleryMediaCell: View {
       }
     }
   }
+}
+
+struct GalleryAspectRatioModifier: ViewModifier {
+    let isSquare: Bool
+    
+    func body(content: Content) -> some View {
+        if isSquare {
+            content.aspectRatio(1, contentMode: .fill)
+        } else {
+            // Masonry mode limits height to something reasonable without squishing it to 1:1,
+            // or just scales to fit the width. For Waterfall, the width is dictated by the column,
+            // so we just let it aspect fit/fill naturally.
+            // A max height prevents extremely tall single images from breaking the flow too badly.
+            content
+                .scaledToFit()
+                .frame(maxHeight: 400)
+        }
+    }
 }

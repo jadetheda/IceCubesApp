@@ -663,7 +663,14 @@ public struct ExperimentalSettingsView: View {
   public var body: some View {
     @Bindable var preferences = preferences
     Form {
-      Section {
+      Section("Gallery Mode") {
+        Stepper("Columns: \(preferences.galleryColumns)", value: $preferences.galleryColumns, in: 2...4)
+        Toggle(isOn: $preferences.galleryCropToSquare) {
+          Label("Crop images to square", systemImage: "crop")
+        }
+      }
+      
+      Section("Media") {
         Toggle(isOn: $preferences.remoteMediaAutoFallback) {
           Label("Auto fallback to remote media", systemImage: "photo.badge.arrow.down")
         }

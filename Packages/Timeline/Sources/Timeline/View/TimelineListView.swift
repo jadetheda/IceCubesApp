@@ -24,50 +24,68 @@ struct TimelineListView: View {
   var body: some View {
     @Bindable var viewModel = viewModel
     ScrollViewReader { proxy in
-      List {
-        ScrollToView()
-          .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
-          .onAppear {
-            viewModel.scrollToTopVisible = true
-          }
-          .onDisappear {
-            viewModel.scrollToTopVisible = false
-          }
-        TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
-        TimelineTagHeaderView(tag: $viewModel.tag)
+      Group {
         if TimelineContentFilter.shared.isGalleryMode {
-          switch viewModel.timeline {
-          case .remoteLocal:
-            GalleryStatusesListView(
-              fetcher: viewModel,
-              client: client,
-              routerPath: routerPath,
-              isRemote: true,
-              filterContext: timeline.filterContext)
-          default:
-            GalleryStatusesListView(
-              fetcher: viewModel,
-              client: client,
-              routerPath: routerPath,
-              filterContext: timeline.filterContext)
-              .environment(\.isHomeTimeline, timeline == .home)
+          ScrollView {
+            LazyVStack(spacing: 0) {
+              ScrollToView()
+                .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
+                .onAppear {
+                  viewModel.scrollToTopVisible = true
+                }
+                .onDisappear {
+                  viewModel.scrollToTopVisible = false
+                }
+              TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
+              TimelineTagHeaderView(tag: $viewModel.tag)
+              
+              switch viewModel.timeline {
+              case .remoteLocal:
+                GalleryStatusesListView(
+                  fetcher: viewModel,
+                  client: client,
+                  routerPath: routerPath,
+                  isRemote: true,
+                  filterContext: timeline.filterContext)
+              default:
+                GalleryStatusesListView(
+                  fetcher: viewModel,
+                  client: client,
+                  routerPath: routerPath,
+                  filterContext: timeline.filterContext)
+                  .environment(\.isHomeTimeline, timeline == .home)
+              }
+            }
           }
         } else {
-          switch viewModel.timeline {
-          case .remoteLocal:
-            StatusesListView(
-              fetcher: viewModel,
-              client: client,
-              routerPath: routerPath,
-              isRemote: true,
-              filterContext: timeline.filterContext)
-          default:
-            StatusesListView(
-              fetcher: viewModel,
-              client: client,
-              routerPath: routerPath,
-              filterContext: timeline.filterContext)
-              .environment(\.isHomeTimeline, timeline == .home)
+          List {
+            ScrollToView()
+              .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
+              .onAppear {
+                viewModel.scrollToTopVisible = true
+              }
+              .onDisappear {
+                viewModel.scrollToTopVisible = false
+              }
+            TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
+            TimelineTagHeaderView(tag: $viewModel.tag)
+            
+            switch viewModel.timeline {
+            case .remoteLocal:
+              StatusesListView(
+                fetcher: viewModel,
+                client: client,
+                routerPath: routerPath,
+                isRemote: true,
+                filterContext: timeline.filterContext)
+            default:
+              StatusesListView(
+                fetcher: viewModel,
+                client: client,
+                routerPath: routerPath,
+                filterContext: timeline.filterContext)
+                .environment(\.isHomeTimeline, timeline == .home)
+            }
           }
         }
       }
