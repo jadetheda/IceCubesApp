@@ -78,10 +78,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     let columns = UserPreferences.shared.galleryColumns
     
     // Distribute items into columns round-robin
-    var columnItems: [[MediaStatus]] = Array(repeating: [], count: columns)
-    for (index, status) in mediaStatuses.enumerated() {
-        columnItems[index % columns].append(status)
-    }
+    let columnItems: [[MediaStatus]] = {
+      var items: [[MediaStatus]] = Array(repeating: [], count: columns)
+      for (index, status) in mediaStatuses.enumerated() {
+          items[index % columns].append(status)
+      }
+      return items
+    }()
     
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
