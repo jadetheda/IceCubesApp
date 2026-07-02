@@ -90,7 +90,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 4) {
           ForEach(columnItems[colIndex]) { status in
-            GalleryMediaCell(mediaStatus: status, routerPath: routerPath)
+            GalleryMediaCell(
+              mediaStatus: status,
+              routerPath: routerPath,
+              client: client,
+              isRemote: isRemote,
+              filterContext: filterContext
+            )
               .onAppear { fetcher.statusDidAppear(status: status.status) }
               .onDisappear { fetcher.statusDidDisappear(status: status.status) }
           }
@@ -113,7 +119,15 @@ extension Array {
 struct GalleryMediaCell: View {
   let mediaStatus: MediaStatus
   let routerPath: RouterPath
-  
+  let client: MastodonClient
+  let isRemote: Bool
+  let filterContext: Filter.Context?
+
+  @State private var viewModel: StatusRowViewModel?
+  @State private var showSelectableText: Bool = false
+  @State private var isBlockConfirmationPresented = false
+  @State private var isShareAsImageSheetPresented = false
+
   var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
     if let url = mediaStatus.attachment.url {
@@ -145,6 +159,86 @@ struct GalleryMediaCell: View {
       .onTapGesture {
         routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
       }
+      .contextMenu {
+        if let viewModel {
+          StatusRowContextMenu(
+            viewModel: viewModel,
+            showTextForSelection: $showSelectableText,
+            isBlockConfirmationPresented: $isBlockConfirmationPresented,
+            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
+          )
+          .tint(.primary)
+          .onAppear {
+            Task {
+              await viewModel.loadAuthorRelationship()
+            }
+          }
+        } else {
+          ProgressView()
+        }
+      }
+      .onAppear {
+        if viewModel == nil {
+          viewModel = StatusRowViewModel(
+            status: mediaStatus.status,
+            client: client,
+            routerPath: routerPath,
+            isRemote: isRemote,
+            filterContext: filterContext
+          )
+        }
+      }
+      .sheet(isPresented: $showSelectableText) {
+        if let viewModel {
+          let content =
+            viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+            ?? viewModel.status.content.asSafeMarkdownAttributedString
+          StatusRowSelectableTextView(content: content)
+        }
+      }
+      .alert(
+        isPresented: Binding(
+          get: { viewModel?.showDeleteAlert ?? false },
+          set: { viewModel?.showDeleteAlert = $0 }
+        ),
+        content: {
+          Alert(
+            title: Text("status.action.delete.confirm.title"),
+            message: Text("status.action.delete.confirm.message"),
+            primaryButton: .destructive(
+              Text("status.action.delete")
+            ) {
+              Task {
+                if let viewModel {
+                  try? await viewModel.delete()
+                }
+              }
+            },
+            secondaryButton: .cancel()
+          )
+        }
+      )
+      .confirmationDialog(
+        "",
+        isPresented: $isBlockConfirmationPresented
+      ) {
+        Button("account.action.block", role: .destructive) {
+          Task {
+            do {
+              if let viewModel {
+                let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
+                viewModel.authorRelationship = try await client.post(
+                  endpoint: Accounts.block(id: operationAccount.id))
+              }
+            } catch {}
+          }
+        }
+      }
+      .environment(
+        StatusDataControllerProvider.shared.dataController(
+          for: viewModel?.finalStatus ?? mediaStatus.status,
+          client: client)
+      )
     }
   }
 }

@@ -58,15 +58,6 @@ public struct TimelineContentFilterView: View {
                 hidePostsWithoutMedia = true
                 hidePostsWithMedia = false
                 hideStatusText = true
-                isGalleryMode = false
-              } label: {
-                let isActive = hidePostsWithoutMedia && hideStatusText && !isGalleryMode
-                Label("Only media (no text)", systemImage: isActive ? "checkmark" : "")
-              }
-              Button {
-                hidePostsWithoutMedia = true
-                hidePostsWithMedia = false
-                hideStatusText = true
                 isGalleryMode = true
               } label: {
                 let isActive = isGalleryMode

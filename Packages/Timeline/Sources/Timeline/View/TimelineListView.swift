@@ -27,7 +27,7 @@ struct TimelineListView: View {
       Group {
         if TimelineContentFilter.shared.isGalleryMode {
           ScrollView {
-            LazyVStack(spacing: 0) {
+            VStack(spacing: 0) {
               ScrollToView()
                 .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
                 .onAppear {

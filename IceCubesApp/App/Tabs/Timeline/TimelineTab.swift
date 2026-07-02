@@ -155,14 +155,6 @@ struct TimelineTab: View {
           contentFilter.hidePostsWithoutMedia = true
           contentFilter.hidePostsWithMedia = false
           contentFilter.hideStatusText = true
-          contentFilter.isGalleryMode = false
-        } label: {
-          Label("Only media (no text)", systemImage: (contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
-        }
-        Button {
-          contentFilter.hidePostsWithoutMedia = true
-          contentFilter.hidePostsWithMedia = false
-          contentFilter.hideStatusText = true
           contentFilter.isGalleryMode = true
         } label: {
           Label("Gallery mode", systemImage: contentFilter.isGalleryMode ? "checkmark" : "")
