@@ -63,77 +63,167 @@ import Env
   public static let shared = TimelineContentFilter()
   private let storage = Storage()
 
+  @ObservationIgnored
+  private var _showBoosts: Bool = false
   public var showBoosts: Bool {
-    didSet {
-      storage.showBoosts = showBoosts
+    get {
+      access(keyPath: \.showBoosts)
+      return _showBoosts
+    }
+    set {
+      withMutation(keyPath: \.showBoosts) {
+        _showBoosts = newValue
+        storage.showBoosts = newValue
+      }
     }
   }
 
+  @ObservationIgnored
+  private var _showReplies: Bool = false
   public var showReplies: Bool {
-    didSet {
-      storage.showReplies = showReplies
+    get {
+      access(keyPath: \.showReplies)
+      return _showReplies
+    }
+    set {
+      withMutation(keyPath: \.showReplies) {
+        _showReplies = newValue
+        storage.showReplies = newValue
+      }
     }
   }
 
+  @ObservationIgnored
+  private var _showThreads: Bool = false
   public var showThreads: Bool {
-    didSet {
-      storage.showThreads = showThreads
+    get {
+      access(keyPath: \.showThreads)
+      return _showThreads
+    }
+    set {
+      withMutation(keyPath: \.showThreads) {
+        _showThreads = newValue
+        storage.showThreads = newValue
+      }
     }
   }
 
+  @ObservationIgnored
+  private var _showQuotePosts: Bool = false
   public var showQuotePosts: Bool {
-    didSet {
-      storage.showQuotePosts = showQuotePosts
+    get {
+      access(keyPath: \.showQuotePosts)
+      return _showQuotePosts
+    }
+    set {
+      withMutation(keyPath: \.showQuotePosts) {
+        _showQuotePosts = newValue
+        storage.showQuotePosts = newValue
+      }
     }
   }
   
+  @ObservationIgnored
+  private var _hidePostsWithMedia: Bool = false
   public var hidePostsWithMedia: Bool {
-    didSet {
-      storage.hidePostsWithMedia = hidePostsWithMedia
+    get {
+      access(keyPath: \.hidePostsWithMedia)
+      return _hidePostsWithMedia
+    }
+    set {
+      withMutation(keyPath: \.hidePostsWithMedia) {
+        _hidePostsWithMedia = newValue
+        storage.hidePostsWithMedia = newValue
+      }
     }
   }
   
+  @ObservationIgnored
+  private var _hidePostsWithoutMedia: Bool = false
   public var hidePostsWithoutMedia: Bool {
-    didSet {
-      storage.hidePostsWithoutMedia = hidePostsWithoutMedia
+    get {
+      access(keyPath: \.hidePostsWithoutMedia)
+      return _hidePostsWithoutMedia
+    }
+    set {
+      withMutation(keyPath: \.hidePostsWithoutMedia) {
+        _hidePostsWithoutMedia = newValue
+        storage.hidePostsWithoutMedia = newValue
+      }
     }
   }
     
-    public var hideStatusText: Bool {
-    didSet {
-      storage.hideStatusText = hideStatusText
+    @ObservationIgnored
+  private var _hideStatusText: Bool = false
+  public var hideStatusText: Bool {
+    get {
+      access(keyPath: \.hideStatusText)
+      return _hideStatusText
+    }
+    set {
+      withMutation(keyPath: \.hideStatusText) {
+        _hideStatusText = newValue
+        storage.hideStatusText = newValue
+      }
     }
   }
     
+  @ObservationIgnored
+  private var _isGalleryMode: Bool = false
   public var isGalleryMode: Bool {
-    didSet {
-      storage.isGalleryMode = isGalleryMode
+    get {
+      access(keyPath: \.isGalleryMode)
+      return _isGalleryMode
+    }
+    set {
+      withMutation(keyPath: \.isGalleryMode) {
+        _isGalleryMode = newValue
+        storage.isGalleryMode = newValue
+      }
     }
   }
     
+  @ObservationIgnored
+  private var _hidePostsFromBots: Bool = false
   public var hidePostsFromBots: Bool {
-    didSet {
-      storage.hidePostsFromBots = hidePostsFromBots
+    get {
+      access(keyPath: \.hidePostsFromBots)
+      return _hidePostsFromBots
+    }
+    set {
+      withMutation(keyPath: \.hidePostsFromBots) {
+        _hidePostsFromBots = newValue
+        storage.hidePostsFromBots = newValue
+      }
     }
   }
     
+  @ObservationIgnored
+  private var _hideReadPosts: Bool = false
   public var hideReadPosts: Bool {
-    didSet {
-      storage.hideReadPosts = hideReadPosts
+    get {
+      access(keyPath: \.hideReadPosts)
+      return _hideReadPosts
+    }
+    set {
+      withMutation(keyPath: \.hideReadPosts) {
+        _hideReadPosts = newValue
+        storage.hideReadPosts = newValue
+      }
     }
   }
 
   private init() {
-    showBoosts = storage.showBoosts
-    showReplies = storage.showReplies
-    showThreads = storage.showThreads
-    showQuotePosts = storage.showQuotePosts
-    hidePostsWithMedia = storage.hidePostsWithMedia
-    hidePostsWithoutMedia = storage.hidePostsWithoutMedia
-    hidePostsFromBots = storage.hidePostsFromBots
-    hideStatusText = storage.hideStatusText
-    isGalleryMode = storage.isGalleryMode
-    hideReadPosts = storage.hideReadPosts
+    _showBoosts = storage.showBoosts
+    _showReplies = storage.showReplies
+    _showThreads = storage.showThreads
+    _showQuotePosts = storage.showQuotePosts
+    _hidePostsWithMedia = storage.hidePostsWithMedia
+    _hidePostsWithoutMedia = storage.hidePostsWithoutMedia
+    _hidePostsFromBots = storage.hidePostsFromBots
+    _hideStatusText = storage.hideStatusText
+    _isGalleryMode = storage.isGalleryMode
+    _hideReadPosts = storage.hideReadPosts
   }
 
   public func snapshot() -> Snapshot {

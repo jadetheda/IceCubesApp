@@ -8,12 +8,15 @@ import SwiftUI
 @MainActor
 @Observable public class MediaUIAttachmentVideoViewModel {
   var player: AVPlayer?
+  private var observer: NSKeyValueObservation?
   let url: URL
+  let fallbackUrl: URL?
   let forceAutoPlay: Bool
   var isPlaying: Bool = false
 
-  public init(url: URL, forceAutoPlay: Bool = false) {
+  public init(url: URL, fallbackUrl: URL? = nil, forceAutoPlay: Bool = false) {
     self.url = url
+    self.fallbackUrl = fallbackUrl
     self.forceAutoPlay = forceAutoPlay
   }
 

@@ -59,6 +59,7 @@ public struct StatusRowMediaPreviewView: View {
       if attachments.count == 1 {
         FeaturedImagePreView(
           attachment: attachments[0],
+          useRemoteMedia: effectiveUseRemoteMedia,
           maxSize: imageMaxHeight == 300
             ? nil
             : CGSize(width: imageMaxHeight, height: imageMaxHeight),
@@ -191,7 +192,7 @@ private struct MediaPreview: View {
             AltTextButton(text: displayData.description, font: .scaledFootnote)
           }
         case .av:
-          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url))
+          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl))
             .onAppear { onLoaded() }
             .accessibilityAddTraits(.startsMediaSession)
         }
@@ -359,6 +360,7 @@ struct AltTextButton: View {
 private struct DisplayData: Identifiable, Hashable {
   let id: String
   let url: URL
+  let fallbackUrl: URL?
   let previewUrl: URL?
   let description: String?
   let type: DisplayType
@@ -371,6 +373,7 @@ private struct DisplayData: Identifiable, Hashable {
     guard let type = attachment.supportedType else { return nil }
     id = attachment.id
     self.url = url
+    fallbackUrl = attachment.url
     previewUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     description = attachment.description
     self.type = DisplayType(from: type)
@@ -453,6 +456,7 @@ struct WrapperForPreview: View {
 @MainActor
 private struct FeaturedImagePreView: View {
   let attachment: MediaAttachment
+  let useRemoteMedia: Bool
   let maxSize: CGSize?
   let sensitive: Bool
   var onLoaded: () -> Void = {}
@@ -471,14 +475,15 @@ private struct FeaturedImagePreView: View {
   }
 
   var body: some View {
-    if let url = attachment.url, let namespace = quickLook.namespace {
+    let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
+    if let url = resolvedUrl, let namespace = quickLook.namespace {
       _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
           RoundedRectangle(cornerRadius: 10).fill(Color.gray)
             .overlay {
               switch attachment.supportedType {
               case .image:
-                LazyResizableImage(url: attachment.url) { state in
+                LazyResizableImage(url: resolvedUrl) { state in
                   if let image = state.image {
                     image
                       .resizable()

@@ -11,6 +11,10 @@ public struct TimelineContentFilterView: View {
 
   @State private var contentFilter = TimelineContentFilter.shared
   @State private var isEditingFilters = false
+  @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
+  @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
+  @AppStorage("timeline_hide_status_text") var hideStatusText: Bool = false
+  @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
 
   public init() {}
 
@@ -33,46 +37,46 @@ public struct TimelineContentFilterView: View {
           if UserPreferences.shared.showHidePostsWithoutMediaToggle {
             // AI- Added 5-way filter mode to toggle between All Posts, Only Media, Media (No Text), Gallery Mode, and Only Text
             Button {
-              if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+              if !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode {
                 // All posts -> Only posts with media
-                contentFilter.hidePostsWithoutMedia = true
-                contentFilter.hidePostsWithMedia = false
-                contentFilter.hideStatusText = false
-                contentFilter.isGalleryMode = false
-              } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                hidePostsWithoutMedia = true
+                hidePostsWithMedia = false
+                hideStatusText = false
+                isGalleryMode = false
+              } else if hidePostsWithoutMedia && !hideStatusText && !isGalleryMode {
                 // Only posts with media -> Only media (no text)
-                contentFilter.hidePostsWithoutMedia = true
-                contentFilter.hidePostsWithMedia = false
-                contentFilter.hideStatusText = true
-                contentFilter.isGalleryMode = false
-              } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                hidePostsWithoutMedia = true
+                hidePostsWithMedia = false
+                hideStatusText = true
+                isGalleryMode = false
+              } else if hidePostsWithoutMedia && hideStatusText && !isGalleryMode {
                 // Only media (no text) -> Gallery Mode
-                contentFilter.hidePostsWithoutMedia = true
-                contentFilter.hidePostsWithMedia = false
-                contentFilter.hideStatusText = true
-                contentFilter.isGalleryMode = true
-              } else if contentFilter.isGalleryMode {
+                hidePostsWithoutMedia = true
+                hidePostsWithMedia = false
+                hideStatusText = true
+                isGalleryMode = true
+              } else if isGalleryMode {
                 // Gallery Mode -> Only text posts
-                contentFilter.hidePostsWithoutMedia = false
-                contentFilter.hidePostsWithMedia = true
-                contentFilter.hideStatusText = false
-                contentFilter.isGalleryMode = false
+                hidePostsWithoutMedia = false
+                hidePostsWithMedia = true
+                hideStatusText = false
+                isGalleryMode = false
               } else {
                 // Only text posts -> All posts
-                contentFilter.hidePostsWithoutMedia = false
-                contentFilter.hidePostsWithMedia = false
-                contentFilter.hideStatusText = false
-                contentFilter.isGalleryMode = false
+                hidePostsWithoutMedia = false
+                hidePostsWithMedia = false
+                hideStatusText = false
+                isGalleryMode = false
               }
             } label: {
               HStack {
-                if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                if !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode {
                   Label("Show all posts", systemImage: "line.3.horizontal")
-                } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                } else if hidePostsWithoutMedia && !hideStatusText && !isGalleryMode {
                   Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
-                } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+                } else if hidePostsWithoutMedia && hideStatusText && !isGalleryMode {
                   Label("Only media (no text)", systemImage: "photo")
-                } else if contentFilter.isGalleryMode {
+                } else if isGalleryMode {
                   Label("Gallery mode", systemImage: "square.grid.2x2")
                 } else {
                   Label("Only text posts", systemImage: "text.alignleft")
@@ -82,7 +86,7 @@ public struct TimelineContentFilterView: View {
             }
             .buttonStyle(.plain)
           } else {
-            Toggle(isOn: $contentFilter.hidePostsWithMedia) {
+            Toggle(isOn: $hidePostsWithMedia) {
               Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
             }
           }

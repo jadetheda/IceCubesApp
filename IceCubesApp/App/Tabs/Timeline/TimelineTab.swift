@@ -135,9 +135,44 @@ struct TimelineTab: View {
     }
     if preferences.showHidePostsWithoutMediaToggle {
       Button {
-        contentFilter.hidePostsWithoutMedia.toggle()
+        if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = true
+          contentFilter.isGalleryMode = false
+        } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = true
+          contentFilter.isGalleryMode = true
+        } else if contentFilter.isGalleryMode {
+          contentFilter.hidePostsWithoutMedia = false
+          contentFilter.hidePostsWithMedia = true
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        } else {
+          contentFilter.hidePostsWithoutMedia = false
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        }
       } label: {
-        Label(contentFilter.hidePostsWithoutMedia ? "Show posts without media" : "Hide posts without media", systemImage: "photo.on.rectangle.angled")
+        if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          Label("Show all posts", systemImage: "line.3.horizontal")
+        } else if contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
+        } else if contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode {
+          Label("Only media (no text)", systemImage: "photo")
+        } else if contentFilter.isGalleryMode {
+          Label("Gallery mode", systemImage: "square.grid.2x2")
+        } else {
+          Label("Only text posts", systemImage: "text.alignleft")
+        }
       }
       Divider()
     }

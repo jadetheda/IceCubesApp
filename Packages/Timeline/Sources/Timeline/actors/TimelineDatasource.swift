@@ -27,14 +27,7 @@ actor TimelineDatasource {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     
-    let actualSeen: Set<String>?
-    if let seen {
-        actualSeen = seen
-    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
-        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
-    } else {
-        actualSeen = nil
-    }
+    let actualSeen: Set<String>? = seen
     
     var filtered: [Status] = []
     var realIds: Set<String> = []
@@ -53,14 +46,7 @@ actor TimelineDatasource {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     
-    let actualSeen: Set<String>?
-    if let seen {
-        actualSeen = seen
-    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
-        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
-    } else {
-        actualSeen = nil
-    }
+    let actualSeen = seen
     
     var filtered: [TimelineItem] = []
     var realIds: Set<String> = []
@@ -253,6 +239,5 @@ actor TimelineDatasource {
       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
-      && !(filter.hideSeenPostsEnabled && filter.hideReadPosts && isSeen)
   }
 }
