@@ -35,56 +35,55 @@ public struct TimelineContentFilterView: View {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
           if UserPreferences.shared.showHidePostsWithoutMediaToggle {
-            // AI- Added 5-way filter mode to toggle between All Posts, Only Media, Media (No Text), Gallery Mode, and Only Text
-            Button {
-              if !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode {
-                // All posts -> Only posts with media
+            Menu {
+              Button {
+                hidePostsWithoutMedia = false
+                hidePostsWithMedia = false
+                hideStatusText = false
+                isGalleryMode = false
+              } label: {
+                let isActive = !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode
+                Label("Show all posts", systemImage: isActive ? "checkmark" : "")
+              }
+              Button {
                 hidePostsWithoutMedia = true
                 hidePostsWithMedia = false
                 hideStatusText = false
                 isGalleryMode = false
-              } else if hidePostsWithoutMedia && !hideStatusText && !isGalleryMode {
-                // Only posts with media -> Only media (no text)
+              } label: {
+                let isActive = hidePostsWithoutMedia && !hideStatusText && !isGalleryMode
+                Label("Only posts with media", systemImage: isActive ? "checkmark" : "")
+              }
+              Button {
                 hidePostsWithoutMedia = true
                 hidePostsWithMedia = false
                 hideStatusText = true
                 isGalleryMode = false
-              } else if hidePostsWithoutMedia && hideStatusText && !isGalleryMode {
-                // Only media (no text) -> Gallery Mode
+              } label: {
+                let isActive = hidePostsWithoutMedia && hideStatusText && !isGalleryMode
+                Label("Only media (no text)", systemImage: isActive ? "checkmark" : "")
+              }
+              Button {
                 hidePostsWithoutMedia = true
                 hidePostsWithMedia = false
                 hideStatusText = true
                 isGalleryMode = true
-              } else if isGalleryMode {
-                // Gallery Mode -> Only text posts
+              } label: {
+                let isActive = isGalleryMode
+                Label("Gallery mode", systemImage: isActive ? "checkmark" : "")
+              }
+              Button {
                 hidePostsWithoutMedia = false
                 hidePostsWithMedia = true
                 hideStatusText = false
                 isGalleryMode = false
-              } else {
-                // Only text posts -> All posts
-                hidePostsWithoutMedia = false
-                hidePostsWithMedia = false
-                hideStatusText = false
-                isGalleryMode = false
+              } label: {
+                let isActive = hidePostsWithMedia
+                Label("Only text posts", systemImage: isActive ? "checkmark" : "")
               }
             } label: {
-              HStack {
-                if !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode {
-                  Label("Show all posts", systemImage: "line.3.horizontal")
-                } else if hidePostsWithoutMedia && !hideStatusText && !isGalleryMode {
-                  Label("Only posts with media", systemImage: "photo.on.rectangle.angled")
-                } else if hidePostsWithoutMedia && hideStatusText && !isGalleryMode {
-                  Label("Only media (no text)", systemImage: "photo")
-                } else if isGalleryMode {
-                  Label("Gallery mode", systemImage: "square.grid.2x2")
-                } else {
-                  Label("Only text posts", systemImage: "text.alignleft")
-                }
-                Spacer()
-              }
+              Label("Display Mode", systemImage: "rectangle.grid.1x2")
             }
-            .buttonStyle(.plain)
           } else {
             Toggle(isOn: $hidePostsWithMedia) {
               Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")

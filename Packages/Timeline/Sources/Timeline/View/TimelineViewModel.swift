@@ -284,7 +284,7 @@ extension TimelineViewModel: GapLoadingFetcher {
         timeline: timeline)
 
       await updateDatasourceAndState(statuses: statuses, client: client, replaceExisting: true)
-      let lastCount = await autoFetchNextPagesIfFilteredEmpty(
+      let lastCount = await autoFetchNextPageWhileNoVisibleItems(
         lastFetchedCount: statuses.count,
         pageLimit: Constants.initialPageLimit)
       if lastCount != statuses.count {
@@ -447,12 +447,14 @@ extension TimelineViewModel: GapLoadingFetcher {
       lastId: lastId,
       offset: statuses.count)
 
+    let visibleCountBefore = await datasource.getFilteredItems(seen: sessionSeenPosts).count
     await datasource.append(contentOf: newStatuses)
     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
 
-    let lastCount = await autoFetchNextPagesIfFilteredEmpty(
+    let lastCount = await autoFetchNextPageWhileNoVisibleItems(
       lastFetchedCount: newStatuses.count,
-      pageLimit: Constants.nextPageLimit)
+      pageLimit: Constants.nextPageLimit,
+      visibleCountBefore: visibleCountBefore)
     await cache()
     statusesState = await .displayWithGaps(
       items: datasource.getFilteredItems(seen: sessionSeenPosts),
@@ -639,12 +641,13 @@ extension TimelineViewModel: GapLoadingFetcher {
     }
   }
 
-  private func autoFetchNextPagesIfFilteredEmpty(
+  private func autoFetchNextPageWhileNoVisibleItems(
     lastFetchedCount: Int,
-    pageLimit: Int
+    pageLimit: Int,
+    visibleCountBefore: Int = 0
   ) async -> Int {
     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
-    guard await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty else { return lastFetchedCount }
+    guard await datasource.getFilteredItems(seen: sessionSeenPosts).count <= visibleCountBefore else { return lastFetchedCount }
     guard let client else { return lastFetchedCount }
 
     var pagesLoaded = 0
@@ -652,7 +655,7 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     while pagesLoaded < Constants.emptyFilterAutoPageLimit,
       lastCount >= Constants.nextPageLimit,
-      await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty
+      await datasource.getFilteredItems(seen: sessionSeenPosts).count <= visibleCountBefore
     {
       let statuses = await datasource.get()
       guard let lastId = statuses.last?.id else { break }

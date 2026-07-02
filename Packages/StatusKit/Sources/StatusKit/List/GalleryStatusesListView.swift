@@ -111,36 +111,35 @@ struct GalleryMediaCell: View {
   let routerPath: RouterPath
   
   var body: some View {
-    GeometryReader { proxy in
-      if let url = mediaStatus.attachment.url {
-        Group {
-          switch mediaStatus.attachment.supportedType {
-          case .image:
-            LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
-              if let image = state.image {
-                image
-                  .resizable()
-                  .scaledToFill()
-                  .frame(width: proxy.size.width, height: proxy.size.width)
-              } else {
+    if let url = mediaStatus.attachment.url {
+      Group {
+        switch mediaStatus.attachment.supportedType {
+        case .image:
+          LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
+            if let image = state.image {
+              image
+                .resizable()
+                .scaledToFill()
+            } else {
+              ZStack {
+                Color.secondary.opacity(0.1)
                 ProgressView()
-                  .frame(width: proxy.size.width, height: proxy.size.width)
               }
             }
-            .processors([.resize(size: proxy.size)])
-            .transition(.opacity)
-          case .gifv, .video:
-            MediaUIAttachmentVideoView(viewModel: .init(url: url))
-          default:
-            EmptyView()
           }
-        }
-        .onTapGesture {
-          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
+          .transition(.opacity)
+        case .gifv, .video:
+          MediaUIAttachmentVideoView(viewModel: .init(url: url))
+        default:
+          EmptyView()
         }
       }
+      .aspectRatio(1, contentMode: .fill)
+      .clipped()
+      .contentShape(Rectangle())
+      .onTapGesture {
+        routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
+      }
     }
-    .clipped()
-    .aspectRatio(1, contentMode: .fit)
   }
 }

@@ -134,6 +134,123 @@ struct TimelineTab: View {
       Divider()
     }
     if preferences.showHidePostsWithoutMediaToggle {
+      Menu {
+        Button {
+          contentFilter.hidePostsWithoutMedia = false
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        } label: {
+          Label("Show all posts", systemImage: (!contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
+        }
+        Button {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        } label: {
+          Label("Only posts with media", systemImage: (contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
+        }
+        Button {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = true
+          contentFilter.isGalleryMode = false
+        } label: {
+          Label("Only media (no text)", systemImage: (contentFilter.hidePostsWithoutMedia && contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
+        }
+        Button {
+          contentFilter.hidePostsWithoutMedia = true
+          contentFilter.hidePostsWithMedia = false
+          contentFilter.hideStatusText = true
+          contentFilter.isGalleryMode = true
+        } label: {
+          Label("Gallery mode", systemImage: contentFilter.isGalleryMode ? "checkmark" : "")
+        }
+        Button {
+          contentFilter.hidePostsWithoutMedia = false
+          contentFilter.hidePostsWithMedia = true
+          contentFilter.hideStatusText = false
+          contentFilter.isGalleryMode = false
+        } label: {
+          Label("Only text posts", systemImage: contentFilter.hidePostsWithMedia ? "checkmark" : "")
+        }
+      } label: {
+        Label("Display Mode", systemImage: "rectangle.grid.1x2")
+      }
+      Divider()
+    }
+
+    if client.isAuth {
+          timeline = lastTimelineFilter
+        } else {
+          timeline = .trending
+        }
+      }
+      if !client.isAuth {
+        routerPath.presentedSheet = .addAccount
+      }
+    }
+    .task {
+      await currentAccount.fetchLists()
+    }
+    .onChange(of: client.isAuth) {
+      resetTimelineFilter()
+    }
+    .onChange(of: currentAccount.account?.id) {
+      resetTimelineFilter()
+    }
+    .onChange(of: client.id) {
+      routerPath.path = []
+    }
+    .onChange(of: timeline) { _, newValue in
+      if client.isAuth, canFilterTimeline {
+        lastTimelineFilter = newValue
+      }
+      switch newValue {
+      case .tagGroup(let title, _, _):
+        if let group = tagGroups.first(where: { $0.title == title }) {
+          selectedTagGroup = group
+        }
+      default:
+        selectedTagGroup = nil
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .refreshTimeline)) { _ in
+      timeline = .latest
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .trendingTimeline)) { _ in
+      timeline = .trending
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .localTimeline)) { _ in
+      timeline = .local
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .federatedTimeline)) { _ in
+      timeline = .federated
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .homeTimeline)) { _ in
+      timeline = .home
+    }
+    .withSafariRouter()
+    .environment(routerPath)
+  }
+
+  @ViewBuilder
+  private var timelineFilterButton: some View {
+    headerGroup
+    if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
+      Button {
+        if preferences.hideSeenPostsIsToggle {
+          contentFilter.hideReadPosts.toggle()
+        } else {
+          NotificationCenter.default.post(name: .hideReadPosts, object: nil)
+        }
+      } label: {
+        Label((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
+      }
+      Divider()
+    }
+    if preferences.showHidePostsWithoutMediaToggle {
       Button {
         if !contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode {
           contentFilter.hidePostsWithoutMedia = true
