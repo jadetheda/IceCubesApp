@@ -8,6 +8,9 @@ jobs:
   main:
     name: Validate Translations
     runs-on: macOS-latest
+    env:
+      ACTIONS_STEP_DEBUG: true
+      ACTIONS_RUNNER_DEBUG: true
     steps:
       - name: git checkout
         uses: actions/checkout@v3
