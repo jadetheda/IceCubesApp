@@ -264,23 +264,16 @@ import SwiftUI
   }
 
   public var galleryColumns: Int {
-    get { storage.galleryColumns }
-    set {
-      storage.galleryColumns = newValue
-      galleryColumns = newValue
+    didSet {
+      storage.galleryColumns = galleryColumns
     }
   }
 
   public var galleryCropToSquare: Bool {
-    get { storage.galleryCropToSquare }
-    set {
-      storage.galleryCropToSquare = newValue
-      galleryCropToSquare = newValue
+    didSet {
+      storage.galleryCropToSquare = galleryCropToSquare
     }
   }
-
-  public var galleryColumns: Int
-  public var galleryCropToSquare: Bool
   public var inAppBrowserReaderView: Bool {
     didSet {
       storage.inAppBrowserReaderView = inAppBrowserReaderView
