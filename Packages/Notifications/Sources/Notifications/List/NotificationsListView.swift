@@ -134,6 +134,7 @@ public struct NotificationsListView: View {
     .onChange(of: filter.showFavourite) { _, _ in refreshFiltered() }
     .onChange(of: filter.showPoll) { _, _ in refreshFiltered() }
     .onChange(of: filter.showQuote) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showQuotedUpdate) { _, _ in refreshFiltered() }
     .onChange(of: isNotificationsPolicyPresented) { _, isPresented in
       guard !isPresented else { return }
       Task {
