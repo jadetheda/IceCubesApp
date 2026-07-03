@@ -23,6 +23,8 @@ public struct NotificationsContentFilterView: View {
           Toggle(isOn: $filter.showFavourite) { Label("notifications.type.favourite", systemImage: "star.fill") }
           Toggle(isOn: $filter.showPoll) { Label("notifications.type.poll", systemImage: "chart.bar") }
           Toggle(isOn: $filter.showUpdate) { Label("notifications.type.update", systemImage: "pencil") }
+          Toggle(isOn: $filter.showQuote) { Label("notifications.type.quote", systemImage: "quote.opening") }
+          Toggle(isOn: $filter.showQuotedUpdate) { Label("notifications.type.quoted-update", systemImage: "quote.opening") }
         }
       }
       .navigationTitle("notifications.content-filter.title")
