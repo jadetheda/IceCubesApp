@@ -403,9 +403,6 @@ extension TimelineViewModel: GapLoadingFetcher {
       await datasource.insertGap(gap, at: newStatuses.count)
     }
 
-    if let lastVisible = visibleStatuses.last {
-      await datasource.remove(after: lastVisible, safeOffset: 15)
-    }
     await cache()
     let prefs = UserPreferences.shared
     let newStatusesIDs = newStatuses.filter { status in
