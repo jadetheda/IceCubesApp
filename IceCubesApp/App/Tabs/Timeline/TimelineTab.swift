@@ -133,6 +133,20 @@ struct TimelineTab: View {
       }
       Divider()
     }
+    if preferences.showHidePostsWithoutMediaToggle {
+      Button {
+        if contentFilter.isGalleryMode {
+          contentFilter.isGalleryMode = false
+          contentFilter.hidePostsWithoutMedia = false
+        } else {
+          contentFilter.isGalleryMode = true
+          contentFilter.hidePostsWithoutMedia = true
+        }
+      } label: {
+        Label(contentFilter.isGalleryMode ? "Exit Gallery Mode" : "Gallery Mode", systemImage: "rectangle.grid.1x2")
+      }
+      Divider()
+    }
     timelineFiltersButtons
     if client.isAuth {
       listsFiltersButons
