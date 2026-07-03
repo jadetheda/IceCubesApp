@@ -60,7 +60,6 @@ import Nuke
 
   private(set) var timelineTask: Task<Void, Never>?
   private var sessionSeenPosts: Set<String> = []
-  private var sessionSeenPosts: Set<String> = []
 
   var tag: Tag?
 
