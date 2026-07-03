@@ -33,6 +33,21 @@ import SwiftUI
       player?.pause()
       isPlaying = false
     }
+    
+    if let fallbackUrl = fallbackUrl {
+      observer = player?.currentItem?.observe(\.status, options: [.new]) { [weak self] item, _ in
+        if item.status == .failed {
+          Task { @MainActor in
+            let wasPlaying = self?.isPlaying ?? false
+            self?.player?.replaceCurrentItem(with: AVPlayerItem(url: fallbackUrl))
+            if wasPlaying {
+              self?.player?.play()
+            }
+          }
+        }
+      }
+    }
+
     guard let player else { return }
     NotificationCenter.default.addObserver(
       forName: .AVPlayerItemDidPlayToEndTime,
