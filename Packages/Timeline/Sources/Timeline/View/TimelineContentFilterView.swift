@@ -33,7 +33,8 @@ public struct TimelineContentFilterView: View {
           Toggle(isOn: $contentFilter.showQuotePosts) {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
-          Section("Display Mode") {
+        }
+        Section("Display Mode") {
             Toggle(isOn: Binding(
                 get: { !hidePostsWithoutMedia },
                 set: { hidePostsWithoutMedia = !$0 }
@@ -56,6 +57,7 @@ public struct TimelineContentFilterView: View {
                }
             }
           }
+        Section {
           if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {
             Toggle(isOn: $contentFilter.hideReadPosts) {
               Label("Hide read posts", systemImage: "eye.slash")

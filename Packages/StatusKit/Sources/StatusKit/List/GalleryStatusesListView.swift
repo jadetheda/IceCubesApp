@@ -149,6 +149,7 @@ struct GalleryMediaCell: View {
           .transition(.opacity)
         case .gifv, .video:
           MediaUIAttachmentVideoView(viewModel: .init(url: url))
+            .allowsHitTesting(false)
         default:
           EmptyView()
         }
