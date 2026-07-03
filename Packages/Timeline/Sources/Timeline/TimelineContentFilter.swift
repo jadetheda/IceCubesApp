@@ -12,7 +12,6 @@ import Env
     public let hidePostsWithMedia: Bool
     public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
-    public let hideStatusText: Bool
     public let isGalleryMode: Bool
     public let hideReadPosts: Bool
     public let hideSeenPostsEnabled: Bool
@@ -26,7 +25,6 @@ import Env
       hidePostsWithMedia: Bool,
       hidePostsWithoutMedia: Bool,
       hidePostsFromBots: Bool,
-      hideStatusText: Bool,
       isGalleryMode: Bool,
       hideReadPosts: Bool,
       hideSeenPostsEnabled: Bool,
@@ -39,7 +37,6 @@ import Env
       self.hidePostsWithMedia = hidePostsWithMedia
       self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
-      self.hideStatusText = hideStatusText
       self.isGalleryMode = isGalleryMode
       self.hideReadPosts = hideReadPosts
       self.hideSeenPostsEnabled = hideSeenPostsEnabled
@@ -55,7 +52,6 @@ import Env
     @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
     @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
-    @AppStorage("timeline_hide_status_text") var hideStatusText: Bool = false
     @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
     @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
   }
@@ -154,16 +150,9 @@ import Env
   }
     
     @ObservationIgnored
-  private var _hideStatusText: Bool = false
-  public var hideStatusText: Bool {
     get {
-      access(keyPath: \.hideStatusText)
-      return _hideStatusText
     }
     set {
-      withMutation(keyPath: \.hideStatusText) {
-        _hideStatusText = newValue
-        storage.hideStatusText = newValue
       }
     }
   }
@@ -221,7 +210,6 @@ import Env
     _hidePostsWithMedia = storage.hidePostsWithMedia
     _hidePostsWithoutMedia = storage.hidePostsWithoutMedia
     _hidePostsFromBots = storage.hidePostsFromBots
-    _hideStatusText = storage.hideStatusText
     _isGalleryMode = storage.isGalleryMode
     _hideReadPosts = storage.hideReadPosts
   }
@@ -235,7 +223,6 @@ import Env
       hidePostsWithMedia: hidePostsWithMedia,
       hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
-      hideStatusText: hideStatusText,
       isGalleryMode: isGalleryMode,
       hideReadPosts: hideReadPosts,
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,

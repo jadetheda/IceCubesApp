@@ -157,7 +157,11 @@ struct GalleryMediaCell: View {
       .clipped()
       .contentShape(Rectangle())
       .onTapGesture {
-        routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
+        if let viewModel {
+          viewModel.navigateToDetail()
+        } else {
+          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
+        }
       }
       .contextMenu {
         if let viewModel {
@@ -167,6 +171,7 @@ struct GalleryMediaCell: View {
             isBlockConfirmationPresented: $isBlockConfirmationPresented,
             isShareAsImageSheetPresented: $isShareAsImageSheetPresented
           )
+          .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
           .tint(.primary)
           .onAppear {
             Task {

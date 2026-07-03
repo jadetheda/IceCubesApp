@@ -13,7 +13,6 @@ public struct TimelineContentFilterView: View {
   @State private var isEditingFilters = false
   @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
   @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
-  @AppStorage("timeline_hide_status_text") var hideStatusText: Bool = false
   @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
 
   public init() {}
@@ -34,50 +33,27 @@ public struct TimelineContentFilterView: View {
           Toggle(isOn: $contentFilter.showQuotePosts) {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
-          if UserPreferences.shared.showHidePostsWithoutMediaToggle {
-            Menu {
-              Button {
-                hidePostsWithoutMedia = false
-                hidePostsWithMedia = false
-                hideStatusText = false
-                isGalleryMode = false
-              } label: {
-                let isActive = !hidePostsWithoutMedia && !hidePostsWithMedia && !hideStatusText && !isGalleryMode
-                Label("Show all posts", systemImage: isActive ? "checkmark" : "")
-              }
-              Button {
-                hidePostsWithoutMedia = true
-                hidePostsWithMedia = false
-                hideStatusText = false
-                isGalleryMode = false
-              } label: {
-                let isActive = hidePostsWithoutMedia && !hideStatusText && !isGalleryMode
-                Label("Only posts with media", systemImage: isActive ? "checkmark" : "")
-              }
-              Button {
-                hidePostsWithoutMedia = true
-                hidePostsWithMedia = false
-                hideStatusText = true
-                isGalleryMode = true
-              } label: {
-                let isActive = isGalleryMode
-                Label("Gallery mode", systemImage: isActive ? "checkmark" : "")
-              }
-              Button {
-                hidePostsWithoutMedia = false
-                hidePostsWithMedia = true
-                hideStatusText = false
-                isGalleryMode = false
-              } label: {
-                let isActive = hidePostsWithMedia
-                Label("Only text posts", systemImage: isActive ? "checkmark" : "")
-              }
-            } label: {
-              Label("Display Mode", systemImage: "rectangle.grid.1x2")
+          Section("Display Mode") {
+            Toggle(isOn: Binding(
+                get: { !hidePostsWithoutMedia },
+                set: { hidePostsWithoutMedia = !$0 }
+            )) {
+              Label("Text posts", systemImage: "text.alignleft")
             }
-          } else {
-            Toggle(isOn: $hidePostsWithMedia) {
-              Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
+            .disabled(isGalleryMode)
+            Toggle(isOn: Binding(
+                get: { !hidePostsWithMedia },
+                set: { hidePostsWithMedia = !$0 }
+            )) {
+              Label("Media posts", systemImage: "photo")
+            }
+            Toggle(isOn: $isGalleryMode) {
+              Label("Gallery mode", systemImage: "rectangle.grid.1x2")
+            }
+            .onChange(of: isGalleryMode) { _, newValue in
+               if newValue {
+                   hidePostsWithMedia = false
+               }
             }
           }
           if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {

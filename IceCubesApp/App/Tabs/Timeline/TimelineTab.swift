@@ -133,45 +133,6 @@ struct TimelineTab: View {
       }
       Divider()
     }
-    if preferences.showHidePostsWithoutMediaToggle {
-      Menu {
-        Button {
-          contentFilter.hidePostsWithoutMedia = false
-          contentFilter.hidePostsWithMedia = false
-          contentFilter.hideStatusText = false
-          contentFilter.isGalleryMode = false
-        } label: {
-          Label("Show all posts", systemImage: (!contentFilter.hidePostsWithoutMedia && !contentFilter.hidePostsWithMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
-        }
-        Button {
-          contentFilter.hidePostsWithoutMedia = true
-          contentFilter.hidePostsWithMedia = false
-          contentFilter.hideStatusText = false
-          contentFilter.isGalleryMode = false
-        } label: {
-          Label("Only posts with media", systemImage: (contentFilter.hidePostsWithoutMedia && !contentFilter.hideStatusText && !contentFilter.isGalleryMode) ? "checkmark" : "")
-        }
-        Button {
-          contentFilter.hidePostsWithoutMedia = true
-          contentFilter.hidePostsWithMedia = false
-          contentFilter.hideStatusText = true
-          contentFilter.isGalleryMode = true
-        } label: {
-          Label("Gallery mode", systemImage: contentFilter.isGalleryMode ? "checkmark" : "")
-        }
-        Button {
-          contentFilter.hidePostsWithoutMedia = false
-          contentFilter.hidePostsWithMedia = true
-          contentFilter.hideStatusText = false
-          contentFilter.isGalleryMode = false
-        } label: {
-          Label("Only text posts", systemImage: contentFilter.hidePostsWithMedia ? "checkmark" : "")
-        }
-      } label: {
-        Label("Display Mode", systemImage: "rectangle.grid.1x2")
-      }
-      Divider()
-    }
     timelineFiltersButtons
     if client.isAuth {
       listsFiltersButons
