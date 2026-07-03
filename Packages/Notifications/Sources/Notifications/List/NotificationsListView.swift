@@ -20,6 +20,8 @@ public struct NotificationsListView: View {
   @State private var selectedType: Models.Notification.NotificationType?
   @State private var policy: Models.NotificationsPolicy?
   @State private var isNotificationsPolicyPresented: Bool = false
+  @State private var isNotificationsContentFilterPresented: Bool = false
+  @State private var filter = NotificationsContentFilter.shared
 
   let lockedType: Models.Notification.NotificationType?
   let lockedAccountId: String?
@@ -76,6 +78,13 @@ public struct NotificationsListView: View {
               .tint(theme.labelColor)
           }
           Divider()
+          Button {
+            isNotificationsContentFilterPresented = true
+          } label: {
+            Label("Display Options", systemImage: "slider.horizontal.3")
+          }
+          .tint(theme.labelColor)
+          Divider()
           ForEach(Notification.NotificationType.allCases, id: \.self) { type in
             Button {
               applyFilter(type: type)
@@ -112,6 +121,19 @@ public struct NotificationsListView: View {
         .environment(client)
         .environment(theme)
     }
+    .sheet(isPresented: $isNotificationsContentFilterPresented) {
+      NotificationsContentFilterView()
+        .environment(theme)
+    }
+    .onChange(of: filter.showUpdate) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showStatus) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showMention) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showReblog) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showFollow) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showFollowRequest) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showFavourite) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showPoll) { _, _ in refreshFiltered() }
+    .onChange(of: filter.showQuote) { _, _ in refreshFiltered() }
     .onChange(of: isNotificationsPolicyPresented) { _, isPresented in
       guard !isPresented else { return }
       Task {
@@ -276,6 +298,14 @@ public struct NotificationsListView: View {
 }
 
 extension NotificationsListView {
+  private func refreshFiltered() {
+    dataSource.reset()
+    viewState = .loading
+    Task {
+      await fetchNotifications()
+    }
+  }
+
   private func applyFilter(type: Models.Notification.NotificationType?) {
     selectedType = type
     dataSource.reset()

@@ -378,12 +378,14 @@ public final class NotificationsListDataSource {
   // MARK: - Helper Methods
 
   private func queryTypes(for selectedType: Models.Notification.NotificationType?) -> [String]? {
+    var excludedTypes = Models.Notification.NotificationType.allCases
     if let selectedType {
-      var excludedTypes = Models.Notification.NotificationType.allCases
       excludedTypes.removeAll(where: { $0 == selectedType })
-      return excludedTypes.map(\.rawValue)
+    } else {
+      let filter = NotificationsContentFilter.shared
+      excludedTypes = excludedTypes.filter { !filter.isTypeEnabled($0) }
     }
-    return nil
+    return excludedTypes.isEmpty ? nil : excludedTypes.map(\.rawValue)
   }
 
   private func markAsRead(client: MastodonClient) {
