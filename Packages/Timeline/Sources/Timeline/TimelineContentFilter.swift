@@ -18,17 +18,17 @@ import Env
     public let hideSeenPostsIncludeBoosts: Bool
 
     public init(
-      showBoosts: Bool,
-      showReplies: Bool,
-      showThreads: Bool,
-      showQuotePosts: Bool,
-      hidePostsWithMedia: Bool,
-      hidePostsWithoutMedia: Bool,
-      hidePostsFromBots: Bool,
-      isGalleryMode: Bool,
-      hideReadPosts: Bool,
-      hideSeenPostsEnabled: Bool,
-      hideSeenPostsIncludeBoosts: Bool
+      showBoosts: Bool = true,
+      showReplies: Bool = true,
+      showThreads: Bool = true,
+      showQuotePosts: Bool = true,
+      hidePostsWithMedia: Bool = false,
+      hidePostsWithoutMedia: Bool = false,
+      hidePostsFromBots: Bool = false,
+      isGalleryMode: Bool = false,
+      hideReadPosts: Bool = false,
+      hideSeenPostsEnabled: Bool = false,
+      hideSeenPostsIncludeBoosts: Bool = false
     ) {
       self.showBoosts = showBoosts
       self.showReplies = showReplies
