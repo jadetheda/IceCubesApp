@@ -60,6 +60,7 @@ import Nuke
 
   private(set) var timelineTask: Task<Void, Never>?
   private var sessionSeenPosts: Set<String> = []
+  private var sessionSeenPosts: Set<String> = []
 
   var tag: Tag?
 
@@ -229,7 +230,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   func fetchNewestStatuses(pullToRefresh: Bool) async {
     guard let client else { return }
     do {
-      if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
+      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
         await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
       }
       if let marker {

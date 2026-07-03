@@ -149,20 +149,6 @@ import Env
     }
   }
     
-  @ObservationIgnored
-  private var _hideStatusText: Bool = false
-  public var hideStatusText: Bool {
-    get {
-      access(keyPath: \.hideStatusText)
-      return _hideStatusText
-    }
-    set {
-      withMutation(keyPath: \.hideStatusText) {
-        _hideStatusText = newValue
-        storage.hideStatusText = newValue
-      }
-    }
-  }
     
   @ObservationIgnored
   private var _isGalleryMode: Bool = false
