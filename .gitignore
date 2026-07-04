@@ -93,3 +93,4 @@ IceCubesApp.xcconfig
 *.resolved
 buildServer.json
 /.playwright-mcp
+png_backup.json
