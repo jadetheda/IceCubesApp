@@ -16,18 +16,18 @@ workflows:
           xcodebuild clean build \
             -project IceCubesApp.xcodeproj \
             -scheme IceCubesApp \
-            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Release \
             -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-            
+            CODE_SIGNING_ALLOWED=NO \
+            ENTITLEMENTS_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO
       - name: Package to IPA
         script: |
           mkdir -p Payload
-          # BUG FIX: Search explicitly for the main app bundle, avoiding extensions
-          APP_PATH=$(find build -name "IceCubesApp.app" -type d | head -n 1)
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "IceCubesApp.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "Error: Could not find IceCubesApp.app directory."
             exit 1
@@ -35,7 +35,5 @@ workflows:
           echo "Found app at: $APP_PATH"
           cp -r "$APP_PATH" Payload/
           zip -r IceCubesApp-Unsigned.ipa Payload
-          
     artifacts:
-      # OPTIMIZATION: Use a pattern string in case the file name changes
       - "*.ipa"
