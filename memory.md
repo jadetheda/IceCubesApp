@@ -197,3 +197,8 @@
     * Re-wrote the PNG guardian backup system to use zlib compression. The resulting archive (`png_backup.json.gz`) is 77MB, which successfully fits under GitHub's 100MB limit. This self-healing architecture will now successfully persist across AI Studio sessions.
     * Properly merged all modern SwiftUI architectural documentation and guidelines from `CLAUDE.md` into `AGENTS.md`.
     * Cleared out the false-positive AI Studio workspace corruption warnings by running an integrity update check over the workspace manifest via the internal API.
+
+* **2026-07-04 01:18:00 UTC**
+  * **Fixes & Optimizations**:
+    * Temporarily disabled GitHub Actions workflows (`ios-build-distribute.yml` and `validate_translations.yml`) by commenting out their `push` and `pull_request` triggers to prevent them from running on every commit (due to billing limits).
+    * Temporarily disabled the "Action Status" polling and UI display in the web dashboard (`src/App.tsx`) to hide the feature while actions are disabled.
