@@ -207,6 +207,9 @@ extension TimelineViewModel: GapLoadingFetcher {
 
   func refreshTimelineContentFilter() async {
     timelineTask?.cancel()
+    if TimelineContentFilter.shared.hideReadPosts {
+      sessionSeenPosts = SeenPostsManager.shared.seenPosts
+    }
     await updateStatusesState()
   }
 
