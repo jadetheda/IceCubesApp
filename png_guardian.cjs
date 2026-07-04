@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const zlib = require('zlib');
 
-const WORKSPACE = path.join(__dirname, 'ios-workspace');
-const BACKUP_FILE = path.join(__dirname, 'png_backup.json');
+const WORKSPACE = __dirname;
+const BACKUP_FILE = path.join(__dirname, 'png_backup.json.gz');
 
 function findPngs(dir) {
     let results = [];
@@ -34,14 +34,18 @@ if (command === 'backup') {
         backup[relativePath] = data;
         count++;
     }
-    fs.writeFileSync(BACKUP_FILE, JSON.stringify(backup));
-    console.log(`Backed up ${count} PNGs to png_backup.json.`);
+    const jsonStr = JSON.stringify(backup);
+    const compressed = zlib.gzipSync(Buffer.from(jsonStr, 'utf8'));
+    fs.writeFileSync(BACKUP_FILE, compressed);
+    console.log(`Backed up ${count} PNGs to png_backup.json.gz.`);
 } else if (command === 'restore') {
     if (!fs.existsSync(BACKUP_FILE)) {
-        console.error("No backup found at png_backup.json!");
+        console.error("No backup found at png_backup.json.gz!");
         process.exit(1);
     }
-    const backup = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+    const compressed = fs.readFileSync(BACKUP_FILE);
+    const jsonStr = zlib.gunzipSync(compressed).toString('utf8');
+    const backup = JSON.parse(jsonStr);
     let count = 0;
     for (const [relPath, base64Data] of Object.entries(backup)) {
         const fullPath = path.join(WORKSPACE, relPath);
@@ -52,7 +56,7 @@ if (command === 'backup') {
         fs.writeFileSync(fullPath, base64Data, 'base64');
         count++;
     }
-    console.log(`Restored ${count} PNGs from png_backup.json.`);
+    console.log(`Restored ${count} PNGs from png_backup.json.gz.`);
 } else {
     console.log("Usage: node png_guardian.cjs <backup|restore>");
 }
