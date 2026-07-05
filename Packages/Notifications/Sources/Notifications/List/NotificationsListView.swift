@@ -374,7 +374,7 @@ extension NotificationsListView {
         )
       }
 
-      if result.containsFollowRequest {
+      if result.containsFollowRequests {
         await account.fetchFollowerRequests()
       }
     }
