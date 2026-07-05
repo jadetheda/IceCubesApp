@@ -281,7 +281,7 @@ public final class NotificationsListDataSource {
 
   public struct StreamEventResult {
     let notifications: [ConsolidatedNotification]
-    let containsFollowRequest: Bool
+    let containsFollowRequests: Bool
   }
 
   public func handleStreamEvent(
@@ -307,7 +307,7 @@ public final class NotificationsListDataSource {
 
     return StreamEventResult(
       notifications: consolidatedNotifications,
-      containsFollowRequest: event.notification.supportedType == .follow_request
+      containsFollowRequests: event.notification.supportedType == .follow_request
     )
   }
 
