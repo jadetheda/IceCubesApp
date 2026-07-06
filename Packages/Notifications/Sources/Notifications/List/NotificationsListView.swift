@@ -162,7 +162,7 @@ public struct NotificationsListView: View {
       HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
       SoundEffectManager.shared.playSound(.refresh)
     }
-    .onChange(of: watcher.latestEvent?.id) {
+    .onChange(of: watcher.latestEvent?.id) { _, _ in
       if let latestEvent = watcher.latestEvent {
         Task {
           await handleStreamEvent(latestEvent)
