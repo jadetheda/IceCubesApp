@@ -37,6 +37,79 @@ public struct NotificationsListView: View {
   }
 
   public var body: some View {
+    listWithSetup
+      .refreshable {
+        SoundEffectManager.shared.playSound(.pull)
+        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
+        await fetchNotifications()
+        policy = await dataSource.fetchPolicy(client: client)
+        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
+        SoundEffectManager.shared.playSound(.refresh)
+      }
+      .onChange(of: watcher.latestEvent?.id) { _, _ in
+        if let latestEvent = watcher.latestEvent {
+          Task {
+            await handleStreamEvent(latestEvent)
+          }
+        }
+      }
+      .onChange(of: scenePhase) { _, newValue in
+        switch newValue {
+        case .active:
+          Task {
+            await fetchNotifications()
+          }
+        default:
+          break
+        }
+      }
+      .onChange(of: client) { oldValue, newValue in
+        guard oldValue.id != newValue.id else { return }
+        dataSource.reset()
+        viewState = .loading
+        Task {
+          await fetchNotifications()
+          policy = await dataSource.fetchPolicy(client: client)
+        }
+      }
+  }
+
+  // Extracted to help Swift type-checker: split the long modifier chain
+  private var listWithSetup: some View {
+    baseListView
+      .onChange(of: filter.showUpdate) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showStatus) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showMention) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showReblog) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showFollow) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showFollowRequest) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showFavourite) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showPoll) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showQuote) { _, _ in refreshFiltered() }
+      .onChange(of: filter.showQuotedUpdate) { _, _ in refreshFiltered() }
+      .onChange(of: isNotificationsPolicyPresented) { _, isPresented in
+        guard !isPresented else { return }
+        Task {
+          policy = await dataSource.fetchPolicy(client: client)
+          await fetchNotifications()
+        }
+      }
+      .navigationBarTitleDisplayMode(.inline)
+      #if !os(visionOS)
+        .scrollContentBackground(.hidden)
+        .background(theme.primaryBackgroundColor)
+      #endif
+      .task {
+        if let lockedType {
+          selectedType = lockedType
+        }
+        await fetchNotifications()
+        policy = await dataSource.fetchPolicy(client: client)
+      }
+  }
+
+  // Extracted to help Swift type-checker: split the long modifier chain
+  private var baseListView: some View {
     List {
       if lockedAccountId == nil, let summary = policy?.summary {
         NotificationsHeaderFilteredView(filteredNotifications: summary)
@@ -124,69 +197,6 @@ public struct NotificationsListView: View {
     .sheet(isPresented: $isNotificationsContentFilterPresented) {
       NotificationsContentFilterView()
         .environment(theme)
-    }
-    .onChange(of: filter.showUpdate) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showStatus) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showMention) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showReblog) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showFollow) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showFollowRequest) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showFavourite) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showPoll) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showQuote) { _, _ in refreshFiltered() }
-    .onChange(of: filter.showQuotedUpdate) { _, _ in refreshFiltered() }
-    .onChange(of: isNotificationsPolicyPresented) { _, isPresented in
-      guard !isPresented else { return }
-      Task {
-        policy = await dataSource.fetchPolicy(client: client)
-        await fetchNotifications()
-      }
-    }
-    .navigationBarTitleDisplayMode(.inline)
-    #if !os(visionOS)
-      .scrollContentBackground(.hidden)
-      .background(theme.primaryBackgroundColor)
-    #endif
-    .task {
-      if let lockedType {
-        selectedType = lockedType
-      }
-      await fetchNotifications()
-      policy = await dataSource.fetchPolicy(client: client)
-    }
-    .refreshable {
-      SoundEffectManager.shared.playSound(.pull)
-      HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
-      await fetchNotifications()
-      policy = await dataSource.fetchPolicy(client: client)
-      HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
-      SoundEffectManager.shared.playSound(.refresh)
-    }
-    .onChange(of: watcher.latestEvent?.id) { _, _ in
-      if let latestEvent = watcher.latestEvent {
-        Task {
-          await handleStreamEvent(latestEvent)
-        }
-      }
-    }
-    .onChange(of: scenePhase) { _, newValue in
-      switch newValue {
-      case .active:
-        Task {
-          await fetchNotifications()
-        }
-      default:
-        break
-      }
-    }
-    .onChange(of: client) { oldValue, newValue in
-      guard oldValue.id != newValue.id else { return }
-      dataSource.reset()
-      viewState = .loading
-      Task {
-        await fetchNotifications()
-        policy = await dataSource.fetchPolicy(client: client)
-      }
     }
   }
 
