@@ -37,7 +37,7 @@ public struct NotificationsListView: View {
   }
 
   public var body: some View {
-    listWithSetup
+    listWithFilterObservers
       .refreshable {
         SoundEffectManager.shared.playSound(.pull)
         HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
@@ -74,9 +74,8 @@ public struct NotificationsListView: View {
       }
   }
 
-  // Extracted to help Swift type-checker: split the long modifier chain
-  private var listWithSetup: some View {
-    baseListView
+  private var listWithFilterObservers: some View {
+    notificationsList
       .onChange(of: filter.showUpdate) { _, _ in refreshFiltered() }
       .onChange(of: filter.showStatus) { _, _ in refreshFiltered() }
       .onChange(of: filter.showMention) { _, _ in refreshFiltered() }
@@ -108,8 +107,7 @@ public struct NotificationsListView: View {
       }
   }
 
-  // Extracted to help Swift type-checker: split the long modifier chain
-  private var baseListView: some View {
+  private var notificationsList: some View {
     List {
       if lockedAccountId == nil, let summary = policy?.summary {
         NotificationsHeaderFilteredView(filteredNotifications: summary)
