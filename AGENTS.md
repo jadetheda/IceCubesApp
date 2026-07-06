@@ -62,6 +62,7 @@ When writing Python scripts, shell commands, or architectures intended to run of
 - **Swift String Interpolation Safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing \(\"%.1f\") will cause compiler crash (Exit Code 65). Always write \("%.1f").
 
 ## 🐛 Exit Code 65 Logs
+- **Root Cause (nonisolated + defaultIsolation conflict, 2026-07-06)**: In the Notifications package, defaultIsolation(MainActor.self) makes all undeclared functions implicitly @MainActor. label(count:) in NotificationTypeExt.swift was therefore @MainActor. NotificationRowAppendTextView is nonisolated (required because EmojiTextApp.append is typed (@Sendable () -> Text)?). Calling a @MainActor function from a nonisolated sync context is a Swift 6 compile error. Fix: add nonisolated to label(count:) — it is a pure switch on an enum with no actor state.
 - **Root Cause**: Adding properties to a struct (`TimelineContentFilter.Snapshot`) without providing default initializer values breaks any existing instantiations, specifically in test targets (`TimelineViewModelTests.swift`).
 - **Solution**: Always provide default values (e.g. `isGalleryMode: Bool = false`) in the custom `init()` of structs if modifying them, to prevent compilation failures across the codebase.
 # CLAUDE.md

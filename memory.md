@@ -206,3 +206,13 @@
 * **2026-07-06 12:20:00 UTC**
   * **Fixes & Optimizations**:
     * Cloned the correct jadetheda/IceCubesApp fork. Fixed Exit Code 65 (StringCatalog parse error) by appending a missing trailing newline to Localizable.xcstrings. Pushed the fix to the repository and updated the local integrity manifest.
+
+* **2026-07-06 UTC**
+  * **Fixes & Optimizations**:
+    * Fixed Exit Code 65 (Swift 6 actor isolation compile error) in `NotificationTypeExt.swift`. Root cause: `NotificationRowAppendTextView` was correctly marked `nonisolated` (required because `EmojiTextApp.append` is typed `(@Sendable () -> Text)?`), but `label(count:)` in `NotificationTypeExt.swift` was implicitly `@MainActor` due to `defaultIsolation(MainActor.self)` in the Notifications package. Calling a `@MainActor` function from a `nonisolated` synchronous context is a Swift 6 compile error. Fix: added `nonisolated` to `label(count:)` — it is a pure switch on an enum value with no actor state.
+  * **Production Readiness Impact**: Restored build stability by resolving the Swift 6 actor isolation error that caused xcodebuild to exit with code 65.
+
+* **2026-07-06 UTC**
+  * **Fixes & Optimizations**:
+    * Fixed Exit Code 65 Swift 6 actor isolation error. NotificationRowAppendTextView is nonisolated (required by EmojiTextApp.append typed as (@Sendable () -> Text)?). The Notifications package sets defaultIsolation(MainActor.self), so label(count:) in NotificationTypeExt.swift was implicitly @MainActor. Calling @MainActor from nonisolated sync context = Swift 6 compile error. Fix: add nonisolated to label(count:) — pure switch, no actor state.
+  * **Production Readiness Impact**: Restored build stability.
