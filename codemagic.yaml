@@ -34,9 +34,12 @@ workflows:
       - name: Package to IPA
         script: |
           mkdir -p Payload
-          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "IceCubesApp.app" -type d | head -n 1)
+          echo "Searching for IceCubesApp.app under build/..."
+          find build -name "IceCubesApp.app" -type d 2>/dev/null || true
+          APP_PATH=$(find build -name "IceCubesApp.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
-            echo "Error: Could not find IceCubesApp.app directory."
+            echo "Error: Could not find IceCubesApp.app. Build tree:"
+            find build/Build/Products -maxdepth 4 2>/dev/null || echo "(build/Build/Products not found)"
             exit 1
           fi
           echo "Found app at: $APP_PATH"
