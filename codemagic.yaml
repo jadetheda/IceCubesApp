@@ -36,7 +36,7 @@ workflows:
           mkdir -p Payload
           # Search the whole build tree — the exact Products subdir varies
           # across Xcode versions so we don't hardcode the path.
-          APP_PATH=$(find build -name "IceCubesApp.app" -type d | head -n 1)
+          APP_PATH=$(find build -name "Ice Cubes.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
             echo "Error: Could not find IceCubesApp.app under build/"
             find build/Build -maxdepth 4 -type d 2>/dev/null
