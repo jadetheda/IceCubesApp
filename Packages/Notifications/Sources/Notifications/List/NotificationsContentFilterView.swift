@@ -44,6 +44,7 @@ public struct NotificationsContentFilterView: View {
       }
       .navigationTitle("notifications.content-filter.title")
       .navigationBarTitleDisplayMode(.inline)
+      .scrollContentBackground(.hidden)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           Button("action.done") {
@@ -51,10 +52,7 @@ public struct NotificationsContentFilterView: View {
           }
         }
       }
-      #if !os(visionOS)
-      .scrollContentBackground(.hidden)
-      .background(theme.secondaryBackgroundColor)
-      #endif
     }
+    .presentationDetents([.medium, .large])
   }
 }
