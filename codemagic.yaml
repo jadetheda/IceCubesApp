@@ -1,7 +1,7 @@
 workflows:
   ios-unsigned-build:
     name: Build Unsigned IPA
-    instance_type: mac_pro_m2
+    instance_type: mac_mini_m2
     cache:
       cache_paths:
         - build/SourcePackages
