@@ -4,13 +4,11 @@ workflows:
     instance_type: mac_pro_m2
     cache:
       cache_paths:
-        # Cache SPM package checkouts so they aren't re-fetched and re-compiled
-        # on every run. Invalidated automatically when Package.resolved changes.
         - build/SourcePackages
-        # Cache compiled dependency products so unchanged packages aren't rebuilt.
         - build/Build/Products/Release-iphoneos
+        - build/Build/Intermediates.noindex
     environment:
-      xcode: latest
+      xcode: "26.4"
     triggering:
       events:
         - push
@@ -30,15 +28,14 @@ workflows:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ENTITLEMENTS_REQUIRED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            DEBUG_INFORMATION_FORMAT=dwarf
       - name: Package to IPA
         script: |
           mkdir -p Payload
-          # Search the whole build tree — the exact Products subdir varies
-          # across Xcode versions so we don't hardcode the path.
           APP_PATH=$(find build -name "Ice Cubes.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
-            echo "Error: Could not find IceCubesApp.app under build/"
+            echo "Error: Could not find Ice Cubes.app under build/"
             find build/Build -maxdepth 4 -type d 2>/dev/null
             exit 1
           fi
