@@ -2,6 +2,13 @@ workflows:
   ios-unsigned-build:
     name: Build Unsigned IPA
     instance_type: mac_mini_m2
+    cache:
+      cache_paths:
+        # Cache SPM package checkouts so they aren't re-fetched and re-compiled
+        # on every run. Invalidated automatically when Package.resolved changes.
+        - build/SourcePackages
+        # Cache compiled dependency products so unchanged packages aren't rebuilt.
+        - build/Build/Products/Release-iphoneos
     environment:
       xcode: latest
     triggering:
@@ -13,7 +20,7 @@ workflows:
     scripts:
       - name: Build Unsigned App
         script: |
-          xcodebuild clean build \
+          xcodebuild build \
             -project IceCubesApp.xcodeproj \
             -scheme IceCubesApp \
             -destination 'generic/platform=iOS' \
