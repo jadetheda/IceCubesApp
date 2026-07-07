@@ -34,12 +34,12 @@ workflows:
       - name: Package to IPA
         script: |
           mkdir -p Payload
-          echo "Searching for IceCubesApp.app under build/..."
-          find build -name "IceCubesApp.app" -type d 2>/dev/null || true
+          # Search the whole build tree — the exact Products subdir varies
+          # across Xcode versions so we don't hardcode the path.
           APP_PATH=$(find build -name "IceCubesApp.app" -type d | head -n 1)
           if [ -z "$APP_PATH" ]; then
-            echo "Error: Could not find IceCubesApp.app. Build tree:"
-            find build/Build/Products -maxdepth 4 2>/dev/null || echo "(build/Build/Products not found)"
+            echo "Error: Could not find IceCubesApp.app under build/"
+            find build/Build -maxdepth 4 -type d 2>/dev/null
             exit 1
           fi
           echo "Found app at: $APP_PATH"
