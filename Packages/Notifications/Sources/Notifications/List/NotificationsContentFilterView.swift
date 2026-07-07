@@ -1,5 +1,6 @@
 import DesignSystem
 import Env
+import Models
 import SwiftUI
 
 @MainActor
@@ -11,20 +12,34 @@ public struct NotificationsContentFilterView: View {
 
   public init() {}
 
+  private func binding(for type: Models.Notification.NotificationType) -> Binding<Bool> {
+    switch type {
+    case .follow: return $filter.showFollow
+    case .follow_request: return $filter.showFollowRequest
+    case .mention: return $filter.showMention
+    case .reblog: return $filter.showReblog
+    case .status: return $filter.showStatus
+    case .favourite: return $filter.showFavourite
+    case .poll: return $filter.showPoll
+    case .update: return $filter.showUpdate
+    case .quote: return $filter.showQuote
+    case .quoted_update: return $filter.showQuotedUpdate
+    }
+  }
+
   public var body: some View {
     NavigationStack {
       Form {
         Section {
-          Toggle(isOn: $filter.showFollow) { Label("notifications.type.follow", systemImage: "person.fill.badge.plus") }
-          Toggle(isOn: $filter.showFollowRequest) { Label("notifications.type.follow-request", systemImage: "person.fill.badge.plus") }
-          Toggle(isOn: $filter.showMention) { Label("notifications.type.mention", systemImage: "at") }
-          Toggle(isOn: $filter.showReblog) { Label("notifications.type.reblog", systemImage: "arrow.2.squarepath") }
-          Toggle(isOn: $filter.showStatus) { Label("notifications.type.status", systemImage: "bubble.right") }
-          Toggle(isOn: $filter.showFavourite) { Label("notifications.type.favourite", systemImage: "star.fill") }
-          Toggle(isOn: $filter.showPoll) { Label("notifications.type.poll", systemImage: "chart.bar") }
-          Toggle(isOn: $filter.showUpdate) { Label("notifications.type.update", systemImage: "pencil") }
-          Toggle(isOn: $filter.showQuote) { Label("notifications.type.quote", systemImage: "quote.opening") }
-          Toggle(isOn: $filter.showQuotedUpdate) { Label("notifications.type.quoted-update", systemImage: "quote.opening") }
+          ForEach(Models.Notification.NotificationType.allCases, id: \.self) { type in
+            Toggle(isOn: binding(for: type)) {
+              Label {
+                Text(type.menuTitle())
+              } icon: {
+                type.icon(isPrivate: false)
+              }
+            }
+          }
         }
       }
       .navigationTitle("notifications.content-filter.title")

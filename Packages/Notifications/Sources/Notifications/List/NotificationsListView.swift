@@ -149,13 +149,6 @@ public struct NotificationsListView: View {
               .tint(theme.labelColor)
           }
           Divider()
-          Button {
-            isNotificationsContentFilterPresented = true
-          } label: {
-            Label("Display Options", systemImage: "slider.horizontal.3")
-          }
-          .tint(theme.labelColor)
-          Divider()
           ForEach(Notification.NotificationType.allCases, id: \.self) { type in
             Button {
               applyFilter(type: type)
@@ -182,6 +175,13 @@ public struct NotificationsListView: View {
             routerPath.navigate(to: .conversations)
           } label: {
             Label("Direct Messages", systemImage: "message")
+          }
+          .tint(theme.labelColor)
+          Divider()
+          Button {
+            isNotificationsContentFilterPresented = true
+          } label: {
+            Label("Content Filter", systemImage: "slider.horizontal.3")
           }
           .tint(theme.labelColor)
         }
