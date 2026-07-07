@@ -222,3 +222,9 @@
     * Fixed `NotificationsContentFilterView` displaying raw localization keys (`notifications.type.follow`, etc.) instead of readable names. Root cause: those keys were never added to `Localizable.xcstrings`. Fix: refactored the view to use the existing `NotificationType.menuTitle()` and `icon(isPrivate:)` methods via a `ForEach` over `NotificationType.allCases` and a `binding(for:)` helper, reusing strings already backed by the catalog (`notifications.menu-title.*`).
     * Renamed the `ToolbarTitleMenu` entry "Display Options" to "Content Filter" in `NotificationsListView.swift` and moved it to the bottom of the menu (after Direct Messages), so type-filter shortcuts appear at the top and the sheet trigger is at the bottom.
   * **Production Readiness Impact**: No exit code 65 risk. All switch cases exhaustive, no actor isolation violations, no string interpolation escaping issues. `binding(for:)` uses the same `$filter.showX` dynamic member lookup pattern as the original `Toggle` calls.
+
+* **2026-07-07 UTC (session 2)**
+  * **UX Changes**:
+    * Matched `NotificationsContentFilterView` presentation style to `TimelineContentFilterView`: removed the opaque `.background(theme.secondaryBackgroundColor)` block, kept `.scrollContentBackground(.hidden)`, and added `.presentationDetents([.medium, .large])` to the `NavigationStack`. The sheet now slides up from the bottom as a partial overlay (same as the Timeline Content Filter) instead of covering the full screen.
+    * Changed the "Content Filter" `ToolbarTitleMenu` button icon in `NotificationsListView.swift` from `slider.horizontal.3` to `line.3.horizontal`.
+  * **Production Readiness Impact**: No exit code 65 risk. `.presentationDetents` is a pure SwiftUI presentation modifier with no actor isolation implications. No new switch cases or string interpolations introduced.
