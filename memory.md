@@ -216,3 +216,9 @@
   * **Fixes & Optimizations**:
     * Fixed Exit Code 65 Swift 6 actor isolation error. NotificationRowAppendTextView is nonisolated (required by EmojiTextApp.append typed as (@Sendable () -> Text)?). The Notifications package sets defaultIsolation(MainActor.self), so label(count:) in NotificationTypeExt.swift was implicitly @MainActor. Calling @MainActor from nonisolated sync context = Swift 6 compile error. Fix: add nonisolated to label(count:) — pure switch, no actor state.
   * **Production Readiness Impact**: Restored build stability.
+
+* **2026-07-07 UTC**
+  * **UX Changes**:
+    * Fixed `NotificationsContentFilterView` displaying raw localization keys (`notifications.type.follow`, etc.) instead of readable names. Root cause: those keys were never added to `Localizable.xcstrings`. Fix: refactored the view to use the existing `NotificationType.menuTitle()` and `icon(isPrivate:)` methods via a `ForEach` over `NotificationType.allCases` and a `binding(for:)` helper, reusing strings already backed by the catalog (`notifications.menu-title.*`).
+    * Renamed the `ToolbarTitleMenu` entry "Display Options" to "Content Filter" in `NotificationsListView.swift` and moved it to the bottom of the menu (after Direct Messages), so type-filter shortcuts appear at the top and the sheet trigger is at the bottom.
+  * **Production Readiness Impact**: No exit code 65 risk. All switch cases exhaustive, no actor isolation violations, no string interpolation escaping issues. `binding(for:)` uses the same `$filter.showX` dynamic member lookup pattern as the original `Toggle` calls.
