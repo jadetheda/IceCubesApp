@@ -31,7 +31,7 @@
 
 ## 🐛 Bug Checking & Responsiveness (Exit Code 65 Rule)
 - **Check for Bugs**: You MUST always proactively check for bugs and potential edge cases in your code before committing changes. If you implement a new feature (like a toolbar button or modifier), ensure it does not break layout or cause compilation timeouts.
-- **Do NOT disappear on Exit Code 65**: If a GitHub Action build fails with Exit Code 65 (or any compiler crash/timeout) during your background tasks, you must fix it, but NEVER continuously loop trying to fix it without getting back to the user. If you encounter a complex Exit Code 65, inform the user of the failure and your plan instead of silently retrying forever in the background.
+- **Do NOT disappear on Exit Code 65**: If a Codemagic build fails with Exit Code 65 (or any compiler crash/timeout) during your background tasks, you must fix it, but NEVER continuously loop trying to fix it without getting back to the user. If you encounter a complex Exit Code 65, inform the user of the failure and your plan instead of silently retrying forever in the background.
 - **Learn from Exit Code 65**: Every time you encounter and fix an Exit Code 65 (or any compiler crash), you MUST document the root cause and the solution here in AGENTS.md so that you learn from it and prevent the same mistake from causing timeouts in the future.
 
 ## ⚠️ Token Scarcity & Reliability Priority
