@@ -86007,6 +86007,286 @@
           }
         }
       }
+    },
+    "settings.experimental.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental Features"
+          }
+        }
+      }
+    },
+    "settings.experimental.header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EXPERIMENTAL FEATURES"
+          }
+        }
+      }
+    },
+    "settings.experimental.gallery-mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gallery Mode"
+          }
+        }
+      }
+    },
+    "settings.experimental.gallery-columns": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Columns: %lld"
+          }
+        }
+      }
+    },
+    "settings.experimental.gallery-crop-square": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crop images to square"
+          }
+        }
+      }
+    },
+    "settings.experimental.media": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Media"
+          }
+        }
+      }
+    },
+    "settings.experimental.remote-media-auto-fallback": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto fallback to remote media"
+          }
+        }
+      }
+    },
+    "settings.experimental.remote-media-fallback-delay": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto fallback delay: %@s"
+          }
+        }
+      }
+    },
+    "settings.experimental.remote-media-always-force": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always force remote media"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Seen Posts"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-threshold": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Required time to be detected as seen: %@s"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-liked-only": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only detect liked posts as seen"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-show-header": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show button in header"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-require-media": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Require media to be loaded"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-include-boosts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include boosts (hide if original seen)"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-is-toggle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Button acts as a state toggle instead of one-off action"
+          }
+        }
+      }
+    },
+    "settings.experimental.hide-seen-posts-footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
+          }
+        }
+      }
+    },
+    "settings.experimental.media-only-toggle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Media-Only Toggle in Timeline Menu"
+          }
+        }
+      }
+    },
+    "settings.experimental.media-only-toggle-footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allows hiding posts without media from the timeline filter menu."
+          }
+        }
+      }
+    },
+    "settings.experimental.stream-home": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stream home timeline"
+          }
+        }
+      }
+    },
+    "settings.experimental.stream-home.footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeps your home timeline up to date in real time using streaming when available. Disable in case of performance issues."
+          }
+        }
+      }
+    },
+    "settings.experimental.full-timeline-fetch": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full timeline fetch"
+          }
+        }
+      }
+    },
+    "settings.experimental.full-timeline-fetch.footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap."
+          }
+        }
+      }
+    },
+    "settings.export.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export App Settings"
+          }
+        }
+      }
+    },
+    "settings.import.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import App Settings"
+          }
+        }
+      }
+    },
+    "settings.cache.footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove all cached images and videos"
+          }
+        }
+      }
+    },
+    "settings.other.social-keyboard.footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adds @ and # keys directly on the keyboard for faster mentions and hashtags."
+          }
+        }
+      }
+    },
+    "settings.wishlist.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Feature Requests"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
