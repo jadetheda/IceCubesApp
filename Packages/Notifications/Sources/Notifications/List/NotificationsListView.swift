@@ -166,7 +166,7 @@ public struct NotificationsListView: View {
             Button {
               isNotificationsPolicyPresented = true
             } label: {
-              Label("notifications.content-filter.title", systemImage: "line.3.horizontal.decrease")
+              Label("notifications.content-filter.title", systemImage: "line.3.horizontal.decrease.circle")
             }
             .tint(theme.labelColor)
           }
@@ -181,7 +181,7 @@ public struct NotificationsListView: View {
           Button {
             isNotificationsContentFilterPresented = true
           } label: {
-            Label("Content Filter", systemImage: "line.3.horizontal")
+            Label("Content Filter", systemSymbol: .line3HorizontalDecrease)
           }
           .tint(theme.labelColor)
         }
@@ -352,7 +352,7 @@ extension NotificationsListView {
 
   private func fetchNextPage() async {
     do {
-      let result = try await dataSource.fetchNextPage(
+      let result = await dataSource.fetchNextPage(
         client: client,
         selectedType: selectedType,
         lockedAccountId: lockedAccountId
