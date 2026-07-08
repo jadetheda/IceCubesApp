@@ -54,6 +54,8 @@ public struct TimelineContentFilterView: View {
             .onChange(of: isGalleryMode) { _, newValue in
                if newValue {
                    hidePostsWithMedia = false
+               } else {
+                   hidePostsWithoutMedia = false
                }
             }
           }
