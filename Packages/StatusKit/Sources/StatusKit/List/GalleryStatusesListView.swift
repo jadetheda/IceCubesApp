@@ -116,14 +116,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 }
 
-extension Array {
-    func chunked(into size: Int) -> [[Element]] {
-        stride(from: 0, to: count, by: size).map {
-            Array(self[Swift.min($0 + size, count)])
-        }
-    }
-}
-
 @MainActor
 struct GalleryMediaCell: View {
   let mediaStatus: MediaStatus
