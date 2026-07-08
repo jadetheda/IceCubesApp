@@ -119,7 +119,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 extension Array {
     func chunked(into size: Int) -> [[Element]] {
         stride(from: 0, to: count, by: size).map {
-            Array(self[$0 ..< Swift.min($0 + size, count)])
+            Array(self[Swift.min($0 + size, count)])
         }
     }
 }
@@ -179,7 +179,7 @@ struct GalleryMediaCell: View {
             viewModel: viewModel,
             showTextForSelection: $showSelectableText,
             isBlockConfirmationPresented: $isBlockConfirmationPresented,
-            isShareAsImageSheetAsImageSheetPresented: $isShareAsImageSheetPresented
+            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
           )
           .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
           .tint(.primary)
