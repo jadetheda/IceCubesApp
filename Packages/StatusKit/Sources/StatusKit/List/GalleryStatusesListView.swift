@@ -15,8 +15,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private let isRemote: Bool
   private let client: MastodonClient
   private let filterContext: Filter.Context?
-  
-  @State private var hasLoadedInitialPage = false
 
   public init(
     fetcher: Fetcher,
@@ -104,12 +102,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .padding(.horizontal, 4)
-    .onAppear {
-      // If we have very few media posts but there are more pages, auto-fetch more
-      if mediaStatuses.count < 6 && nextPageState == .hasNextPage && hasLoadedInitialPage {
-        Task { try? await fetcher.fetchNextPage() }
+    .task(id: mediaStatuses.count) {
+      if mediaStatuses.count > 0 && mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+        try? await fetcher.fetchNextPage()
       }
-      hasLoadedInitialPage = true
     }
     
     makeNextPageRow(nextPageState: nextPageState)

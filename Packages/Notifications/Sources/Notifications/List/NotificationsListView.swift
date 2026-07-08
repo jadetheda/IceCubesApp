@@ -181,7 +181,7 @@ public struct NotificationsListView: View {
           Button {
             isNotificationsContentFilterPresented = true
           } label: {
-            Label("Content Filter", systemSymbol: .line3HorizontalDecrease)
+            Label("Content Filter", systemImage: "line.3.horizontal.decrease")
           }
           .tint(theme.labelColor)
         }
