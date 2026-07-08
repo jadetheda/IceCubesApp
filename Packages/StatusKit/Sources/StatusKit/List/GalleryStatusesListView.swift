@@ -15,6 +15,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private let isRemote: Bool
   private let client: MastodonClient
   private let filterContext: Filter.Context?
+  
+  @State private var hasLoadedInitialPage = false
 
   public init(
     fetcher: Fetcher,
@@ -44,15 +46,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
-      makeGrid(for: statuses)
-      makeNextPageRow(nextPageState: nextPageState)
+      makeGrid(for: statuses, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
       let statuses = items.compactMap { item -> Status? in
           if case let .status(status) = item { return status }
           return nil
       }
-      makeGrid(for: statuses)
-      makeNextPageRow(nextPageState: nextPageState)
+      makeGrid(for: statuses, nextPageState: nextPageState)
     }
   }
 
@@ -73,7 +73,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 
   @ViewBuilder
-  private func makeGrid(for statuses: [Status]) -> some View {
+  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
     let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
     let columns = UserPreferences.shared.galleryColumns
     
@@ -104,6 +104,15 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .padding(.horizontal, 4)
+    .onAppear {
+      // If we have very few media posts but there are more pages, auto-fetch more
+      if mediaStatuses.count < 6 && nextPageState == .hasNextPage && hasLoadedInitialPage {
+        Task { try? await fetcher.fetchNextPage() }
+      }
+      hasLoadedInitialPage = true
+    }
+    
+    makeNextPageRow(nextPageState: nextPageState)
   }
 }
 
@@ -170,7 +179,7 @@ struct GalleryMediaCell: View {
             viewModel: viewModel,
             showTextForSelection: $showSelectableText,
             isBlockConfirmationPresented: $isBlockConfirmationPresented,
-            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
+            isShareAsImageSheetAsImageSheetPresented: $isShareAsImageSheetPresented
           )
           .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
           .tint(.primary)
