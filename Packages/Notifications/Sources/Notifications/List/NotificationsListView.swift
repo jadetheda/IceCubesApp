@@ -352,7 +352,7 @@ extension NotificationsListView {
 
   private func fetchNextPage() async {
     do {
-      let result = await dataSource.fetchNextPage(
+      let result = try await dataSource.fetchNextPage(
         client: client,
         selectedType: selectedType,
         lockedAccountId: lockedAccountId
