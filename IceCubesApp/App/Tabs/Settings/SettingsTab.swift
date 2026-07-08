@@ -279,7 +279,7 @@ struct SettingsTabs: View {
         Label("settings.other.social-keyboard", systemImage: "keyboard")
       }
     } footer: {
-      Text("Adds @ and # keys directly on the keyboard for faster mentions and hashtags.")
+      Text("settings.other.social-keyboard.footer")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -290,11 +290,11 @@ struct SettingsTabs: View {
     @Bindable var preferences = preferences
     return Section {
       Toggle(isOn: $preferences.streamHomeTimeline) {
-        Label("Stream home timeline", systemImage: "antenna.radiowaves.left.and.right")
+        Label("settings.experimental.stream-home", systemImage: "antenna.radiowaves.left.and.right")
           .symbolVariant(preferences.streamHomeTimeline ? .none : .slash)
       }
     } footer: {
-      Text("Keeps your home timeline up to date in real time using streaming when available. Disable in case of performance issues.")
+      Text("settings.experimental.stream-home.footer")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -305,11 +305,11 @@ struct SettingsTabs: View {
     @Bindable var preferences = preferences
     return Section {
       Toggle(isOn: $preferences.fullTimelineFetch) {
-        Label("Full timeline fetch", systemImage: "arrow.triangle.2.circlepath")
+        Label("settings.experimental.full-timeline-fetch", systemImage: "arrow.triangle.2.circlepath")
           .symbolVariant(preferences.fullTimelineFetch ? .none : .slash)
       }
     } footer: {
-      Text("Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap.")
+      Text("settings.experimental.full-timeline-fetch.footer")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -319,16 +319,16 @@ struct SettingsTabs: View {
   private var experimentalSection: some View {
     Section {
       NavigationLink(destination: ExperimentalSettingsView()) {
-        Label("Experimental Features", systemImage: "flask")
+        Label("settings.experimental.title", systemImage: "flask")
       }
-      Button("Export App Settings") {
+      Button("settings.export.title") {
         prepareExport()
       }
-      Button("Import App Settings") {
+      Button("settings.import.title") {
         isImportingSettings = true
       }
     } header: {
-      Text("EXPERIMENTAL FEATURES")
+      Text("settings.experimental.header")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -385,7 +385,7 @@ struct SettingsTabs: View {
       NavigationLink {
         WishlistView()
       } label: {
-        Label("Feature Requests", systemImage: "list.bullet.rectangle.portrait")
+        Label("settings.wishlist.title", systemImage: "list.bullet.rectangle.portrait")
       }
 
     } header: {
@@ -444,7 +444,7 @@ struct SettingsTabs: View {
     } header: {
       Text("settings.section.cache")
     } footer: {
-      Text("Remove all cached images and videos")
+      Text("settings.cache.footer")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -663,67 +663,67 @@ public struct ExperimentalSettingsView: View {
   public var body: some View {
     @Bindable var preferences = preferences
     Form {
-      Section("Gallery Mode") {
-        Stepper("Columns: \(preferences.galleryColumns)", value: $preferences.galleryColumns, in: 2...4)
+      Section("settings.experimental.gallery-mode") {
+        Stepper("settings.experimental.gallery-columns \(preferences.galleryColumns)", value: $preferences.galleryColumns, in: 2...4)
         Toggle(isOn: $preferences.galleryCropToSquare) {
-          Label("Crop images to square", systemImage: "crop")
+          Label("settings.experimental.gallery-crop-square", systemImage: "crop")
         }
       }
       
-      Section("Media") {
+      Section("settings.experimental.media") {
         Toggle(isOn: $preferences.remoteMediaAutoFallback) {
-          Label("Auto fallback to remote media", systemImage: "photo.badge.arrow.down")
+          Label("settings.experimental.remote-media-auto-fallback", systemImage: "photo.badge.arrow.down")
         }
         if preferences.remoteMediaAutoFallback {
           VStack(alignment: .leading) {
-            Text("Auto fallback delay: \(String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay))s")
+            Text("settings.experimental.remote-media-fallback-delay \(String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay))")
             Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
           }
         }
         Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
-          Label("Always force remote media", systemImage: "photo.badge.exclamationmark")
+          Label("settings.experimental.remote-media-always-force", systemImage: "photo.badge.exclamationmark")
         }
       }
       Section {
         Toggle(isOn: $preferences.hideSeenPostsEnabled) {
-          Label("Hide Seen Posts", systemImage: "eye.slash")
+          Label("settings.experimental.hide-seen-posts", systemImage: "eye.slash")
         }
         if preferences.hideSeenPostsEnabled {
           VStack(alignment: .leading) {
-            Text("Required time to be detected as seen: \(String(format: "%.1f", preferences.hideSeenPostsThreshold))s")
+            Text("settings.experimental.hide-seen-posts-threshold \(String(format: "%.1f", preferences.hideSeenPostsThreshold))")
             Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
           }
           Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
-            Text("Only detect liked posts as seen")
+            Text("settings.experimental.hide-seen-posts-liked-only")
           }
           Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
-            Text("Show button in header")
+            Text("settings.experimental.hide-seen-posts-show-header")
           }
           Toggle(isOn: $preferences.hideSeenPostsRequireMediaLoaded) {
-            Text("Require media to be loaded")
+            Text("settings.experimental.hide-seen-posts-require-media")
           }
           Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
-            Text("Include boosts (hide if original seen)")
+            Text("settings.experimental.hide-seen-posts-include-boosts")
           }
           Toggle(isOn: $preferences.hideSeenPostsIsToggle) {
-            Text("Button acts as a state toggle instead of one-off action")
+            Text("settings.experimental.hide-seen-posts-is-toggle")
           }
         }
       } footer: {
-        Text("Automatically track which posts you have seen and allow hiding them from the timeline.")
+        Text("settings.experimental.hide-seen-posts-footer")
       }
       .listRowBackground(theme.primaryBackgroundColor)
       
       Section {
         Toggle(isOn: $preferences.showHidePostsWithoutMediaToggle) {
-          Label("Media-Only Toggle in Timeline Menu", systemImage: "photo.on.rectangle.angled")
+          Label("settings.experimental.media-only-toggle", systemImage: "photo.on.rectangle.angled")
         }
       } footer: {
-        Text("Allows hiding posts without media from the timeline filter menu.")
+        Text("settings.experimental.media-only-toggle-footer")
       }
       .listRowBackground(theme.primaryBackgroundColor)
     }
-    .navigationTitle("Experimental Features")
+    .navigationTitle("settings.experimental.title")
     .scrollContentBackground(.hidden)
     .background(theme.secondaryBackgroundColor)
   }
