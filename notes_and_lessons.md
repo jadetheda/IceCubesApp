@@ -56,9 +56,3 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 **The Fix:** We have hardcoded protective Git configurations into the `apply_and_push.sh` script to neutralize these threats before committing:
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
 - `git config core.autocrlf input` (Normalizes line endings on commit).
-
-## Notes and Lessons (2026-07-03 01:36 UTC)
-* **Regex Modifications in Swift**: When utilizing scripts to replace large multi-line property declarations (like SwiftUI `@AppStorage` or Observation accessors) using regex, extra care must be taken to match the ENTIRE block (including `{ get set }` closures). The previous iteration failed to match the closure bodies, leaving orphaned `get {} set {}` blocks which resulted in immediate compiler crashes (Exit Code 65).
-* **AVPlayer Fallback Strategy**: Mastodon `remote_url` fields for video media often point to HTML webpages (like YouTube or PeerTube embedded pages) instead of direct `.mp4` URLs. `AVPlayer` will fail with a `.failed` status when attempting to load these. To support "load remote media" safely for videos, we must observe `AVPlayerItem.status` and dynamically switch to the proxy `url` (the fallback URL) if it fails.
-* **Gallery Mode Video Tapping**: In a gallery grid, `MediaUIAttachmentVideoView` intercepts tap gestures, preventing the parent cell from navigating to the status detail. Applying `.allowsHitTesting(false)` to the video view when inside the gallery mode grid forces the tap to fall through to the cell's navigation gesture, ensuring consistent behavior with images.
-* **Notification Filtering**: Mastodon's `/api/v1/notifications` endpoint utilizes `types` arrays to query, but often these act effectively as `exclude_types` based on how the API logic wraps it. The app now supports filtering these via a dedicated content filter screen.
