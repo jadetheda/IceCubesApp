@@ -24,6 +24,11 @@
 - **The Issue:** The native AI Studio GitHub push heavily mangles the repository state. It frequently ignores strict `.gitignore` rules, pushing massive binary files (`.bin`, `.chd`, `.iso`, build artifacts) directly to the remote, bloating the repository and causing LFS rejections. Furthermore, it risks overwriting custom dotfiles and agent-specific documentation files (like this very `AGENTS.md` file) with default platform templates.
 - **Agent Action:** When discussing version control or repository backups, warn the user about this behavior. Always ensure the `.gitignore` is fully robust and suggest using terminal-based Git pushes or ZIP exports instead of the default AI Studio GitHub integration to preserve structural integrity.
 
+
+## 🚨 Binary File Corruption (The "Sleep/Wake" Mangling Rule)
+- **The Issue**: When you leave AI Studio for a few hours, the container scales to zero. Upon waking up, AI Studio's internal file restoration system restores the workspace. Because it is optimized for text/web apps, it **mangles all binary files** (like .pngs, .xcassets) by trying to parse them as UTF-8.
+- **The Fix**: This is why `png_guardian.cjs` and `sync_repo.sh` exist. If the user mentions corrupted images or returning from a break, you MUST assume the native binary files are corrupted. Either run the PNG guardian to restore them from base64, or use `sync_repo.sh` to do a clean pull from GitHub. Do NOT trust the file system's binaries after a container restart.
+
 ## ⚖️ Attribution & External Code Tracking
 - **The Issue:** As projects grow and external snippets/libraries are integrated, the origin of the code gets lost, making licensing and debugging a nightmare.
 - **The Fix:** You MUST maintain the `/attributions.md` file. Establish a rigid rule that every time external code, open-source logic, or third-party specifications are incorporated, this file MUST be updated immediately.
