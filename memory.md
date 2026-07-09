@@ -208,3 +208,7 @@
     * Fixed Exit Code 65 compilation failures related to `NotificationsListView.swift` (`systemSymbol: .line3HorizontalDecrease` updated correctly to `systemImage: "line.3.horizontal.decrease"`).
     * Updated `GalleryStatusesListView.swift` auto-pagination logic so the `.task` effectively watches `mediaStatuses.count` to fetch additional pages automatically if there's less than 6 loaded.
     * Updated `AGENTS.md` instructions to officially recognize the CI transition from GitHub Actions to **Codemagic**.
+* **2026-07-09 UTC (Agent Session 4)**
+  * **Fixes & Optimizations**:
+    * Configured Vite server (`vite.config.ts`) to unconditionally ignore `ios-workspace` filesystem watching, effectively stopping the "something went wrong" preview reload loops.
+    * Fixed the "Gallery Mode scrolling freeze" layout bug by proactively calculating and setting the `aspectRatio` container in `GalleryAspectRatioModifier` using `mediaStatus.attachment.meta.original` dimensional data, thus preventing the `LazyVStack` infinite recalculation loop.
