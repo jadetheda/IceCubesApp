@@ -102,7 +102,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .padding(.horizontal, 4)
-    .task(id: mediaStatuses.count) {
+    .task(id: statuses.count) {
       if mediaStatuses.count > 0 && mediaStatuses.count < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
@@ -151,7 +151,7 @@ struct GalleryMediaCell: View {
           EmptyView()
         }
       }
-      .modifier(GalleryAspectRatioModifier(isSquare: isSquare))
+      .modifier(GalleryAspectRatioModifier(isSquare: isSquare, meta: mediaStatus.attachment.meta?.original))
       .clipped()
       .contentShape(Rectangle())
       .onTapGesture {
@@ -248,10 +248,15 @@ struct GalleryMediaCell: View {
 
 struct GalleryAspectRatioModifier: ViewModifier {
     let isSquare: Bool
+    let meta: MediaAttachment.MetaContainer.Meta?
     
     func body(content: Content) -> some View {
         if isSquare {
             content.aspectRatio(1, contentMode: .fill)
+        } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {
+            content
+                .aspectRatio(CGFloat(width) / CGFloat(height), contentMode: .fit)
+                .frame(maxHeight: 400)
         } else {
             // Masonry mode limits height to something reasonable without squishing it to 1:1,
             // or just scales to fit the width. For Waterfall, the width is dictated by the column,
