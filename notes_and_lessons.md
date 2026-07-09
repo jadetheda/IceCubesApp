@@ -56,3 +56,8 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 **The Fix:** We have hardcoded protective Git configurations into the `apply_and_push.sh` script to neutralize these threats before committing:
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
 - `git config core.autocrlf input` (Normalizes line endings on commit).
+
+## 🚨 Critical Discovery: The "Container Sleep" Binary Corruption
+* **The Symptom**: Returning to AI Studio after a few hours of inactivity results in completely corrupted PNGs and binary files within the iOS workspace.
+* **The Root Cause**: AI Studio scales its containers to zero during inactivity. When the container sleeps, the platform snapshots the workspace. Because AI Studio was designed primarily for text-based web development, its internal state restoration mechanism attempts to re-encode all saved files (including iOS binaries like `.png`, `.xcassets`, `.car`) as UTF-8 text upon wake-up. This completely mangles the raw binary headers and data.
+* **The Lesson**: We can **never** trust the native AI Studio file persistence to keep iOS binaries safe between sessions. This is why tools like `png_guardian.cjs` and automated GitHub re-clones (`sync_repo.sh`) are absolutely mandatory for mobile development in this environment. If we leave and come back, we must assume the binaries are trashed and require a guardian-restore or a fresh git clone.
