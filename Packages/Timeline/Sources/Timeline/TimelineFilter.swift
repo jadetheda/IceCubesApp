@@ -451,3 +451,56 @@ extension RemoteTimelineFilter: RawRepresentable {
     return result
   }
 }
+
+extension TimelineFilter {
+  public func fetchStatuses(
+    client: MastodonClient,
+    sinceId: String?,
+    maxId: String?,
+    minId: String?,
+    offset: Int?,
+    limit: Int?
+  ) async throws -> [Status] {
+    if case let .tagGroup(_, tags, _) = self {
+      let statusesLimit = limit ?? 40
+      return try await withThrowingTaskGroup(of: [Status].self) { group in
+        for tag in tags {
+          let cleanTag = tag.replacingOccurrences(of: "#", with: "")
+          group.addTask {
+            do {
+              return try await client.get(endpoint: Timelines.hashtag(tag: cleanTag, additional: nil, maxId: maxId, minId: minId))
+            } catch {
+              return []
+            }
+          }
+        }
+        var allStatuses: [Status] = []
+        for try await statuses in group {
+          allStatuses.append(contentsOf: statuses)
+        }
+        
+        var uniqueStatuses: [Status] = []
+        var seenIds = Set<String>()
+        for status in allStatuses {
+          if !seenIds.contains(status.id) {
+            seenIds.insert(status.id)
+            uniqueStatuses.append(status)
+          }
+        }
+        
+        uniqueStatuses.sort { $0.id > $1.id }
+        return Array(uniqueStatuses.prefix(statusesLimit))
+      }
+    }
+    
+    return try await client.get(
+      endpoint: self.endpoint(
+        sinceId: sinceId,
+        maxId: maxId,
+        minId: minId,
+        offset: offset,
+        limit: limit
+      )
+    )
+  }
+}

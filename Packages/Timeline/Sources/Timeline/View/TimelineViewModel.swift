@@ -216,13 +216,14 @@ extension TimelineViewModel: GapLoadingFetcher {
   func fetchStatuses(from: Marker.Content) async throws {
     guard let client else { return }
     statusesState = .loading
-    let statuses: [Status] = try await client.get(
-      endpoint: timeline.endpoint(
-        sinceId: nil,
-        maxId: from.lastReadId,
-        minId: nil,
-        offset: 0,
-        limit: 40))
+    let statuses = try await timeline.fetchStatuses(
+      client: client,
+      sinceId: nil,
+      maxId: from.lastReadId,
+      minId: nil,
+      offset: 0,
+      limit: 40
+    )
 
     await updateDatasourceAndState(statuses: statuses, client: client, replaceExisting: true)
     marker = nil
