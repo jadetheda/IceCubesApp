@@ -103,7 +103,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
     .padding(.horizontal, 4)
     .task(id: statuses.count) {
-      if mediaStatuses.count > 0 && mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }
