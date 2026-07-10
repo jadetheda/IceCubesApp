@@ -461,6 +461,12 @@ import SwiftUI
     }
   }
 
+  public var tagGroupsClientSideMergeEnabled: Bool {
+    didSet {
+      storage.tagGroupsClientSideMergeEnabled = tagGroupsClientSideMergeEnabled
+    }
+  }
+
   public var hideSeenPostsIsToggle: Bool {
     didSet {
       storage.hideSeenPostsIsToggle = hideSeenPostsIsToggle
@@ -678,6 +684,7 @@ import SwiftUI
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
+    tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
 }
