@@ -222,3 +222,9 @@
     * Ran the `wipe_and_load.mjs` script to replace the workspace from the ZIP payload, followed by a GitHub `sync_repo.sh` re-clone.
     * Addressed the "Gallery Mode scrolling freeze" layout bug in `GalleryStatusesListView.swift`. The previous PR successfully fixed the layout loop by proactively setting `aspectRatio` via `mediaStatus.attachment.meta.original` dimensional data, thus preventing SwiftUI `LazyVStack` infinite recalculation loops.
     * **Critial Fix**: Identified a flaw in the previous PR's sparse media pagination logic. The previous logic (`mediaStatuses.count > 0 && mediaStatuses.count < 6`) caused Gallery Mode to stall indefinitely on loading if the first page returned 0 media attachments. Reverted the `> 0` condition to properly allow automatic sequential pagination through text-only posts until the media grid threshold is met.
+* **2026-07-10 UTC (Agent Session 6)**
+  * **Fixes & Optimizations**:
+    * Fixed a build failure (Exit Code 65) where `TimelineFilter.swift` could not access `UserPreferences.shared.tagGroupsClientSideMergeEnabled`. The property was previously only added to the nested `Storage` class within `UserPreferences`, leaving it unexposed on the main object. Added the missing property and `init()` assignment to restore compilation.
+* **2026-07-10 UTC (Agent Session 6)**
+  * **Fixes & Optimizations**:
+    * Fixed a build failure (Exit Code 65) where `TimelineFilter.swift` could not access `UserPreferences.shared.tagGroupsClientSideMergeEnabled`. The property was previously only added to the nested `Storage` class within `UserPreferences`, leaving it unexposed on the main object. Added the missing property and `init()` assignment to restore compilation.

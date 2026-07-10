@@ -69,6 +69,11 @@ When writing Python scripts, shell commands, or architectures intended to run of
 *   **Solution**: **Fault tolerance > strict binary specifications**. Do not rely on header data. If you expect a specific width, hard-force it. Calculate the height mathematically based on the raw file size minus the data offset, rather than trusting the header bytes.
 - **Swift String Interpolation Safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing \(\"%.1f\") will cause compiler crash (Exit Code 65). Always write \("%.1f").
 
+
+## 🐛 Exit Code 65 Logs (UserPreferences Missing Expose)
+- **Root Cause**: When adding a new property to `UserPreferences` (e.g. `tagGroupsClientSideMergeEnabled`), it was added to the nested `Storage` class but not exposed on the main `UserPreferences` object, breaking any code that tried to access it via `UserPreferences.shared`.
+- **Solution**: Always expose the property on the main `UserPreferences` class with a getter/setter pointing to the nested `storage`, and sync its initial value in `init()`.
+
 ## 🐛 Exit Code 65 Logs
 - **Root Cause**: Adding properties to a struct (`TimelineContentFilter.Snapshot`) without providing default initializer values breaks any existing instantiations, specifically in test targets (`TimelineViewModelTests.swift`).
 - **Solution**: Always provide default values (e.g. `isGalleryMode: Bool = false`) in the custom `init()` of structs if modifying them, to prevent compilation failures across the codebase.
