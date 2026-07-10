@@ -57,7 +57,37 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
 - `git config core.autocrlf input` (Normalizes line endings on commit).
 
-## 🚨 Critical Discovery: The "Container Sleep" Binary Corruption
-* **The Symptom**: Returning to AI Studio after a few hours of inactivity results in completely corrupted PNGs and binary files within the iOS workspace.
-* **The Root Cause**: AI Studio scales its containers to zero during inactivity. When the container sleeps, the platform snapshots the workspace. Because AI Studio was designed primarily for text-based web development, its internal state restoration mechanism attempts to re-encode all saved files (including iOS binaries like `.png`, `.xcassets`, `.car`) as UTF-8 text upon wake-up. This completely mangles the raw binary headers and data.
-* **The Lesson**: We can **never** trust the native AI Studio file persistence to keep iOS binaries safe between sessions. This is why tools like `png_guardian.cjs` and automated GitHub re-clones (`sync_repo.sh`) are absolutely mandatory for mobile development in this environment. If we leave and come back, we must assume the binaries are trashed and require a guardian-restore or a fresh git clone.
+## AI Studio Workspace Replacement Strategy
+- **File Deletion Limit / Cost**: Deleting many individual files using standard token-heavy edits or shell loops can be very inefficient in AI Studio.
+- **Solution (`replace_workspace.sh`)**: When completely replacing a codebase from a new ZIP (like from a direct GitHub URL or provided user link), always use an automated script (like `replace_workspace.sh`).
+  - This script downloads the ZIP via `npx` (to bypass missing `curl`/`wget`).
+  - It wipes the workspace using `find` (preserving crucial `.git`, `.env`, and `ios-workspace` folders).
+  - It extracts the clean structure over the old one.
+  - This avoids tedious manual file-by-file wiping.
+
+## Background Task & Browser Automation Tracking
+- **The Issue**: Long-running background tasks (like Playwright browser automation scripts or file scrapers, e.g., `dl4.cjs`) were executed without being properly tracked in `memory.md`.
+- **The Lesson**: EVERY background task, especially those involving external navigation or headless browsers, MUST be documented in `memory.md` immediately upon execution, including the purpose of the task and its expected outcome. If it fails or times out (e.g. `TimeoutError` waiting for download events), the failure must also be logged to prevent silent errors and confusion.
+
+## Tag Groups Feature Architecture & Lessons
+
+Based on the recent PR detailing the Tag Group feature:
+
+### Data Model & Persistence
+- **SwiftData over AppStorage**: Tag groups use a SwiftData `@Model` (`TagGroup`), allowing `@Query` to keep the UI in sync automatically.
+- **Model ↔ Timeline Filter Decoupling**: The app decouples the SwiftData `TagGroup` model (in the `Models` package) from the `TimelineFilter.tagGroup` enum (in the `Timeline` package). The Timeline package has no SwiftData dependency. The app layer copies data between them.
+- **Two Persistence Paths**: SwiftData stores the group, while `@AppStorage("timeline_pinned_filters")` stores pinned filters via `TimelineFilter`'s `Codable`. Editing a group in SwiftData does *not* automatically update a pinned filter copy, which is a potential staleness gotcha.
+
+### Network & Backend Integration
+- **Server-Side Merge (`any[]`)**: A tag group maps to a Mastodon `/api/v1/timelines/tag/{firstTag}?any[]={second}&any[]={third}...` request. The `any[]` parameter is the core trick—Mastodon natively processes it as an OR query over multiple hashtags. No client-side merge logic is needed.
+- **No Streaming**: Tag groups fall into the `.pub` filter context and are not in the streamable set, meaning no live WebSocket updates (manual refresh only).
+
+### UI & Validation Rules
+- **Validation**: Requires a non-empty title, a valid SF Symbol checked against `SFSafeSymbols`, and a minimum of 2 tags (a 1-tag group would just duplicate the standard hashtag timeline).
+- **Lowercase on Save**: Tags are lowercased before persisting because Mastodon API calls are case-insensitive.
+- **Identity Excludes Icon**: `TimelineFilter.tagGroup`'s `id` is computed from `title + tags.joined()`. Changing only the icon won't reload the timeline.
+
+## Mastodon API: Tag Group Searching
+- **Limitation**: The Mastodon API `any[]` array query for `Timelines.hashtag` acts as a server-side OR merge, but it seems to limit or miss results compared to doing separate full text searches.
+- **Solution**: For tag groups (which contain multiple hashtags), it's more reliable to fetch each tag individually using separate API calls (`Timelines.hashtag(tag: cleanTag)`) and merge the results client-side, filtering out duplicates using a Set of Status IDs. This approach ensures a comprehensive list of statuses is retrieved.
+- **Mastodon API Hash Symbol Encoding**: When hitting `/api/v1/timelines/tag/:hashtag`, the hashtag must NOT include the `#` symbol. If `#` is included in the Swift `URLComponents.path`, it can either truncate the path (acting as a fragment) causing 404s, or encode as `%23`. While Mastodon core strips `%23` in `any[]` parameters, some forks and older versions do not, leading to silent filtering (0 matches for the encoded tag). Always sanitize and strip `#` from tag queries before sending them to the Mastodon API.

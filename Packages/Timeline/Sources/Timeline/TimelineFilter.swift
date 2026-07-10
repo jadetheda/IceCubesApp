@@ -1,4 +1,5 @@
 import Foundation
+import Env
 import Models
 import NetworkClient
 import SwiftUI
@@ -238,7 +239,7 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
         return Timelines.hashtag(tag: tag, additional: nil, maxId: maxId, minId: minId)
       }
     case let .tagGroup(_, tags, _):
-      var tags = tags
+      var tags = tags.map { $0.replacingOccurrences(of: "#", with: "") }
       if !tags.isEmpty {
         let tag = tags.removeFirst()
         return Timelines.hashtag(tag: tag, additional: tags, maxId: maxId, minId: minId)
@@ -452,7 +453,9 @@ extension RemoteTimelineFilter: RawRepresentable {
   }
 }
 
+
 extension TimelineFilter {
+  @MainActor
   public func fetchStatuses(
     client: MastodonClient,
     sinceId: String?,
@@ -461,7 +464,7 @@ extension TimelineFilter {
     offset: Int?,
     limit: Int?
   ) async throws -> [Status] {
-    if case let .tagGroup(_, tags, _) = self {
+    if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled {
       let statusesLimit = limit ?? 40
       return try await withThrowingTaskGroup(of: [Status].self) { group in
         for tag in tags {

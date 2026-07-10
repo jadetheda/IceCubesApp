@@ -722,6 +722,15 @@ public struct ExperimentalSettingsView: View {
         Text("settings.experimental.media-only-toggle-footer")
       }
       .listRowBackground(theme.primaryBackgroundColor)
+
+      Section {
+        Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
+          Label("Alternative Tag Group Fetching", systemImage: "tag.2")
+        }
+      } footer: {
+        Text("Fixes missing posts in Tag Groups for some servers (like IceShrimp). Fetches each tag separately instead of all at once, which uses more network requests.")
+      }
+      .listRowBackground(theme.primaryBackgroundColor)
     }
     .navigationTitle("settings.experimental.title")
     .scrollContentBackground(.hidden)

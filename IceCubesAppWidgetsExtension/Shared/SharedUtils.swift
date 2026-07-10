@@ -14,13 +14,14 @@ func loadStatuses(
 ) async -> [Status] {
   let client = MastodonClient(server: account.account.server, oauthToken: account.account.oauthToken)
   do {
-    var statuses: [Status] = try await client.get(
-      endpoint: timeline.endpoint(
-        sinceId: nil,
-        maxId: nil,
-        minId: nil,
-        offset: nil,
-        limit: 6))
+    var statuses = try await timeline.fetchStatuses(
+      client: client,
+      sinceId: nil,
+      maxId: nil,
+      minId: nil,
+      offset: nil,
+      limit: 6
+    )
     statuses = statuses.filter { $0.reblog == nil && !$0.content.asRawText.isEmpty }
     switch widgetFamily {
     case .systemSmall, .systemMedium:

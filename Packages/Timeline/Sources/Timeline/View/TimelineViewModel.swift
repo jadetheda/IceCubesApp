@@ -552,13 +552,14 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     do {
       // Fetch statuses within the gap
-      let statuses: [Status] = try await client.get(
-        endpoint: timeline.endpoint(
-          sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
-          maxId: gap.maxId,
-          minId: nil,
-          offset: 0,
-          limit: 50))
+      let statuses = try await timeline.fetchStatuses(
+        client: client,
+        sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
+        maxId: gap.maxId,
+        minId: nil,
+        offset: 0,
+        limit: 50
+      )
 
       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
 

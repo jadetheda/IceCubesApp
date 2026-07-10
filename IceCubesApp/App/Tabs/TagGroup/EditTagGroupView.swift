@@ -277,7 +277,7 @@ private struct TagsInputView: View {
   }
 
   private func addNewTag() {
-    addTag(newTag.trimmingCharacters(in: .whitespaces).lowercased())
+    addTag(newTag.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "#", with: ""))
     newTag = ""
     focusedField = .new
   }
@@ -424,7 +424,7 @@ extension TagGroup {
 
   func format() {
     title = title.trimmingCharacters(in: .whitespacesAndNewlines)
-    tags = tags.map { $0.lowercased() }
+    tags = tags.map { $0.lowercased().replacingOccurrences(of: "#", with: "") }
   }
 
   // MARK: static members

@@ -97,6 +97,7 @@ import SwiftUI
     @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
 
+    @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
 
     init() {
       prepareTranslationType()
