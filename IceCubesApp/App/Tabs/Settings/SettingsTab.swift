@@ -664,7 +664,7 @@ public struct ExperimentalSettingsView: View {
     @Bindable var preferences = preferences
     Form {
       Section("settings.experimental.gallery-mode") {
-        Stepper("settings.experimental.gallery-columns \(preferences.galleryColumns)", value: $preferences.galleryColumns, in: 2...4)
+        Stepper(String(format: NSLocalizedString("settings.experimental.gallery-columns", comment: ""), preferences.galleryColumns), value: $preferences.galleryColumns, in: 2...4)
         Toggle(isOn: $preferences.galleryCropToSquare) {
           Label("settings.experimental.gallery-crop-square", systemImage: "crop")
         }
@@ -676,7 +676,7 @@ public struct ExperimentalSettingsView: View {
         }
         if preferences.remoteMediaAutoFallback {
           VStack(alignment: .leading) {
-            Text("settings.experimental.remote-media-fallback-delay \(String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay))")
+            Text(String(format: NSLocalizedString("settings.experimental.remote-media-fallback-delay", comment: ""), String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay)))
             Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
           }
         }
@@ -690,7 +690,7 @@ public struct ExperimentalSettingsView: View {
         }
         if preferences.hideSeenPostsEnabled {
           VStack(alignment: .leading) {
-            Text("settings.experimental.hide-seen-posts-threshold \(String(format: "%.1f", preferences.hideSeenPostsThreshold))")
+            Text(String(format: NSLocalizedString("settings.experimental.hide-seen-posts-threshold", comment: ""), String(format: "%.1f", preferences.hideSeenPostsThreshold)))
             Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
           }
           Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
@@ -725,7 +725,7 @@ public struct ExperimentalSettingsView: View {
 
       Section {
         Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
-          Label("Alternative Tag Group Fetching", systemImage: "tag.2")
+          Label("Alternative Tag Group Fetching", systemImage: "tag")
         }
       } footer: {
         Text("Fixes missing posts in Tag Groups for some servers (like IceShrimp). Fetches each tag separately instead of all at once, which uses more network requests.")
