@@ -11,9 +11,6 @@ public struct TimelineContentFilterView: View {
 
   @State private var contentFilter = TimelineContentFilter.shared
   @State private var isEditingFilters = false
-  @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
-  @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
-  @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
 
   public init() {}
 
@@ -36,24 +33,24 @@ public struct TimelineContentFilterView: View {
         }
         Section("Display Mode") {
             Toggle(isOn: Binding(
-                get: { !hidePostsWithoutMedia },
-                set: { hidePostsWithoutMedia = !$0 }
+                get: { !contentFilter.hidePostsWithoutMedia },
+                set: { contentFilter.hidePostsWithoutMedia = !$0 }
             )) {
               Label("Text posts", systemImage: "text.alignleft")
             }
-            .disabled(isGalleryMode)
+            .disabled(contentFilter.isGalleryMode)
             Toggle(isOn: Binding(
-                get: { !hidePostsWithMedia },
-                set: { hidePostsWithMedia = !$0 }
+                get: { !contentFilter.hidePostsWithMedia },
+                set: { contentFilter.hidePostsWithMedia = !$0 }
             )) {
               Label("Media posts", systemImage: "photo")
             }
-            Toggle(isOn: $isGalleryMode) {
+            Toggle(isOn: $contentFilter.isGalleryMode) {
               Label("Gallery mode", systemImage: "rectangle.grid.1x2")
             }
-            .onChange(of: isGalleryMode) { _, newValue in
+            .onChange(of: contentFilter.isGalleryMode) { _, newValue in
                if newValue {
-                   hidePostsWithMedia = false
+                   contentFilter.hidePostsWithMedia = false
                }
             }
           }
