@@ -499,6 +499,7 @@ extension TimelineViewModel: GapLoadingFetcher {
               if allCached || !visibleStatuses.contains(where: { $0.id == status.id }) { break }
               try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
+            if !allCached { return }
           }
           
           var idToMark = status.id
