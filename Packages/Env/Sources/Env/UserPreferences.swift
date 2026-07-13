@@ -95,6 +95,7 @@ import SwiftUI
 
     @AppStorage("remote_media_auto_fallback") public var remoteMediaAutoFallback: Bool = true
     @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
+    @AppStorage("remote_media_fallback_on_fail") public var remoteMediaFallbackOnFail: Bool = true
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
 
     @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
@@ -455,6 +456,11 @@ import SwiftUI
       storage.remoteMediaAutoFallbackDelay = remoteMediaAutoFallbackDelay
     }
   }
+  public var remoteMediaFallbackOnFail: Bool {
+    didSet {
+      storage.remoteMediaFallbackOnFail = remoteMediaFallbackOnFail
+    }
+  }
   public var remoteMediaAlwaysForce: Bool {
     didSet {
       storage.remoteMediaAlwaysForce = remoteMediaAlwaysForce
@@ -683,6 +689,7 @@ import SwiftUI
     hideSeenPostsIsToggle = storage.hideSeenPostsIsToggle
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
+    remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle

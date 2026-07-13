@@ -23,6 +23,23 @@ import SwiftUI
       inLists = try await client.get(endpoint: Accounts.lists(id: account.id))
       isLoadingInfo = false
     } catch {
+      let accountId = account.id
+      if let allLists: [Models.List] = try? await client.get(endpoint: Lists.lists) {
+        var foundLists: [Models.List] = []
+        await withTaskGroup(of: (Models.List, Bool).self) { group in
+          for list in allLists {
+            group.addTask {
+              let accounts: [Account]? = try? await client.get(endpoint: Lists.accounts(listId: list.id))
+              let contains = accounts?.contains(where: { $0.id == accountId }) ?? false
+              return (list, contains)
+            }
+          }
+          for await (list, contains) in group {
+            if contains { foundLists.append(list) }
+          }
+        }
+        self.inLists = foundLists
+      }
       withAnimation {
         isLoadingInfo = false
       }

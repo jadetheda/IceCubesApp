@@ -680,6 +680,9 @@ public struct ExperimentalSettingsView: View {
             Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
           }
         }
+        Toggle(isOn: $preferences.remoteMediaFallbackOnFail) {
+          Label("Load Remote Media On Fail", systemImage: "arrow.triangle.2.circlepath")
+        }
         Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
           Label("settings.experimental.remote-media-always-force", systemImage: "photo.badge.exclamationmark")
         }
