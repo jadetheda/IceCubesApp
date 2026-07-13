@@ -107,7 +107,7 @@ public struct StatusRowMediaPreviewView: View {
 
   @ViewBuilder
   private func makeAttachmentView(_ attachement: MediaAttachment) -> some View {
-    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia) {
+    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, autoFallback: userPreferences.remoteMediaAutoFallback) {
       MediaPreview(
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
@@ -367,13 +367,13 @@ private struct DisplayData: Identifiable, Hashable {
   let accessibilityText: String
   let isLandscape: Bool
 
-  init?(from attachment: MediaAttachment, useRemoteMedia: Bool) {
+  init?(from attachment: MediaAttachment, useRemoteMedia: Bool, autoFallback: Bool = false) {
     let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
     guard let url = resolvedUrl else { return nil }
     guard let type = attachment.supportedType else { return nil }
     id = attachment.id
     self.url = url
-    fallbackUrl = attachment.url
+    fallbackUrl = autoFallback ? (attachment.remoteUrl ?? attachment.url) : attachment.url
     previewUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     description = attachment.description
     self.type = DisplayType(from: type)
@@ -465,6 +465,7 @@ private struct FeaturedImagePreView: View {
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
   @Environment(\.isModal) private var isModal: Bool
+  @Environment(UserPreferences.self) private var userPreferences
 
   private var originalWidth: CGFloat {
     CGFloat(attachment.meta?.original?.width ?? 300)
@@ -494,7 +495,7 @@ private struct FeaturedImagePreView: View {
                   }
                 }
               case .gifv, .video, .audio:
-                MediaUIAttachmentVideoView(viewModel: .init(url: url))
+                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: userPreferences.remoteMediaAutoFallback ? (attachment.remoteUrl ?? attachment.url) : attachment.url))
                   .onAppear { onLoaded() }
               default:
                 EmptyView()

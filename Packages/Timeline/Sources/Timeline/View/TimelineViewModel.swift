@@ -489,10 +489,6 @@ extension TimelineViewModel: GapLoadingFetcher {
                   if let url = attachment.url {
                     return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
                   }
-                } else if attachment.supportedType == .video || attachment.supportedType == .gifv {
-                  if let url = attachment.previewUrl ?? attachment.url {
-                    return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
-                  }
                 }
                 return true
               }
