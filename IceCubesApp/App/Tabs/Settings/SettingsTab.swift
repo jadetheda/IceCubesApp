@@ -683,6 +683,8 @@ public struct ExperimentalSettingsView: View {
         Toggle(isOn: $preferences.remoteMediaFallbackOnFail) {
           Label("Load Remote Media On Fail", systemImage: "arrow.triangle.2.circlepath")
         }
+        Toggle("Use IceShrimp Workarounds", isOn: $preferences.useIceShrimpWorkarounds)
+        Toggle("Never Load Video", isOn: $preferences.neverLoadVideo)
         Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
           Label("settings.experimental.remote-media-always-force", systemImage: "photo.badge.exclamationmark")
         }

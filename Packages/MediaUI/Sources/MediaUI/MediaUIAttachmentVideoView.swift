@@ -238,6 +238,5 @@ public struct MediaUIAttachmentVideoView: View {
       }
     )
     .accessibilityAddTraits(.startsMediaSession)
-    .ignoresSafeArea()
   }
 }

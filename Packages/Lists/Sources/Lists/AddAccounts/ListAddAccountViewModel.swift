@@ -3,6 +3,14 @@ import NetworkClient
 import Observation
 import SwiftUI
 
+// Global cache to avoid heavy repetitive API requests for IceShrimp instances.
+// The API endpoint for getting lists an account belongs to is broken in some cases.
+@MainActor
+struct IceShrimpListCache {
+  static var lastFetch: Date?
+  static var accountLists: [String: [Models.List]] = [:]
+}
+
 @MainActor
 @Observable class ListAddAccountViewModel {
   let account: Account
@@ -24,21 +32,29 @@ import SwiftUI
       isLoadingInfo = false
     } catch {
       let accountId = account.id
-      if let allLists: [Models.List] = try? await client.get(endpoint: Lists.lists) {
-        var foundLists: [Models.List] = []
-        await withTaskGroup(of: (Models.List, Bool).self) { group in
+      // Use cached list data if it was fetched within the last 10 minutes (600 seconds)
+      if let last = IceShrimpListCache.lastFetch, Date().timeIntervalSince(last) < 600 {
+        self.inLists = IceShrimpListCache.accountLists[accountId] ?? []
+      } else if let allLists: [Models.List] = try? await client.get(endpoint: Lists.lists) {
+        var newAccountLists: [String: [Models.List]] = [:]
+        await withTaskGroup(of: (Models.List, [Account]?).self) { group in
           for list in allLists {
             group.addTask {
               let accounts: [Account]? = try? await client.get(endpoint: Lists.accounts(listId: list.id))
-              let contains = accounts?.contains(where: { $0.id == accountId }) ?? false
-              return (list, contains)
+              return (list, accounts)
             }
           }
-          for await (list, contains) in group {
-            if contains { foundLists.append(list) }
+          for await (list, accounts) in group {
+            if let accounts = accounts {
+              for acc in accounts {
+                newAccountLists[acc.id, default: []].append(list)
+              }
+            }
           }
         }
-        self.inLists = foundLists
+        IceShrimpListCache.accountLists = newAccountLists
+        IceShrimpListCache.lastFetch = Date()
+        self.inLists = newAccountLists[accountId] ?? []
       }
       withAnimation {
         isLoadingInfo = false
@@ -52,6 +68,7 @@ import SwiftUI
       endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
     if response?.statusCode == 200 {
       inLists.append(list)
+      IceShrimpListCache.accountLists[account.id, default: []].append(list)
     }
   }
 
@@ -61,6 +78,7 @@ import SwiftUI
       endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
     if response?.statusCode == 200 {
       inLists.removeAll(where: { $0.id == list.id })
+      IceShrimpListCache.accountLists[account.id]?.removeAll(where: { $0.id == list.id })
     }
   }
 }

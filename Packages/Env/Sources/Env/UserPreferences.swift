@@ -97,6 +97,8 @@ import SwiftUI
     @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
     @AppStorage("remote_media_fallback_on_fail") public var remoteMediaFallbackOnFail: Bool = true
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
+    @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
+    @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
 
     @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
 
@@ -461,6 +463,16 @@ import SwiftUI
       storage.remoteMediaFallbackOnFail = remoteMediaFallbackOnFail
     }
   }
+  public var useIceShrimpWorkarounds: Bool {
+    didSet {
+      storage.useIceShrimpWorkarounds = useIceShrimpWorkarounds
+    }
+  }
+  public var neverLoadVideo: Bool {
+    didSet {
+      storage.neverLoadVideo = neverLoadVideo
+    }
+  }
   public var remoteMediaAlwaysForce: Bool {
     didSet {
       storage.remoteMediaAlwaysForce = remoteMediaAlwaysForce
@@ -690,6 +702,8 @@ import SwiftUI
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
+    useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
+    neverLoadVideo = storage.neverLoadVideo
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle

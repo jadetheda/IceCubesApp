@@ -107,7 +107,11 @@ public struct StatusRowMediaPreviewView: View {
 
   @ViewBuilder
   private func makeAttachmentView(_ attachement: MediaAttachment) -> some View {
-    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: userPreferences.remoteMediaFallbackOnFail) {
+    let isIceShrimp = CurrentInstance.shared.isIceShrimp
+    let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
+    let noVideo = userPreferences.neverLoadVideo || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
+
+    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
       MediaPreview(
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
@@ -367,16 +371,25 @@ private struct DisplayData: Identifiable, Hashable {
   let accessibilityText: String
   let isLandscape: Bool
 
-  init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false) {
+  init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
     let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
     guard let url = resolvedUrl else { return nil }
     guard let type = attachment.supportedType else { return nil }
+    
     id = attachment.id
-    self.url = url
     fallbackUrl = fallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url
-    previewUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
+    let pUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
+    previewUrl = pUrl
+    
+    if neverLoadVideo && (type == .video || type == .gifv) {
+      self.type = .image
+      self.url = pUrl
+    } else {
+      self.type = DisplayType(from: type)
+      self.url = url
+    }
+    
     description = attachment.description
-    self.type = DisplayType(from: type)
     accessibilityText = Self.getAccessibilityString(from: attachment)
     isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
   }

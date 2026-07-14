@@ -465,7 +465,6 @@ extension TimelineFilter {
     limit: Int?
   ) async throws -> [Status] {
     if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled {
-      let statusesLimit = limit ?? 40
       return try await withThrowingTaskGroup(of: [Status].self) { group in
         for tag in tags {
           let cleanTag = tag.replacingOccurrences(of: "#", with: "")
@@ -492,7 +491,11 @@ extension TimelineFilter {
         }
         
         uniqueStatuses.sort { $0.id > $1.id }
-        return Array(uniqueStatuses.prefix(statusesLimit))
+        
+        // Return all merged statuses without truncating via .prefix(). 
+        // Truncating combined tag timelines causes permanent data loss (dropped posts in the gaps) 
+        // and artificially lowers the unread post indicators.
+        return uniqueStatuses
       }
     }
     

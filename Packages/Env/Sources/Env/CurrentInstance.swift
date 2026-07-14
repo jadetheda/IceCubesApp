@@ -23,6 +23,9 @@ import Observation
     return 0
   }
 
+  public var isIceShrimp: Bool {
+    instance?.version.lowercased().contains("iceshrimp") == true
+  }
   public var isFiltersSupported: Bool {
     version >= 4
   }
