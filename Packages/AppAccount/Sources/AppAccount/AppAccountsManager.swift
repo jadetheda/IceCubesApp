@@ -16,6 +16,10 @@ import SwiftUI
       currentClient = .init(
         server: currentAccount.server,
         oauthToken: currentAccount.oauthToken)
+        
+      if let isShrimp = currentAccount.isIceShrimp {
+        UserPreferences.shared.useIceShrimpWorkarounds = isShrimp
+      }
     }
   }
 

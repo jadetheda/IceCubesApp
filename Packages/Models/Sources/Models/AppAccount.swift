@@ -5,6 +5,7 @@ public struct AppAccount: Codable, Identifiable, Hashable {
   public let server: String
   public var accountName: String?
   public let oauthToken: OauthToken?
+  public var isIceShrimp: Bool?
 
   public var key: String {
     if let oauthToken {
@@ -21,11 +22,13 @@ public struct AppAccount: Codable, Identifiable, Hashable {
   public init(
     server: String,
     accountName: String?,
-    oauthToken: OauthToken? = nil
+    oauthToken: OauthToken? = nil,
+    isIceShrimp: Bool? = nil
   ) {
     self.server = server
     self.accountName = accountName
     self.oauthToken = oauthToken
+    self.isIceShrimp = isIceShrimp
   }
 }
 

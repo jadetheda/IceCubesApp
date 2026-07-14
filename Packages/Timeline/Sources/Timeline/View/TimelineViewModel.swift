@@ -523,6 +523,10 @@ extension TimelineViewModel: GapLoadingFetcher {
   func hideReadPosts() async {
     sessionSeenPosts = SeenPostsManager.shared.seenPosts
     
+    if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
+      await datasource.hideReadPosts(seen: sessionSeenPosts ?? [], includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+    }
+    
     var items = await datasource.getFilteredItems(seen: sessionSeenPosts)
     
     if items.count < 10, let client = client, let lastId = await datasource.get().last?.id {
