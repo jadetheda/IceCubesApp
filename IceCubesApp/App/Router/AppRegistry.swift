@@ -48,6 +48,7 @@ extension View {
         currentInstance.setClient(client: client)
         userPreferences.setClient(client: client)
         await currentInstance.fetchCurrentInstance()
+        await appAccountsManager.updateIceShrimpStatus(for: appAccountsManager.currentAccount)
         watcher.setClient(
           client: client,
           instanceStreamingURL: currentInstance.instance?.urls?.streamingApi)

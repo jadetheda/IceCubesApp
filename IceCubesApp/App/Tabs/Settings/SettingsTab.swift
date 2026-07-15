@@ -683,8 +683,7 @@ public struct ExperimentalSettingsView: View {
         Toggle(isOn: $preferences.remoteMediaFallbackOnFail) {
           Label("Load Remote Media On Fail", systemImage: "arrow.triangle.2.circlepath")
         }
-        Toggle("Use IceShrimp Workarounds", isOn: $preferences.useIceShrimpWorkarounds)
-        Toggle("Never Load Video", isOn: $preferences.neverLoadVideo)
+
         Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
           Label("settings.experimental.remote-media-always-force", systemImage: "photo.badge.exclamationmark")
         }
@@ -728,12 +727,16 @@ public struct ExperimentalSettingsView: View {
       }
       .listRowBackground(theme.primaryBackgroundColor)
 
-      Section {
-        Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
-          Label("Alternative Tag Group Fetching", systemImage: "tag")
+      Section("IceShrimp Workarounds") {
+        Toggle("Enable IceShrimp Workarounds", isOn: $preferences.useIceShrimpWorkarounds)
+        if preferences.useIceShrimpWorkarounds {
+          Toggle("Never Load Video (Fallback)", isOn: $preferences.neverLoadVideo)
+          Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
+            Label("Alternative Tag Group Fetching", systemImage: "tag")
+          }
         }
       } footer: {
-        Text("Fixes missing posts in Tag Groups for some servers (like IceShrimp). Fetches each tag separately instead of all at once, which uses more network requests.")
+        Text("Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server.")
       }
       .listRowBackground(theme.primaryBackgroundColor)
     }

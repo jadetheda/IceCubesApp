@@ -233,7 +233,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   func fetchNewestStatuses(pullToRefresh: Bool) async {
     guard let client else { return }
     do {
-      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
+      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
         await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
       }
       if let marker {
@@ -607,7 +607,9 @@ extension TimelineViewModel: GapLoadingFetcher {
 
 
   private func filterSeenStatuses(from statuses: [Status]) -> [Status] {
-    if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
+    // Only permanently discard fetched statuses if we are in fire-and-forget mode.
+    // If it's a toggle, we MUST keep them in the datasource so they can reappear when toggled off.
+    if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
        let seen = SeenPostsManager.shared.seenPosts
        let includeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
        return statuses.filter { status in 

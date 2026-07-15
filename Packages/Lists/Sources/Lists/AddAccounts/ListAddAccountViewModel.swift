@@ -31,6 +31,11 @@ struct IceShrimpListCache {
       inLists = try await client.get(endpoint: Accounts.lists(id: account.id))
       isLoadingInfo = false
     } catch {
+      guard Env.UserPreferences.shared.useIceShrimpWorkarounds else {
+        withAnimation { isLoadingInfo = false }
+        return
+      }
+      
       let accountId = account.id
       // Use cached list data if it was fetched within the last 10 minutes (600 seconds)
       if let last = IceShrimpListCache.lastFetch, Date().timeIntervalSince(last) < 600 {

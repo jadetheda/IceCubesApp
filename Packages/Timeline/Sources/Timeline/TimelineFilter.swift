@@ -464,7 +464,7 @@ extension TimelineFilter {
     offset: Int?,
     limit: Int?
   ) async throws -> [Status] {
-    if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled {
+    if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled, UserPreferences.shared.useIceShrimpWorkarounds {
       return try await withThrowingTaskGroup(of: [Status].self) { group in
         for tag in tags {
           let cleanTag = tag.replacingOccurrences(of: "#", with: "")

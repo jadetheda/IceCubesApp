@@ -216,13 +216,24 @@ private struct DisplayData: Identifiable, Hashable {
   let type: DisplayType
 
   init?(from attachment: MediaAttachment) {
+    let isIceShrimp = Env.CurrentInstance.shared.isIceShrimp
+    let noVideo = Env.UserPreferences.shared.neverLoadVideo || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
+    let pUrl = attachment.previewUrl ?? attachment.url
+    
     guard let url = attachment.url else { return nil }
     guard let type = attachment.supportedType else { return nil }
 
     id = attachment.id
-    self.url = url
+    
+    if noVideo && (type == .video || type == .gifv) {
+      self.type = .image
+      self.url = pUrl ?? url
+    } else {
+      self.type = DisplayType(from: type)
+      self.url = url
+    }
+    
     description = attachment.description
-    self.type = DisplayType(from: type)
   }
 }
 
