@@ -129,10 +129,34 @@ import Nuke
   let pendingStatusesObserver: TimelineUnreadStatusesObserver = .init()
   var marker: Marker.Content?
 
+  @ObservationIgnored
+  private var hideReadPostsObserver: NSObjectProtocol?
+
   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
     self.statusFetcher = statusFetcher
     Task {
       await datasource.setFilterContext(timeline.filterContext)
+    }
+
+    // Both the toolbar toggle and the one-off "hide read posts" action post this
+    // notification. Without this observer, toggling `TimelineContentFilter.shared.hideReadPosts`
+    // (or firing the one-off action) never re-filters `statusesState`, so the button appears to
+    // do nothing even for posts that are already marked seen.
+    hideReadPostsObserver = NotificationCenter.default.addObserver(
+      forName: .hideReadPosts,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      guard let self else { return }
+      Task { @MainActor in
+        await self.hideReadPosts()
+      }
+    }
+  }
+
+  deinit {
+    if let hideReadPostsObserver {
+      NotificationCenter.default.removeObserver(hideReadPostsObserver)
     }
   }
 
