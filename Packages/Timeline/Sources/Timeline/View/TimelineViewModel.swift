@@ -130,7 +130,7 @@ import Nuke
   var marker: Marker.Content?
 
   @ObservationIgnored
-  private var hideReadPostsObserver: NSObjectProtocol?
+  nonisolated(unsafe) private var hideReadPostsObserver: NSObjectProtocol?
 
   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
     self.statusFetcher = statusFetcher
