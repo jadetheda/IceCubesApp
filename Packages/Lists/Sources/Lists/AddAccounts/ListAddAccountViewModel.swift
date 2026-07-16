@@ -32,7 +32,7 @@ struct IceShrimpListCache {
       inLists = try await client.get(endpoint: Accounts.lists(id: account.id))
       isLoadingInfo = false
     } catch {
-      guard Env.UserPreferences.shared.useIceShrimpWorkarounds else {
+      guard UserPreferences.shared.useIceShrimpWorkarounds else {
         withAnimation { isLoadingInfo = false }
         return
       }
