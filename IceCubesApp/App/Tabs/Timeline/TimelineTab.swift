@@ -125,9 +125,8 @@ struct TimelineTab: View {
       Button {
         if preferences.hideSeenPostsIsToggle {
           contentFilter.hideReadPosts.toggle()
-        } else {
-          NotificationCenter.default.post(name: .hideReadPosts, object: nil)
         }
+        NotificationCenter.default.post(name: .hideReadPosts, object: nil)
       } label: {
         Label((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
       }
