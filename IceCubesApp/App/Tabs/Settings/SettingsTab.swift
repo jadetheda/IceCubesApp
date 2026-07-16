@@ -727,7 +727,7 @@ public struct ExperimentalSettingsView: View {
       }
       .listRowBackground(theme.primaryBackgroundColor)
 
-      Section("IceShrimp Workarounds") {
+      Section {
         Toggle("Enable IceShrimp Workarounds", isOn: $preferences.useIceShrimpWorkarounds)
         if preferences.useIceShrimpWorkarounds {
           Toggle("Never Load Video (Fallback)", isOn: $preferences.neverLoadVideo)
@@ -735,6 +735,8 @@ public struct ExperimentalSettingsView: View {
             Label("Alternative Tag Group Fetching", systemImage: "tag")
           }
         }
+      } header: {
+        Text("IceShrimp Workarounds")
       } footer: {
         Text("Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server.")
       }
