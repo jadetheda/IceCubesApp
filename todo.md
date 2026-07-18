@@ -26,6 +26,7 @@
 # ## Stretch goals
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.
 - [ ] If I load a user's profile and it comes back completely empty, we should fetch the profile content directly from the instance they belong to.
+- [ ] I rather hate how the post view (at least on iOS) crops the images to like 5:4. There should be a setting to turn that off!
 
 ## Absolute Pipedreams
 - [ ] **Stretch goal:** Investigate what would be required to support **Akkoma**, **Sharkey**, and/or **PixelFed**.
