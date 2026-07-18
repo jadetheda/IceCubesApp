@@ -80,6 +80,12 @@ extension View {
         StatusDetailView(status: status)
       case .remoteStatusDetail(let url):
         StatusDetailView(remoteStatusURL: url)
+      case .remoteLocalTimeline(let server):
+        TimelineView(
+          timeline: .constant(.remoteLocal(server: server, filter: .local)),
+          pinnedFilters: .constant([]),
+          selectedTagGroup: .constant(nil),
+          canFilterTimeline: false)
       case .conversationDetail(let conversation):
         ConversationDetailView(conversation: conversation)
       case .hashTag(let tag, let accountId):
