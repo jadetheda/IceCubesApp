@@ -112,10 +112,16 @@ struct TimelineListView: View {
       }
       .onChange(of: selectedTabScrollToTop) { _, newValue in
         if newValue == 0, routerPath.path.isEmpty {
-          withAnimation {
-            proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+          let didUndo = viewModel.handleScrollToTopTrigger(proxy: proxy)
+          if !didUndo {
+            withAnimation {
+              proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+            }
           }
         }
+      }
+      .onReceive(NotificationCenter.default.publisher(for: .statusBarTapped)) { _ in
+        _ = viewModel.handleScrollToTopTrigger(proxy: proxy)
       }
     }
   }

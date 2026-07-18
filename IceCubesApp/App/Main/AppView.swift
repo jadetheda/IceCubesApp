@@ -131,6 +131,9 @@ struct AppView: View {
       routerPath: appRouterPath
     )
     .environment(\.selectedTabScrollToTop, selectedTabScrollToTop)
+    .onAppear {
+      StatusBarTapTracker.shared.setup()
+    }
   }
 
   @ViewBuilder

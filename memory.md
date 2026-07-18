@@ -233,3 +233,7 @@
 ## 2026-07-18T17:08:11Z - Added Media-Only Toggle (Display Mode section) to ContentSettingsView
 ## 2026-07-18T17:39:11Z - Configured Nuke data cache and updated version to 2.1.4.4
 ## 2026-07-18T17:39:33Z - Replaced AccountMediaGrid with Gallery layout, implemented Gallery Mode for Pinned Posts, added Lists Tab Timeline Content Filter dropdown, and removed require media loaded toggle.
+## 2026-07-18T18:00:00Z - Fixed Scroll-to-Top Undo Logic Syntax & Refined Toggles
+- Fixed major syntax error in `TimelineViewModel.swift` where a property observer was detached.
+- Refined undo scroll-to-top logic to check `!scrollToTopVisible` and `previousScrollPosition != nil`.
+- Updated integrity manifest.

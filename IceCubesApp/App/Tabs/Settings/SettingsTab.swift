@@ -680,6 +680,12 @@ public struct ExperimentalSettingsView: View {
         }
       }
       
+      Section("Undo Scroll To Top") {
+        Toggle("Enable Undo Scroll To Top", isOn: $preferences.undoScrollToTopEnabled)
+        if preferences.undoScrollToTopEnabled {
+          Stepper("Timeout: \(String(format: "%.0f", preferences.undoScrollToTopTimeout))s", value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
+        }
+      }
       Section("settings.experimental.media") {
         Toggle(isOn: $preferences.remoteMediaAutoFallback) {
           Label("settings.experimental.remote-media-auto-fallback", systemImage: "photo.badge.arrow.down")

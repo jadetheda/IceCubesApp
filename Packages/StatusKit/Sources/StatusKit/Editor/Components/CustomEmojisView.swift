@@ -1,12 +1,18 @@
 import DesignSystem
 import Env
 import Models
+import Nuke
 import NukeUI
 import SwiftUI
 
 extension StatusEditor {
   @MainActor
   struct CustomEmojisView: View {
+    // Isolated pipeline just for custom emojis
+    private let emojiPipeline: ImagePipeline = {
+      var config = ImagePipeline.Configuration.withDataCache
+      return ImagePipeline(configuration: config)
+    }()
     @Environment(\.dismiss) private var dismiss
 
     @Environment(Theme.self) private var theme
@@ -37,6 +43,7 @@ extension StatusEditor {
                         .accessibility(hidden: true)
                     }
                   }
+                  .pipeline(emojiPipeline)
                   .onTapGesture {
                     store.insertStatusText(text: " :\(emoji.shortcode): ")
                   }

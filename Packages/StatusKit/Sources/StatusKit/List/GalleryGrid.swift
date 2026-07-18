@@ -52,6 +52,5 @@ public struct GalleryGrid: View {
         }
       }
     }
-    .padding(.horizontal, 4)
   }
 }

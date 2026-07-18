@@ -19,6 +19,7 @@ struct AnyStatusesListView: View {
   var body: some View {
     if contentFilter.isGalleryMode {
       AnyView(unboxedGallery(fetcher))
+        .listRowInsets(EdgeInsets())
     } else {
       switch fetcher.statusesState {
       case .loading:

@@ -36,6 +36,8 @@ import SwiftUI
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
     @AppStorage("gallery_columns") public var galleryColumns: Int = 2
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
+    @AppStorage("undo_scroll_to_top_enabled") public var undoScrollToTopEnabled: Bool = true
+    @AppStorage("undo_scroll_to_top_timeout") public var undoScrollToTopTimeout: Double = 10.0
 
     @AppStorage("haptic_tab") public var hapticTabSelectionEnabled = true
     @AppStorage("haptic_timeline") public var hapticTimelineEnabled = true
@@ -273,6 +275,12 @@ import SwiftUI
     }
   }
 
+  public var undoScrollToTopEnabled: Bool {
+    didSet { storage.undoScrollToTopEnabled = undoScrollToTopEnabled }
+  }
+  public var undoScrollToTopTimeout: Double {
+    didSet { storage.undoScrollToTopTimeout = undoScrollToTopTimeout }
+  }
   public var galleryCropToSquare: Bool {
     didSet {
       storage.galleryCropToSquare = galleryCropToSquare
@@ -665,6 +673,8 @@ import SwiftUI
     autoDetectPostLanguage = storage.autoDetectPostLanguage
     galleryColumns = storage.galleryColumns
     galleryCropToSquare = storage.galleryCropToSquare
+    undoScrollToTopEnabled = storage.undoScrollToTopEnabled
+    undoScrollToTopTimeout = storage.undoScrollToTopTimeout
     inAppBrowserReaderView = storage.inAppBrowserReaderView
     hapticTabSelectionEnabled = storage.hapticTabSelectionEnabled
     hapticTimelineEnabled = storage.hapticTimelineEnabled

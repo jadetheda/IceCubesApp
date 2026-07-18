@@ -133,3 +133,7 @@ Based on the recent PR detailing the Tag Group feature:
 4.  **User Preference Toggle**:
     - Add `@AppStorage("boost_carousel_enabled") public var enableBoostCarousel: Bool = false` to `UserPreferences`.
     - Expose this setting in `SettingsTab` (under Timeline settings) so users who prefer the traditional vertical layout can opt out.
+
+## Scroll-to-Top Undo State Tracking
+- **Observation**: When a scroll-to-top trigger is initiated, the list immediately scrolls up, changing `scrollToTopVisible` to `false` when it reaches the top.
+- **Fix**: To allow a secondary tap to undo/scroll back to the previous offset, the check must expect `!scrollToTopVisible` (at the top) along with `previousScrollPosition != nil`. Checking `scrollToTopVisible` itself on the second tap would fail since the list has already finished scrolling up.
