@@ -1,5 +1,6 @@
 import Models
 import NetworkClient
+import Env
 
 extension StatusEditor {
   @MainActor
@@ -14,7 +15,6 @@ extension StatusEditor {
         let category = emoji.category ?? "Custom"
         dict[category, default: []].append(emoji)
       }
-
       return grouped
         .sorted(by: { lhs, rhs in
           if rhs.key == "Custom" {
@@ -40,6 +40,17 @@ extension StatusEditor {
 @MainActor
 extension MastodonClient: StatusEditor.CustomEmojiService.Client {
   public func fetchCustomEmojis() async throws -> [Emoji] {
-    try await get(endpoint: CustomEmojis.customEmojis) ?? []
+    if let cached = await CustomEmojiCache.shared.get(for: server) {
+      Task {
+        if let newEmojis: [Emoji] = try? await get(endpoint: CustomEmojis.customEmojis) {
+          await CustomEmojiCache.shared.set(emojis: newEmojis, for: server)
+        }
+      }
+      return cached
+    }
+    
+    let emojis: [Emoji] = try await get(endpoint: CustomEmojis.customEmojis) ?? []
+    await CustomEmojiCache.shared.set(emojis: emojis, for: server)
+    return emojis
   }
 }
