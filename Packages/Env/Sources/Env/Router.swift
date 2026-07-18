@@ -13,6 +13,7 @@ public enum RouterDestination: Hashable {
   case statusDetail(id: String)
   case statusDetailWithStatus(status: Status)
   case remoteStatusDetail(url: URL)
+  case remoteLocalTimeline(server: String)
   case conversationDetail(conversation: Conversation)
   case hashTag(tag: String, account: String?)
   case list(list: Models.List)
