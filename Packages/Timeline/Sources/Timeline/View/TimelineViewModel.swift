@@ -91,6 +91,9 @@ import Nuke
   @ObservationIgnored
   private var visibleStatuses: [Status] = []
 
+  @ObservationIgnored
+  private var visibleStatusesCount: [String: Int] = [:]
+
   private var canStreamEvents: Bool = true {
     didSet {
       if canStreamEvents {
@@ -172,6 +175,8 @@ import Nuke
 
   func reset() async {
     await datasource.reset()
+    visibleStatuses = []
+    visibleStatusesCount = [:]
   }
 
   private func handleLatestOrResume(_ oldValue: TimelineFilter) async {
@@ -488,7 +493,11 @@ extension TimelineViewModel: GapLoadingFetcher {
 
   func statusDidAppear(status: Status) {
     pendingStatusesObserver.removeStatus(status: status)
-    visibleStatuses.insert(status, at: 0)
+    
+    visibleStatusesCount[status.id, default: 0] += 1
+    if !visibleStatuses.contains(where: { $0.id == status.id }) {
+      visibleStatuses.insert(status, at: 0)
+    }
 
     if let client, timeline.supportNewestPagination {
       Task {
@@ -540,7 +549,17 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   func statusDidDisappear(status: Status) {
-    visibleStatuses.removeAll(where: { $0.id == status.id })
+    if let count = visibleStatusesCount[status.id] {
+      let newCount = count - 1
+      if newCount <= 0 {
+        visibleStatusesCount.removeValue(forKey: status.id)
+        visibleStatuses.removeAll(where: { $0.id == status.id })
+      } else {
+        visibleStatusesCount[status.id] = newCount
+      }
+    } else {
+      visibleStatuses.removeAll(where: { $0.id == status.id })
+    }
   }
 
   @MainActor
