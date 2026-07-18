@@ -582,6 +582,8 @@ public enum AnyCodable: Codable, Sendable {
   case integer(Int)
   case double(Double)
   case boolean(Bool)
+  case data(Data)
+  case date(Date)
   case array([AnyCodable])
   case dict([String: AnyCodable])
   
@@ -591,6 +593,8 @@ public enum AnyCodable: Codable, Sendable {
     else if let x = try? container.decode(Int.self) { self = .integer(x) }
     else if let x = try? container.decode(Double.self) { self = .double(x) }
     else if let x = try? container.decode(String.self) { self = .string(x) }
+    else if let x = try? container.decode(Data.self) { self = .data(x) }
+    else if let x = try? container.decode(Date.self) { self = .date(x) }
     else if let x = try? container.decode([AnyCodable].self) { self = .array(x) }
     else if let x = try? container.decode([String: AnyCodable].self) { self = .dict(x) }
     else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid AnyCodable value") }
@@ -603,6 +607,8 @@ public enum AnyCodable: Codable, Sendable {
     case .integer(let x): try container.encode(x)
     case .double(let x): try container.encode(x)
     case .boolean(let x): try container.encode(x)
+    case .data(let x): try container.encode(x)
+    case .date(let x): try container.encode(x)
     case .array(let x): try container.encode(x)
     case .dict(let x): try container.encode(x)
     }
@@ -614,6 +620,8 @@ public enum AnyCodable: Codable, Sendable {
     case .integer(let x): return x
     case .double(let x): return x
     case .boolean(let x): return x
+    case .data(let x): return x
+    case .date(let x): return x
     case .array(let x): return x.map { $0.value }
     case .dict(let x): return x.mapValues { $0.value }
     }
@@ -624,6 +632,8 @@ public enum AnyCodable: Codable, Sendable {
     if let x = value as? Bool { return .boolean(x) }
     if let x = value as? Int { return .integer(x) }
     if let x = value as? Double { return .double(x) }
+    if let x = value as? Data { return .data(x) }
+    if let x = value as? Date { return .date(x) }
     if let x = value as? [Any] { return .array(x.compactMap { parse($0) }) }
     if let x = value as? [String: Any] { return .dict(x.compactMapValues { parse($0) }) }
     return nil
