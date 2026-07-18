@@ -21,12 +21,13 @@
 ### Features
 
 - [ ] **Broken feature:** Tapping on the time sends you to the top of the page. Tapping it again should return you to your previous position, effectively acting as an undo for accidental taps. This should expire after **10 seconds** by default, with the timeout configurable under **Experimental Features**. We attempted to implement this, but it isn't working.
-- [ ] **New-ish feature:** While working through community feature requests, I'd like to mark individual feature requests (client-side only) with statuses such as **Pending**, **In Review**, etc. These categorizations should persist across app launches so I can track my progress.
+- [ ] **Finish started (?) feature:** While working through community feature requests, I'd like to mark individual feature requests (client-side only) with statuses such as **Pending**, **In Review**, etc. These categorizations should persist across app launches so I can track my progress.
+- [ ] I rather hate how the post view (at least on iOS) crops the images to like 5:4. There should be a setting to turn that off!
 
 # ## Stretch goals
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.
 - [ ] If I load a user's profile and it comes back completely empty, we should fetch the profile content directly from the instance they belong to.
-- [ ] I rather hate how the post view (at least on iOS) crops the images to like 5:4. There should be a setting to turn that off!
+
 
 ## Absolute Pipedreams
 - [ ] **Stretch goal:** Investigate what would be required to support **Akkoma**, **Sharkey**, and/or **PixelFed**.
