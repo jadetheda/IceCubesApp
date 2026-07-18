@@ -95,3 +95,41 @@ Based on the recent PR detailing the Tag Group feature:
 ## 🚨 Exit Code 65: Missing Exposed Properties on UserPreferences
 * **The Root Cause**: `UserPreferences` in the `Env` package uses a nested `Storage` class with `@AppStorage` wrappers to handle UserDefaults. When adding new settings (like `tagGroupsClientSideMergeEnabled`), adding them only to the `Storage` class is insufficient.
 * **The Solution**: You must also expose a matching `public var` on the main `UserPreferences` class itself (with `didSet` propagating to `storage`) AND ensure the initial value is synced back from `storage` inside the `init()` method. Failure to do so will result in a compiler failure (Exit Code 65) when other files attempt to access it via `UserPreferences.shared`.
+
+## Phanpy-Style Boost Carousel Architecture
+
+**Background:** Phanpy groups multiple consecutive boosts (reblogs) from different accounts into a single, horizontally scrollable carousel to prevent the home timeline from becoming cluttered with a "wall of boosts."
+
+**Implementation Considerations & Steps:**
+
+1.  **Data Structure Modification (`TimelineItem`)**:
+    - Add a new case to the `TimelineItem` enum: `case boostCarousel([Status])` or `case boostCarousel(id: String, statuses: [Status])` to group adjacent boosted statuses.
+    - Update the `id` property to return a unique identifier for the carousel (e.g., `"carousel-\(firstStatus.id)"`).
+
+2.  **Processing Logic (`TimelineDatasource`)**:
+    - Introduce a processing pass inside `TimelineDatasource` whenever items are updated (`set(items:)`, `append(items:)`, etc.).
+    - Iterate over the incoming statuses and identify sequences of consecutive statuses where `status.reblog != nil`.
+    - Collapse these sequences into a `.boostCarousel` item.
+    - *Edge Case*: Only merge boosts if they appear adjacently in the timeline's strict chronological or paginated order.
+    - *Staleness*: Consider how the timeline cache saves items; the `TimelineCache` will also need to support decoding/encoding the new `.boostCarousel` type, or the carousel grouping should remain purely a view-level transformation on the data source.
+
+3.  **UI Rendering (`StatusesListView`)**:
+    - In `StatusesListView.swift` (inside the `.displayWithGaps` switch case), handle `case .boostCarousel(let statuses):`.
+    - Render a horizontally scrolling list:
+      ```swift
+      ScrollView(.horizontal, showsIndicators: false) {
+          LazyHStack(spacing: 16) {
+              ForEach(statuses) { status in
+                  StatusRowView(...)
+                      .frame(width: UIScreen.main.bounds.width * 0.85)
+              }
+          }
+          .scrollTargetLayout()
+      }
+      .scrollTargetBehavior(.viewAligned)
+      ```
+    - Ensure `.onAppear` and `.onDisappear` triggers on individual items within the carousel still fire correctly so `TimelineViewModel` can track `latestSeenId` correctly.
+
+4.  **User Preference Toggle**:
+    - Add `@AppStorage("boost_carousel_enabled") public var enableBoostCarousel: Bool = false` to `UserPreferences`.
+    - Expose this setting in `SettingsTab` (under Timeline settings) so users who prefer the traditional vertical layout can opt out.
