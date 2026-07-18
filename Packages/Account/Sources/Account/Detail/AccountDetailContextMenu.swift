@@ -16,9 +16,48 @@ public struct AccountDetailContextMenu: View {
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
 
+  @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
+  @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
+  @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
+
   public var body: some View {
     if let account = account {
       Section(account.acct) {
+        Menu("Display Mode") {
+          Toggle(isOn: Binding(
+            get: { !hidePostsWithoutMedia },
+            set: { hidePostsWithoutMedia = !$0 }
+          )) {
+            Label("Text posts", systemImage: "text.alignleft")
+          }
+          .disabled(isGalleryMode)
+          
+          Toggle(isOn: Binding(
+            get: { !hidePostsWithMedia },
+            set: { hidePostsWithMedia = !$0 }
+          )) {
+            Label("Media posts", systemImage: "photo")
+          }
+          
+          Toggle(isOn: Binding(
+            get: { isGalleryMode },
+            set: {
+              isGalleryMode = $0
+              if $0 { hidePostsWithMedia = false }
+            }
+          )) {
+            Label("Gallery mode", systemImage: "rectangle.grid.1x2")
+          }
+        }
+        
+        if let server = account.url?.host() {
+          Button {
+            routerPath.navigate(to: .remoteLocalTimeline(server: server))
+          } label: {
+            Label("View Local Timeline", systemImage: "globe")
+          }
+        }
+
         if !isCurrentUser {
           Button {
             routerPath.presentedSheet = .mentionStatusEditor(
