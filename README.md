@@ -12,8 +12,9 @@ You can connect to any Mastodon instance, browse your timeline, interact with ot
 
 It's multiplatform and works on iOS, macOS, iPadOS, and visionOS.
 It has a dedicated UI with a sidebar on macOS and iPadOS.
+
 This fork is dedicated to implementing the feature request viewable in-app.
-It is just a personal project *being developed primarily using AI* :(sorry) so code quality is probably not great.
+It is just a personal project **being developed primarily using AI** *:(sorry)* so code quality is probably not great.
 
 # Features
 
