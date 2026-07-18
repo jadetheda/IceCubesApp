@@ -6,8 +6,8 @@ import Models
 import DesignSystem
 import Timeline
 
-struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
-  let fetcher: Fetcher
+struct AnyStatusesListView: View {
+  let fetcher: any StatusesFetcher
   let client: MastodonClient
   let routerPath: RouterPath
   
@@ -18,13 +18,7 @@ struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
   
   var body: some View {
     if contentFilter.isGalleryMode {
-      GalleryStatusesListView(
-        fetcher: fetcher,
-        client: client,
-        routerPath: routerPath,
-        isRemote: false,
-        filterContext: .account
-      )
+      unboxedGallery(fetcher)
     } else {
       switch fetcher.statusesState {
       case .loading:
@@ -96,5 +90,16 @@ struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
     }
     .padding()
     .listRowBackground(theme.primaryBackgroundColor)
+  }
+  
+  @ViewBuilder
+  private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> some View {
+    GalleryStatusesListView(
+      fetcher: f,
+      client: client,
+      routerPath: routerPath,
+      isRemote: false,
+      filterContext: .account
+    )
   }
 }
