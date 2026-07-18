@@ -228,3 +228,4 @@
 * **2026-07-10 UTC (Agent Session 6)**
   * **Fixes & Optimizations**:
     * Fixed a build failure (Exit Code 65) where `TimelineFilter.swift` could not access `UserPreferences.shared.tagGroupsClientSideMergeEnabled`. The property was previously only added to the nested `Storage` class within `UserPreferences`, leaving it unexposed on the main object. Added the missing property and `init()` assignment to restore compilation.
+## 2026-07-18T17:02:27Z - Fixed Server Emote Cache by changing URL to String in Emoji.swift

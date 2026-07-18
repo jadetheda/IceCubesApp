@@ -149,11 +149,22 @@ struct StatusRowContextMenu: View {
       } label: {
         Label("status.action.view-in-browser", systemImage: "safari")
       }
-      if let server = url.host() {
-        Button {
-          viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
-        } label: {
-          Label("View Local Timeline", systemImage: "globe")
+      if let server = url.host(),
+         server != viewModel.client.server {
+        let isCurrentRemoteLocal: Bool = {
+          if let last = viewModel.routerPath.path.last,
+             case let .remoteLocalTimeline(remoteServer) = last,
+             remoteServer == server {
+            return true
+          }
+          return false
+        }()
+        if !isCurrentRemoteLocal {
+          Button {
+            viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
+          } label: {
+            Label("View Local Timeline", systemImage: "globe")
+          }
         }
       }
     }

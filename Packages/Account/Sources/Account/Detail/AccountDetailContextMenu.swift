@@ -17,47 +17,9 @@ public struct AccountDetailContextMenu: View {
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
 
-  // Use the shared TimelineContentFilter instance instead of raw AppStorage 
-  // to ensure state remains synced between Timeline and Profile views.
-  var contentFilter = TimelineContentFilter.shared
-
   public var body: some View {
     if let account = account {
       Section(account.acct) {
-        Menu("Display Mode") {
-          Toggle(isOn: Binding(
-            get: { !contentFilter.hidePostsWithoutMedia },
-            set: { contentFilter.hidePostsWithoutMedia = !$0 }
-          )) {
-            Label("Text posts", systemImage: "text.alignleft")
-          }
-          .disabled(contentFilter.isGalleryMode)
-          
-          Toggle(isOn: Binding(
-            get: { !contentFilter.hidePostsWithMedia },
-            set: { contentFilter.hidePostsWithMedia = !$0 }
-          )) {
-            Label("Media posts", systemImage: "photo")
-          }
-          
-          Toggle(isOn: Binding(
-            get: { contentFilter.isGalleryMode },
-            set: {
-              contentFilter.isGalleryMode = $0
-              if $0 { contentFilter.hidePostsWithMedia = false }
-            }
-          )) {
-            Label("Gallery mode", systemImage: "rectangle.grid.1x2")
-          }
-        }
-        
-        if let server = account.url?.host() {
-          Button {
-            routerPath.navigate(to: .remoteLocalTimeline(server: server))
-          } label: {
-            Label("View Local Timeline", systemImage: "globe")
-          }
-        }
 
         if !isCurrentUser {
           Button {
@@ -73,7 +35,25 @@ public struct AccountDetailContextMenu: View {
             Label("account.action.message", systemImage: "tray.full")
           }
 
-          #if !targetEnvironment(macCatalyst)
+          
+          if let server = account.url?.host(), server != client.server {
+            let isCurrentRemoteLocal: Bool = {
+              if let last = routerPath.path.last,
+                 case let .remoteLocalTimeline(remoteServer) = last,
+                 remoteServer == server {
+                return true
+              }
+              return false
+            }()
+            if !isCurrentRemoteLocal {
+              Button {
+                routerPath.navigate(to: .remoteLocalTimeline(server: server))
+              } label: {
+                Label("View Local Timeline", systemImage: "globe")
+              }
+            }
+          }
+#if !targetEnvironment(macCatalyst)
             Divider()
           #endif
 
@@ -226,6 +206,14 @@ public struct AccountDetailContextMenu: View {
         #if !targetEnvironment(macCatalyst)
           Divider()
         #endif
+        
+        Section {
+          Button {
+            routerPath.presentedSheet = .timelineContentFilter
+          } label: {
+            Label("timeline.content-filter.title", systemImage: "line.3.horizontal.decrease")
+          }
+        }
       }
     }
   }
