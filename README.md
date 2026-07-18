@@ -25,11 +25,11 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 - **Content Filters for Notifications**
-- **Rudimentary config Import/Export system** -- useful for backing up Tag Groups and such!
+- **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
 - **Load Remote Media button & auto-fallback** (for when your server doesn’t have media cached)
 * ~**More places to access remote Local Timelines**~ not quite yet
 * **Special IceShrimp.NET support**
-* **Enhance Timeline Content Filters** now support toggling on/off media/text posts
+* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
 * **Server emote caching**
 * and much more!
 
