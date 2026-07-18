@@ -50,8 +50,8 @@ When working with source code within AI Studio and extracting it on an iOS devic
 
 These occur because standard iOS file extraction and basic `cp` commands do not respect UNIX file system nuances the way a native macOS/Linux environment would. The two biggest offenders are:
 
-1.  **File Permissions (`chmod`)**: `a-Shell mini` is a sandboxed iOS app. When you unzip files and copy them over, executable flags (like `100755` on shell scripts or binaries) are often wiped to `100644`. Git detects this as a file modification (`old mode 100755 new mode 100644`).
-2.  **Line Endings (CRLF vs LF)**: Sometimes, archiving and unarchiving text files across environments accidentally normalizes or converts line endings. If LF (`\n`) is converted to CRLF (`\r\n`), Git will flag the entire file as modified.
+1. **File Permissions (`chmod`)**: `a-Shell mini` is a sandboxed iOS app. When you unzip files and copy them over, executable flags (like `100755` on shell scripts or binaries) are often wiped to `100644`. Git detects this as a file modification (`old mode 100755 new mode 100644`).
+2. **Line Endings (CRLF vs LF)**: Sometimes, archiving and unarchiving text files across environments accidentally normalizes or converts line endings. If LF (`\n`) is converted to CRLF (`\r\n`), Git will flag the entire file as modified.
 
 **The Fix:** We have hardcoded protective Git configurations into the `apply_and_push.sh` script to neutralize these threats before committing:
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
@@ -69,71 +69,54 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **The Issue**: Long-running background tasks (like Playwright browser automation scripts or file scrapers, e.g., `dl4.cjs`) were executed without being properly tracked in `memory.md`.
 - **The Lesson**: EVERY background task, especially those involving external navigation or headless browsers, MUST be documented in `memory.md` immediately upon execution, including the purpose of the task and its expected outcome. If it fails or times out (e.g. `TimeoutError` waiting for download events), the failure must also be logged to prevent silent errors and confusion.
 
-## Tag Groups Feature Architecture & Lessons
+## Token Scarcity, Quota Exhaustion & Model Fallbacks
+- **The Issue**: When the user's high-tier models (Pro) hit quota limits, the environment automatically transitions to lower-tier models (such as Gemini Flash).
+- **The Impact**: Flash models have smaller reasoning context bounds and are more prone to minor syntax oversights, missing closing brackets, or detached block structures. For example, a property observer (`didSet`) was accidentally detached and left floating in `TimelineViewModel.swift`, which caused compiler crashes.
+- **Mitigation**: 
+  - Do not make massive sweeping code refactors in a single step under Flash constraints.
+  - Keep changes highly localized, small, and surgical.
+  - Eagerly run `compile_applet` or linter checks after EVERY single change to catch syntax regressions early.
+  - Manually review all changed closures, bracket nesting, and Swift structure initializers before committing.
 
-Based on the recent PR detailing the Tag Group feature:
+## Tool Quota Efficiency & Batching
+- **Optimization Rule**: To minimize discrete system runs and prevent hitting token or execution rate limits, always batch file reading and diagnostics.
+- **Practice**:
+  - Prefer using a single broad `grep` query or multi-file diagnostic check over multiple individual `cat` or `view_file` calls.
+  - When applying multiple non-adjacent edits, use the `multi_edit_file` tool rather than running several consecutive `edit_file` calls.
+  - Leverage parallel background commands for independent operations where the output of one is not needed for the next.
 
-### Data Model & Persistence
-- **SwiftData over AppStorage**: Tag groups use a SwiftData `@Model` (`TagGroup`), allowing `@Query` to keep the UI in sync automatically.
-- **Model ↔ Timeline Filter Decoupling**: The app decouples the SwiftData `TagGroup` model (in the `Models` package) from the `TimelineFilter.tagGroup` enum (in the `Timeline` package). The Timeline package has no SwiftData dependency. The app layer copies data between them.
+## Tag Groups Feature Architecture
+- **Data Model & Persistence**: Tag groups use a SwiftData `@Model` (`TagGroup`), allowing `@Query` to keep the UI in sync automatically.
+- **Model ↔ Timeline Filter Decoupling**: The app decouples the SwiftData `TagGroup` model (in the `Models` package) from the `TimelineFilter.tagGroup` enum (in the `Timeline` package). The Timeline package has no SwiftData dependency. the app layer copies data between them.
 - **Two Persistence Paths**: SwiftData stores the group, while `@AppStorage("timeline_pinned_filters")` stores pinned filters via `TimelineFilter`'s `Codable`. Editing a group in SwiftData does *not* automatically update a pinned filter copy, which is a potential staleness gotcha.
 
-### Network & Backend Integration
-- **Server-Side Merge (`any[]`)**: A tag group maps to a Mastodon `/api/v1/timelines/tag/{firstTag}?any[]={second}&any[]={third}...` request. The `any[]` parameter is the core trick—Mastodon natively processes it as an OR query over multiple hashtags. No client-side merge logic is needed.
-- **No Streaming**: Tag groups fall into the `.pub` filter context and are not in the streamable set, meaning no live WebSocket updates (manual refresh only).
-
-### UI & Validation Rules
-- **Validation**: Requires a non-empty title, a valid SF Symbol checked against `SFSafeSymbols`, and a minimum of 2 tags (a 1-tag group would just duplicate the standard hashtag timeline).
-- **Lowercase on Save**: Tags are lowercased before persisting because Mastodon API calls are case-insensitive.
-- **Identity Excludes Icon**: `TimelineFilter.tagGroup`'s `id` is computed from `title + tags.joined()`. Changing only the icon won't reload the timeline.
-
-## Mastodon API: Tag Group Searching
+## Mastodon API: Tag Group Searching & Hash Sanitization
 - **Limitation**: The Mastodon API `any[]` array query for `Timelines.hashtag` acts as a server-side OR merge, but it seems to limit or miss results compared to doing separate full text searches.
 - **Solution**: For tag groups (which contain multiple hashtags), it's more reliable to fetch each tag individually using separate API calls (`Timelines.hashtag(tag: cleanTag)`) and merge the results client-side, filtering out duplicates using a Set of Status IDs. This approach ensures a comprehensive list of statuses is retrieved.
 - **Mastodon API Hash Symbol Encoding**: When hitting `/api/v1/timelines/tag/:hashtag`, the hashtag must NOT include the `#` symbol. If `#` is included in the Swift `URLComponents.path`, it can either truncate the path (acting as a fragment) causing 404s, or encode as `%23`. While Mastodon core strips `%23` in `any[]` parameters, some forks and older versions do not, leading to silent filtering (0 matches for the encoded tag). Always sanitize and strip `#` from tag queries before sending them to the Mastodon API.
 
-## 🚨 Exit Code 65: Missing Exposed Properties on UserPreferences
-* **The Root Cause**: `UserPreferences` in the `Env` package uses a nested `Storage` class with `@AppStorage` wrappers to handle UserDefaults. When adding new settings (like `tagGroupsClientSideMergeEnabled`), adding them only to the `Storage` class is insufficient.
-* **The Solution**: You must also expose a matching `public var` on the main `UserPreferences` class itself (with `didSet` propagating to `storage`) AND ensure the initial value is synced back from `storage` inside the `init()` method. Failure to do so will result in a compiler failure (Exit Code 65) when other files attempt to access it via `UserPreferences.shared`.
+## Client-Side Tag Group Merging & Data Loss
+- **Bug**: Client-side merging of timelines (like Tag Groups) combined results from multiple API calls and truncated them using `.prefix(limit)` to match standard pagination counts.
+- **Consequence**: This permanently dropped statuses because Mastodon's `minId`/`sinceId`/`maxId` Snowflake pagination creates invisible gaps when valid statuses within the bounds are thrown away by the client. The unread pill count was always too low, and hiding seen posts resulted in blank timelines.
+- **Fix**: Never truncate combined pagination results when utilizing client-side merges. Let the SwiftUI list handle the bulk data instead of creating dropped-packet gaps.
+
+## 🚨 Exit Code 65 & Compiler Error Mitigation
+- **Exposed Properties on UserPreferences**: `UserPreferences` in the `Env` package uses a nested `Storage` class with `@AppStorage` wrappers to handle UserDefaults. When adding new settings (like `tagGroupsClientSideMergeEnabled` or `undoScrollToTopEnabled`), adding them only to the `Storage` class is insufficient. You must also expose a matching `public var` on the main `UserPreferences` class itself (with `didSet` propagating to `storage`) AND ensure the initial value is synced back from `storage` inside the `init()` method. Failure to do so will result in a compiler failure (Exit Code 65) when other files attempt to access it.
+- **Default Initializers in Structs**: Adding properties to an existing struct (e.g. `TimelineContentFilter.Snapshot`) without providing default values inside the struct's custom initializers will break all existing instantiations, particularly in independent test targets (`TimelineViewModelTests.swift`). Always specify sensible defaults (e.g., `isGalleryMode: Bool = false`) in struct initializers.
+- **Swift String Interpolation safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing `\"%.1f\"` will cause compiler crashes (Exit Code 65). Always write `%.1f` directly without backslash-escaping double-quotes.
 
 ## Phanpy-Style Boost Carousel Architecture
-
-**Background:** Phanpy groups multiple consecutive boosts (reblogs) from different accounts into a single, horizontally scrollable carousel to prevent the home timeline from becoming cluttered with a "wall of boosts."
-
-**Implementation Considerations & Steps:**
-
-1.  **Data Structure Modification (`TimelineItem`)**:
-    - Add a new case to the `TimelineItem` enum: `case boostCarousel([Status])` or `case boostCarousel(id: String, statuses: [Status])` to group adjacent boosted statuses.
-    - Update the `id` property to return a unique identifier for the carousel (e.g., `"carousel-\(firstStatus.id)"`).
-
-2.  **Processing Logic (`TimelineDatasource`)**:
-    - Introduce a processing pass inside `TimelineDatasource` whenever items are updated (`set(items:)`, `append(items:)`, etc.).
-    - Iterate over the incoming statuses and identify sequences of consecutive statuses where `status.reblog != nil`.
-    - Collapse these sequences into a `.boostCarousel` item.
-    - *Edge Case*: Only merge boosts if they appear adjacently in the timeline's strict chronological or paginated order.
-    - *Staleness*: Consider how the timeline cache saves items; the `TimelineCache` will also need to support decoding/encoding the new `.boostCarousel` type, or the carousel grouping should remain purely a view-level transformation on the data source.
-
-3.  **UI Rendering (`StatusesListView`)**:
-    - In `StatusesListView.swift` (inside the `.displayWithGaps` switch case), handle `case .boostCarousel(let statuses):`.
-    - Render a horizontally scrolling list:
-      ```swift
-      ScrollView(.horizontal, showsIndicators: false) {
-          LazyHStack(spacing: 16) {
-              ForEach(statuses) { status in
-                  StatusRowView(...)
-                      .frame(width: UIScreen.main.bounds.width * 0.85)
-              }
-          }
-          .scrollTargetLayout()
-      }
-      .scrollTargetBehavior(.viewAligned)
-      ```
-    - Ensure `.onAppear` and `.onDisappear` triggers on individual items within the carousel still fire correctly so `TimelineViewModel` can track `latestSeenId` correctly.
-
-4.  **User Preference Toggle**:
-    - Add `@AppStorage("boost_carousel_enabled") public var enableBoostCarousel: Bool = false` to `UserPreferences`.
-    - Expose this setting in `SettingsTab` (under Timeline settings) so users who prefer the traditional vertical layout can opt out.
+- **Background**: Phanpy groups multiple consecutive boosts (reblogs) from different accounts into a single, horizontally scrollable carousel to prevent the home timeline from becoming cluttered with a "wall of boosts."
+- **Implementation Rules**:
+  - **Data Structure**: Group adjacent boosted statuses into a `.boostCarousel` item in the `TimelineItem` enum with a unique ID computed from the first status ID.
+  - **Processing Pass**: Iterate through incoming statuses in `TimelineDatasource` and collapse sequences of reblogs. This is best handled as a view-level transformation on the active timeline data source to avoid caching complexities.
+  - **UI Carousel Layout**: Use `ScrollView(.horizontal, showsIndicators: false)` wrapping a `LazyHStack` with view-aligned scroll target behavior. Frame elements to taking up roughly 85% of screen width to hint at horizontal scroll availability. Ensure `.onAppear` and `.onDisappear` triggers on individual carousel rows fire correctly so unread tracking doesn't break.
+  - **User Configuration**: Provide a toggle in `UserPreferences` (and Settings UI) so users can opt back into the traditional vertical layout.
 
 ## Scroll-to-Top Undo State Tracking
 - **Observation**: When a scroll-to-top trigger is initiated, the list immediately scrolls up, changing `scrollToTopVisible` to `false` when it reaches the top.
 - **Fix**: To allow a secondary tap to undo/scroll back to the previous offset, the check must expect `!scrollToTopVisible` (at the top) along with `previousScrollPosition != nil`. Checking `scrollToTopVisible` itself on the second tap would fail since the list has already finished scrolling up.
+
+## IceShrimp.NET List Retrieval Compatibility
+- **Observation**: The `GET /api/v1/accounts/:id/lists` endpoint is prone to failure or missing implementation on IceShrimp instances.
+- **Fix**: A robust workaround is fetching all lists and individually fetching the accounts of each list (`Lists.accounts(listId:)`) via a Swift task group.
