@@ -232,3 +232,4 @@
 ## 2026-07-18T17:07:06Z - Fixed redundant View Local Timeline and replaced Display Mode menu with TimelineContentFilter button in AccountDetailContextMenu
 ## 2026-07-18T17:08:11Z - Added Media-Only Toggle (Display Mode section) to ContentSettingsView
 ## 2026-07-18T17:39:11Z - Configured Nuke data cache and updated version to 2.1.4.4
+## 2026-07-18T17:39:33Z - Replaced AccountMediaGrid with Gallery layout, implemented Gallery Mode for Pinned Posts, added Lists Tab Timeline Content Filter dropdown, and removed require media loaded toggle.
