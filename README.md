@@ -15,7 +15,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 This fork is dedicated to implementing the feature request viewable in-app.
 It is just a personal project *being developed primarily using AI* :(sorry) so code quality is probably not great.
 
-## Features
+# Features
 
 ## New in **Community Edition**
 * Gallery Mode *(inspired by Hydra for Reddit)*
