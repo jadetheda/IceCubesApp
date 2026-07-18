@@ -20,7 +20,7 @@ extension StatusEditor {
             ForEach(store.customEmojiContainer) { container in
               Section {
                 ForEach(container.emojis) { emoji in
-                  LazyImage(url: emoji.url) { state in
+                  LazyImage(url: URL(string: emoji.url)) { state in
                     if let image = state.image {
                       image
                         .resizable()

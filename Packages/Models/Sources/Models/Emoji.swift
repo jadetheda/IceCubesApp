@@ -10,8 +10,8 @@ public struct Emoji: Codable, Hashable, Identifiable, Equatable, Sendable {
   }
 
   public let shortcode: String
-  public let url: URL
-  public let staticUrl: URL
+  public let url: String
+  public let staticUrl: String
   public let visibleInPicker: Bool
   public let category: String?
 }

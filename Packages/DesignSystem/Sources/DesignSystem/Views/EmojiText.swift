@@ -17,7 +17,10 @@ public struct EmojiTextApp: View {
     append: (@Sendable () -> Text)? = nil
   ) {
     self.markdown = markdown
-    self.emojis = emojis.map { RemoteEmoji(shortcode: $0.shortcode, url: $0.url) }
+    self.emojis = emojis.compactMap { emoji in
+      guard let url = URL(string: emoji.url) else { return nil }
+      return RemoteEmoji(shortcode: emoji.shortcode, url: url)
+    }
     self.language = language
     self.lineLimit = lineLimit
     self.append = append
