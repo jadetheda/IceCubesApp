@@ -1,6 +1,4 @@
-# IceCubesApp
-
-[![Download on the App Store](Images/download_on_the_app_store.svg)](https://apps.apple.com/us/app/ice-cubes-for-mastodon/id6444915884)
+# IceCubesApp: **Community Edition**
 
 <a href="https://www.emergetools.com/app/example/ios/com.thomasricouard.IceCubesApp/release?utm_campaign=badge-data"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fwww.emergetools.com%2Fapi%2Fv2%2Fpublic_new_build%3FexampleId%3Dcom.thomasricouard.IceCubesApp%26platform%3Dios%26badgeOption%3Dversion_and_max_install_size%26buildType%3Drelease&query=$.badgeMetadata&label=Ice%20Cubes&logo=apple" /></a>
 <a href="" rel="nofollow"><img src="https://camo.githubusercontent.com/498ead3b529283d08c8db814f646db66ac683bb6b8ced181087fdcde9106c241/68747470733a2f2f696d672e736869656c64732e696f2f656e64706f696e743f75726c3d687474707325334125324625324673776966747061636b616765696e6465782e636f6d2532466170692532467061636b616765732532466d316775656c706625324673776966742d7265616c74696d652d6f70656e616925324662616467652533467479706525334473776966742d76657273696f6e7326636f6c6f723d627269676874677265656e" alt="Swift Version" data-canonical-src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fm1guelpf%2Fswift-realtime-openai%2Fbadge%3Ftype%3Dswift-versions&amp;color=brightgreen" style="max-width: 100%;"></a>
@@ -14,6 +12,8 @@ You can connect to any Mastodon instance, browse your timeline, interact with ot
 
 It's multiplatform and works on iOS, macOS, iPadOS, and visionOS.
 It has a dedicated UI with a sidebar on macOS and iPadOS.
+This fork is dedicated to implementing the feature request viewable in-app.
+It is just a personal project *being developed primarily using AI* :(sorry) so code quality is probably not great.
 
 ## Features
 
@@ -132,6 +132,20 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * Customize your swipe gestures.
 * Customize your tabbar entries.
 * Sound & haptic feedback support.
+
+## New in **Community Edition**
+* Gallery Mode *(inspired by Hydra for Reddit)*
+* Content Filter for Notification types
+* Hide Seen Posts feature *(also inspired by Hydra)*
+* More places to access remote Local Timelines
+* Fixes to support IceShrimp.NET instances
+* Ability to Import/Export settings -- useful for backing up Tag Groups and such!
+* Content Filters now support toggling on/off media or text posts
+* Server emotes are now cached
+* Optional fallback for media your server hasn't cached yet
+* and much more!
+
+Configuration for these new features is available under a new **Experimental Features** section in Settings.
 
 ## A note on the architecture
 
