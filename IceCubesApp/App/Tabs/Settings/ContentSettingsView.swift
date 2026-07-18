@@ -148,8 +148,34 @@ struct ContentSettingsView: View {
         Toggle(isOn: $contentFilter.showQuotePosts) {
           Label("timeline.filter.show-quote", systemImage: "quote.bubble")
         }
-        Toggle(isOn: $contentFilter.hidePostsWithMedia) {
-          Label("timeline.filter.hide-posts-with-media", systemImage: "photo.on.rectangle.angled")
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+      
+      Section("Display Mode") {
+        Toggle(isOn: Binding(
+            get: { !contentFilter.hidePostsWithoutMedia },
+            set: { contentFilter.hidePostsWithoutMedia = !$0 }
+        )) {
+          Label("Text posts", systemImage: "text.alignleft")
+        }
+        .disabled(contentFilter.isGalleryMode)
+        
+        Toggle(isOn: Binding(
+            get: { !contentFilter.hidePostsWithMedia },
+            set: { contentFilter.hidePostsWithMedia = !$0 }
+        )) {
+          Label("Media posts", systemImage: "photo")
+        }
+        
+        Toggle(isOn: $contentFilter.isGalleryMode) {
+          Label("Gallery mode", systemImage: "rectangle.grid.1x2")
+        }
+        .onChange(of: contentFilter.isGalleryMode) { _, newValue in 
+           if newValue { 
+               contentFilter.hidePostsWithMedia = false 
+           }
         }
         Toggle(isOn: $contentFilter.hidePostsFromBots) {
           Label("timeline.filter.hide-posts-from-bots", systemImage: "poweroutlet.type.b")
