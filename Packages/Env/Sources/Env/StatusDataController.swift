@@ -23,7 +23,7 @@ public protocol StatusDataControlling {
 public final class StatusDataControllerProvider {
   public static let shared = StatusDataControllerProvider()
 
-  private var cache: NSMutableDictionary = [:]
+  private var cache: [CacheKey: StatusDataController] = [:]
 
   private struct CacheKey: Hashable {
     let statusId: String
@@ -34,7 +34,8 @@ public final class StatusDataControllerProvider {
     -> StatusDataController
   {
     let key = CacheKey(statusId: status.id, client: client)
-    if let controller = cache[key] as? StatusDataController {
+    if let controller = cache[key] {
+      controller.updateFrom(status: status)
       return controller
     }
     let controller = StatusDataController(status: status, client: client)
