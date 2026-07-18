@@ -4,6 +4,7 @@ import NetworkClient
 import Env
 import Models
 import DesignSystem
+import Timeline
 
 struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
   let fetcher: Fetcher
@@ -12,12 +13,11 @@ struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
   
   @Environment(Theme.self) private var theme
   
-  @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
-  @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
-  @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
+  // Directly access the shared TimelineContentFilter for synced visual state.
+  var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    if isGalleryMode {
+    if contentFilter.isGalleryMode {
       GalleryStatusesListView(
         fetcher: fetcher,
         client: client,
@@ -78,10 +78,10 @@ struct AnyStatusesListView<Fetcher: StatusesFetcher>: View {
   
   private func filteredStatuses(_ statuses: [Status]) -> [Status] {
     statuses.filter { status in
-      if hidePostsWithMedia {
+      if contentFilter.hidePostsWithMedia {
         if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
       }
-      if hidePostsWithoutMedia {
+      if contentFilter.hidePostsWithoutMedia {
         if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
       }
       return true
