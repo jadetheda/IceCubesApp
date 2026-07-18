@@ -230,3 +230,4 @@
     * Fixed a build failure (Exit Code 65) where `TimelineFilter.swift` could not access `UserPreferences.shared.tagGroupsClientSideMergeEnabled`. The property was previously only added to the nested `Storage` class within `UserPreferences`, leaving it unexposed on the main object. Added the missing property and `init()` assignment to restore compilation.
 ## 2026-07-18T17:02:27Z - Fixed Server Emote Cache by changing URL to String in Emoji.swift
 ## 2026-07-18T17:07:06Z - Fixed redundant View Local Timeline and replaced Display Mode menu with TimelineContentFilter button in AccountDetailContextMenu
+## 2026-07-18T17:08:11Z - Added Media-Only Toggle (Display Mode section) to ContentSettingsView
