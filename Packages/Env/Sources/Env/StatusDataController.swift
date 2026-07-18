@@ -105,6 +105,7 @@ public final class StatusDataControllerProvider {
     do {
       let status: Status = try await client.post(endpoint: endpoint)
       updateFrom(status: status)
+      NotificationCenter.default.post(name: .statusUpdated, object: status)
     } catch {
       isFavorited.toggle()
       favoritesCount += isFavorited ? -1 : 1
@@ -122,6 +123,7 @@ public final class StatusDataControllerProvider {
     do {
       let status: Status = try await client.post(endpoint: endpoint)
       updateFrom(status: status.reblog ?? status)
+      NotificationCenter.default.post(name: .statusUpdated, object: status.reblog ?? status)
     } catch {
       isReblogged.toggle()
       reblogsCount += isReblogged ? -1 : 1
@@ -136,6 +138,7 @@ public final class StatusDataControllerProvider {
     do {
       let status: Status = try await client.post(endpoint: endpoint)
       updateFrom(status: status)
+      NotificationCenter.default.post(name: .statusUpdated, object: status)
     } catch {
       isBookmarked.toggle()
     }

@@ -96,7 +96,7 @@ actor TimelineDatasource {
   private func findStatusIndex(id: String) -> Int? {
     items.firstIndex(where: { item in
       if case .status(let status) = item {
-        return status.id == id
+        return status.id == id || status.reblog?.id == id
       }
       return false
     })
@@ -168,7 +168,36 @@ actor TimelineDatasource {
   }
 
   func replace(_ status: Status, at index: Int) {
-    items[index] = .status(status)
+    if case .status(let oldStatus) = items[index] {
+      if oldStatus.id == status.id {
+        items[index] = .status(status)
+      } else if let oldReblog = oldStatus.reblog, oldReblog.id == status.id {
+        let newReblog = ReblogStatus(
+          id: status.id, content: status.content, account: status.account, createdAt: status.createdAt, editedAt: status.editedAt,
+          mediaAttachments: status.mediaAttachments, mentions: status.mentions, repliesCount: status.repliesCount, reblogsCount: status.reblogsCount,
+          favouritesCount: status.favouritesCount, card: status.card, favourited: status.favourited, reblogged: status.reblogged, pinned: status.pinned,
+          bookmarked: status.bookmarked, emojis: status.emojis, url: status.url, application: status.application,
+          inReplyToId: status.inReplyToId, inReplyToAccountId: status.inReplyToAccountId, visibility: status.visibility, poll: status.poll,
+          spoilerText: status.spoilerText, filtered: status.filtered, sensitive: status.sensitive, language: status.language,
+          tags: status.tags, quote: status.quote, quotesCount: status.quotesCount, quoteApproval: status.quoteApproval
+        )
+        let wrapper = Status(
+          id: oldStatus.id, content: oldStatus.content, account: oldStatus.account, createdAt: oldStatus.createdAt, editedAt: oldStatus.editedAt,
+          reblog: newReblog, mediaAttachments: oldStatus.mediaAttachments, mentions: oldStatus.mentions,
+          repliesCount: oldStatus.repliesCount, reblogsCount: oldStatus.reblogsCount, favouritesCount: oldStatus.favouritesCount, card: oldStatus.card, favourited: oldStatus.favourited,
+          reblogged: oldStatus.reblogged, pinned: oldStatus.pinned, bookmarked: oldStatus.bookmarked, emojis: oldStatus.emojis, url: oldStatus.url,
+          application: oldStatus.application, inReplyToId: oldStatus.inReplyToId, inReplyToAccountId: oldStatus.inReplyToAccountId,
+          visibility: oldStatus.visibility, poll: oldStatus.poll, spoilerText: oldStatus.spoilerText, filtered: oldStatus.filtered,
+          sensitive: oldStatus.sensitive, language: oldStatus.language, tags: oldStatus.tags, quote: oldStatus.quote, quotesCount: oldStatus.quotesCount,
+          quoteApproval: oldStatus.quoteApproval
+        )
+        items[index] = .status(wrapper)
+      } else {
+        items[index] = .status(status)
+      }
+    } else {
+      items[index] = .status(status)
+    }
   }
 
   func remove(_ statusId: String) -> Status? {

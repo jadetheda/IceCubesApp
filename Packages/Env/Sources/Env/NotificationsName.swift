@@ -8,4 +8,5 @@ extension Notification.Name {
   public static let federatedTimeline = Notification.Name("federatedTimeline")
   public static let localTimeline = Notification.Name("localTimeline")
   public static let hideReadPosts = Notification.Name("hideReadPosts")
+  public static let statusUpdated = Notification.Name("statusUpdated")
 }

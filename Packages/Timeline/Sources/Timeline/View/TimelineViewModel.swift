@@ -134,6 +134,8 @@ import Nuke
 
   @ObservationIgnored
   nonisolated(unsafe) private var hideReadPostsObserver: NSObjectProtocol?
+  @ObservationIgnored
+  nonisolated(unsafe) private var statusUpdatedObserver: NSObjectProtocol?
 
   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
     self.statusFetcher = statusFetcher
@@ -155,11 +157,27 @@ import Nuke
         await self.hideReadPosts()
       }
     }
+    
+    statusUpdatedObserver = NotificationCenter.default.addObserver(
+      forName: .statusUpdated,
+      object: nil,
+      queue: .main
+    ) { [weak self] notification in
+      guard let self, let status = notification.object as? Status else { return }
+      Task { @MainActor in
+        guard let originalIndex = await self.datasource.indexOf(statusId: status.id) else { return }
+        await self.datasource.replace(status, at: originalIndex)
+        await self.cache()
+      }
+    }
   }
 
   deinit {
     if let hideReadPostsObserver {
       NotificationCenter.default.removeObserver(hideReadPostsObserver)
+    }
+    if let statusUpdatedObserver {
+      NotificationCenter.default.removeObserver(statusUpdatedObserver)
     }
   }
 
