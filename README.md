@@ -21,16 +21,16 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 
 # Features
 
-## New in **Community Edition**
-* Gallery Mode *(inspired by Hydra for Reddit)*
-* Content Filter for Notification types
-* Hide Seen Posts feature *(also inspired by Hydra)*
-* More places to access remote Local Timelines
-* Fixes to support IceShrimp.NET instances
-* Ability to Import/Export settings -- useful for backing up Tag Groups and such!
-* Content Filters now support toggling on/off media or text posts
-* Server emotes are now cached
-* Optional fallback for media your server hasn't cached yet
+## New in **Community Edition:**
+* **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
+- **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
+- **Content Filters for Notifications**
+- **Rudimentary config Import/Export system** -- useful for backing up Tag Groups and such!
+- **Load Remote Media button & auto-fallback** (for when your server doesn’t have media cached)
+* ~**More places to access remote Local Timelines**~ not quite yet
+* **Special IceShrimp.NET support**
+* **Enhance Timeline Content Filters** now support toggling on/off media/text posts
+* **Server emote caching**
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
