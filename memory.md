@@ -231,3 +231,4 @@
 ## 2026-07-18T17:02:27Z - Fixed Server Emote Cache by changing URL to String in Emoji.swift
 ## 2026-07-18T17:07:06Z - Fixed redundant View Local Timeline and replaced Display Mode menu with TimelineContentFilter button in AccountDetailContextMenu
 ## 2026-07-18T17:08:11Z - Added Media-Only Toggle (Display Mode section) to ContentSettingsView
+## 2026-07-18T17:39:11Z - Configured Nuke data cache and updated version to 2.1.4.4
