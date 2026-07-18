@@ -29,7 +29,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     self.filterContext = filterContext
   }
 
-  public var body: some View {
+  public public var body: some View {
     switch fetcher.statusesState {
     case .loading:
       ProgressView()
@@ -113,12 +113,20 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 }
 
 @MainActor
-struct GalleryMediaCell: View {
-  let mediaStatus: MediaStatus
-  let routerPath: RouterPath
-  let client: MastodonClient
-  let isRemote: Bool
-  let filterContext: Filter.Context?
+public struct GalleryMediaCell: View {
+  public let mediaStatus: MediaStatus
+  public let routerPath: RouterPath
+  public let client: MastodonClient
+  public let isRemote: Bool
+  public let filterContext: Filter.Context?
+
+  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: MastodonClient, isRemote: Bool, filterContext: Filter.Context?) {
+    self.mediaStatus = mediaStatus
+    self.routerPath = routerPath
+    self.client = client
+    self.isRemote = isRemote
+    self.filterContext = filterContext
+  }
 
   @State private var viewModel: StatusRowViewModel?
   @State private var showSelectableText: Bool = false
@@ -246,11 +254,16 @@ struct GalleryMediaCell: View {
   }
 }
 
-struct GalleryAspectRatioModifier: ViewModifier {
-    let isSquare: Bool
-    let meta: MediaAttachment.MetaContainer.Meta?
+public struct GalleryAspectRatioModifier: ViewModifier {
+    public let isSquare: Bool
+    public let meta: MediaAttachment.MetaContainer.Meta?
+
+    public init(isSquare: Bool, meta: MediaAttachment.MetaContainer.Meta?) {
+      self.isSquare = isSquare
+      self.meta = meta
+    }
     
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         if isSquare {
             content.aspectRatio(1, contentMode: .fill)
         } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {

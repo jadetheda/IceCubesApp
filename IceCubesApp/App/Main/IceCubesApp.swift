@@ -11,6 +11,8 @@ import StatusKit
 import SwiftUI
 import Timeline
 import WishKit
+import Nuke
+import NukeUI
 
 @main
 struct IceCubesApp: App {
@@ -44,6 +46,7 @@ struct IceCubesApp: App {
         "LogForEachSlowPath": true, // Enable "LogForEachSlowPath" by default. The log can be found via - subsystem: "com.apple.SwiftUI" category: "Invalid Configuration"
       ])
     #endif
+    ImagePipeline.shared = ImagePipeline(configuration: .withDataCache)
   }
 
   var body: some Scene {

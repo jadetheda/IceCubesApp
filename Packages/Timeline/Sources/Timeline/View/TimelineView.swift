@@ -131,6 +131,33 @@ public struct TimelineView: View {
       }
     }
     TimelineToolbarTagGroupButton(timeline: $timeline)
+    
+    if case .list = timeline {
+      ToolbarItem(placement: .navigationBarTrailing) {
+        Menu {
+          Toggle(isOn: Binding(
+              get: { contentFilter.isGalleryMode },
+              set: { newValue in 
+                  if newValue {
+                      contentFilter.hidePostsWithoutMedia = true
+                  }
+                  contentFilter.isGalleryMode = newValue
+              }
+          )) {
+            Label(contentFilter.isGalleryMode ? "Exit Gallery Mode" : "Gallery Mode", systemImage: "rectangle.grid.1x2")
+          }
+          
+          Button {
+            routerPath.presentedSheet = .timelineContentFilter
+          } label: {
+            Label("timeline.content-filter.title", systemImage: "line.3.horizontal.decrease")
+          }
+        } label: {
+          Image(systemName: "ellipsis.circle")
+        }
+        .tint(theme.labelColor)
+      }
+    }
   }
 
   private var timelineView: some View {

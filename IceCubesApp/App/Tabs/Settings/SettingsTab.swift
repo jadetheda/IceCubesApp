@@ -713,9 +713,7 @@ public struct ExperimentalSettingsView: View {
           Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
             Text("settings.experimental.hide-seen-posts-show-header")
           }
-          Toggle(isOn: $preferences.hideSeenPostsRequireMediaLoaded) {
-            Text("settings.experimental.hide-seen-posts-require-media")
-          }
+
           Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
             Text("settings.experimental.hide-seen-posts-include-boosts")
           }
