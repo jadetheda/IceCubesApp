@@ -132,7 +132,7 @@ public struct GalleryMediaCell: View {
   @State private var isBlockConfirmationPresented = false
   @State private var isShareAsImageSheetPresented = false
 
-  var body: some View {
+  public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
     if let url = mediaStatus.attachment.url {
       Group {
