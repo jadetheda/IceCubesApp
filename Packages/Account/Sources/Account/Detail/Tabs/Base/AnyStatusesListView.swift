@@ -18,7 +18,7 @@ struct AnyStatusesListView: View {
   
   var body: some View {
     if contentFilter.isGalleryMode {
-      unboxedGallery(fetcher)
+      AnyView(unboxedGallery(fetcher))
     } else {
       switch fetcher.statusesState {
       case .loading:
