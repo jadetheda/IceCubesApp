@@ -29,7 +29,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     self.filterContext = filterContext
   }
 
-  public public var body: some View {
+  public var body: some View {
     switch fetcher.statusesState {
     case .loading:
       ProgressView()
