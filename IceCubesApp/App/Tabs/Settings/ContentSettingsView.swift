@@ -31,6 +31,9 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.animateEmojis) {
             Text("settings.other.animate-emojis")
         }
+        Toggle(isOn: $userPreferences.cacheServerEmotes) {
+            Text("settings.other.cache-server-emotes")
+        }
 
       }
       #if !os(visionOS)

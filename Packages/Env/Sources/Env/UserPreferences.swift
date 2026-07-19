@@ -27,6 +27,7 @@ import SwiftUI
     @AppStorage("app_require_alt_text") public var appRequireAltText = false
     @AppStorage("autoplay_video") public var autoPlayVideo = true
     @AppStorage("animate_emojis") public var animateEmojis = true
+    @AppStorage("cache_server_emotes") public var cacheServerEmotes = true
     @AppStorage("mute_video") public var muteVideo = true
     @AppStorage("preferred_translation_type") public var preferredTranslationType = TranslationType
       .useServerIfPossible
@@ -242,6 +243,12 @@ import SwiftUI
   public var animateEmojis: Bool {
     didSet {
       storage.animateEmojis = animateEmojis
+    }
+  }
+
+  public var cacheServerEmotes: Bool {
+    didSet {
+      storage.cacheServerEmotes = cacheServerEmotes
     }
   }
 
@@ -668,6 +675,7 @@ import SwiftUI
     appRequireAltText = storage.appRequireAltText
     autoPlayVideo = storage.autoPlayVideo
     animateEmojis = storage.animateEmojis
+    cacheServerEmotes = storage.cacheServerEmotes
     preferredTranslationType = storage.preferredTranslationType
     userDeeplAPIFree = storage.userDeeplAPIFree
     autoDetectPostLanguage = storage.autoDetectPostLanguage
