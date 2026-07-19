@@ -153,7 +153,7 @@ public struct TimelineView: View {
             Label("timeline.content-filter.title", systemImage: "line.3.horizontal.decrease")
           }
         } label: {
-          Image(systemName: "ellipsis.circle")
+          Image(systemName: "ellipsis")
         }
         .tint(theme.labelColor)
       }
