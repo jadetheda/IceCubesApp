@@ -10,14 +10,38 @@ struct AnyStatusesListView: View {
   let fetcher: any StatusesFetcher
   let client: MastodonClient
   let routerPath: RouterPath
+  // When false (default for profile tabs), this view does not observe or apply
+  // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
+  // toggles like hideReadPosts from affecting the profile media view.
+  let useTimelineFilter: Bool
+
+  init(
+    fetcher: any StatusesFetcher,
+    client: MastodonClient,
+    routerPath: RouterPath,
+    useTimelineFilter: Bool = false
+  ) {
+    self.fetcher = fetcher
+    self.client = client
+    self.routerPath = routerPath
+    self.useTimelineFilter = useTimelineFilter
+  }
   
   @Environment(Theme.self) private var theme
   
-  // Directly access the shared TimelineContentFilter for synced visual state.
-  var contentFilter = TimelineContentFilter.shared
+  // Only read the shared filter when we actually need it.
+  // Pulling it into a stored property makes this view an @Observable subscriber,
+  // which means ANY change to TimelineContentFilter triggers a full re-render — even
+  // unrelated fields like hideReadPosts that have no meaning in a profile context.
+  private var contentFilter: TimelineContentFilter? {
+    useTimelineFilter ? TimelineContentFilter.shared : nil
+  }
   
   var body: some View {
-    if contentFilter.isGalleryMode {
+    // In profile tabs, Gallery Mode is managed separately (via the shared filter),
+    // but we intentionally don't subscribe to it here to avoid spurious re-renders.
+    let isGalleryMode = useTimelineFilter && (contentFilter?.isGalleryMode ?? false)
+    if isGalleryMode {
       AnyView(unboxedGallery(fetcher))
         .listRowInsets(EdgeInsets())
     } else {
@@ -72,11 +96,14 @@ struct AnyStatusesListView: View {
   }
   
   private func filteredStatuses(_ statuses: [Status]) -> [Status] {
-    statuses.filter { status in
-      if contentFilter.hidePostsWithMedia {
+    // If we are not applying the global timeline filter (profile context),
+    // return statuses as-is. The server-side fetch already filtered by media type.
+    guard let filter = contentFilter else { return statuses }
+    return statuses.filter { status in
+      if filter.hidePostsWithMedia {
         if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
       }
-      if contentFilter.hidePostsWithoutMedia {
+      if filter.hidePostsWithoutMedia {
         if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
       }
       return true
@@ -104,3 +131,4 @@ struct AnyStatusesListView: View {
     )
   }
 }
+
