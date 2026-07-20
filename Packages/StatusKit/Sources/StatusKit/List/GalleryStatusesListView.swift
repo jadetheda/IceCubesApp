@@ -90,24 +90,26 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
     var segments: [GallerySegment] = []
     var currentStatuses: [Status] = []
-    var gridIndex = 0
-
+    
     for item in items {
       switch item {
       case .status(let status):
         currentStatuses.append(status)
+        if currentStatuses.count >= 18 {
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+          currentStatuses = []
+        }
       case .gap(let gap):
         if !currentStatuses.isEmpty {
-          segments.append(.grid(id: "grid-\(gridIndex)", statuses: currentStatuses))
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
           currentStatuses = []
-          gridIndex += 1
         }
         segments.append(.gap(gap))
       }
     }
 
     if !currentStatuses.isEmpty {
-      segments.append(.grid(id: "grid-\(gridIndex)", statuses: currentStatuses))
+      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
     }
 
     return segments
@@ -166,14 +168,24 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   @ViewBuilder
   private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
     let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
-    VStack(spacing: 8) {
-      makeGridSection(for: statuses)
-        .task(id: statuses.count) {
-          if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
-            try? await fetcher.fetchNextPage()
-          }
+    let items = statuses.map { TimelineItem.status($0) }
+    let segments = makeSegments(from: items)
+
+    LazyVStack(spacing: 8) {
+      ForEach(segments) { segment in
+        switch segment {
+        case .grid(_, let segmentStatuses):
+          makeGridSection(for: segmentStatuses)
+        case .gap:
+          EmptyView()
         }
+      }
       makeNextPageRow(nextPageState: nextPageState)
+    }
+    .task(id: statuses.count) {
+      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+        try? await fetcher.fetchNextPage()
+      }
     }
   }
 }

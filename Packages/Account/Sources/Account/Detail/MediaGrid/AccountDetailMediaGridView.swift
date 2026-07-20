@@ -97,7 +97,7 @@ public struct AccountDetailMediaGridView: View {
   
   public var body: some View {
     ScrollView {
-      LazyVStack(spacing: 0) {
+      VStack(spacing: 0) {
         // Reuse the exact same masonry gallery implementation from the Timeline
         // This eliminates layout bugs and standardizes remote-media behavior.
         GalleryStatusesListView(

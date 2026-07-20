@@ -291,5 +291,10 @@
 - 2026-07-20T08:16:00Z: **Fixed Gallery Mode Infinite Loading and Scroll-Up (Gaps) Bug**
   - Segmented the raw `TimelineItem` stream in `GalleryStatusesListView` into individual contiguous gallery chunks and interactive gap views (represented as `GallerySegment.grid` and `GallerySegment.gap`).
   - This preserves the masonry grid for contiguous media, while correctly rendering `TimelineGapView` loaders in the grid stream. Tapping "Load more" now merges newer posts, restoring the user's ability to scroll up past the cached/marker start position.
-  - Replaced standard non-lazy `VStack` with `LazyVStack` inside `GalleryStatusesListView`, `TimelineListView`, and `AccountDetailMediaGridView`. This ensures SwiftUI only instantiates visible grid sections as they scroll into view, preventing Nuke's `LazyImage` from running `onAppear` for hundreds of images at the same time, which was choking the network and causing images to load infinitely.
+  - Replaced standard non-lazy `VStack` with `LazyVStack` inside `GalleryStatusesListView`. This ensures SwiftUI only instantiates visible grid sections as they scroll into view, preventing Nuke's `LazyImage` from running `onAppear` for hundreds of images at the same time, which was choking the network and causing images to load infinitely.
+
+- 2026-07-20T08:28:00Z: **Hardened Gallery Mode Lazy Layouts and Performance**
+  - Segmented the masonry blocks in `GalleryStatusesListView` into discrete 18-status chunks, ensuring that even large contiguous gaps natively construct as multiple lazy items. This enables true lazy rendering within `LazyVStack` without breaking height calculations in `ScrollView`.
+  - Reverted `TimelineListView` and `AccountDetailMediaGridView` to use standard `VStack` under their `ScrollView` to prevent the SwiftUI nested `LazyVStack` layout bug.
+  - Applied chunking layout unification to the `.display(statuses:)` state view (`makeGrid(for:nextPageState:)`) to match `.displayWithGaps`, ensuring that single-feed views (like Profile media tabs) also benefit from lazy column chunking instead of evaluating completely on mount.
 
