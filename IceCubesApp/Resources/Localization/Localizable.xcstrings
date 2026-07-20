@@ -86287,6 +86287,16 @@
           }
         }
       }
+    },
+    "account.media.fullscreen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fullscreen"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

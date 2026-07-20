@@ -89,7 +89,7 @@ private struct MediaTabView: View {
   var body: some View {
     Group {
       HStack {
-        Label("Media Grid", systemImage: "square.grid.2x2")
+        Label("account.media.fullscreen", systemImage: "square.grid.2x2")
         Spacer()
         Image(systemName: "chevron.right")
       }
