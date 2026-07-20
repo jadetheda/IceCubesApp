@@ -66,6 +66,7 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
             filterContext: filterContext),
           context: .timeline
         )
+        .id(status.id)
         .onAppear {
           fetcher.statusDidAppear(status: status)
         }
@@ -106,6 +107,7 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
             }
           }
         }
+        .id(item.id)
         #if os(visionOS)
           .listRowBackground(
             RoundedRectangle(cornerRadius: 8)

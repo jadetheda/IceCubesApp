@@ -156,6 +156,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
               isRemote: isRemote,
               filterContext: filterContext
             )
+              .id(status.status.id)
               .onAppear { fetcher.statusDidAppear(status: status.status) }
               .onDisappear { fetcher.statusDidDisappear(status: status.status) }
           }

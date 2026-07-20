@@ -29,7 +29,7 @@ struct TimelineListView: View {
           ScrollView {
             VStack(spacing: 0) {
               ScrollToView()
-                .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
+                .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
                 .onAppear {
                   viewModel.scrollToTopVisible = true
                 }
@@ -60,7 +60,7 @@ struct TimelineListView: View {
         } else {
           List {
             ScrollToView()
-              .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0)
+              .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
               .onAppear {
                 viewModel.scrollToTopVisible = true
               }
@@ -112,8 +112,11 @@ struct TimelineListView: View {
       }
       .onChange(of: selectedTabScrollToTop) { _, newValue in
         if newValue == 0, routerPath.path.isEmpty {
-          let didUndo = viewModel.handleScrollToTopTrigger(proxy: proxy)
-          if !didUndo {
+          if let previous = viewModel.handleScrollToTopTrigger() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              scrollToIdAnimated = previous
+            }
+          } else {
             withAnimation {
               proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
             }
@@ -121,7 +124,11 @@ struct TimelineListView: View {
         }
       }
       .onReceive(NotificationCenter.default.publisher(for: .statusBarTapped)) { _ in
-        _ = viewModel.handleScrollToTopTrigger(proxy: proxy)
+        if let previous = viewModel.handleScrollToTopTrigger() {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            scrollToIdAnimated = previous
+          }
+        }
       }
     }
   }

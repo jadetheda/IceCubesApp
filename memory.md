@@ -298,3 +298,9 @@
   - Reverted `TimelineListView` and `AccountDetailMediaGridView` to use standard `VStack` under their `ScrollView` to prevent the SwiftUI nested `LazyVStack` layout bug.
   - Applied chunking layout unification to the `.display(statuses:)` state view (`makeGrid(for:nextPageState:)`) to match `.displayWithGaps`, ensuring that single-feed views (like Profile media tabs) also benefit from lazy column chunking instead of evaluating completely on mount.
 
+- 2026-07-20T08:42:00Z: **Fixed Undo Scroll-to-Top Feature Conflict and ID Resolution**
+  - Resolved status bar gesture conflicts by adding a small 0.1-second delay in `handleScrollToTopTrigger()`.
+  - **Strict Concurrency Fix (Exit Code 65 Prevention)**: Removed the asynchronous capture of `ScrollViewProxy` inside `DispatchQueue.main.asyncAfter` in `TimelineViewModel`. `ScrollViewProxy` is a non-Sendable type and Apple explicitly forbids passing it to asynchronous code. Modified `handleScrollToTopTrigger` to return the target ID `String?`, and moved the scroll execution back to the view layer via the `@Binding var scrollToIdAnimated` state, which safely uses the proxy synchronously inside a SwiftUI `onChange` modifier.
+  - Fixed an issue where the top-sentinel `ScrollToView` was optimized out or unrendered when `pinnedFilters` was active due to its height being `0`. Adjusted the frame height to a virtually invisible but renderable `0.5` points, ensuring `onAppear`/`onDisappear` triggers reliably.
+  - Added explicit `.id(...)` modifiers to rows in both `StatusesListView` (standard feed) and `GalleryStatusesListView` (gallery feed cells) to guarantee that SwiftUI's `ScrollViewProxy` can locate and scroll back to the saved post position.
+
