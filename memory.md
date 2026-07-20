@@ -261,3 +261,8 @@
 - **2026-07-20T06:55:00Z - Fixed Undo Scroll to Top Logic**
   - Fixed a critical bug in `TimelineViewModel.swift` where `handleScrollToTopTrigger` was reversing the undo condition (`!scrollToTopVisible` instead of `scrollToTopVisible`).
   - Replaced the naive `visibleStatuses.first` (which tracked the last appeared item, often at the bottom of the screen) with a robust search through `statusesState` items to find the true top-most visible item by intersecting with `visibleStatusesCount`.
+
+- 2026-07-20T07:20:00Z: **Fixed Gallery Mode in Profile and Media Grid Hit-Testing**
+  - Removed `useTimelineFilter` workaround from `AnyStatusesListView` to ensure that `TimelineContentFilter.shared.isGalleryMode` natively and fully applies to Account detail tabs.
+  - Refactored `GalleryMediaCell` in `GalleryStatusesListView.swift` to use a native `Button` as the root interactive element instead of `.onTapGesture` on a `Group`, resolving severe inconsistency and missed hit-tests in the Masonry grid.
+  - Applied similar `Button` wrapping pattern to the full-screen media toggle in `MediaTab.swift`.

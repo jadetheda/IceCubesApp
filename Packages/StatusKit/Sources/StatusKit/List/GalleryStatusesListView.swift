@@ -135,39 +135,41 @@ public struct GalleryMediaCell: View {
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
     if let url = mediaStatus.attachment.url {
-      Group {
-        switch mediaStatus.attachment.supportedType {
-        case .image:
-          LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
-            if let image = state.image {
-              image
-                .resizable()
-                .scaledToFill()
-            } else {
-              ZStack {
-                Color.secondary.opacity(0.1)
-                ProgressView()
-              }
-            }
-          }
-          .transition(.opacity)
-        case .gifv, .video:
-          MediaUIAttachmentVideoView(viewModel: .init(url: url))
-            .allowsHitTesting(false)
-        default:
-          EmptyView()
-        }
-      }
-      .modifier(GalleryAspectRatioModifier(isSquare: isSquare, meta: mediaStatus.attachment.meta?.original))
-      .clipped()
-      .contentShape(Rectangle())
-      .onTapGesture {
+      Button {
         if let viewModel {
           viewModel.navigateToDetail()
         } else {
           routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
         }
+      } label: {
+        Group {
+          switch mediaStatus.attachment.supportedType {
+          case .image:
+            LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
+              if let image = state.image {
+                image
+                  .resizable()
+                  .scaledToFill()
+              } else {
+                ZStack {
+                  Color.secondary.opacity(0.1)
+                  ProgressView()
+                }
+              }
+            }
+            .transition(.opacity)
+          case .gifv, .video:
+            MediaUIAttachmentVideoView(viewModel: .init(url: url))
+              .allowsHitTesting(false)
+          default:
+            EmptyView()
+          }
+        }
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, meta: mediaStatus.attachment.meta?.original))
+        .clipped()
+        .contentShape(Rectangle())
       }
+      .buttonStyle(.plain)
       .contextMenu {
         if let viewModel {
           StatusRowContextMenu(

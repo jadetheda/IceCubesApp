@@ -13,35 +13,22 @@ struct AnyStatusesListView: View {
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
   // toggles like hideReadPosts from affecting the profile media view.
-  let useTimelineFilter: Bool
-
   init(
     fetcher: any StatusesFetcher,
     client: MastodonClient,
-    routerPath: RouterPath,
-    useTimelineFilter: Bool = false
+    routerPath: RouterPath
   ) {
     self.fetcher = fetcher
     self.client = client
     self.routerPath = routerPath
-    self.useTimelineFilter = useTimelineFilter
   }
   
   @Environment(Theme.self) private var theme
   
-  // Only read the shared filter when we actually need it.
-  // Pulling it into a stored property makes this view an @Observable subscriber,
-  // which means ANY change to TimelineContentFilter triggers a full re-render — even
-  // unrelated fields like hideReadPosts that have no meaning in a profile context.
-  private var contentFilter: TimelineContentFilter? {
-    useTimelineFilter ? TimelineContentFilter.shared : nil
-  }
+  var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    // In profile tabs, Gallery Mode is managed separately (via the shared filter),
-    // but we intentionally don't subscribe to it here to avoid spurious re-renders.
-    let isGalleryMode = useTimelineFilter && (contentFilter?.isGalleryMode ?? false)
-    if isGalleryMode {
+    if contentFilter.isGalleryMode {
       AnyView(unboxedGallery(fetcher))
         .listRowInsets(EdgeInsets())
     } else {
@@ -96,14 +83,11 @@ struct AnyStatusesListView: View {
   }
   
   private func filteredStatuses(_ statuses: [Status]) -> [Status] {
-    // If we are not applying the global timeline filter (profile context),
-    // return statuses as-is. The server-side fetch already filtered by media type.
-    guard let filter = contentFilter else { return statuses }
     return statuses.filter { status in
-      if filter.hidePostsWithMedia {
+      if contentFilter.hidePostsWithMedia {
         if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
       }
-      if filter.hidePostsWithoutMedia {
+      if contentFilter.hidePostsWithoutMedia {
         if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
       }
       return true
