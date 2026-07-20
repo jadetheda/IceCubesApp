@@ -170,3 +170,9 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Observation**: Automatic CI build triggers (such as `push` events under Codemagic `triggering` in `codemagic.yaml` or `push` triggers in `.github/workflows/`) run compile routines on every commit, creating substantial workflow clutter and spamming developers with failed/incomplete build notices during highly iterative developer turns.
 - **Solution**: Keep automated push triggers commented out or deactivated in `codemagic.yaml` and `.github/workflows` to prevent automatic compiles on intermediate/WIP commits. Active builds should be run on-demand via manual triggers (`workflow_dispatch` in GitHub or via Codemagic UI).
 
+## Chunked Masonry Gallery feeds (Gaps & Laziness)
+- **Observation**: Flattening a timeline state containing gaps into a single monolithic grid completely breaks two critical aspects of feed browsing:
+  1. Gaps are discarded, so users cannot see or load missing statuses between historical positions and the top of the timeline (making it impossible to "scroll up past" the initial load point).
+  2. All statuses are flattened into one giant parent view inside a non-lazy scroll container, prompting the system to run `onAppear` on all images simultaneously. This chokes Nuke's image downloading/rendering queues, causing many images to load endlessly.
+- **Solution**: Segment the timeline `[TimelineItem]` stream into an array of distinct chunks (`grid` and `gap`). Within `GalleryStatusesListView`, render each contiguous grid chunk using a masonry `HStack` and each gap using `TimelineGapView` loader. Put these chunks inside a `LazyVStack` so that only the visible sections are evaluated, loaded, and requested at any one time.
+

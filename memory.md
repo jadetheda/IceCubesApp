@@ -288,3 +288,8 @@
   - Added `Spacer(minLength: 0)` to the bottom of the `VStack` columns inside `GalleryStatusesListView` and `GalleryGrid` to prevent shorter columns from centering their content vertically when placed inside an `HStack(alignment: .top)`.
   - Added `.aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)` to the loading placeholder (`ZStack` with `ProgressView`) inside `GalleryMediaCell`. This stops loading items without metadata from infinitely expanding vertically up to 400 points, which was creating massive black rectangles and causing columns to artificially align into a grid.
 
+- 2026-07-20T08:16:00Z: **Fixed Gallery Mode Infinite Loading and Scroll-Up (Gaps) Bug**
+  - Segmented the raw `TimelineItem` stream in `GalleryStatusesListView` into individual contiguous gallery chunks and interactive gap views (represented as `GallerySegment.grid` and `GallerySegment.gap`).
+  - This preserves the masonry grid for contiguous media, while correctly rendering `TimelineGapView` loaders in the grid stream. Tapping "Load more" now merges newer posts, restoring the user's ability to scroll up past the cached/marker start position.
+  - Replaced standard non-lazy `VStack` with `LazyVStack` inside `GalleryStatusesListView`, `TimelineListView`, and `AccountDetailMediaGridView`. This ensures SwiftUI only instantiates visible grid sections as they scroll into view, preventing Nuke's `LazyImage` from running `onAppear` for hundreds of images at the same time, which was choking the network and causing images to load infinitely.
+

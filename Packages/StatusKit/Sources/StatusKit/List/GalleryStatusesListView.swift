@@ -46,12 +46,71 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     case .display(let statuses, let nextPageState):
       makeGrid(for: statuses, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
-      let statuses = items.compactMap { item -> Status? in
-          if case let .status(status) = item { return status }
-          return nil
+      let segments = makeSegments(from: items)
+      let allStatuses = items.compactMap { $0.status }
+      let mediaStatuses = allStatuses.flatMap { $0.asMediaStatus }
+      LazyVStack(spacing: 8) {
+        ForEach(segments) { segment in
+          switch segment {
+          case .grid(_, let statuses):
+            makeGridSection(for: statuses)
+          case .gap(let gap):
+            if let gapLoader = fetcher as? GapLoadingFetcher {
+              TimelineGapView(gap: gap) {
+                await gapLoader.loadGap(gap: gap)
+              }
+              .listRowBackground(theme.primaryBackgroundColor)
+            }
+          }
+        }
+        makeNextPageRow(nextPageState: nextPageState)
       }
-      makeGrid(for: statuses, nextPageState: nextPageState)
+      .task(id: items.count) {
+        if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+          try? await fetcher.fetchNextPage()
+        }
+      }
     }
+  }
+
+  private enum GallerySegment: Identifiable {
+    case grid(id: String, statuses: [Status])
+    case gap(TimelineGap)
+
+    var id: String {
+      switch self {
+      case .grid(let id, _):
+        return id
+      case .gap(let gap):
+        return gap.id
+      }
+    }
+  }
+
+  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
+    var segments: [GallerySegment] = []
+    var currentStatuses: [Status] = []
+    var gridIndex = 0
+
+    for item in items {
+      switch item {
+      case .status(let status):
+        currentStatuses.append(status)
+      case .gap(let gap):
+        if !currentStatuses.isEmpty {
+          segments.append(.grid(id: "grid-\(gridIndex)", statuses: currentStatuses))
+          currentStatuses = []
+          gridIndex += 1
+        }
+        segments.append(.gap(gap))
+      }
+    }
+
+    if !currentStatuses.isEmpty {
+      segments.append(.grid(id: "grid-\(gridIndex)", statuses: currentStatuses))
+    }
+
+    return segments
   }
 
   @ViewBuilder
@@ -71,7 +130,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 
   @ViewBuilder
-  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
+  private func makeGridSection(for statuses: [Status]) -> some View {
     let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
     let columns = UserPreferences.shared.galleryColumns
     
@@ -102,13 +161,20 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         }
       }
     }
-    .task(id: statuses.count) {
-      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
-        try? await fetcher.fetchNextPage()
-      }
+  }
+
+  @ViewBuilder
+  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
+    let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
+    VStack(spacing: 8) {
+      makeGridSection(for: statuses)
+        .task(id: statuses.count) {
+          if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+            try? await fetcher.fetchNextPage()
+          }
+        }
+      makeNextPageRow(nextPageState: nextPageState)
     }
-    
-    makeNextPageRow(nextPageState: nextPageState)
   }
 }
 
