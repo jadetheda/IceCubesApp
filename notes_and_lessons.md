@@ -156,3 +156,8 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Observation**: Placing `LazyVStack` inside an `HStack` inside another lazy container (like a `List` or `ScrollView`) completely breaks SwiftUI's height calculation logic, especially when children contain asynchronously loaded media (like `LazyImage`).
 - **Consequence**: Users will see massive, inexplicable gaps between images as the outer lazy container receives an unbounded or incorrect height calculation from the inner `LazyVStack`s resolving at different times.
 - **Solution**: Always use standard `VStack` for the columns of a masonry `HStack`, allowing the `List` or `ScrollView` to correctly calculate the grid's total height as a single block. Inner items using `LazyImage` will still load efficiently when entering the bounds.
+
+## Complete Experimental Settings Localization
+- **Observation**: Adding new features and settings in English under `Localizable.xcstrings` without corresponding translations for other supported languages causes non-English users to see raw localization identifier keys (like `settings.experimental.title`) in the UI.
+- **Solution**: Always supply comprehensive native localizations for all new UI keys in all 19 supported languages to preserve a polished user experience regardless of the user's active device locale.
+

@@ -274,3 +274,9 @@
 - 2026-07-20T07:31:00Z: **Renamed Fullscreen Button & Added Localization**
   - Renamed the "Fullscreen" button to "Fullscreen Gallery" (`account.media.fullscreen`).
   - Added comprehensive localizations for 15 languages inside `Localizable.xcstrings`, including French, German, Spanish, Italian, Japanese, Korean, Traditional/Simplified Chinese, and more.
+
+- 2026-07-20T07:40:00Z: **Localized Experimental Settings in 19 Languages**
+  - Added comprehensive localizations for all 27 experimental setting keys (e.g., `settings.experimental.title`, `settings.experimental.header`, `settings.experimental.gallery-mode`, etc.) inside `Localizable.xcstrings`.
+  - Added translations for 19 languages including French, German, Spanish, Italian, Japanese, Korean, Ukrainian, Brazilian Portuguese, Simplified/Traditional Chinese, and more.
+  - This prevents raw localization IDs from appearing in the settings panel when English is not the active system language.
+
