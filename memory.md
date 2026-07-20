@@ -284,3 +284,7 @@
   - Commented out the `triggering` event block in `codemagic.yaml`.
   - This prevents automatic compiles on every single commit/push, addressing the issue of unwanted build runs.
 
+- 2026-07-20T08:05:00Z: **Fixed Masonry Grid Vertical Gaps & Expansion Bug**
+  - Added `Spacer(minLength: 0)` to the bottom of the `VStack` columns inside `GalleryStatusesListView` and `GalleryGrid` to prevent shorter columns from centering their content vertically when placed inside an `HStack(alignment: .top)`.
+  - Added `.aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)` to the loading placeholder (`ZStack` with `ProgressView`) inside `GalleryMediaCell`. This stops loading items without metadata from infinitely expanding vertically up to 400 points, which was creating massive black rectangles and causing columns to artificially align into a grid.
+

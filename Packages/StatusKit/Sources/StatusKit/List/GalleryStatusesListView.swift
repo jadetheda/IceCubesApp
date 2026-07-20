@@ -98,6 +98,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
               .onAppear { fetcher.statusDidAppear(status: status.status) }
               .onDisappear { fetcher.statusDidDisappear(status: status.status) }
           }
+          Spacer(minLength: 0)
         }
       }
     }
@@ -155,6 +156,7 @@ public struct GalleryMediaCell: View {
                   Color.secondary.opacity(0.1)
                   ProgressView()
                 }
+                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
               }
             }
             .transition(.opacity)

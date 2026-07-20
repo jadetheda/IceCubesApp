@@ -157,6 +157,11 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Consequence**: Users will see massive, inexplicable gaps between images as the outer lazy container receives an unbounded or incorrect height calculation from the inner `LazyVStack`s resolving at different times.
 - **Solution**: Always use standard `VStack` for the columns of a masonry `HStack`, allowing the `List` or `ScrollView` to correctly calculate the grid's total height as a single block. Inner items using `LazyImage` will still load efficiently when entering the bounds.
 
+## Masonry Grid VStack Centering (The "Grid" Bug)
+- **Observation**: When building a Masonry grid using `HStack(alignment: .top)` containing multiple standard `VStack` columns, SwiftUI's layout system will propose the height of the tallest column to the shorter columns. If the shorter `VStack`s contain only inflexible content or lack a trailing `Spacer`, they will center their content vertically within the proposed height, creating massive top and bottom gaps and unintentionally aligning rows across columns like a standard grid.
+- **Consequence**: Users will report "vertical gaps" and state the "masonry seems completely broken" because rows magically align across independent columns.
+- **Solution**: Always add a `Spacer(minLength: 0)` to the bottom of the `VStack` columns inside the `HStack(alignment: .top)`. This consumes the excess proposed height, pushing the inflexible content to the top and maintaining the tightly packed staggered look expected in a masonry layout. Additionally, ensure that loading placeholders (`ZStack` with `Color`) explicitly use `.aspectRatio(1, contentMode: .fit)` if they lack metadata, preventing them from infinitely expanding to fill available vertical space.
+
 ## Complete Experimental Settings Localization
 - **Observation**: Adding new features and settings in English under `Localizable.xcstrings` without corresponding translations for other supported languages causes non-English users to see raw localization identifier keys (like `settings.experimental.title`) in the UI.
 - **Solution**: Always supply comprehensive native localizations for all new UI keys in all 19 supported languages to preserve a polished user experience regardless of the user's active device locale.

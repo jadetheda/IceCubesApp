@@ -49,6 +49,7 @@ public struct GalleryGrid: View {
               filterContext: filterContext
             )
           }
+          Spacer(minLength: 0)
         }
       }
     }
