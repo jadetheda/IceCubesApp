@@ -1,0 +1,1935 @@
+commit 3332472764e0d0f3dd2488ffbc841eeb41944a1d
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Wed Jul 1 07:20:30 2026 +0000
+
+    Git & Asset Corruption Fix: I executed a hard reset and restored the .git index, fixing the corrupted PNG assets that were mangled by the previous file sync. Seen Posts "Sticking Around" & Cache Logic: The issue was actually caused by the hideSeenPostsRequireMediaLoaded setting! When posts appeared on screen, if their media wasn't instantly available in the cache, the view model was hard-returning and failing to mark them as seen. I have rebuilt this logic to wait dynamically up to 5 seconds for media to load. Even if it fails after 5 seconds, it will now aggressively mark it as seen to prevent posts from permanently sticking around. Pull-To-Refresh Hide Seen Posts: The timeline pull-to-refresh routine has been updated. If you pull-to-refresh while hideReadPosts is toggled on, it will now explicitly flush all currently loaded read posts from memory before fetching the newest statuses. ZIP Export Nested Folder Fix: I modified the custom ZIP generator endpoint in server.ts to output the exact contents of the ios-workspace directly to the root of the ZIP file, bypassing the nested folder structure. Load Remote Media Feature: The new experimental feature has been thoroughly planned and implemented: Models: Added remoteUrl to MediaAttachment (Mastodon's remote_url maps to this automatically). Context Menu: In StatusRowContextMenu, you can now press ... on a post with remote media and explicitly select Load remote media. This triggers a direct UI update for that specific post. Auto-Fallback & Forced Remote: I added toggles to ContentSettingsView (under Media). A background observer task runs dynamically for each post; if the auto-fallback is enabled and images are still loading after the configured delay (default 10s), the client intercepts the request and instantly pivots to remote_url.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index ac998cba..75e7a920 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -14,6 +14,7 @@ import SwiftUI
+   let isRemote: Bool
+   let showActions: Bool
+   let textDisabled: Bool
++  var useRemoteMedia: Bool = false
+   let finalStatus: AnyStatus
+   let filterContext: Filter.Context?
+ 
+@@ -157,6 +158,7 @@ import SwiftUI
+     self.isRemote = isRemote
+     self.showActions = showActions
+     self.textDisabled = textDisabled
++    self.useRemoteMedia = UserPreferences.shared.remoteMediaAlwaysForce
+     self.scrollToId = scrollToId
+     self.filterContext = filterContext
+     if let reblog = status.reblog {
+
+commit 65fa910c5132540242b8af2c2793b306903069cd
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Tue Jan 6 14:42:21 2026 +0100
+
+    Fix filter context handling for notifications and timelines (#2416) close #639, #2211, #2210, #2227
+    
+    * fix: respect instance filter contexts
+    
+    Ensure instance-side filter contexts are respected across timelines, account views, detail threads, explore, and notifications.
+    
+    Notifications now drop hide-completely items while still advancing markers to prevent unread badges, and policy changes refresh the list after dismissing the sheet.
+    
+    Localize filtered notifications selection UI and policy subtitles.
+    
+    Closes: #639, #2211, #2210, #2227
+    
+    * fix: localize notifications policy labels
+    
+    Use localization keys for notifications policy subtitles and moderated accounts label.
+    
+    * fix: advance marker for hidden streamed notifications
+    
+    * Set filter context on datasource in initializer
+    
+    Added a Task in the TimelineViewModel initializer to set the filter context on the datasource asynchronously. This ensures the datasource is configured with the correct filter context upon initialization.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 4eb17907..ac998cba 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -15,6 +15,7 @@ import SwiftUI
+   let showActions: Bool
+   let textDisabled: Bool
+   let finalStatus: AnyStatus
++  let filterContext: Filter.Context?
+ 
+   let client: MastodonClient
+   let routerPath: RouterPath
+@@ -100,7 +101,10 @@ import SwiftUI
+   }
+ 
+   var filter: Filtered? {
+-    finalStatus.filtered?.first
++    if let filterContext {
++      return finalStatus.filteredEntry(matching: filterContext)
++    }
++    return finalStatus.filtered?.first
+   }
+ 
+   var isThread: Bool {
+@@ -143,7 +147,8 @@ import SwiftUI
+     isRemote: Bool = false,
+     showActions: Bool = true,
+     textDisabled: Bool = false,
+-    scrollToId: Binding<String?>? = nil
++    scrollToId: Binding<String?>? = nil,
++    filterContext: Filter.Context? = nil
+   ) {
+     self.status = status
+     finalStatus = status.reblog ?? status
+@@ -153,6 +158,7 @@ import SwiftUI
+     self.showActions = showActions
+     self.textDisabled = textDisabled
+     self.scrollToId = scrollToId
++    self.filterContext = filterContext
+     if let reblog = status.reblog {
+       isPinned = reblog.pinned == true
+     } else {
+
+commit 71b8d54510de0e0d7dcc75c5dc721a21b8503e9a
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Tue Jan 6 10:43:43 2026 +0100
+
+    feat: add toast for post deletion
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 4f33881d..4eb17907 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -343,11 +343,9 @@ import SwiftUI
+     }
+   }
+ 
+-  func delete() async {
+-    do {
+-      StreamWatcher.shared.emmitDeleteEvent(for: status.id)
+-      _ = try await client.delete(endpoint: Statuses.status(id: status.id))
+-    } catch {}
++  func delete() async throws {
++    StreamWatcher.shared.emmitDeleteEvent(for: status.id)
++    _ = try await client.delete(endpoint: Statuses.status(id: status.id))
+   }
+ 
+   func fetchActionsAccounts() async {
+
+commit 8f3e55d57ffe8b1453798f9109aaabadcd964ed0
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Thu Sep 18 14:32:10 2025 +0200
+
+    Add status caching and loading by ID
+    
+    Introduces a cache for statuses by ID in StatusEmbedCache and updates StatusRowViewModel to load embedded statuses using quotedStatusId. Also adds quotedStatusId to the Quote model for improved status retrieval.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 2d152572..4f33881d 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -188,6 +188,11 @@ import SwiftUI
+       finalStatus.quote?.state == .accepted
+     {
+       embeddedStatus = quotedStatus
++    } else if let id = finalStatus.quote?.quotedStatusId,
++      let embed = StatusEmbedCache.shared.get(id: id)
++    {
++      isEmbedLoading = false
++      embeddedStatus = embed
+     }
+ 
+     collapseLongPosts = UserPreferences.shared.collapseLongPosts
+@@ -245,6 +250,11 @@ import SwiftUI
+   }
+ 
+   func loadEmbeddedStatus() async {
++    let loaded = await loadStatusById()
++    if loaded {
++      return
++    }
++
+     guard embeddedStatus == nil,
+       let url = embededStatusURL()
+     else {
+@@ -290,6 +300,27 @@ import SwiftUI
+     }
+   }
+ 
++  private func loadStatusById() async -> Bool {
++    if embeddedStatus == nil,
++      let id = finalStatus.quote?.quotedStatusId,
++      finalStatus.quote?.quotedStatus == nil
++    {
++      isEmbedLoading = true
++      if let embed = StatusEmbedCache.shared.get(id: id) {
++        embeddedStatus = embed
++        isEmbedLoading = false
++        return true
++      } else if let embed: Status = try? await client.get(endpoint: Statuses.status(id: id)) {
++        StatusEmbedCache.shared.set(id: id, status: embed)
++        embeddedStatus = embed
++        isEmbedLoading = false
++        return true
++      }
++      return false
++    }
++    return false
++  }
++
+   func pin() async {
+     guard client.isAuth else { return }
+     isPinned = true
+@@ -331,9 +362,9 @@ import SwiftUI
+         endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
+       var quoters: [Account] = []
+       if finalStatus.quotesCount ?? 0 > 0, CurrentAccount.shared.account?.id == status.account.id {
+-        let statuses: [Status] =  try await client.get(
++        let statuses: [Status] = try await client.get(
+           endpoint: Statuses.quotesBy(id: status.id, maxId: nil))
+-        quoters = statuses.map{ $0.account }
++        quoters = statuses.map { $0.account }
+       }
+       withAnimation(.smooth) {
+         self.favoriters = favoriters
+
+commit 3dc4f565d37fbbbcc3170efb2849b0e5bf547413
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Sep 10 14:25:21 2025 +0200
+
+    Show quote and reblog details only for own statuses
+    
+    Updated logic to fetch and display quoters and rebloggers so that these details are only shown when the current account is the author of the status. This improves privacy and relevance of the information displayed.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 8dbdd9f2..2d152572 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -330,7 +330,7 @@ import SwiftUI
+       let rebloggers: [Account] = try await client.get(
+         endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
+       var quoters: [Account] = []
+-      if finalStatus.quotesCount ?? 0 > 0 {
++      if finalStatus.quotesCount ?? 0 > 0, CurrentAccount.shared.account?.id == status.account.id {
+         let statuses: [Status] =  try await client.get(
+           endpoint: Statuses.quotesBy(id: status.id, maxId: nil))
+         quoters = statuses.map{ $0.account }
+
+commit 05b03c1a11283773389eac806a1c82111e1eb18d
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Sep 10 14:08:36 2025 +0200
+
+    Add quotes support to status and timeline views
+    
+    Introduces quotesCount to status models and data controllers, adds a new quotes timeline filter, endpoint, and router destination. Updates UI to display quote counts and allow navigation to a timeline of quotes for a status. Localization and tests updated to support new quotes feature.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 410aa0a2..8dbdd9f2 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -49,6 +49,7 @@ import SwiftUI
+   private(set) var actionsAccountsFetched: Bool = false
+   var favoriters: [Account] = []
+   var rebloggers: [Account] = []
++  var quoters: [Account] = []
+ 
+   var isLoadingRemoteContent: Bool = false
+   var localStatusId: String?
+@@ -328,9 +329,16 @@ import SwiftUI
+         endpoint: Statuses.favoritedBy(id: status.id, maxId: nil))
+       let rebloggers: [Account] = try await client.get(
+         endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
++      var quoters: [Account] = []
++      if finalStatus.quotesCount ?? 0 > 0 {
++        let statuses: [Status] =  try await client.get(
++          endpoint: Statuses.quotesBy(id: status.id, maxId: nil))
++        quoters = statuses.map{ $0.account }
++      }
+       withAnimation(.smooth) {
+         self.favoriters = favoriters
+         self.rebloggers = rebloggers
++        self.quoters = quoters
+       }
+     } catch {}
+   }
+
+commit 0a28049f2d3caf77bde1d96aeae8851f4ea5ea17
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Sep 10 10:47:08 2025 +0200
+
+    Add quote support to Status and StatusRowViewModel
+    
+    Introduces a new Quote model and adds an optional quote property to Status and ReblogStatus. Updates StatusRowViewModel to handle embedded quoted statuses when the quote state is accepted.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 863738b1..410aa0a2 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -183,6 +183,10 @@ import SwiftUI
+     {
+       isEmbedLoading = false
+       embeddedStatus = embed
++    } else if let quotedStatus = finalStatus.quote?.quotedStatus,
++      finalStatus.quote?.state == .accepted
++    {
++      embeddedStatus = quotedStatus
+     }
+ 
+     collapseLongPosts = UserPreferences.shared.collapseLongPosts
+@@ -227,6 +231,7 @@ import SwiftUI
+   }
+ 
+   private func embededStatusURL() -> URL? {
++    guard finalStatus.quote == nil else { return nil }
+     let content = finalStatus.content
+     if !content.statusesURLs.isEmpty,
+       let url = content.statusesURLs.first,
+
+commit 24cccfad1d3944f43189c1a0f69f02fa31b51785
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Aug 27 07:37:20 2025 +0200
+
+    Ice Cubes 2.0 + iOS 26 supports (#2280)
+    
+    * iOS 26 compiles
+    
+    * New compose accessory view
+    
+    * Better GlassEffectContainer transition
+    
+    * Fixes
+    
+    * Drop iOS 17 + Timeline filters at bottom
+    
+    * Glass status observer
+    
+    * Fixes
+    
+    * More fixes
+    
+    * Disable tabbar collapse
+    
+    * Refacor timeline checkpoint
+    
+    * Tyding code
+    
+    * Set version to 2.0
+    
+    * Remove fast timeline setting
+    
+    * Perf fixes
+    
+    * Remove custom Sidebar
+    
+    * Perf boost + remove content gradient
+    
+    * Fixes
+    
+    * Remove steaming
+    
+    * Fix TL
+    
+    * Use Tab
+    
+    * Fix separators
+    
+    * Better sheet
+    
+    * Editor enhance
+    
+    * Leading status row actions
+    
+    * More iOS 26 fixes
+    
+    * Fix context menu tint color
+    
+    * Fix app account sheet
+    
+    * Fix extension send button
+    
+    * New Icons
+    
+    * AppIcon
+    
+    * Add back VisionOS Icon
+    
+    * Working icon
+    
+    * Update Claude.MD
+    
+    * WIP Playground
+    
+    * Replace OpenAI with FoundationModels
+    
+    * Stream response
+    
+    * Prewarm Assistant on editor open
+    
+    * Add more LLM tools
+    
+    * Fixes
+    
+    * Remove contentWarning prompt
+    
+    * Update packages to Swift 6.2
+    
+    * Various iOS 26 fixes
+    
+    * Prepare birictional gap
+    
+    * Add sections for iPad sidebar
+    
+    * Fix profile status update
+    
+    * Make StatusesState Equatable
+    
+    * Disable LLM on macCatalyst for now
+    
+    * Add Tags and Lists to sideabar
+    
+    * Add local timeline and tags group in the sidebar
+    
+    * Account: Refine header view
+    
+    * Show non LLM tag
+    
+    * Support V2 notifications group
+    
+    * Refactor NotificationsViewModel
+    
+    * Fix initial gap
+    
+    * Notifications list: Add glassEffect
+    
+    * Set editor glass effect to interactive
+    
+    * Refactor TimelineView
+    
+    * Notifications: Merge new group
+    
+    * Notifications: Refactor VM
+    
+    * Notifications: Cleanup code
+    
+    * Liquid glass DM View
+    
+    * Add direct access to DM in notifications top menu
+    
+    * Editor: Fix sizing on mention/tags
+    
+    * Better DM detail view
+    
+    * DM: More refactor view
+    
+    * DM: Even better views
+    
+    * DM: Rework media attachements
+    
+    * DM: Interactive textfield
+    
+    * Notifications: Refactor and remove ViewModel
+    
+    * DM: Refactor and remove ViewModel
+    
+    * DM Detail: Refactor without ViewModel
+    
+    * Remove sub.club support
+    
+    * DM Detail: Fix loading
+    
+    * Icons cleanup
+    
+    * Tweak icons
+    
+    * Account Detail: Refactor sub tabs
+    
+    * More icons
+    
+    * Account Detail: Remove ViewModel
+    
+    * Account Detail: Refactor to smaller views
+    
+    * Explore: Refactor to components + inline state
+    
+    * Accounts Statuses: Refactor + remove VM
+    
+    * Edit note: Remove VM
+    
+    * Trim AccountDetail
+    
+    * Account: Set button to primary color
+    
+    * Fixes
+    
+    * Improve UI consistency and context menus in media and notifications
+    
+    Refactored MediaView to use context menus instead of Menu for media items and updated alt/discard marker buttons for iOS 26 compatibility. Added .tint(.label) to notification filter buttons for consistent appearance. Minor code style and import order improvements in AppView.
+    
+    * Add .glassProminent
+    
+    * Fix warnings
+    
+    * Refactor compressVideo to use async/await
+    
+    Updated the compressVideo function to use Swift's async/await syntax instead of withCheckedContinuation, simplifying the code and improving readability.
+    
+    * Rename SPM Network -> NetworkClient
+    
+    * Fix build
+    
+    * Client -> MastodonClient
+    
+    * Rename file
+    
+    * Refactor media container to use state-based model
+    
+    Replaces the previous MediaContainer property model with a state-based enum to better represent the lifecycle of media (pending, uploading, uploaded, failed). Updates MediaView and ViewModel to use the new state model, improving clarity and error handling for media uploads, progress, and failures. Adds convenience initializers and factory methods for creating containers in various states, and updates UI logic to match the new structure.
+    
+    * Add media upload progress tracking and UI updates
+    
+    Introduces progress tracking for media uploads in MastodonClient by adding new upload methods with progress handlers and a URLSession delegate. Updates StatusEditor ViewModel to pass progress handlers and update media container state during uploads. Enhances MediaView to display both circular and linear progress indicators with animation.
+    
+    * Refactor message view to use glass effect on iOS 26+
+    
+    Introduces a conditional to use .glassEffect for message backgrounds on iOS 26 and above, while maintaining the previous background logic for earlier versions. Extracts the message text rendering into a reusable textView property for cleaner code.
+    
+    * Test removing legacy app icon
+    
+    * Revert "Test removing legacy app icon"
+    
+    This reverts commit 27c552d3cbf29a2e05f92ae52b003179b2ce4dd7.
+    
+    * Refactor timeline pills and tab bar for iOS 26 compatibility
+    
+    Moved TimelineQuickAccessPills logic from AppView to TimelineView and updated implementation to use new iOS 26 APIs where available. Simplified tab bar view in AppView and improved conditional logic for iPad and Mac layouts.
+    
+    * Update glassEffect to use .regular.interactive()
+    
+    Replaces the default glassEffect modifier with .regular.interactive() for improved visual consistency and interaction feedback on FollowButton and related controls.
+    
+    * Improve progress indicator logic and remove iOS version check
+    
+    Refines the display logic for progress indicators in MediaView, showing a linear progress bar only when progress is between 0 and 1, and otherwise showing a circular indicator. Also removes an unnecessary iOS version check in TimelineView for toolbar background visibility.
+    
+    * Update screenshots
+    
+    * Update toolbar tint and improve account fields UI
+    
+    Added `.tint(.label)` to several toolbar items for consistent icon coloring. Refactored AccountFieldsView to support iOS 26+ visual effects and improved accessibility and background handling. Removed redundant `.tint(.label)` from NotificationsListView.
+    
+    * Add zoom transition for MediaUI
+    
+    * Remove Old AppIcon
+    
+    * Remove alternate icons assets
+    
+    * Update sign-in button style and layout in AddAccountView
+    
+    Refactors the sign-in button to use a new 'signinButton' view, applying .glassProminent style on iOS 26+ and .borderedProminent otherwise. Adjusts button layout for full width, sets a fixed height, and updates row insets and background for improved appearance.
+    
+    * Remove iPhone tab label preference setting
+    
+    Eliminated the 'showiPhoneTabLabel' toggle from TabbarEntriesSettingsView and related property from UserPreferences. This streamlines settings by removing an unused or deprecated option.
+    
+    * Fix text replacement in StatusEditor ViewModel
+    
+    Updated the async stream handling in StatusEditor to use the 'content' property of the streamed object when replacing text, ensuring correct text updates.
+    
+    * Update UI for iOS 26 and improve avatar effects
+    
+    Refactored ToolbarTab and AppAccountsSelectorView to use .embed avatarConfig and apply glassEffect on iOS 26+. Updated contentShape to .circle for better interaction. Added theme-based tint to notification list buttons for improved visual consistency.
+    
+    * Add optional caption to Mastodon post intent (#2292)
+    
+    * Add app shortcut and intent for inline image posting on Mastodon (#2293)
+    
+    * Add optional alt text to image upload intents (#2294)
+    
+    * Adjust toolbar label offset for iOS 26 (#2296)
+    
+    * Improve background handling in Explore and Editor views
+    
+    Updated ExploreView to use edgesIgnoringSafeArea for the background color and made minor formatting improvements. Refactored MainView in StatusEditor to use a computed backgroundColor view for better background management based on presentationDetent.
+    
+    * Remove macCatalyst conditional compilation for AI features
+    
+    Eliminated #if !targetEnvironment(macCatalyst) checks from AI-related components in the status editor, making AI features available on all platforms where iOS 26+ is supported. Also added new localization keys related to image posting and descriptions.
+    
+    * Add ToolbarSpacer and improve toolbar styling
+    
+    Introduces ToolbarSpacer with .topBarTrailing placement for iOS 26.0+ in NotificationTab, TimelineTab, and TimelineView to improve toolbar layout. Updates toolbar item placements and adds theme-based foreground styling to toolbar icons. Removes unnecessary line limit in NotificationRowContentView and adjusts line limit logic in StatusRowTextView for better text display. Refactors some pattern matching for clarity.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 5f102772..863738b1 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -3,7 +3,7 @@ import DesignSystem
+ import Env
+ import Models
+ import NaturalLanguage
+-import Network
++import NetworkClient
+ import Observation
+ import SwiftUI
+ 
+@@ -16,7 +16,7 @@ import SwiftUI
+   let textDisabled: Bool
+   let finalStatus: AnyStatus
+ 
+-  let client: Client
++  let client: MastodonClient
+   let routerPath: RouterPath
+ 
+   let userFollowedTag: HTMLString.Link?
+@@ -111,42 +111,12 @@ import SwiftUI
+     (status.reblog?.url ?? status.url).flatMap(URL.init(string:))
+   }
+ 
+-  @ViewBuilder
+-  func makeBackgroundColor(isHomeTimeline: Bool) -> some View {
+-    if isHomeTimeline, theme.showContentGradient {
+-      homeBackgroundColor
+-    } else {
+-      backgroundColor
+-    }
+-  }
+-
+-  @ViewBuilder
+-  var homeBackgroundColor: some View {
+-    if status.visibility == .direct {
+-      theme.tintColor.opacity(0.15)
+-    } else if userMentionned {
+-      theme.secondaryBackgroundColor
+-    } else {
+-      if status.account.isPremiumAccount {
+-        makeDecorativeGradient(startColor: .yellow, endColor: theme.primaryBackgroundColor)
+-      } else if userFollowedTag != nil {
+-        makeDecorativeGradient(startColor: .teal, endColor: theme.primaryBackgroundColor)
+-      } else if status.reblog != nil {
+-        makeDecorativeGradient(startColor: theme.tintColor, endColor: theme.primaryBackgroundColor)
+-      } else {
+-        theme.primaryBackgroundColor
+-      }
+-    }
+-  }
+-
+   @ViewBuilder
+   var backgroundColor: some View {
+     if status.visibility == .direct {
+       theme.tintColor.opacity(0.15)
+     } else if userMentionned {
+       theme.secondaryBackgroundColor
+-    } else if status.account.isPremiumAccount {
+-      Color.yellow.opacity(0.4)
+     } else {
+       theme.primaryBackgroundColor
+     }
+@@ -167,7 +137,7 @@ import SwiftUI
+ 
+   public init(
+     status: Status,
+-    client: Client,
++    client: MastodonClient,
+     routerPath: RouterPath,
+     isRemote: Bool = false,
+     showActions: Bool = true,
+
+commit 35e8cb651295b371ed5dc2b4a7e258fb71735301
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Mon Oct 28 10:57:48 2024 +0100
+
+    Format all code using swift-format
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 19b77974..5f102772 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -61,7 +61,7 @@ import SwiftUI
+     didSet {
+       // if we are newly blocking or muting the author, force collapse post so it goes away
+       if let relationship = authorRelationship,
+-         relationship.blocking || relationship.muting
++        relationship.blocking || relationship.muting
+       {
+         lineLimit = 0
+       }
+@@ -89,7 +89,8 @@ import SwiftUI
+ 
+   private func recalcCollapse() {
+     let hasContentWarning = !status.spoilerText.asRawText.isEmpty
+-    let showCollapseButton = collapseLongPosts && isCollapsed && !hasContentWarning
++    let showCollapseButton =
++      collapseLongPosts && isCollapsed && !hasContentWarning
+       && finalStatus.content.asRawText.unicodeScalars.count > collapseThresholdLength
+     let newlineLimit = showCollapseButton && isCollapsed ? collapsedLines : nil
+     if newlineLimit != lineLimit {
+@@ -102,8 +103,8 @@ import SwiftUI
+   }
+ 
+   var isThread: Bool {
+-    status.reblog?.inReplyToId != nil || status.reblog?.inReplyToAccountId != nil ||
+-      status.inReplyToId != nil || status.inReplyToAccountId != nil
++    status.reblog?.inReplyToId != nil || status.reblog?.inReplyToAccountId != nil
++      || status.inReplyToId != nil || status.inReplyToAccountId != nil
+   }
+ 
+   var url: URL? {
+@@ -152,25 +153,27 @@ import SwiftUI
+   }
+ 
+   func makeDecorativeGradient(startColor: Color, endColor: Color) -> some View {
+-    LinearGradient(stops: [
+-      .init(color: startColor.opacity(0.2), location: 0.03),
+-      .init(color: startColor.opacity(0.1), location: 0.06),
+-      .init(color: startColor.opacity(0.05), location: 0.09),
+-      .init(color: startColor.opacity(0.02), location: 0.15),
+-      .init(color: endColor, location: 0.25),
+-    ],
+-    startPoint: .topLeading,
+-    endPoint: .bottomTrailing)
++    LinearGradient(
++      stops: [
++        .init(color: startColor.opacity(0.2), location: 0.03),
++        .init(color: startColor.opacity(0.1), location: 0.06),
++        .init(color: startColor.opacity(0.05), location: 0.09),
++        .init(color: startColor.opacity(0.02), location: 0.15),
++        .init(color: endColor, location: 0.25),
++      ],
++      startPoint: .topLeading,
++      endPoint: .bottomTrailing)
+   }
+ 
+-  public init(status: Status,
+-              client: Client,
+-              routerPath: RouterPath,
+-              isRemote: Bool = false,
+-              showActions: Bool = true,
+-              textDisabled: Bool = false,
+-              scrollToId: Binding<String?>? = nil)
+-  {
++  public init(
++    status: Status,
++    client: Client,
++    routerPath: RouterPath,
++    isRemote: Bool = false,
++    showActions: Bool = true,
++    textDisabled: Bool = false,
++    scrollToId: Binding<String?>? = nil
++  ) {
+     self.status = status
+     finalStatus = status.reblog ?? status
+     self.client = client
+@@ -197,13 +200,16 @@ import SwiftUI
+     }
+ 
+     userFollowedTag = finalStatus.content.links.first(where: { link in
+-      link.type == .hashtag && CurrentAccount.shared.tags.contains(where: { $0.name.lowercased() == link.title.lowercased() })
++      link.type == .hashtag
++        && CurrentAccount.shared.tags.contains(where: {
++          $0.name.lowercased() == link.title.lowercased()
++        })
+     })
+ 
+     isFiltered = filter != nil
+ 
+     if let url = embededStatusURL(),
+-       let embed = StatusEmbedCache.shared.get(url: url)
++      let embed = StatusEmbedCache.shared.get(url: url)
+     {
+       isEmbedLoading = false
+       embeddedStatus = embed
+@@ -237,7 +243,7 @@ import SwiftUI
+ 
+   func goToParent() {
+     guard let id = status.inReplyToId else { return }
+-    if let _ = scrollToId {
++    if scrollToId != nil {
+       scrollToId?.wrappedValue = id
+     } else {
+       routerPath.navigate(to: .statusDetail(id: id))
+@@ -245,16 +251,17 @@ import SwiftUI
+   }
+ 
+   func loadAuthorRelationship() async {
+-    let relationships: [Relationship]? = try? await client.get(endpoint: Accounts.relationships(ids: [status.reblog?.account.id ?? status.account.id]))
++    let relationships: [Relationship]? = try? await client.get(
++      endpoint: Accounts.relationships(ids: [status.reblog?.account.id ?? status.account.id]))
+     authorRelationship = relationships?.first
+   }
+ 
+   private func embededStatusURL() -> URL? {
+     let content = finalStatus.content
+     if !content.statusesURLs.isEmpty,
+-       let url = content.statusesURLs.first,
+-       !StatusEmbedCache.shared.badStatusesURLs.contains(url),
+-       client.hasConnection(with: url)
++      let url = content.statusesURLs.first,
++      !StatusEmbedCache.shared.badStatusesURLs.contains(url),
++      client.hasConnection(with: url)
+     {
+       return url
+     }
+@@ -263,7 +270,7 @@ import SwiftUI
+ 
+   func loadEmbeddedStatus() async {
+     guard embeddedStatus == nil,
+-          let url = embededStatusURL()
++      let url = embededStatusURL()
+     else {
+       if isEmbedLoading {
+         isEmbedLoading = false
+@@ -283,11 +290,13 @@ import SwiftUI
+       if url.absoluteString.contains(client.server), let id = Int(url.lastPathComponent) {
+         embed = try await client.get(endpoint: Statuses.status(id: String(id)))
+       } else {
+-        let results: SearchResults = try await client.get(endpoint: Search.search(query: url.absoluteString,
+-                                                                                  type: .statuses,
+-                                                                                  offset: 0,
+-                                                                                  following: nil),
+-                                                          forceVersion: .v2)
++        let results: SearchResults = try await client.get(
++          endpoint: Search.search(
++            query: url.absoluteString,
++            type: .statuses,
++            offset: 0,
++            following: nil),
++          forceVersion: .v2)
+         embed = results.statuses.first
+       }
+       if let embed {
+@@ -340,8 +349,10 @@ import SwiftUI
+       withAnimation(.smooth) {
+         actionsAccountsFetched = true
+       }
+-      let favoriters: [Account] = try await client.get(endpoint: Statuses.favoritedBy(id: status.id, maxId: nil))
+-      let rebloggers: [Account] = try await client.get(endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
++      let favoriters: [Account] = try await client.get(
++        endpoint: Statuses.favoritedBy(id: status.id, maxId: nil))
++      let rebloggers: [Account] = try await client.get(
++        endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
+       withAnimation(.smooth) {
+         self.favoriters = favoriters
+         self.rebloggers = rebloggers
+@@ -385,7 +396,7 @@ import SwiftUI
+     var hasShown = false
+     #if canImport(_Translation_SwiftUI)
+       if translation == nil,
+-         #available(iOS 17.4, *)
++        #available(iOS 17.4, *)
+       {
+         showAppleTranslation = true
+         hasShown = true
+@@ -393,7 +404,7 @@ import SwiftUI
+     #endif
+ 
+     if !hasShown,
+-       translation == nil
++      translation == nil
+     {
+       if preferredTranslationType == .useDeepl {
+         deeplTranslationError = true
+@@ -409,8 +420,9 @@ import SwiftUI
+     }
+ 
+     let deepLClient = getDeepLClient()
+-    let translation = try? await deepLClient.request(target: userLang,
+-                                                     text: finalStatus.content.asRawText)
++    let translation = try? await deepLClient.request(
++      target: userLang,
++      text: finalStatus.content.asRawText)
+     withAnimation {
+       self.translation = translation
+       isLoadingTranslation = false
+@@ -422,8 +434,10 @@ import SwiftUI
+       isLoadingTranslation = true
+     }
+ 
+-    let translation: Translation? = try? await client.post(endpoint: Statuses.translate(id: finalStatus.id,
+-                                                                                        lang: userLang))
++    let translation: Translation? = try? await client.post(
++      endpoint: Statuses.translate(
++        id: finalStatus.id,
++        lang: userLang))
+ 
+     withAnimation {
+       self.translation = translation
+@@ -454,11 +468,13 @@ import SwiftUI
+   func fetchRemoteStatus() async -> Bool {
+     guard isRemote, let remoteStatusURL = URL(string: finalStatus.url ?? "") else { return false }
+     isLoadingRemoteContent = true
+-    let results: SearchResults? = try? await client.get(endpoint: Search.search(query: remoteStatusURL.absoluteString,
+-                                                                                type: .statuses,
+-                                                                                offset: nil,
+-                                                                                following: nil),
+-                                                        forceVersion: .v2)
++    let results: SearchResults? = try? await client.get(
++      endpoint: Search.search(
++        query: remoteStatusURL.absoluteString,
++        type: .statuses,
++        offset: nil,
++        following: nil),
++      forceVersion: .v2)
+     if let status = results?.statuses.first {
+       localStatusId = status.id
+       localStatus = status
+
+commit 1ad4a245f31d6913fcb65df9086dd7d09fa28a2c
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Aug 14 20:07:43 2024 +0200
+
+    Add support for sub.club support (#2162)
+    
+    * Account tipping
+    
+    * Tryout full flow
+    
+    * Add link params
+    
+    * WIP
+    
+    * Progress flow
+    
+    * Fixes
+    
+    * More progress
+    
+    * Refresh user profile on notification
+    
+    * Tweaks
+    
+    * Fix follow button not refreshing
+    
+    * Refactor proxy url
+    
+    * Code cleanup
+    
+    * Subscribe to a premium account from a standard linked account
+    
+    * Premium posts tab on linked standard account
+    
+    * Fix flow
+    
+    * New domain
+    
+    * Fix flow
+    
+    * More fixes to follow flow
+    
+    * Update so to sub.club
+    
+    * Add colorScheme in URL
+    
+    * rollback domain
+    
+    * Back to sub.club
+    
+    * Use SubClub API for Subscription info
+    
+    * Fix
+    
+    * Merge
+    
+    * Merge branch 'iOS-18' + fixes
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 9b1c86c3..19b77974 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -126,7 +126,9 @@ import SwiftUI
+     } else if userMentionned {
+       theme.secondaryBackgroundColor
+     } else {
+-      if userFollowedTag != nil {
++      if status.account.isPremiumAccount {
++        makeDecorativeGradient(startColor: .yellow, endColor: theme.primaryBackgroundColor)
++      } else if userFollowedTag != nil {
+         makeDecorativeGradient(startColor: .teal, endColor: theme.primaryBackgroundColor)
+       } else if status.reblog != nil {
+         makeDecorativeGradient(startColor: theme.tintColor, endColor: theme.primaryBackgroundColor)
+@@ -142,6 +144,8 @@ import SwiftUI
+       theme.tintColor.opacity(0.15)
+     } else if userMentionned {
+       theme.secondaryBackgroundColor
++    } else if status.account.isPremiumAccount {
++      Color.yellow.opacity(0.4)
+     } else {
+       theme.primaryBackgroundColor
+     }
+
+commit a72f2900385dda2a52b70f40724060d33578b4ef
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Thu Aug 1 08:58:54 2024 +0200
+
+    Lint
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index cac0d16e..9b1c86c3 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -18,7 +18,7 @@ import SwiftUI
+ 
+   let client: Client
+   let routerPath: RouterPath
+-  
++
+   let userFollowedTag: HTMLString.Link?
+ 
+   private let theme = Theme.shared
+@@ -118,7 +118,7 @@ import SwiftUI
+       backgroundColor
+     }
+   }
+-  
++
+   @ViewBuilder
+   var homeBackgroundColor: some View {
+     if status.visibility == .direct {
+@@ -146,7 +146,7 @@ import SwiftUI
+       theme.primaryBackgroundColor
+     }
+   }
+-  
++
+   func makeDecorativeGradient(startColor: Color, endColor: Color) -> some View {
+     LinearGradient(stops: [
+       .init(color: startColor.opacity(0.2), location: 0.03),
+@@ -155,8 +155,8 @@ import SwiftUI
+       .init(color: startColor.opacity(0.02), location: 0.15),
+       .init(color: endColor, location: 0.25),
+     ],
+-                   startPoint: .topLeading,
+-                   endPoint: .bottomTrailing)
++    startPoint: .topLeading,
++    endPoint: .bottomTrailing)
+   }
+ 
+   public init(status: Status,
+@@ -191,7 +191,7 @@ import SwiftUI
+     } else {
+       userMentionned = false
+     }
+-    
++
+     userFollowedTag = finalStatus.content.links.first(where: { link in
+       link.type == .hashtag && CurrentAccount.shared.tags.contains(where: { $0.name.lowercased() == link.title.lowercased() })
+     })
+@@ -366,29 +366,31 @@ import SwiftUI
+ 
+     if preferredTranslationType != .useDeepl {
+       await translateWithInstance(userLang: userLang)
+-      
++
+       if translation == nil {
+         await translateWithDeepL(userLang: userLang)
+       }
+     } else {
+       await translateWithDeepL(userLang: userLang)
+-      
++
+       if translation == nil {
+         await translateWithInstance(userLang: userLang)
+       }
+     }
+-    
++
+     var hasShown = false
+-#if canImport(_Translation_SwiftUI)
+-    if translation == nil,
+-       #available(iOS 17.4, *) {
+-      showAppleTranslation = true
+-      hasShown = true
+-    }
+-#endif
+-    
++    #if canImport(_Translation_SwiftUI)
++      if translation == nil,
++         #available(iOS 17.4, *)
++      {
++        showAppleTranslation = true
++        hasShown = true
++      }
++    #endif
++
+     if !hasShown,
+-       translation == nil {
++       translation == nil
++    {
+       if preferredTranslationType == .useDeepl {
+         deeplTranslationError = true
+       } else {
+@@ -410,7 +412,7 @@ import SwiftUI
+       isLoadingTranslation = false
+     }
+   }
+-  
++
+   func translateWithInstance(userLang: String) async {
+     withAnimation {
+       isLoadingTranslation = true
+
+commit 123f05538ae2cc62a99cc91b643d2881579b28fa
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Jul 31 11:19:43 2024 +0200
+
+    Paginate search results fix #2143
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index eceb66cc..cac0d16e 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -280,7 +280,7 @@ import SwiftUI
+         embed = try await client.get(endpoint: Statuses.status(id: String(id)))
+       } else {
+         let results: SearchResults = try await client.get(endpoint: Search.search(query: url.absoluteString,
+-                                                                                  type: "statuses",
++                                                                                  type: .statuses,
+                                                                                   offset: 0,
+                                                                                   following: nil),
+                                                           forceVersion: .v2)
+@@ -449,7 +449,7 @@ import SwiftUI
+     guard isRemote, let remoteStatusURL = URL(string: finalStatus.url ?? "") else { return false }
+     isLoadingRemoteContent = true
+     let results: SearchResults? = try? await client.get(endpoint: Search.search(query: remoteStatusURL.absoluteString,
+-                                                                                type: "statuses",
++                                                                                type: .statuses,
+                                                                                 offset: nil,
+                                                                                 following: nil),
+                                                         forceVersion: .v2)
+
+commit 33c2646ea192a7141a7eb4e64aa5e160015f426f
+Author: fwcd <30873659+fwcd@users.noreply.github.com>
+Date:   Mon Jul 29 07:56:42 2024 +0200
+
+    Make status rows draggable (#2141)
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 1e149dd2..eceb66cc 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -105,7 +105,11 @@ import SwiftUI
+     status.reblog?.inReplyToId != nil || status.reblog?.inReplyToAccountId != nil ||
+       status.inReplyToId != nil || status.inReplyToAccountId != nil
+   }
+-  
++
++  var url: URL? {
++    (status.reblog?.url ?? status.url).flatMap(URL.init(string:))
++  }
++
+   @ViewBuilder
+   func makeBackgroundColor(isHomeTimeline: Bool) -> some View {
+     if isHomeTimeline, theme.showContentGradient {
+
+commit fbff1d6dfebaf36d291d317d056ecdf5b41675ed
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Tue Jul 16 09:00:11 2024 +0200
+
+    Adjust content gradient + settings
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index b1fbd5ba..1e149dd2 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -108,7 +108,7 @@ import SwiftUI
+   
+   @ViewBuilder
+   func makeBackgroundColor(isHomeTimeline: Bool) -> some View {
+-    if isHomeTimeline {
++    if isHomeTimeline, theme.showContentGradient {
+       homeBackgroundColor
+     } else {
+       backgroundColor
+@@ -145,10 +145,10 @@ import SwiftUI
+   
+   func makeDecorativeGradient(startColor: Color, endColor: Color) -> some View {
+     LinearGradient(stops: [
+-      .init(color: startColor.opacity(0.3), location: 0.03),
+-      .init(color: startColor.opacity(0.2), location: 0.06),
+-      .init(color: startColor.opacity(0.1), location: 0.09),
+-      .init(color: startColor.opacity(0.05), location: 0.15),
++      .init(color: startColor.opacity(0.2), location: 0.03),
++      .init(color: startColor.opacity(0.1), location: 0.06),
++      .init(color: startColor.opacity(0.05), location: 0.09),
++      .init(color: startColor.opacity(0.02), location: 0.15),
+       .init(color: endColor, location: 0.25),
+     ],
+                    startPoint: .topLeading,
+
+commit 3c5c9adc03226d8c9c361e285d320327b23b87f4
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Jul 10 16:13:41 2024 +0200
+
+    Cache tag + gradient on home timeline
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 03946b98..b1fbd5ba 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -18,6 +18,8 @@ import SwiftUI
+ 
+   let client: Client
+   let routerPath: RouterPath
++  
++  let userFollowedTag: HTMLString.Link?
+ 
+   private let theme = Theme.shared
+   private let userMentionned: Bool
+@@ -103,8 +105,35 @@ import SwiftUI
+     status.reblog?.inReplyToId != nil || status.reblog?.inReplyToAccountId != nil ||
+       status.inReplyToId != nil || status.inReplyToAccountId != nil
+   }
++  
++  @ViewBuilder
++  func makeBackgroundColor(isHomeTimeline: Bool) -> some View {
++    if isHomeTimeline {
++      homeBackgroundColor
++    } else {
++      backgroundColor
++    }
++  }
++  
++  @ViewBuilder
++  var homeBackgroundColor: some View {
++    if status.visibility == .direct {
++      theme.tintColor.opacity(0.15)
++    } else if userMentionned {
++      theme.secondaryBackgroundColor
++    } else {
++      if userFollowedTag != nil {
++        makeDecorativeGradient(startColor: .teal, endColor: theme.primaryBackgroundColor)
++      } else if status.reblog != nil {
++        makeDecorativeGradient(startColor: theme.tintColor, endColor: theme.primaryBackgroundColor)
++      } else {
++        theme.primaryBackgroundColor
++      }
++    }
++  }
+ 
+-  var highlightRowColor: Color {
++  @ViewBuilder
++  var backgroundColor: some View {
+     if status.visibility == .direct {
+       theme.tintColor.opacity(0.15)
+     } else if userMentionned {
+@@ -113,6 +142,18 @@ import SwiftUI
+       theme.primaryBackgroundColor
+     }
+   }
++  
++  func makeDecorativeGradient(startColor: Color, endColor: Color) -> some View {
++    LinearGradient(stops: [
++      .init(color: startColor.opacity(0.3), location: 0.03),
++      .init(color: startColor.opacity(0.2), location: 0.06),
++      .init(color: startColor.opacity(0.1), location: 0.09),
++      .init(color: startColor.opacity(0.05), location: 0.15),
++      .init(color: endColor, location: 0.25),
++    ],
++                   startPoint: .topLeading,
++                   endPoint: .bottomTrailing)
++  }
+ 
+   public init(status: Status,
+               client: Client,
+@@ -146,6 +187,10 @@ import SwiftUI
+     } else {
+       userMentionned = false
+     }
++    
++    userFollowedTag = finalStatus.content.links.first(where: { link in
++      link.type == .hashtag && CurrentAccount.shared.tags.contains(where: { $0.name.lowercased() == link.title.lowercased() })
++    })
+ 
+     isFiltered = filter != nil
+ 
+
+commit 48faddebea67d82cfbc930e40a0a4d04c0400875
+Author: Paul Schuetz <pa.schuetz@web.de>
+Date:   Mon May 13 13:27:21 2024 +0200
+
+    Implement Apple Translate (#2065)
+    
+    * Implement a first version of Apple's Translation
+    
+    The user can now choose between his instance's server, DeepL (with API
+    key) and Apple's Translation framework. A translation is cleared if
+    the translation type is changed. The strings aren't yet written, but
+    the translations settings view's inconsistent background is now fixed.
+    
+    * Transfer the old "always_use_deepl" setting
+    
+    The "always_use_deepl"-setting is now deleted, but its content is
+    transferred to the equivalent value in "preferred_translation_type".
+    
+    * Show the user if the DeepL-API key is still stored
+    
+    The user is now shown a prompt if they've switched away from
+    .useDeepl, but there's still an API key stored. The API key is not
+    deleted if the user doesn't instruct the app to do so, so this change
+    makes it more transparent, since a user might not expect the key to
+    be stored and might not want this to be the case.
+    
+    * Localize Labels
+    
+    The labels for the buttons and options are now localized. "DeepL API Key" is written consistently (with uppercase Key)
+    
+    * Run all the strings through localization
+    
+    The strings "DeepL" and "Apple Translate" are now also saved in
+    localizable.strings and addressed through keys. They were taken
+    directly previously, which was inconsistent.
+    
+    * Fix storage
+    
+    The selected value for preferredTranslationType wasn't stored, the
+    synchronization between UserPreferences and Storage is now in place.
+    
+    * Hide Apple Translate if not yet on iOS 17.4
+    
+    The Apple Translate option is hidden if the user hasn't updated their
+    phone to at least iOS 17.4. If the Apple Translate option is selected
+    but the user has downgraded to before iOS 17.4, the standard instance
+    option is selected.
+    
+    * Consistently show Apple Translate
+    
+    Apple Translate was previously only shown if the standard translate
+    button was visible, that is now fixed. It's now attached to the
+    StatusRowView, which is always present.
+    
+    * Animate the removal of translations
+    
+    The reset of a translation when the translation type is changed is now
+    animated, which is important for iPad users if they've translated a
+    post in the sidebar.
+    
+    * Add support for the Mac Catalyst build
+    
+    The Mac Catalyst Version doesn't allow the import of the api, so
+    compiler flags now check if the import isn't allowed and then remove
+    all references to Apple Translate.
+    
+    * Swift Format
+    
+    * Revert "Run all the strings through localization"
+    
+    This reverts commit 86c5099662add18eaf6326c815de36344602c82d.
+    
+    # Conflicts:
+    #       Packages/Env/Sources/Env/TranslationType.swift
+    
+    * Remove the DeepL fallback
+    
+    The DeepL fallback for the instance translation service is removed,
+    error messages are shown if a translation fails.
+    
+    * Allow for the use of an User API Key as fallback
+    
+    The DeepL fallback is reinstated if the user has put in their own API
+    Key
+    
+    * Make the localization keys clear strings
+    
+    * Make Apple and the instance a fallback
+    
+    Apple Translate is now a fallback for both other translation types,
+    the instance service is a fallback for DeepL.
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index ad47c332..03946b98 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -31,6 +31,18 @@ import SwiftUI
+   var translation: Translation?
+   var isLoadingTranslation: Bool = false
+   var showDeleteAlert: Bool = false
++  var showAppleTranslation = false
++  var preferredTranslationType = TranslationType.useServerIfPossible {
++    didSet {
++      if oldValue != preferredTranslationType {
++        translation = nil
++        showAppleTranslation = false
++      }
++    }
++  }
++
++  var deeplTranslationError = false
++  var instanceTranslationError = false
+ 
+   private(set) var actionsAccountsFetched: Bool = false
+   var favoriters: [Account] = []
+@@ -297,25 +309,43 @@ import SwiftUI
+   }
+ 
+   func translate(userLang: String) async {
+-    withAnimation {
+-      isLoadingTranslation = true
+-    }
+-    if !alwaysTranslateWithDeepl {
+-      do {
+-        // We first use instance translation API if available.
+-        let translation: Translation = try await client.post(endpoint: Statuses.translate(id: finalStatus.id,
+-                                                                                          lang: userLang))
+-        withAnimation {
+-          self.translation = translation
+-          isLoadingTranslation = false
+-        }
+-
+-        return
+-      } catch {}
++    updatePreferredTranslation()
++    if preferredTranslationType == .useApple {
++      showAppleTranslation = true
++      return
+     }
+ 
+-    // If not or fail we use Ice Cubes own DeepL client.
+-    await translateWithDeepL(userLang: userLang)
++    if preferredTranslationType != .useDeepl {
++      await translateWithInstance(userLang: userLang)
++      
++      if translation == nil {
++        await translateWithDeepL(userLang: userLang)
++      }
++    } else {
++      await translateWithDeepL(userLang: userLang)
++      
++      if translation == nil {
++        await translateWithInstance(userLang: userLang)
++      }
++    }
++    
++    var hasShown = false
++#if canImport(_Translation_SwiftUI)
++    if translation == nil,
++       #available(iOS 17.4, *) {
++      showAppleTranslation = true
++      hasShown = true
++    }
++#endif
++    
++    if !hasShown,
++       translation == nil {
++      if preferredTranslationType == .useDeepl {
++        deeplTranslationError = true
++      } else {
++        instanceTranslationError = true
++      }
++    }
+   }
+ 
+   func translateWithDeepL(userLang: String) async {
+@@ -331,6 +361,20 @@ import SwiftUI
+       isLoadingTranslation = false
+     }
+   }
++  
++  func translateWithInstance(userLang: String) async {
++    withAnimation {
++      isLoadingTranslation = true
++    }
++
++    let translation: Translation? = try? await client.post(endpoint: Statuses.translate(id: finalStatus.id,
++                                                                                        lang: userLang))
++
++    withAnimation {
++      self.translation = translation
++      isLoadingTranslation = false
++    }
++  }
+ 
+   private func getDeepLClient() -> DeepLClient {
+     let userAPIfree = UserPreferences.shared.userDeeplAPIFree
+@@ -339,11 +383,17 @@ import SwiftUI
+   }
+ 
+   private var userAPIKey: String? {
+-    DeepLUserAPIHandler.readIfAllowed()
++    DeepLUserAPIHandler.readKey()
+   }
+ 
+-  var alwaysTranslateWithDeepl: Bool {
+-    DeepLUserAPIHandler.shouldAlwaysUseDeepl
++  func updatePreferredTranslation() {
++    if DeepLUserAPIHandler.shouldAlwaysUseDeepl {
++      preferredTranslationType = .useDeepl
++    } else if UserPreferences.shared.preferredTranslationType == .useApple {
++      preferredTranslationType = .useApple
++    } else {
++      preferredTranslationType = .useServerIfPossible
++    }
+   }
+ 
+   func fetchRemoteStatus() async -> Bool {
+
+commit fab23cbafc7b655a57831d03828901bf65818525
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Thu Jan 11 18:56:06 2024 +0100
+
+    Cleanup
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 7f19f5e2..ad47c332 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -83,9 +83,6 @@ import SwiftUI
+     }
+   }
+ 
+-  @ObservationIgnored
+-  private var seen = false
+-
+   var filter: Filtered? {
+     finalStatus.filtered?.first
+   }
+
+commit 2f5307bfc7303f55c1dc084f64d5837589ae963d
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Thu Jan 11 18:55:35 2024 +0100
+
+    Add timeline content filter
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 32e91b1b..7f19f5e2 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -151,19 +151,6 @@ import SwiftUI
+     recalcCollapse()
+   }
+ 
+-  func markSeen() {
+-    // called in on appear so we can cache that the status has been seen.
+-    if UserPreferences.shared.suppressDupeReblogs, !seen {
+-      DispatchQueue.global().async { [weak self] in
+-        guard let self else { return }
+-        ReblogCache.shared.cache(status, seen: true)
+-        Task { @MainActor in
+-          self.seen = true
+-        }
+-      }
+-    }
+-  }
+-
+   func navigateToDetail() {
+     if isRemote, let url = URL(string: finalStatus.url ?? "") {
+       routerPath.navigate(to: .remoteStatusDetail(url: url))
+
+commit 5c1f113c54467df38627a252562a5b58f6d856d7
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Tue Jan 9 16:17:34 2024 +0100
+
+    Add a progress indicator when posting a new post
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index cba5c623..32e91b1b 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -280,8 +280,8 @@ import SwiftUI
+ 
+   func delete() async {
+     do {
+-      _ = try await client.delete(endpoint: Statuses.status(id: status.id))
+       StreamWatcher.shared.emmitDeleteEvent(for: status.id)
++      _ = try await client.delete(endpoint: Statuses.status(id: status.id))
+     } catch {}
+   }
+ 
+
+commit 7eb382c0525f369f0aeaa88a4bfc56f0b2f90a38
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Sat Jan 6 19:27:26 2024 +0100
+
+    Status -> StatusKit
+
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+new file mode 100644
+index 00000000..cba5c623
+--- /dev/null
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -0,0 +1,383 @@
++import Combine
++import DesignSystem
++import Env
++import Models
++import NaturalLanguage
++import Network
++import Observation
++import SwiftUI
++
++@MainActor
++@Observable public class StatusRowViewModel {
++  let status: Status
++  // Whether this status is on a remote local timeline (many actions are unavailable if so)
++  let isRemote: Bool
++  let showActions: Bool
++  let textDisabled: Bool
++  let finalStatus: AnyStatus
++
++  let client: Client
++  let routerPath: RouterPath
++
++  private let theme = Theme.shared
++  private let userMentionned: Bool
++
++  var isPinned: Bool
++  var embeddedStatus: Status?
++  var displaySpoiler: Bool = false
++  var isEmbedLoading: Bool = false
++  var isFiltered: Bool = false
++
++  var translation: Translation?
++  var isLoadingTranslation: Bool = false
++  var showDeleteAlert: Bool = false
++
++  private(set) var actionsAccountsFetched: Bool = false
++  var favoriters: [Account] = []
++  var rebloggers: [Account] = []
++
++  var isLoadingRemoteContent: Bool = false
++  var localStatusId: String?
++  var localStatus: Status?
++
++  private var scrollToId = nil as Binding<String?>?
++
++  // The relationship our user has to the author of this post, if available
++  var authorRelationship: Relationship? {
++    didSet {
++      // if we are newly blocking or muting the author, force collapse post so it goes away
++      if let relationship = authorRelationship,
++         relationship.blocking || relationship.muting
++      {
++        lineLimit = 0
++      }
++    }
++  }
++
++  // used by the button to expand a collapsed post
++  var isCollapsed: Bool = true {
++    didSet {
++      recalcCollapse()
++    }
++  }
++
++  // number of lines to show, nil means show the whole post
++  var lineLimit: Int?
++  // post length determining if the post should be collapsed
++  @ObservationIgnored
++  let collapseThresholdLength: Int = 750
++  // number of text lines to show on a collpased post
++  @ObservationIgnored
++  let collapsedLines: Int = 8
++  // user preference, set in init
++  @ObservationIgnored
++  var collapseLongPosts: Bool = false
++
++  private func recalcCollapse() {
++    let hasContentWarning = !status.spoilerText.asRawText.isEmpty
++    let showCollapseButton = collapseLongPosts && isCollapsed && !hasContentWarning
++      && finalStatus.content.asRawText.unicodeScalars.count > collapseThresholdLength
++    let newlineLimit = showCollapseButton && isCollapsed ? collapsedLines : nil
++    if newlineLimit != lineLimit {
++      lineLimit = newlineLimit
++    }
++  }
++
++  @ObservationIgnored
++  private var seen = false
++
++  var filter: Filtered? {
++    finalStatus.filtered?.first
++  }
++
++  var isThread: Bool {
++    status.reblog?.inReplyToId != nil || status.reblog?.inReplyToAccountId != nil ||
++      status.inReplyToId != nil || status.inReplyToAccountId != nil
++  }
++
++  var highlightRowColor: Color {
++    if status.visibility == .direct {
++      theme.tintColor.opacity(0.15)
++    } else if userMentionned {
++      theme.secondaryBackgroundColor
++    } else {
++      theme.primaryBackgroundColor
++    }
++  }
++
++  public init(status: Status,
++              client: Client,
++              routerPath: RouterPath,
++              isRemote: Bool = false,
++              showActions: Bool = true,
++              textDisabled: Bool = false,
++              scrollToId: Binding<String?>? = nil)
++  {
++    self.status = status
++    finalStatus = status.reblog ?? status
++    self.client = client
++    self.routerPath = routerPath
++    self.isRemote = isRemote
++    self.showActions = showActions
++    self.textDisabled = textDisabled
++    self.scrollToId = scrollToId
++    if let reblog = status.reblog {
++      isPinned = reblog.pinned == true
++    } else {
++      isPinned = status.pinned == true
++    }
++    if UserPreferences.shared.autoExpandSpoilers {
++      displaySpoiler = false
++    } else {
++      displaySpoiler = !finalStatus.spoilerText.asRawText.isEmpty
++    }
++
++    if status.mentions.first(where: { $0.id == CurrentAccount.shared.account?.id }) != nil {
++      userMentionned = true
++    } else {
++      userMentionned = false
++    }
++
++    isFiltered = filter != nil
++
++    if let url = embededStatusURL(),
++       let embed = StatusEmbedCache.shared.get(url: url)
++    {
++      isEmbedLoading = false
++      embeddedStatus = embed
++    }
++
++    collapseLongPosts = UserPreferences.shared.collapseLongPosts
++    recalcCollapse()
++  }
++
++  func markSeen() {
++    // called in on appear so we can cache that the status has been seen.
++    if UserPreferences.shared.suppressDupeReblogs, !seen {
++      DispatchQueue.global().async { [weak self] in
++        guard let self else { return }
++        ReblogCache.shared.cache(status, seen: true)
++        Task { @MainActor in
++          self.seen = true
++        }
++      }
++    }
++  }
++
++  func navigateToDetail() {
++    if isRemote, let url = URL(string: finalStatus.url ?? "") {
++      routerPath.navigate(to: .remoteStatusDetail(url: url))
++    } else {
++      routerPath.navigate(to: .statusDetailWithStatus(status: status.reblogAsAsStatus ?? status))
++    }
++  }
++
++  func navigateToAccountDetail(account: Account) {
++    if isRemote, let url = account.url {
++      withAnimation {
++        isLoadingRemoteContent = true
++      }
++      Task {
++        await routerPath.navigateToAccountFrom(url: url)
++        isLoadingRemoteContent = false
++      }
++    } else {
++      routerPath.navigate(to: .accountDetailWithAccount(account: account))
++    }
++  }
++
++  func goToParent() {
++    guard let id = status.inReplyToId else { return }
++    if let _ = scrollToId {
++      scrollToId?.wrappedValue = id
++    } else {
++      routerPath.navigate(to: .statusDetail(id: id))
++    }
++  }
++
++  func loadAuthorRelationship() async {
++    let relationships: [Relationship]? = try? await client.get(endpoint: Accounts.relationships(ids: [status.reblog?.account.id ?? status.account.id]))
++    authorRelationship = relationships?.first
++  }
++
++  private func embededStatusURL() -> URL? {
++    let content = finalStatus.content
++    if !content.statusesURLs.isEmpty,
++       let url = content.statusesURLs.first,
++       !StatusEmbedCache.shared.badStatusesURLs.contains(url),
++       client.hasConnection(with: url)
++    {
++      return url
++    }
++    return nil
++  }
++
++  func loadEmbeddedStatus() async {
++    guard embeddedStatus == nil,
++          let url = embededStatusURL()
++    else {
++      if isEmbedLoading {
++        isEmbedLoading = false
++      }
++      return
++    }
++
++    if let embed = StatusEmbedCache.shared.get(url: url) {
++      isEmbedLoading = false
++      embeddedStatus = embed
++      return
++    }
++
++    do {
++      isEmbedLoading = true
++      var embed: Status?
++      if url.absoluteString.contains(client.server), let id = Int(url.lastPathComponent) {
++        embed = try await client.get(endpoint: Statuses.status(id: String(id)))
++      } else {
++        let results: SearchResults = try await client.get(endpoint: Search.search(query: url.absoluteString,
++                                                                                  type: "statuses",
++                                                                                  offset: 0,
++                                                                                  following: nil),
++                                                          forceVersion: .v2)
++        embed = results.statuses.first
++      }
++      if let embed {
++        StatusEmbedCache.shared.set(url: url, status: embed)
++      } else {
++        StatusEmbedCache.shared.badStatusesURLs.insert(url)
++      }
++      withAnimation {
++        embeddedStatus = embed
++        isEmbedLoading = false
++      }
++    } catch {
++      isEmbedLoading = false
++      StatusEmbedCache.shared.badStatusesURLs.insert(url)
++    }
++  }
++
++  func pin() async {
++    guard client.isAuth else { return }
++    isPinned = true
++    do {
++      let status: Status = try await client.post(endpoint: Statuses.pin(id: finalStatus.id))
++      updateFromStatus(status: status)
++    } catch {
++      isPinned = false
++    }
++  }
++
++  func unPin() async {
++    guard client.isAuth else { return }
++    isPinned = false
++    do {
++      let status: Status = try await client.post(endpoint: Statuses.unpin(id: finalStatus.id))
++      updateFromStatus(status: status)
++    } catch {
++      isPinned = true
++    }
++  }
++
++  func delete() async {
++    do {
++      _ = try await client.delete(endpoint: Statuses.status(id: status.id))
++      StreamWatcher.shared.emmitDeleteEvent(for: status.id)
++    } catch {}
++  }
++
++  func fetchActionsAccounts() async {
++    guard !actionsAccountsFetched else { return }
++    do {
++      withAnimation(.smooth) {
++        actionsAccountsFetched = true
++      }
++      let favoriters: [Account] = try await client.get(endpoint: Statuses.favoritedBy(id: status.id, maxId: nil))
++      let rebloggers: [Account] = try await client.get(endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
++      withAnimation(.smooth) {
++        self.favoriters = favoriters
++        self.rebloggers = rebloggers
++      }
++    } catch {}
++  }
++
++  private func updateFromStatus(status: Status) {
++    if let reblog = status.reblog {
++      isPinned = reblog.pinned == true
++    } else {
++      isPinned = status.pinned == true
++    }
++  }
++
++  func getStatusLang() -> String? {
++    finalStatus.language
++  }
++
++  func translate(userLang: String) async {
++    withAnimation {
++      isLoadingTranslation = true
++    }
++    if !alwaysTranslateWithDeepl {
++      do {
++        // We first use instance translation API if available.
++        let translation: Translation = try await client.post(endpoint: Statuses.translate(id: finalStatus.id,
++                                                                                          lang: userLang))
++        withAnimation {
++          self.translation = translation
++          isLoadingTranslation = false
++        }
++
++        return
++      } catch {}
++    }
++
++    // If not or fail we use Ice Cubes own DeepL client.
++    await translateWithDeepL(userLang: userLang)
++  }
++
++  func translateWithDeepL(userLang: String) async {
++    withAnimation {
++      isLoadingTranslation = true
++    }
++
++    let deepLClient = getDeepLClient()
++    let translation = try? await deepLClient.request(target: userLang,
++                                                     text: finalStatus.content.asRawText)
++    withAnimation {
++      self.translation = translation
++      isLoadingTranslation = false
++    }
++  }
++
++  private func getDeepLClient() -> DeepLClient {
++    let userAPIfree = UserPreferences.shared.userDeeplAPIFree
++
++    return DeepLClient(userAPIKey: userAPIKey, userAPIFree: userAPIfree)
++  }
++
++  private var userAPIKey: String? {
++    DeepLUserAPIHandler.readIfAllowed()
++  }
++
++  var alwaysTranslateWithDeepl: Bool {
++    DeepLUserAPIHandler.shouldAlwaysUseDeepl
++  }
++
++  func fetchRemoteStatus() async -> Bool {
++    guard isRemote, let remoteStatusURL = URL(string: finalStatus.url ?? "") else { return false }
++    isLoadingRemoteContent = true
++    let results: SearchResults? = try? await client.get(endpoint: Search.search(query: remoteStatusURL.absoluteString,
++                                                                                type: "statuses",
++                                                                                offset: nil,
++                                                                                following: nil),
++                                                        forceVersion: .v2)
++    if let status = results?.statuses.first {
++      localStatusId = status.id
++      localStatus = status
++      isLoadingRemoteContent = false
++      return true
++    } else {
++      isLoadingRemoteContent = false
++      return false
++    }
++  }
++}

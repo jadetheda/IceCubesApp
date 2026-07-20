@@ -1,0 +1,37 @@
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 0121e2db..c4264b46 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -124,6 +124,32 @@ import Nuke
+   }
+ 
+   var scrollToTopVisible: Bool = false
++  var previousScrollPosition: String? = nil
++  var undoTimer: Timer? = nil
++
++  func handleScrollToTopTrigger(proxy: ScrollViewProxy) -> Bool {
++    guard UserPreferences.shared.undoScrollToTopEnabled else { return false }
++    if let previous = previousScrollPosition, !scrollToTopVisible {
++      withAnimation {
++        proxy.scrollTo(previous, anchor: .top)
++      }
++      previousScrollPosition = nil
++      undoTimer?.invalidate()
++      undoTimer = nil
++      return true
++    } else {
++      if let first = visibleStatuses.first?.id {
++        previousScrollPosition = first
++        undoTimer?.invalidate()
++        undoTimer = Timer.scheduledTimer(withTimeInterval: UserPreferences.shared.undoScrollToTopTimeout, repeats: false) { [weak self] _ in
++          DispatchQueue.main.async {
++            self?.previousScrollPosition = nil
++          }
++        }
++      }
++      return false
++    }
++  }
+ 
+   var serverName: String {
+     client?.server ?? "Error"

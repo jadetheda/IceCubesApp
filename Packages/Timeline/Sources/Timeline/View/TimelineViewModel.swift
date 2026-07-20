@@ -306,10 +306,10 @@ extension TimelineViewModel: GapLoadingFetcher {
   func fetchNewestStatuses(pullToRefresh: Bool) async {
     guard let client else { return }
     do {
-      if pullToRefresh {
+      if pullToRefresh || sessionSeenPosts.isEmpty {
         sessionSeenPosts = SeenPostsManager.shared.seenPosts
         if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
-          await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+          await datasource.hideReadPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
         }
       }
       if let marker {

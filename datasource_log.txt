@@ -1,0 +1,700 @@
+commit 8280d4807cbf96dd9ab743531cb584ffd002ef6b
+Author: AIStudio <aistudio@google.com>
+Date:   Sat Jul 18 08:32:01 2026 +0000
+
+    Ensure timeline interacts (favorite, reblog, bookmark) correctly persist locally to survive force quit. Fixed StatusDataController not updating TimelineDatasource/Cache for interacted statuses by introducing a local notification that rewrites the timeline wrapper and flushes to storage.
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index e486b06b..684ea142 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -96,7 +96,7 @@ actor TimelineDatasource {
+   private func findStatusIndex(id: String) -> Int? {
+     items.firstIndex(where: { item in
+       if case .status(let status) = item {
+-        return status.id == id
++        return status.id == id || status.reblog?.id == id
+       }
+       return false
+     })
+@@ -168,7 +168,36 @@ actor TimelineDatasource {
+   }
+ 
+   func replace(_ status: Status, at index: Int) {
+-    items[index] = .status(status)
++    if case .status(let oldStatus) = items[index] {
++      if oldStatus.id == status.id {
++        items[index] = .status(status)
++      } else if let oldReblog = oldStatus.reblog, oldReblog.id == status.id {
++        let newReblog = ReblogStatus(
++          id: status.id, content: status.content, account: status.account, createdAt: status.createdAt, editedAt: status.editedAt,
++          mediaAttachments: status.mediaAttachments, mentions: status.mentions, repliesCount: status.repliesCount, reblogsCount: status.reblogsCount,
++          favouritesCount: status.favouritesCount, card: status.card, favourited: status.favourited, reblogged: status.reblogged, pinned: status.pinned,
++          bookmarked: status.bookmarked, emojis: status.emojis, url: status.url, application: status.application,
++          inReplyToId: status.inReplyToId, inReplyToAccountId: status.inReplyToAccountId, visibility: status.visibility, poll: status.poll,
++          spoilerText: status.spoilerText, filtered: status.filtered, sensitive: status.sensitive, language: status.language,
++          tags: status.tags, quote: status.quote, quotesCount: status.quotesCount, quoteApproval: status.quoteApproval
++        )
++        let wrapper = Status(
++          id: oldStatus.id, content: oldStatus.content, account: oldStatus.account, createdAt: oldStatus.createdAt, editedAt: oldStatus.editedAt,
++          reblog: newReblog, mediaAttachments: oldStatus.mediaAttachments, mentions: oldStatus.mentions,
++          repliesCount: oldStatus.repliesCount, reblogsCount: oldStatus.reblogsCount, favouritesCount: oldStatus.favouritesCount, card: oldStatus.card, favourited: oldStatus.favourited,
++          reblogged: oldStatus.reblogged, pinned: oldStatus.pinned, bookmarked: oldStatus.bookmarked, emojis: oldStatus.emojis, url: oldStatus.url,
++          application: oldStatus.application, inReplyToId: oldStatus.inReplyToId, inReplyToAccountId: oldStatus.inReplyToAccountId,
++          visibility: oldStatus.visibility, poll: oldStatus.poll, spoilerText: oldStatus.spoilerText, filtered: oldStatus.filtered,
++          sensitive: oldStatus.sensitive, language: oldStatus.language, tags: oldStatus.tags, quote: oldStatus.quote, quotesCount: oldStatus.quotesCount,
++          quoteApproval: oldStatus.quoteApproval
++        )
++        items[index] = .status(wrapper)
++      } else {
++        items[index] = .status(status)
++      }
++    } else {
++      items[index] = .status(status)
++    }
+   }
+ 
+   func remove(_ statusId: String) -> Status? {
+
+commit a5df78a3bf2a4455efd73fdf8ba3bd8d56880c32
+Author: AI Bot <bot@example.com>
+Date:   Sat Jul 4 07:58:07 2026 +0000
+
+    Fix hide seen posts filtering logic and timeline view updates
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 2034656b..e486b06b 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -239,5 +239,6 @@ actor TimelineDatasource {
+       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
+       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+       && !(filter.hidePostsFromBots && isBotAuthored)
++      && (!filter.hideReadPosts || !isSeen)
+   }
+ }
+
+commit a06a4c8a36d2901317d7311e16831da772d93e0c
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Thu Jul 2 08:04:29 2026 +0000
+
+    Fix gallery, remote media, and exit code 65
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 19ba7f07..2034656b 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -27,14 +27,7 @@ actor TimelineDatasource {
+     let contentFilter = await TimelineContentFilter.shared
+     let snapshot = await contentFilter.snapshot()
+     
+-    let actualSeen: Set<String>?
+-    if let seen {
+-        actualSeen = seen
+-    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
+-        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+-    } else {
+-        actualSeen = nil
+-    }
++    let actualSeen: Set<String>? = seen
+     
+     var filtered: [Status] = []
+     var realIds: Set<String> = []
+@@ -53,14 +46,7 @@ actor TimelineDatasource {
+     let contentFilter = await TimelineContentFilter.shared
+     let snapshot = await contentFilter.snapshot()
+     
+-    let actualSeen: Set<String>?
+-    if let seen {
+-        actualSeen = seen
+-    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
+-        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+-    } else {
+-        actualSeen = nil
+-    }
++    let actualSeen = seen
+     
+     var filtered: [TimelineItem] = []
+     var realIds: Set<String> = []
+@@ -253,6 +239,5 @@ actor TimelineDatasource {
+       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
+       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+       && !(filter.hidePostsFromBots && isBotAuthored)
+-      && !(filter.hideSeenPostsEnabled && filter.hideReadPosts && isSeen)
+   }
+ }
+
+commit 1926bd89f9e423d916c0927f89d8c7862645b7f4
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Tue Jun 30 21:24:21 2026 +0000
+
+    Fix Swift 6 @MainActor isolation crash and TimelineView type-check timeout
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 15382ab7..19ba7f07 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -127,14 +127,13 @@ actor TimelineDatasource {
+ 
+   // MARK: - Status Operations
+ 
+-  func hideReadPosts(seen: Set<String>) {
+-    let hideSeenPostsIncludeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
++  func hideReadPosts(seen: Set<String>, includeBoosts: Bool) {
+     items.removeAll { item in
+       if case .status(let status) = item {
+         if seen.contains(status.id) {
+           return true
+         }
+-        if hideSeenPostsIncludeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
++        if includeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
+           return true
+         }
+       }
+
+commit 1bd727a8407d52b675cc041636a09b8739170590
+Author: AI Studio Agent <agent@aistudio.com>
+Date:   Tue Jun 30 10:11:03 2026 +0000
+
+    Fix logical inconsistencies with Hide Seen Posts experimental feature
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 6a67a20a..15382ab7 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -30,7 +30,7 @@ actor TimelineDatasource {
+     let actualSeen: Set<String>?
+     if let seen {
+         actualSeen = seen
+-    } else if snapshot.hideReadPosts {
++    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
+         actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+     } else {
+         actualSeen = nil
+@@ -56,7 +56,7 @@ actor TimelineDatasource {
+     let actualSeen: Set<String>?
+     if let seen {
+         actualSeen = seen
+-    } else if snapshot.hideReadPosts {
++    } else if snapshot.hideSeenPostsEnabled && snapshot.hideReadPosts {
+         actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
+     } else {
+         actualSeen = nil
+@@ -254,6 +254,6 @@ actor TimelineDatasource {
+       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
+       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+       && !(filter.hidePostsFromBots && isBotAuthored)
+-      && !(filter.hideReadPosts && isSeen)
++      && !(filter.hideSeenPostsEnabled && filter.hideReadPosts && isSeen)
+   }
+ }
+
+commit ea7d4fab7ddbb83109c2c07ea3c6d7ca5b8e5aaa
+Author: AI Studio Agent <agent@aistudio.com>
+Date:   Tue Jun 30 09:58:44 2026 +0000
+
+    Fix Hide Posts Without Media toggling without refreshing Timeline, and correctly propagate Seen Posts when Refreshing Timeline
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 49ef171b..6a67a20a 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -128,9 +128,15 @@ actor TimelineDatasource {
+   // MARK: - Status Operations
+ 
+   func hideReadPosts(seen: Set<String>) {
++    let hideSeenPostsIncludeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
+     items.removeAll { item in
+-      if case .status(let status) = item, seen.contains(status.id) {
+-        return true
++      if case .status(let status) = item {
++        if seen.contains(status.id) {
++          return true
++        }
++        if hideSeenPostsIncludeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
++          return true
++        }
+       }
+       return false
+     }
+
+commit 757b1d9021e46f5cea6cecaaffbb31f91cac42bb
+Author: AI Studio Agent <agent@aistudio.com>
+Date:   Tue Jun 30 09:29:09 2026 +0000
+
+    Fix Experimental Settings, Timeline Deduplication, Media Filter, and Eye Icon
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 8dad3136..49ef171b 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -37,10 +37,13 @@ actor TimelineDatasource {
+     }
+     
+     var filtered: [Status] = []
++    var realIds: Set<String> = []
+     for item in items {
+       guard case .status(let status) = item else { continue }
+-      if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
++      let realId = status.reblog?.id ?? status.id
++      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+         filtered.append(status)
++        realIds.insert(realId)
+       }
+     }
+     return filtered
+@@ -60,13 +63,16 @@ actor TimelineDatasource {
+     }
+     
+     var filtered: [TimelineItem] = []
++    var realIds: Set<String> = []
+     for item in items {
+       switch item {
+       case .gap:
+         filtered.append(item)
+       case .status(let status):
+-        if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
++        let realId = status.reblog?.id ?? status.id
++        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+           filtered.append(item)
++          realIds.insert(realId)
+         }
+       }
+     }
+@@ -75,10 +81,13 @@ actor TimelineDatasource {
+ 
+   func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> [Status] {
+     var filtered: [Status] = []
++    var realIds: Set<String> = []
+     for item in items {
+       guard case .status(let status) = item else { continue }
+-      if shouldShowStatus(status, filter: snapshot, seen: seen) {
++      let realId = status.reblog?.id ?? status.id
++      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen) {
+         filtered.append(status)
++        realIds.insert(realId)
+       }
+     }
+     return filtered
+
+commit 7133151fe149115df5bdc58330fcf214fdf7ef7f
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Tue Jun 30 08:08:36 2026 +0000
+
+    Fix Swift 6.2 Exit Code 65 compiler error in TimelineDatasource
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 5b41a6dc..8dad3136 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -221,8 +221,7 @@ actor TimelineDatasource {
+ 
+     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
+ 
+-    let prefs = MainActor.assumeIsolated { UserPreferences.shared }
+-    let hideSeenPostsIncludeBoosts = prefs.hideSeenPostsIncludeBoosts
++    let hideSeenPostsIncludeBoosts = filter.hideSeenPostsIncludeBoosts
+ 
+     var isSeen = seen?.contains(status.id) ?? false
+     if hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+@@ -237,7 +236,8 @@ actor TimelineDatasource {
+       && (showBoosts || status.reblog == nil)
+       && (showThreads || status.inReplyToAccountId != status.account.id)
+       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
+-      && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
++      && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
++      && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+       && !(filter.hidePostsFromBots && isBotAuthored)
+       && !(filter.hideReadPosts && isSeen)
+   }
+
+commit 0e672c14e26d2853defb75abb61c2de2b1524cef
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Tue Jun 30 07:42:57 2026 +0000
+
+    Buncha changes to hide seen posts, including new settings entries, bug fixes (such as not counting seen posts as unread counter), and converting the button to a toggle
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index aea7cd2b..5b41a6dc 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -221,7 +221,15 @@ actor TimelineDatasource {
+ 
+     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
+ 
+-    let isSeen = seen?.contains(status.id) ?? false
++    let prefs = MainActor.assumeIsolated { UserPreferences.shared }
++    let hideSeenPostsIncludeBoosts = prefs.hideSeenPostsIncludeBoosts
++
++    var isSeen = seen?.contains(status.id) ?? false
++    if hideSeenPostsIncludeBoosts, let reblog = status.reblog {
++      if seen?.contains(reblog.id) == true {
++        isSeen = true
++      }
++    }
+ 
+     return !isHidden
+       && (showReplies || status.inReplyToId == nil
+
+commit eb2d88da232df4e5041bd6424676618e1a6b47b1
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Mon Jun 29 07:30:42 2026 +0000
+
+    NEW FEATURE TEST: hide seen posts
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 959ff298..aea7cd2b 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -23,29 +23,49 @@ actor TimelineDatasource {
+     items
+   }
+ 
+-  func getFiltered() async -> [Status] {
++  func getFiltered(seen: Set<String>? = nil) async -> [Status] {
+     let contentFilter = await TimelineContentFilter.shared
+     let snapshot = await contentFilter.snapshot()
++    
++    let actualSeen: Set<String>?
++    if let seen {
++        actualSeen = seen
++    } else if snapshot.hideReadPosts {
++        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
++    } else {
++        actualSeen = nil
++    }
++    
+     var filtered: [Status] = []
+     for item in items {
+       guard case .status(let status) = item else { continue }
+-      if shouldShowStatus(status, filter: snapshot) {
++      if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+         filtered.append(status)
+       }
+     }
+     return filtered
+   }
+ 
+-  func getFilteredItems() async -> [TimelineItem] {
++  func getFilteredItems(seen: Set<String>? = nil) async -> [TimelineItem] {
+     let contentFilter = await TimelineContentFilter.shared
+     let snapshot = await contentFilter.snapshot()
++    
++    let actualSeen: Set<String>?
++    if let seen {
++        actualSeen = seen
++    } else if snapshot.hideReadPosts {
++        actualSeen = await MainActor.run { SeenPostsManager.shared.seenPosts }
++    } else {
++        actualSeen = nil
++    }
++    
+     var filtered: [TimelineItem] = []
+     for item in items {
+       switch item {
+       case .gap:
+         filtered.append(item)
+       case .status(let status):
+-        if shouldShowStatus(status, filter: snapshot) {
++        if shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+           filtered.append(item)
+         }
+       }
+@@ -53,11 +73,11 @@ actor TimelineDatasource {
+     return filtered
+   }
+ 
+-  func getFiltered(using snapshot: TimelineContentFilter.Snapshot) -> [Status] {
++  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> [Status] {
+     var filtered: [Status] = []
+     for item in items {
+       guard case .status(let status) = item else { continue }
+-      if shouldShowStatus(status, filter: snapshot) {
++      if shouldShowStatus(status, filter: snapshot, seen: seen) {
+         filtered.append(status)
+       }
+     }
+@@ -98,6 +118,15 @@ actor TimelineDatasource {
+ 
+   // MARK: - Status Operations
+ 
++  func hideReadPosts(seen: Set<String>) {
++    items.removeAll { item in
++      if case .status(let status) = item, seen.contains(status.id) {
++        return true
++      }
++      return false
++    }
++  }
++
+   func indexOf(statusId: String) -> Int? {
+     findStatusIndex(id: statusId)
+   }
+@@ -173,7 +202,7 @@ actor TimelineDatasource {
+ 
+   // MARK: - Private Helpers
+ 
+-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot) -> Bool {
++  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> Bool {
+     let isHidden = if let filterContext {
+       status.isHidden(in: filterContext)
+     } else {
+@@ -192,6 +221,8 @@ actor TimelineDatasource {
+ 
+     let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
+ 
++    let isSeen = seen?.contains(status.id) ?? false
++
+     return !isHidden
+       && (showReplies || status.inReplyToId == nil
+         || status.inReplyToAccountId == status.account.id)
+@@ -200,5 +231,6 @@ actor TimelineDatasource {
+       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
+       && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
+       && !(filter.hidePostsFromBots && isBotAuthored)
++      && !(filter.hideReadPosts && isSeen)
+   }
+ }
+
+commit b7886e2d038c2bb04f19f7cf697e0a259c92a0c3
+Author: jappiedev <11687336+jappiedev@users.noreply.github.com>
+Date:   Fri Feb 6 11:00:00 2026 +0100
+
+    Add functionality to hide posts created by bots (#2419)
+    
+    Co-authored-by: Jasper <jasper@TinyPowerMetal.local>
+    Co-authored-by: Thomas Ricouard <ricouard77@gmail.com>
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index b72fcc4b..959ff298 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -190,6 +190,8 @@ actor TimelineDatasource {
+     let hasLegacyQuoteLink = !status.content.statusesURLs.isEmpty
+       || !(status.reblog?.content.statusesURLs.isEmpty ?? true)
+ 
++    let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
++
+     return !isHidden
+       && (showReplies || status.inReplyToId == nil
+         || status.inReplyToAccountId == status.account.id)
+@@ -197,5 +199,6 @@ actor TimelineDatasource {
+       && (showThreads || status.inReplyToAccountId != status.account.id)
+       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
+       && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
++      && !(filter.hidePostsFromBots && isBotAuthored)
+   }
+ }
+
+commit 65fa910c5132540242b8af2c2793b306903069cd
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Tue Jan 6 14:42:21 2026 +0100
+
+    Fix filter context handling for notifications and timelines (#2416) close #639, #2211, #2210, #2227
+    
+    * fix: respect instance filter contexts
+    
+    Ensure instance-side filter contexts are respected across timelines, account views, detail threads, explore, and notifications.
+    
+    Notifications now drop hide-completely items while still advancing markers to prevent unread badges, and policy changes refresh the list after dismissing the sheet.
+    
+    Localize filtered notifications selection UI and policy subtitles.
+    
+    Closes: #639, #2211, #2210, #2227
+    
+    * fix: localize notifications policy labels
+    
+    Use localization keys for notifications policy subtitles and moderated accounts label.
+    
+    * fix: advance marker for hidden streamed notifications
+    
+    * Set filter context on datasource in initializer
+    
+    Added a Task in the TimelineViewModel initializer to set the filter context on the datasource asynchronously. This ensures the datasource is configured with the correct filter context upon initialization.
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index a2c03bfd..b72fcc4b 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -4,6 +4,7 @@ import Models
+ 
+ actor TimelineDatasource {
+   private var items: [TimelineItem] = []
++  private var filterContext: Filter.Context?
+ 
+   var isEmpty: Bool {
+     items.isEmpty
+@@ -71,6 +72,10 @@ actor TimelineDatasource {
+     items = []
+   }
+ 
++  func setFilterContext(_ context: Filter.Context?) {
++    filterContext = context
++  }
++
+   // MARK: - Status Finding Helpers
+ 
+   private func findStatusIndex(id: String) -> Int? {
+@@ -169,6 +174,11 @@ actor TimelineDatasource {
+   // MARK: - Private Helpers
+ 
+   private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot) -> Bool {
++    let isHidden = if let filterContext {
++      status.isHidden(in: filterContext)
++    } else {
++      status.isHidden
++    }
+     let showReplies = filter.showReplies
+     let showBoosts = filter.showBoosts
+     let showThreads = filter.showThreads
+@@ -180,7 +190,7 @@ actor TimelineDatasource {
+     let hasLegacyQuoteLink = !status.content.statusesURLs.isEmpty
+       || !(status.reblog?.content.statusesURLs.isEmpty ?? true)
+ 
+-    return !status.isHidden
++    return !isHidden
+       && (showReplies || status.inReplyToId == nil
+         || status.inReplyToAccountId == status.account.id)
+       && (showBoosts || status.reblog == nil)
+
+commit bf959812ff2e1e8d15b5145b01eb79f305476446
+Author: thunder <139712681+thunderxx2@users.noreply.github.com>
+Date:   Tue Jan 6 15:04:57 2026 +0530
+
+    feat: add preference to hide posts containing media (#2382) (#2400)
+    
+    * feat: add preference to hide posts with media (#2382)
+    
+    * Trigger GitHub mergeability recompute
+    
+    * feat: implement media filtering logic and fix formatting (#2382)
+    
+    * feat: implement media filtering logic and fix formatting (#2382)
+    
+    * refactor: move media filtering to the shouldShowStatus
+    
+    * style: align formatting with project standards and codebase
+    
+    ---------
+    
+    Co-authored-by: dushyant <devdushyantatwork@gmail.coom>
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 8fcdf287..a2c03bfd 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -186,5 +186,6 @@ actor TimelineDatasource {
+       && (showBoosts || status.reblog == nil)
+       && (showThreads || status.inReplyToAccountId != status.account.id)
+       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
++      && (!filter.hidePostsWithMedia || status.mediaAttachments.isEmpty)
+   }
+ }
+
+commit cd4c3fd9d979ae6dde3c591e828b413d7bd6abc5
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Dec 31 11:20:12 2025 +0100
+
+    Refactor TimelineContentFilter to use Snapshot struct
+    
+    Introduces a Snapshot struct in TimelineContentFilter to capture filter state, and updates TimelineDatasource to use this snapshot for filtering. Refactors related methods and tests to use the new snapshot-based approach, improving clarity and thread safety.
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 3b1ddc78..8fcdf287 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -24,10 +24,11 @@ actor TimelineDatasource {
+ 
+   func getFiltered() async -> [Status] {
+     let contentFilter = await TimelineContentFilter.shared
++    let snapshot = await contentFilter.snapshot()
+     var filtered: [Status] = []
+     for item in items {
+       guard case .status(let status) = item else { continue }
+-      if await shouldShowStatus(status, filter: contentFilter) {
++      if shouldShowStatus(status, filter: snapshot) {
+         filtered.append(status)
+       }
+     }
+@@ -36,13 +37,14 @@ actor TimelineDatasource {
+ 
+   func getFilteredItems() async -> [TimelineItem] {
+     let contentFilter = await TimelineContentFilter.shared
++    let snapshot = await contentFilter.snapshot()
+     var filtered: [TimelineItem] = []
+     for item in items {
+       switch item {
+       case .gap:
+         filtered.append(item)
+       case .status(let status):
+-        if await shouldShowStatus(status, filter: contentFilter) {
++        if shouldShowStatus(status, filter: snapshot) {
+           filtered.append(item)
+         }
+       }
+@@ -50,6 +52,17 @@ actor TimelineDatasource {
+     return filtered
+   }
+ 
++  func getFiltered(using snapshot: TimelineContentFilter.Snapshot) -> [Status] {
++    var filtered: [Status] = []
++    for item in items {
++      guard case .status(let status) = item else { continue }
++      if shouldShowStatus(status, filter: snapshot) {
++        filtered.append(status)
++      }
++    }
++    return filtered
++  }
++
+   func count() -> Int {
+     items.count
+   }
+@@ -155,11 +168,11 @@ actor TimelineDatasource {
+ 
+   // MARK: - Private Helpers
+ 
+-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter) async -> Bool {
+-    let showReplies = await filter.showReplies
+-    let showBoosts = await filter.showBoosts
+-    let showThreads = await filter.showThreads
+-    let showQuotePosts = await filter.showQuotePosts
++  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot) -> Bool {
++    let showReplies = filter.showReplies
++    let showBoosts = filter.showBoosts
++    let showThreads = filter.showThreads
++    let showQuotePosts = filter.showQuotePosts
+     let hasQuote = status.quote?.quotedStatusId != nil
+       || status.quote?.quotedStatus != nil
+       || status.reblog?.quote?.quotedStatusId != nil
+
+commit 9c905959e2e46d3c356fc8be6a045cbc0889600d
+Author: Thomas Ricouard <ricouard77@gmail.com>
+Date:   Wed Dec 31 08:26:22 2025 +0100
+
+    Fix hide quotes filter for native quote posts (closes #2376)
+
+diff --git a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+index 361b735a..3b1ddc78 100644
+--- a/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
++++ b/Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift
+@@ -160,12 +160,18 @@ actor TimelineDatasource {
+     let showBoosts = await filter.showBoosts
+     let showThreads = await filter.showThreads
+     let showQuotePosts = await filter.showQuotePosts
++    let hasQuote = status.quote?.quotedStatusId != nil
++      || status.quote?.quotedStatus != nil
++      || status.reblog?.quote?.quotedStatusId != nil
++      || status.reblog?.quote?.quotedStatus != nil
++    let hasLegacyQuoteLink = !status.content.statusesURLs.isEmpty
++      || !(status.reblog?.content.statusesURLs.isEmpty ?? true)
+ 
+     return !status.isHidden
+       && (showReplies || status.inReplyToId == nil
+         || status.inReplyToAccountId == status.account.id)
+       && (showBoosts || status.reblog == nil)
+       && (showThreads || status.inReplyToAccountId != status.account.id)
+-      && (showQuotePosts || status.content.statusesURLs.isEmpty)
++      && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
+   }
+ }

@@ -1,0 +1,796 @@
+commit 81518973725bb831ce20d6b2c49ae216b2740a87
+Author: AI Bot <bot@example.com>
+Date:   Sat Jul 18 18:00:32 2026 +0000
+
+    Feature: Implement Undo Scroll-to-Top and Full-Width Profile Gallery Mode | Fix: Resolve property observer syntax error in TimelineViewModel, optimize custom emoji cache pipeline, and track status bar touches
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 0121e2db..c4264b46 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -124,6 +124,32 @@ import Nuke
+   }
+ 
+   var scrollToTopVisible: Bool = false
++  var previousScrollPosition: String? = nil
++  var undoTimer: Timer? = nil
++
++  func handleScrollToTopTrigger(proxy: ScrollViewProxy) -> Bool {
++    guard UserPreferences.shared.undoScrollToTopEnabled else { return false }
++    if let previous = previousScrollPosition, !scrollToTopVisible {
++      withAnimation {
++        proxy.scrollTo(previous, anchor: .top)
++      }
++      previousScrollPosition = nil
++      undoTimer?.invalidate()
++      undoTimer = nil
++      return true
++    } else {
++      if let first = visibleStatuses.first?.id {
++        previousScrollPosition = first
++        undoTimer?.invalidate()
++        undoTimer = Timer.scheduledTimer(withTimeInterval: UserPreferences.shared.undoScrollToTopTimeout, repeats: false) { [weak self] _ in
++          DispatchQueue.main.async {
++            self?.previousScrollPosition = nil
++          }
++        }
++      }
++      return false
++    }
++  }
+ 
+   var serverName: String {
+     client?.server ?? "Error"
+
+commit d5d4c754b8866e6cb696ba9e6c945554722fbf07
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Sat Jul 18 10:51:53 2026 -0400
+
+    hopefully fix compiler errors this time
+    
+    but idk if it rly will!
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 418d3f71..0121e2db 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -588,7 +588,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+     sessionSeenPosts = SeenPostsManager.shared.seenPosts
+     
+     if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
+-      await datasource.hideReadPosts(seen: sessionSeenPosts ?? [], includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
++      await datasource.hideReadPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+     }
+     
+     var items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+
+commit 288d496ad2119c2ca34170064377b016e5f91ec3
+Author: AIStudio <aistudio@google.com>
+Date:   Sat Jul 18 08:55:35 2026 +0000
+
+    Fix pull-to-refresh not hiding seen posts when the hide seen posts toggle is active, by updating sessionSeenPosts during the fetch.
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 07d72b3f..418d3f71 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -280,8 +280,11 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func fetchNewestStatuses(pullToRefresh: Bool) async {
+     guard let client else { return }
+     do {
+-      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
+-        await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
++      if pullToRefresh {
++        sessionSeenPosts = SeenPostsManager.shared.seenPosts
++        if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
++          await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
++        }
+       }
+       if let marker {
+         try await fetchStatuses(from: marker)
+
+commit 8280d4807cbf96dd9ab743531cb584ffd002ef6b
+Author: AIStudio <aistudio@google.com>
+Date:   Sat Jul 18 08:32:01 2026 +0000
+
+    Ensure timeline interacts (favorite, reblog, bookmark) correctly persist locally to survive force quit. Fixed StatusDataController not updating TimelineDatasource/Cache for interacted statuses by introducing a local notification that rewrites the timeline wrapper and flushes to storage.
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index e8728122..07d72b3f 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -134,6 +134,8 @@ import Nuke
+ 
+   @ObservationIgnored
+   nonisolated(unsafe) private var hideReadPostsObserver: NSObjectProtocol?
++  @ObservationIgnored
++  nonisolated(unsafe) private var statusUpdatedObserver: NSObjectProtocol?
+ 
+   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
+     self.statusFetcher = statusFetcher
+@@ -155,12 +157,28 @@ import Nuke
+         await self.hideReadPosts()
+       }
+     }
++    
++    statusUpdatedObserver = NotificationCenter.default.addObserver(
++      forName: .statusUpdated,
++      object: nil,
++      queue: .main
++    ) { [weak self] notification in
++      guard let self, let status = notification.object as? Status else { return }
++      Task { @MainActor in
++        guard let originalIndex = await self.datasource.indexOf(statusId: status.id) else { return }
++        await self.datasource.replace(status, at: originalIndex)
++        await self.cache()
++      }
++    }
+   }
+ 
+   deinit {
+     if let hideReadPostsObserver {
+       NotificationCenter.default.removeObserver(hideReadPostsObserver)
+     }
++    if let statusUpdatedObserver {
++      NotificationCenter.default.removeObserver(statusUpdatedObserver)
++    }
+   }
+ 
+   private func fetchTag(id: String) async {
+
+commit 9f3c41954e60be0b7263ce5e0d534e57bac9b2aa
+Author: AIStudio <aistudio@google.com>
+Date:   Sat Jul 18 08:14:20 2026 +0000
+
+    Fix seen posts not being marked as read on timeline refresh/toggle by implementing a reference-counting mechanism to prevent out-of-order onAppear/onDisappear SwiftUI lifecycle issues
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 0ae729b8..e8728122 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -91,6 +91,9 @@ import Nuke
+   @ObservationIgnored
+   private var visibleStatuses: [Status] = []
+ 
++  @ObservationIgnored
++  private var visibleStatusesCount: [String: Int] = [:]
++
+   private var canStreamEvents: Bool = true {
+     didSet {
+       if canStreamEvents {
+@@ -172,6 +175,8 @@ import Nuke
+ 
+   func reset() async {
+     await datasource.reset()
++    visibleStatuses = []
++    visibleStatusesCount = [:]
+   }
+ 
+   private func handleLatestOrResume(_ oldValue: TimelineFilter) async {
+@@ -488,7 +493,11 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+   func statusDidAppear(status: Status) {
+     pendingStatusesObserver.removeStatus(status: status)
+-    visibleStatuses.insert(status, at: 0)
++    
++    visibleStatusesCount[status.id, default: 0] += 1
++    if !visibleStatuses.contains(where: { $0.id == status.id }) {
++      visibleStatuses.insert(status, at: 0)
++    }
+ 
+     if let client, timeline.supportNewestPagination {
+       Task {
+@@ -540,7 +549,17 @@ extension TimelineViewModel: GapLoadingFetcher {
+   }
+ 
+   func statusDidDisappear(status: Status) {
+-    visibleStatuses.removeAll(where: { $0.id == status.id })
++    if let count = visibleStatusesCount[status.id] {
++      let newCount = count - 1
++      if newCount <= 0 {
++        visibleStatusesCount.removeValue(forKey: status.id)
++        visibleStatuses.removeAll(where: { $0.id == status.id })
++      } else {
++        visibleStatusesCount[status.id] = newCount
++      }
++    } else {
++      visibleStatuses.removeAll(where: { $0.id == status.id })
++    }
+   }
+ 
+   @MainActor
+
+commit 06347a5e3bf189d76d4acd05048228ee1d3169ac
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Thu Jul 16 02:03:09 2026 -0400
+
+    Fix nonisolated deinit build error
+    
+    Marked hideReadPostsObserver as nonisolated(unsafe). The class is @MainActor, but deinit is always nonisolated regardless — accessing the non-Sendable NSObjectProtocol observer token there broke the build under strict concurrency checking. Same commit as the original notification-observer fix, so this can be folded into that existing changelog entry rather than added as a separate one.
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 42a432f3..0ae729b8 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -130,7 +130,7 @@ import Nuke
+   var marker: Marker.Content?
+ 
+   @ObservationIgnored
+-  private var hideReadPostsObserver: NSObjectProtocol?
++  nonisolated(unsafe) private var hideReadPostsObserver: NSObjectProtocol?
+ 
+   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
+     self.statusFetcher = statusFetcher
+
+commit e8c9cd97fc43a1c48fd4e688a978d669875c9758
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Thu Jul 16 01:50:59 2026 -0400
+
+    Fix hide-read-posts notification never being observed
+    
+    Added a NotificationCenter observer for .hideReadPosts in init that calls hideReadPosts() whenever the notification fires, plus a deinit to remove it. Previously nothing listened for this notification, so sessionSeenPosts never refreshed and statusesState never recomputed — seen posts stayed visible even when fully on screen.
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index e5ccc1af..42a432f3 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -129,11 +129,35 @@ import Nuke
+   let pendingStatusesObserver: TimelineUnreadStatusesObserver = .init()
+   var marker: Marker.Content?
+ 
++  @ObservationIgnored
++  private var hideReadPostsObserver: NSObjectProtocol?
++
+   init(statusFetcher: TimelineStatusFetching = TimelineStatusFetcher()) {
+     self.statusFetcher = statusFetcher
+     Task {
+       await datasource.setFilterContext(timeline.filterContext)
+     }
++
++    // Both the toolbar toggle and the one-off "hide read posts" action post this
++    // notification. Without this observer, toggling `TimelineContentFilter.shared.hideReadPosts`
++    // (or firing the one-off action) never re-filters `statusesState`, so the button appears to
++    // do nothing even for posts that are already marked seen.
++    hideReadPostsObserver = NotificationCenter.default.addObserver(
++      forName: .hideReadPosts,
++      object: nil,
++      queue: .main
++    ) { [weak self] _ in
++      guard let self else { return }
++      Task { @MainActor in
++        await self.hideReadPosts()
++      }
++    }
++  }
++
++  deinit {
++    if let hideReadPostsObserver {
++      NotificationCenter.default.removeObserver(hideReadPostsObserver)
++    }
+   }
+ 
+   private func fetchTag(id: String) async {
+
+commit 40dc9aa9f5ca96e7db1441a9c0cda15f1598f41c
+Author: AI Bot <bot@example.com>
+Date:   Wed Jul 15 03:50:04 2026 +0000
+
+    Fix Tag Group hide seen posts & implement auto IceShrimp detection workarounds
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index b9228cbf..e5ccc1af 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -233,7 +233,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func fetchNewestStatuses(pullToRefresh: Bool) async {
+     guard let client else { return }
+     do {
+-      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
++      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
+         await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+       }
+       if let marker {
+@@ -607,7 +607,9 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+ 
+   private func filterSeenStatuses(from statuses: [Status]) -> [Status] {
+-    if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
++    // Only permanently discard fetched statuses if we are in fire-and-forget mode.
++    // If it's a toggle, we MUST keep them in the datasource so they can reappear when toggled off.
++    if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
+        let seen = SeenPostsManager.shared.seenPosts
+        let includeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
+        return statuses.filter { status in 
+
+commit 48c6b7e1a4f26002affdc26c2eff9e7aef844be5
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Tue Jul 14 08:42:22 2026 +0000
+
+    Fix hide seen posts button in ic.net tag groups, start work on iceshrimp detection and settings for it
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 361b7562..b9228cbf 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -523,6 +523,10 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func hideReadPosts() async {
+     sessionSeenPosts = SeenPostsManager.shared.seenPosts
+     
++    if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
++      await datasource.hideReadPosts(seen: sessionSeenPosts ?? [], includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
++    }
++    
+     var items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+     
+     if items.count < 10, let client = client, let lastId = await datasource.get().last?.id {
+
+commit be21c81b805825886df19868b44d51d563895d05
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Mon Jul 13 08:18:23 2026 +0000
+
+    Fix video remote media fallback and video seen post tracking
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 9d078457..361b7562 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -489,10 +489,6 @@ extension TimelineViewModel: GapLoadingFetcher {
+                   if let url = attachment.url {
+                     return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
+                   }
+-                } else if attachment.supportedType == .video || attachment.supportedType == .gifv {
+-                  if let url = attachment.previewUrl ?? attachment.url {
+-                    return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
+-                  }
+                 }
+                 return true
+               }
+
+commit 21d469592c30b8d9f50035f181ddc8348ad6cdd6
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Mon Jul 13 08:08:54 2026 +0000
+
+    Fix hideSeenPosts marking posts as seen when media fails to load completely
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index ee9baf4d..9d078457 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -499,6 +499,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+               if allCached || !visibleStatuses.contains(where: { $0.id == status.id }) { break }
+               try? await Task.sleep(nanoseconds: 1_000_000_000)
+             }
++            if !allCached { return }
+           }
+           
+           var idToMark = status.id
+
+commit 5532baa9b3bcae97a35f7764b0e5bb4dfa93b5ef
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Mon Jul 13 07:36:10 2026 +0000
+
+    Bug fixes: timeline filters apply immediately & videos aren't always seen
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index c84106ba..ee9baf4d 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -485,9 +485,14 @@ extension TimelineViewModel: GapLoadingFetcher {
+             var allCached = false
+             for _ in 0..<5 {
+               allCached = status.mediaAttachments.allSatisfy { attachment in
+-                if attachment.supportedType != .image { return true }
+-                if let url = attachment.url {
+-                  return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
++                if attachment.supportedType == .image {
++                  if let url = attachment.url {
++                    return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
++                  }
++                } else if attachment.supportedType == .video || attachment.supportedType == .gifv {
++                  if let url = attachment.previewUrl ?? attachment.url {
++                    return ImagePipeline.shared.cache.cachedImage(for: ImageRequest(url: url)) != nil
++                  }
+                 }
+                 return true
+               }
+
+commit 624af10796e25d34cbb2f2b70426a5cf5deb1ce1
+Author: AI Studio Agent <54419064+jadetheda@users.noreply.github.com>
+Date:   Fri Jul 10 08:01:57 2026 +0000
+
+    Fix Tag Group fetching logic and add experimental client-side merge setting
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 348ef5b9..c84106ba 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -552,13 +552,14 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+     do {
+       // Fetch statuses within the gap
+-      let statuses: [Status] = try await client.get(
+-        endpoint: timeline.endpoint(
+-          sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
+-          maxId: gap.maxId,
+-          minId: nil,
+-          offset: 0,
+-          limit: 50))
++      let statuses = try await timeline.fetchStatuses(
++        client: client,
++        sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
++        maxId: gap.maxId,
++        minId: nil,
++        offset: 0,
++        limit: 50
++      )
+ 
+       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
+ 
+
+commit 2eb2c5b5677a2560cdca66d26c18062c7271ff81
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Fri Jul 10 04:23:23 2026 +0000
+
+    Attempting to fix bugged tag groups feature- then the agent died
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index a3d808df..348ef5b9 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -216,13 +216,14 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func fetchStatuses(from: Marker.Content) async throws {
+     guard let client else { return }
+     statusesState = .loading
+-    let statuses: [Status] = try await client.get(
+-      endpoint: timeline.endpoint(
+-        sinceId: nil,
+-        maxId: from.lastReadId,
+-        minId: nil,
+-        offset: 0,
+-        limit: 40))
++    let statuses = try await timeline.fetchStatuses(
++      client: client,
++      sinceId: nil,
++      maxId: from.lastReadId,
++      minId: nil,
++      offset: 0,
++      limit: 40
++    )
+ 
+     await updateDatasourceAndState(statuses: statuses, client: client, replaceExisting: true)
+     marker = nil
+
+commit a5df78a3bf2a4455efd73fdf8ba3bd8d56880c32
+Author: AI Bot <bot@example.com>
+Date:   Sat Jul 4 07:58:07 2026 +0000
+
+    Fix hide seen posts filtering logic and timeline view updates
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 1f58bdbe..a3d808df 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -207,6 +207,9 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+   func refreshTimelineContentFilter() async {
+     timelineTask?.cancel()
++    if TimelineContentFilter.shared.hideReadPosts {
++      sessionSeenPosts = SeenPostsManager.shared.seenPosts
++    }
+     await updateStatusesState()
+   }
+ 
+
+commit 5d10898ead718a3ee81993c52e26b057ff671111
+Author: AI Bot <bot@example.com>
+Date:   Fri Jul 3 08:29:48 2026 +0000
+
+    Remove duplicate sessionSeenPosts
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 55bcd099..1f58bdbe 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -60,7 +60,6 @@ import Nuke
+ 
+   private(set) var timelineTask: Task<Void, Never>?
+   private var sessionSeenPosts: Set<String> = []
+-  private var sessionSeenPosts: Set<String> = []
+ 
+   var tag: Tag?
+ 
+
+commit 06b9dda9ad5cc2c3f47bef599418ecc195de3ac5
+Author: AI Bot <bot@example.com>
+Date:   Fri Jul 3 08:29:27 2026 +0000
+
+    Remove hideStatusText
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 944fcb9d..55bcd099 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -60,6 +60,7 @@ import Nuke
+ 
+   private(set) var timelineTask: Task<Void, Never>?
+   private var sessionSeenPosts: Set<String> = []
++  private var sessionSeenPosts: Set<String> = []
+ 
+   var tag: Tag?
+ 
+@@ -229,7 +230,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func fetchNewestStatuses(pullToRefresh: Bool) async {
+     guard let client else { return }
+     do {
+-      if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
++      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
+         await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+       }
+       if let marker {
+
+commit 034234436230ee62fde158d1503cb1dce97df5cf
+Author: anna <54419064+jadetheda@users.noreply.github.com>
+Date:   Fri Jul 3 07:44:09 2026 +0000
+
+    Fix bug where old posts are erased when scrolling down by disabling automatic trimming of old statuses
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 42fe6f26..944fcb9d 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -403,9 +403,6 @@ extension TimelineViewModel: GapLoadingFetcher {
+       await datasource.insertGap(gap, at: newStatuses.count)
+     }
+ 
+-    if let lastVisible = visibleStatuses.last {
+-      await datasource.remove(after: lastVisible, safeOffset: 15)
+-    }
+     await cache()
+     let prefs = UserPreferences.shared
+     let newStatusesIDs = newStatuses.filter { status in
+
+commit bb0532c6916378762268bb3650ed88345969030d
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Thu Jul 2 08:35:54 2026 +0000
+
+    Fix display mode menu and gallery pagination
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 5b7f6a58..42fe6f26 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -284,7 +284,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+         timeline: timeline)
+ 
+       await updateDatasourceAndState(statuses: statuses, client: client, replaceExisting: true)
+-      let lastCount = await autoFetchNextPagesIfFilteredEmpty(
++      let lastCount = await autoFetchNextPageWhileNoVisibleItems(
+         lastFetchedCount: statuses.count,
+         pageLimit: Constants.initialPageLimit)
+       if lastCount != statuses.count {
+@@ -447,12 +447,14 @@ extension TimelineViewModel: GapLoadingFetcher {
+       lastId: lastId,
+       offset: statuses.count)
+ 
++    let visibleCountBefore = await datasource.getFilteredItems(seen: sessionSeenPosts).count
+     await datasource.append(contentOf: newStatuses)
+     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+ 
+-    let lastCount = await autoFetchNextPagesIfFilteredEmpty(
++    let lastCount = await autoFetchNextPageWhileNoVisibleItems(
+       lastFetchedCount: newStatuses.count,
+-      pageLimit: Constants.nextPageLimit)
++      pageLimit: Constants.nextPageLimit,
++      visibleCountBefore: visibleCountBefore)
+     await cache()
+     statusesState = await .displayWithGaps(
+       items: datasource.getFilteredItems(seen: sessionSeenPosts),
+@@ -639,12 +641,13 @@ extension TimelineViewModel: GapLoadingFetcher {
+     }
+   }
+ 
+-  private func autoFetchNextPagesIfFilteredEmpty(
++  private func autoFetchNextPageWhileNoVisibleItems(
+     lastFetchedCount: Int,
+-    pageLimit: Int
++    pageLimit: Int,
++    visibleCountBefore: Int = 0
+   ) async -> Int {
+     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
+-    guard await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty else { return lastFetchedCount }
++    guard await datasource.getFilteredItems(seen: sessionSeenPosts).count <= visibleCountBefore else { return lastFetchedCount }
+     guard let client else { return lastFetchedCount }
+ 
+     var pagesLoaded = 0
+@@ -652,7 +655,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+     while pagesLoaded < Constants.emptyFilterAutoPageLimit,
+       lastCount >= Constants.nextPageLimit,
+-      await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty
++      await datasource.getFilteredItems(seen: sessionSeenPosts).count <= visibleCountBefore
+     {
+       let statuses = await datasource.get()
+       guard let lastId = statuses.last?.id else { break }
+
+commit a06a4c8a36d2901317d7311e16831da772d93e0c
+Author: AIStudio <54419064+jadetheda@users.noreply.github.com>
+Date:   Thu Jul 2 08:04:29 2026 +0000
+
+    Fix gallery, remote media, and exit code 65
+
+diff --git a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+index 0aa41363..5b7f6a58 100644
+--- a/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
++++ b/Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift
+@@ -59,6 +59,7 @@ import Nuke
+   }
+ 
+   private(set) var timelineTask: Task<Void, Never>?
++  private var sessionSeenPosts: Set<String> = []
+ 
+   var tag: Tag?
+ 
+@@ -228,7 +229,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+   func fetchNewestStatuses(pullToRefresh: Bool) async {
+     guard let client else { return }
+     do {
+-      if pullToRefresh, UserPreferences.shared.hideSeenPostsEnabled, UserPreferences.shared.hideSeenPostsIsToggle, TimelineContentFilter.shared.hideReadPosts {
++      if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
+         await datasource.hideReadPosts(seen: SeenPostsManager.shared.seenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+       }
+       if let marker {
+@@ -263,7 +264,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+       !cachedItems.isEmpty
+     {
+       await datasource.setItems(cachedItems)
+-      let items = await datasource.getFilteredItems()
++      let items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+       if let latestSeenId = await cache.getLatestSeenStatus(for: client, filter: timeline.id)?.first
+       {
+         // Restore cache and scroll to latest seen status.
+@@ -382,10 +383,11 @@ extension TimelineViewModel: GapLoadingFetcher {
+   private func updateTimelineWithNewStatuses(
+     _ newStatuses: [Status], latestStatus: String, fetchedCount: Int, shouldCreateGap: Bool
+   ) async {
+-    let topStatus = await datasource.getFiltered(seen: SeenPostsManager.shared.seenPosts).first
++    let topStatus = await datasource.getFiltered(seen: sessionSeenPosts).first
+ 
+     // Insert new statuses at the top
+-    await datasource.insert(contentOf: newStatuses, at: 0)
++    let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
++    await datasource.insert(contentOf: filteredNewStatuses, at: 0)
+ 
+     // Only create a gap if:
+     // 1. We fetched a full page (suggesting there might be more)
+@@ -417,7 +419,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
+ 
+-    let items = await datasource.getFilteredItems()
++    let items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+ 
+     if let topStatus = topStatus,
+       visibleStatuses.contains(where: { $0.id == topStatus.id }),
+@@ -453,7 +455,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+       pageLimit: Constants.nextPageLimit)
+     await cache()
+     statusesState = await .displayWithGaps(
+-      items: datasource.getFilteredItems(),
++      items: datasource.getFilteredItems(seen: sessionSeenPosts),
+       nextPageState: lastCount < Constants.nextPageLimit ? .none : .hasNextPage)
+   }
+ 
+@@ -514,28 +516,23 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+   @MainActor
+   func hideReadPosts() async {
+-    let seen = SeenPostsManager.shared.seenPosts
++    sessionSeenPosts = SeenPostsManager.shared.seenPosts
+     
+-    let statuses = await datasource.get()
+-    let lastId = statuses.last?.id
+-    let offset = statuses.count
+-
+-    await datasource.hideReadPosts(seen: seen, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+-    var items = await datasource.getFilteredItems(seen: seen)
++    var items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+     
+-    if items.count < 10, let client = client, let lastId = lastId {
++    if items.count < 10, let client = client, let lastId = await datasource.get().last?.id {
+       do {
+         let newStatuses: [Status] = try await statusFetcher.fetchNextPage(
+           client: client,
+           timeline: timeline,
+           lastId: lastId,
+-          offset: offset)
+-        await datasource.append(contentOf: newStatuses)
++          offset: await datasource.get().count)
++        let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
++        await datasource.append(contentOf: filteredNewStatuses)
+         StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+-        items = await datasource.getFilteredItems(seen: seen)
++        items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+       } catch { }
+     }
+-
+     withAnimation {
+       statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage) // nextPageState is approximate here
+     }
+@@ -598,6 +595,20 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+   // MARK: - Helper Methods
+ 
++
++  private func filterSeenStatuses(from statuses: [Status]) -> [Status] {
++    if UserPreferences.shared.hideSeenPostsEnabled, (!UserPreferences.shared.hideSeenPostsIsToggle || TimelineContentFilter.shared.hideReadPosts) {
++       let seen = SeenPostsManager.shared.seenPosts
++       let includeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
++       return statuses.filter { status in 
++           if seen.contains(status.id) { return false }
++           if includeBoosts, let reblog = status.reblog, seen.contains(reblog.id) { return false }
++           return true
++       }
++    }
++    return statuses
++  }
++
+   private func updateDatasourceAndState(
+     statuses: [Status], client: MastodonClient, replaceExisting: Bool
+   )
+@@ -605,10 +616,11 @@ extension TimelineViewModel: GapLoadingFetcher {
+   {
+     StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
+ 
++    let filteredStatuses = filterSeenStatuses(from: statuses)
+     if replaceExisting {
+-      await datasource.set(statuses)
++      await datasource.set(filteredStatuses)
+     } else {
+-      await datasource.append(contentOf: statuses)
++      await datasource.append(contentOf: filteredStatuses)
+     }
+ 
+     await cache()
+@@ -616,12 +628,12 @@ extension TimelineViewModel: GapLoadingFetcher {
+   }
+ 
+   private func updateStatusesState() async {
+-    let items = await datasource.getFilteredItems()
++    let items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+     statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+   }
+ 
+   private func updateStatusesStateWithAnimation() async {
+-    let items = await datasource.getFilteredItems()
++    let items = await datasource.getFilteredItems(seen: sessionSeenPosts)
+     withAnimation {
+       statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+     }
+@@ -632,7 +644,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+     pageLimit: Int
+   ) async -> Int {
+     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
+-    guard await datasource.getFilteredItems().isEmpty else { return lastFetchedCount }
++    guard await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty else { return lastFetchedCount }
+     guard let client else { return lastFetchedCount }
+ 
+     var pagesLoaded = 0
+@@ -640,7 +652,7 @@ extension TimelineViewModel: GapLoadingFetcher {
+ 
+     while pagesLoaded < Constants.emptyFilterAutoPageLimit,
+       lastCount >= Constants.nextPageLimit,
+-      await datasource.getFilteredItems().isEmpty
++      await datasource.getFilteredItems(seen: sessionSeenPosts).isEmpty
+     {
+       let statuses = await datasource.get()
+       guard let lastId = statuses.last?.id else { break }
+@@ -655,7 +667,8 @@ extension TimelineViewModel: GapLoadingFetcher {
+         break
+       }
+       guard !newStatuses.isEmpty else { break }
+-      await datasource.append(contentOf: newStatuses)
++      let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
++      await datasource.append(contentOf: filteredNewStatuses)
+       StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+       lastCount = newStatuses.count
+       pagesLoaded += 1
