@@ -9,12 +9,12 @@ workflows:
         - build/Build/Intermediates.noindex
     environment:
       xcode: "26.4"
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: 'main'
-          include: true
+    # triggering:
+    #   events:
+    #     - push
+    #   branch_patterns:
+    #     - pattern: 'main'
+    #       include: true
     scripts:
       - name: Build Unsigned App
         script: |

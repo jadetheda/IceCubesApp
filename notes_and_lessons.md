@@ -161,3 +161,7 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Observation**: Adding new features and settings in English under `Localizable.xcstrings` without corresponding translations for other supported languages causes non-English users to see raw localization identifier keys (like `settings.experimental.title`) in the UI.
 - **Solution**: Always supply comprehensive native localizations for all new UI keys in all 19 supported languages to preserve a polished user experience regardless of the user's active device locale.
 
+## Managing CI/CD Automated Triggering
+- **Observation**: Automatic CI build triggers (such as `push` events under Codemagic `triggering` in `codemagic.yaml` or `push` triggers in `.github/workflows/`) run compile routines on every commit, creating substantial workflow clutter and spamming developers with failed/incomplete build notices during highly iterative developer turns.
+- **Solution**: Keep automated push triggers commented out or deactivated in `codemagic.yaml` and `.github/workflows` to prevent automatic compiles on intermediate/WIP commits. Active builds should be run on-demand via manual triggers (`workflow_dispatch` in GitHub or via Codemagic UI).
+

@@ -280,3 +280,7 @@
   - Added translations for 19 languages including French, German, Spanish, Italian, Japanese, Korean, Ukrainian, Brazilian Portuguese, Simplified/Traditional Chinese, and more.
   - This prevents raw localization IDs from appearing in the settings panel when English is not the active system language.
 
+- 2026-07-20T07:45:00Z: **Disabled Automated Codemagic Push Triggering**
+  - Commented out the `triggering` event block in `codemagic.yaml`.
+  - This prevents automatic compiles on every single commit/push, addressing the issue of unwanted build runs.
+
