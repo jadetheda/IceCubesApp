@@ -257,3 +257,7 @@
 
 - **2026-07-20T06:39:00Z - Fixed Missing Import**
   - Found and fixed a missing `import Observation` in `AccountDetailMediaGridView.swift` which could have caused an Exit Code 65 during Xcode compilation since `AccountMediaFetcher` relies on the `@Observable` macro.
+
+- **2026-07-20T06:55:00Z - Fixed Undo Scroll to Top Logic**
+  - Fixed a critical bug in `TimelineViewModel.swift` where `handleScrollToTopTrigger` was reversing the undo condition (`!scrollToTopVisible` instead of `scrollToTopVisible`).
+  - Replaced the naive `visibleStatuses.first` (which tracked the last appeared item, often at the bottom of the screen) with a robust search through `statusesState` items to find the true top-most visible item by intersecting with `visibleStatusesCount`.

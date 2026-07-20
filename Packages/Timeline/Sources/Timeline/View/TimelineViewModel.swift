@@ -129,7 +129,7 @@ import Nuke
 
   func handleScrollToTopTrigger(proxy: ScrollViewProxy) -> Bool {
     guard UserPreferences.shared.undoScrollToTopEnabled else { return false }
-    if let previous = previousScrollPosition, !scrollToTopVisible {
+    if let previous = previousScrollPosition, scrollToTopVisible {
       withAnimation {
         proxy.scrollTo(previous, anchor: .top)
       }
@@ -138,7 +138,14 @@ import Nuke
       undoTimer = nil
       return true
     } else {
-      if let first = visibleStatuses.first?.id {
+      var topVisibleId: String? = nil
+      if case .displayWithGaps(let items, _) = statusesState {
+          topVisibleId = items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
+      } else if case .display(let statuses, _) = statusesState {
+          topVisibleId = statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
+      }
+      
+      if let first = topVisibleId ?? visibleStatuses.first?.id {
         previousScrollPosition = first
         undoTimer?.invalidate()
         undoTimer = Timer.scheduledTimer(withTimeInterval: UserPreferences.shared.undoScrollToTopTimeout, repeats: false) { [weak self] _ in
