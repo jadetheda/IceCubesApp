@@ -6,9 +6,17 @@ public extension Notification.Name {
 }
 
 public class StatusBarWindow: UIWindow {
+    private var lastTapTime: TimeInterval = 0
+
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-        if point.y <= 50 {
-            NotificationCenter.default.post(name: .statusBarTapped, object: nil)
+        // Ensure we are tapping within the status bar region (top 50 points)
+        if point.y >= 0 && point.y <= 50 {
+            let now = CACurrentMediaTime()
+            // Debounce to prevent multiple hits from the same touch cycle (UIKit calls hitTest multiple times per touch)
+            if now - lastTapTime > 0.5 {
+                lastTapTime = now
+                NotificationCenter.default.post(name: .statusBarTapped, object: nil)
+            }
         }
         return nil
     }
