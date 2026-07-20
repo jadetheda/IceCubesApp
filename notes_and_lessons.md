@@ -139,3 +139,12 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
   - **Navigation**: Pushed either from the "Media Grid" row in `MediaTab`, or via the `square.grid.3x3` toolbar icon on the main user profile header.
 - **Future Alignment**: These two layouts manage media fetch, fallback state, and display modes separately. Identifying their structural files prevents accidental overlaps and provides a roadmap for downstream codebase unification.
 
+
+## REST Pagination Safety & Capped Timelines (e.g. Lists)
+- **Problem**: When a server caps page results (e.g. at 20 items) but the app expects a higher page limit (e.g. `Constants.nextPageLimit = 40`) to keep paging, a check like `lastCount < nextPageLimit` will evaluate to `true` on the very first page fetch. This sets `nextPageState` to `.none`, permanently disabling scrolling/paging for that timeline.
+- **Solution**: The safest and most standard way to detect the end of a paginated timeline is checking if the fetched status list is empty, i.e. `newStatuses.isEmpty || lastCount == 0`. This allows continuous paging on custom lists, hashtags, or server-limited timelines regardless of their hard page limits.
+
+## Modular Component Reuse Across Packages
+- **Unifying Custom Layouts**: Relying on duplicate implementations of high-density grid layouts (such as `AccountDetailMediaGridView` vs `GalleryStatusesListView`) invites divergent bugs where one layout falls behind on performance improvements, seen-state tracking, custom column preferences, or rich interactions.
+- **Implementation**: Instead of maintaining two separate gallery grids, refactor the custom views to be a fullscreen ScrollView container wrapping the standard `GalleryStatusesListView` from `StatusKit`.
+- **Fetcher-Conforming Wrappers**: By creating a lightweight, conforming `StatusesFetcher` wrapper (`AccountMediaFetcher`), we can bridge the `Account` package and the `StatusKit` package, feeding the modular layout with custom paginated list queries while respecting all the user's customized column/crop preferences out of the box.

@@ -535,7 +535,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     await cache()
     statusesState = await .displayWithGaps(
       items: datasource.getFilteredItems(seen: sessionSeenPosts),
-      nextPageState: lastCount < Constants.nextPageLimit ? .none : .hasNextPage)
+      nextPageState: (newStatuses.isEmpty || lastCount == 0) ? .none : .hasNextPage)
   }
 
   func statusDidAppear(status: Status) {

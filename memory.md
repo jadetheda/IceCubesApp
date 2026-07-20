@@ -250,3 +250,7 @@
   - **Full-Screen Media Grid**: `Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift` implements the high-density, 3-column bento grid for gallery browsing.
   - Identified these separate implementations to pave the way for future consistency/refactoring of duplicate layout logic.
 
+
+- **2026-07-20T06:00:00Z - Unified Profile Media Grid & Solved Lists Gallery Pagination Bug**
+  - Fixed the Lists tab Gallery Mode pagination bug in `TimelineViewModel.swift` where list timelines limited to 20 posts per page would disable pagination by thinking they had reached the end of the timeline because the count was less than 40. Refactored the `nextPageState` determination to check if `newStatuses.isEmpty || lastCount == 0`, ensuring continuous, smooth scrolling on sparsely populated/limited streams.
+  - Refactored `AccountDetailMediaGridView.swift` in the `Account` package to completely reuse `GalleryStatusesListView` from `StatusKit`. This unifies the Profile "Media Grid" button with the standard Timeline Gallery Mode masonry layout, addressing the "3-column layout bug" by respecting user-configured columns, enabling robust pagination, seen post tracking, and full context menus without duplicate code.
