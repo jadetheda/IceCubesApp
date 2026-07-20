@@ -6,6 +6,7 @@ import NetworkClient
 import NukeUI
 import SwiftUI
 import StatusKit
+import Observation
 
 /// `AccountMediaFetcher` provides a unified `StatusesFetcher` conforming interface for the 
 /// Profile Media Gallery. This eliminates the fragmentation of having a custom grid layout 
