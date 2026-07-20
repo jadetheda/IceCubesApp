@@ -270,3 +270,7 @@
 - 2026-07-20T07:25:00Z: **Fixed Gallery Masonry Grid Missing Heights (Gap Bug)**
   - Replaced `LazyVStack` with `VStack` for the column structures inside `GalleryStatusesListView`, `GalleryGrid`, and `AccountDetailMediaGridView`.
   - This resolves a critical SwiftUI layout bug where a nested lazy layout (`LazyVStack` inside `HStack` inside a `List` or `ScrollView`) would fail to calculate heights properly for lazy-loading images, causing massive multi-thousand pixel blank gaps to appear between grid items.
+
+- 2026-07-20T07:31:00Z: **Renamed Fullscreen Button & Added Localization**
+  - Renamed the "Fullscreen" button to "Fullscreen Gallery" (`account.media.fullscreen`).
+  - Added comprehensive localizations for 15 languages inside `Localizable.xcstrings`, including French, German, Spanish, Italian, Japanese, Korean, Traditional/Simplified Chinese, and more.
