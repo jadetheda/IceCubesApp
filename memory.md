@@ -237,3 +237,16 @@
 - Fixed major syntax error in `TimelineViewModel.swift` where a property observer was detached.
 - Refined undo scroll-to-top logic to check `!scrollToTopVisible` and `previousScrollPosition != nil`.
 - Updated integrity manifest.
+
+## 2026-07-20T05:00:00Z - Investigated Gallery Mode Context Menu and Long Press Implementations
+- Performed audit of commit history and verified the state of all gallery long-press/context menu triggers.
+- Confirmed that the first timeline-focused Gallery Mode long-press was added in commit `814a0caf` (`GalleryStatusesListView.swift` / `GalleryMediaCell`).
+- Confirmed that the Profile Media Gallery long-press is handled independently in `AccountDetailMediaGridView.swift`.
+- Clarified that recent refactoring commits from yesterday/July 18-19 (such as `81518973` and `14a03ed4`) made `GalleryMediaCell` body public to support the "Full-Width Profile Gallery Mode" layout, and that `bb685fef` successfully resolved Bug 5 by adding auto-fallback preferences into the profile grid layout, without regressing or duplicating context menu features.
+
+## 2026-07-20T05:15:00Z - Documented Profile Media Tab vs Full-Screen Media Grid Architecture
+- Analyzed and documented the distinct files responsible for gallery and media layout on user profiles:
+  - **Media Tab**: `Packages/Account/Sources/Account/Detail/Tabs/MediaTab.swift` renders `MediaTabView` with a top navigation bar pushing to the full grid, followed by standard status cards inside `AnyStatusesListView`.
+  - **Full-Screen Media Grid**: `Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift` implements the high-density, 3-column bento grid for gallery browsing.
+  - Identified these separate implementations to pave the way for future consistency/refactoring of duplicate layout logic.
+

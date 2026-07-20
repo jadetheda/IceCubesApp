@@ -120,3 +120,22 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 ## IceShrimp.NET List Retrieval Compatibility
 - **Observation**: The `GET /api/v1/accounts/:id/lists` endpoint is prone to failure or missing implementation on IceShrimp instances.
 - **Fix**: A robust workaround is fetching all lists and individually fetching the accounts of each list (`Lists.accounts(listId:)`) via a Swift task group.
+
+## Dual Gallery Mode Context Menu Architecture
+- **Timeline/List Gallery (`GalleryStatusesListView` / `GalleryMediaCell`)**: Configured with a `.contextMenu` loading `StatusRowContextMenu`. This displays full Mastodon interactions (boost, fave, reply, delete, etc.) since cells in these flows represent distinct posts in a feed. Originally implemented in commit `814a0caf`.
+- **Profile Media Grid Gallery (`AccountDetailMediaGridView`)**: Configured with a lightweight, media-focused `.contextMenu` containing specific media tools (Open Media via QuickLook, Share Link, Copy Image/Link) rather than timeline operations. Updated in commit `bb685fef` to support fallback/force remote media loading.
+- **Avoid Overlap Confusion**: Because these views are in separate modules (`StatusKit` and `Account`), changes to expose/refactor cell visual layers (like making `GalleryMediaCell` public in commit `14a03ed4` for full-width layout support) do not replace or break the distinct context-menu capabilities of the respective gallery implementations.
+
+## Profile Media Tab vs. Full-Screen Media Grid Implementations
+- **Profile Media Tab (`MediaTab.swift` / `MediaTabView`)**:
+  - **Location**: `/Packages/Account/Sources/Account/Detail/Tabs/MediaTab.swift`
+  - **Purpose**: Displays a native, inline feed tab on the user's profile detail view.
+  - **Layout**: It renders a standard, vertical list of posts containing media using `AnyStatusesListView` to map out full `StatusRowExternalView` cards.
+  - **Navigation**: To allow full grid browsing, it includes a tap-to-navigate row header styled with `Image(systemName: "square.grid.2x2")` reading "Media Grid" that pushes to the full-screen media grid.
+- **Full-Screen Media Grid (`AccountDetailMediaGridView.swift`)**:
+  - **Location**: `/Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift`
+  - **Purpose**: A dedicated full-screen 3-column masonry grid layout.
+  - **Layout**: Renders high-density thumbnail images/videos inside a `LazyVGrid` wrapper.
+  - **Navigation**: Pushed either from the "Media Grid" row in `MediaTab`, or via the `square.grid.3x3` toolbar icon on the main user profile header.
+- **Future Alignment**: These two layouts manage media fetch, fallback state, and display modes separately. Identifying their structural files prevents accidental overlaps and provides a roadmap for downstream codebase unification.
+
