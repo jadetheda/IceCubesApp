@@ -39,7 +39,7 @@ public struct GalleryGrid: View {
         
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
-        VStack(spacing: 4) {
+        LazyVStack(spacing: 4) {
           ForEach(columnItems[colIndex]) { status in
             GalleryMediaCell(
               mediaStatus: status,
@@ -48,8 +48,8 @@ public struct GalleryGrid: View {
               isRemote: isRemote,
               filterContext: filterContext
             )
+            .id(status.status.id)
           }
-          Spacer(minLength: 0)
         }
       }
     }
