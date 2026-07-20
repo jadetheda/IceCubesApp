@@ -86,7 +86,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
-        LazyVStack(spacing: 4) {
+        VStack(spacing: 4) {
           ForEach(columnItems[colIndex]) { status in
             GalleryMediaCell(
               mediaStatus: status,

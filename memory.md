@@ -266,3 +266,7 @@
   - Removed `useTimelineFilter` workaround from `AnyStatusesListView` to ensure that `TimelineContentFilter.shared.isGalleryMode` natively and fully applies to Account detail tabs.
   - Refactored `GalleryMediaCell` in `GalleryStatusesListView.swift` to use a native `Button` as the root interactive element instead of `.onTapGesture` on a `Group`, resolving severe inconsistency and missed hit-tests in the Masonry grid.
   - Applied similar `Button` wrapping pattern to the full-screen media toggle in `MediaTab.swift`.
+
+- 2026-07-20T07:25:00Z: **Fixed Gallery Masonry Grid Missing Heights (Gap Bug)**
+  - Replaced `LazyVStack` with `VStack` for the column structures inside `GalleryStatusesListView`, `GalleryGrid`, and `AccountDetailMediaGridView`.
+  - This resolves a critical SwiftUI layout bug where a nested lazy layout (`LazyVStack` inside `HStack` inside a `List` or `ScrollView`) would fail to calculate heights properly for lazy-loading images, causing massive multi-thousand pixel blank gaps to appear between grid items.

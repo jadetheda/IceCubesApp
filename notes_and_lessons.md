@@ -151,3 +151,8 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 
 - **Scroll Tracking in SwiftUI Lists**: When tracking visible items using `.onAppear` and `.onDisappear`, inserting into a flat array (`insert(at: 0)`) only tracks chronological appearance order. To find the true spatial top-most visible item, you must iterate over your ordered datasource and find the first item whose ID currently exists in the tracked visible set.
 - **Status Bar Tap Conflicts**: When using an overlay `UIWindow` to intercept status bar taps, returning `nil` in `hitTest` allows the system to also process the tap and perform native scroll-to-top. Any manual `proxy.scrollTo` triggered concurrently while the user is *not* at the top will aggressively fight the native scroll animation. Manual scroll-to-top undo must strictly only execute when the user is *already* at the top.
+
+## Masonry Grid Layout Bug (Nested Lazy Containers)
+- **Observation**: Placing `LazyVStack` inside an `HStack` inside another lazy container (like a `List` or `ScrollView`) completely breaks SwiftUI's height calculation logic, especially when children contain asynchronously loaded media (like `LazyImage`).
+- **Consequence**: Users will see massive, inexplicable gaps between images as the outer lazy container receives an unbounded or incorrect height calculation from the inner `LazyVStack`s resolving at different times.
+- **Solution**: Always use standard `VStack` for the columns of a masonry `HStack`, allowing the `List` or `ScrollView` to correctly calculate the grid's total height as a single block. Inner items using `LazyImage` will still load efficiently when entering the bounds.
