@@ -86297,6 +86297,46 @@
           }
         }
       }
+    },
+    "settings.experimental.undo-scroll-to-top": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo Scroll To Top"
+          }
+        }
+      }
+    },
+    "settings.experimental.undo-scroll-to-top.enable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable Undo Scroll To Top"
+          }
+        }
+      }
+    },
+    "settings.experimental.undo-scroll-to-top.timeout": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timeout: %1$.0fs"
+          }
+        }
+      }
+    },
+    "settings.experimental.remote-media-fallback-on-fail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load Remote Media On Fail"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

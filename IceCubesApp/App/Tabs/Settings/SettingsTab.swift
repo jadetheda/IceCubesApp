@@ -680,10 +680,10 @@ public struct ExperimentalSettingsView: View {
         }
       }
       
-      Section("Undo Scroll To Top") {
-        Toggle("Enable Undo Scroll To Top", isOn: $preferences.undoScrollToTopEnabled)
+      Section("settings.experimental.undo-scroll-to-top") {
+        Toggle("settings.experimental.undo-scroll-to-top.enable", isOn: $preferences.undoScrollToTopEnabled)
         if preferences.undoScrollToTopEnabled {
-          Stepper("Timeout: \(String(format: "%.0f", preferences.undoScrollToTopTimeout))s", value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
+          Stepper(String(format: NSLocalizedString("settings.experimental.undo-scroll-to-top.timeout", comment: ""), preferences.undoScrollToTopTimeout), value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
         }
       }
       Section("settings.experimental.media") {
@@ -697,7 +697,7 @@ public struct ExperimentalSettingsView: View {
           }
         }
         Toggle(isOn: $preferences.remoteMediaFallbackOnFail) {
-          Label("Load Remote Media On Fail", systemImage: "arrow.triangle.2.circlepath")
+          Label("settings.experimental.remote-media-fallback-on-fail", systemImage: "arrow.triangle.2.circlepath")
         }
 
         Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
