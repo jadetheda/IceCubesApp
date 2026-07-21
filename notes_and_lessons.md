@@ -191,6 +191,7 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Solution**: To implement timeouts natively in SwiftUI views (like our undo-scroll-to-top timers), always prefer `Task { try? await Task.sleep(for: .seconds(timeout)) }` managed via an `@State private var undoTask: Task<Void, Never>?`. This cleanly inherits the surrounding actor context and safely mutates `@State` properties upon completion without escaping boundaries.
 - **Dynamic Tab ID resolution in SwiftUI**: When building highly customizable TabViews, do not hardcode list identities to static enumerations (e.g., `newValue == 0`). Instead, inject an environment variable (like `@Environment(\.currentTabId)`) at the `Tab` builder level. The underlying lists should compare any global tap pulses against this contextual environment variable, cleanly supporting arbitrary tab shuffling and duplicated view types (like multiple `TimelineListView` tabs).
 
-## Git Push and Commit Hygiene
-- **Observation**: When making iterative edits and bug fixes across multiple files, git working tree changes must be committed and pushed to remote `origin/main` so that the repository stays up-to-date.
-- **Solution**: Stage modified files, write a clear descriptive commit message, and execute `git push origin main` via terminal.
+
+## Multiple Media Status Representation in Gallery Mode
+- **Observation**: `status.asMediaStatus` on `Status` returns an array `[MediaStatus]`, containing one entry for each media attachment attached to that status.
+- **Fix**: In Gallery Mode, mapping statuses to items by treating `asMediaStatus` as a single element or using `compactMap` with `if let` drops multi-attachment posts or fails type checking. Expanding statuses into `.media(MediaStatus)` via a loop over `status.asMediaStatus` ensures every media attachment is rendered independently in the masonry grid, maintaining full context and interaction capability for each image/video cell.

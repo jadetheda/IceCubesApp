@@ -65,21 +65,39 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
   }
 
+  private enum GalleryItem: Identifiable {
+    case media(MediaStatus)
+    case gap(TimelineGap)
+    
+    var id: String {
+      switch self {
+      case .media(let media): return media.id
+      case .gap(let gap): return gap.id
+      }
+    }
+  }
+
   @ViewBuilder
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
-    let galleryItems: [TimelineItem] = items.compactMap { item in
-        switch item {
-        case .status(let status):
-            return status.asMediaStatus != nil ? item : nil
-        case .gap:
-            return item
-        }
-    }
+    let galleryItems: [GalleryItem] = {
+      var itemsToReturn: [GalleryItem] = []
+      for item in items {
+          switch item {
+          case .status(let status):
+              for mediaStatus in status.asMediaStatus {
+                  itemsToReturn.append(.media(mediaStatus))
+              }
+          case .gap(let gap):
+              itemsToReturn.append(.gap(gap))
+          }
+      }
+      return itemsToReturn
+    }()
     
     let columns = UserPreferences.shared.galleryColumns
     
-    let columnItems: [[TimelineItem]] = {
-      var cols: [[TimelineItem]] = Array(repeating: [], count: columns)
+    let columnItems: [[GalleryItem]] = {
+      var cols: [[GalleryItem]] = Array(repeating: [], count: columns)
       for (index, item) in galleryItems.enumerated() {
           cols[index % columns].append(item)
       }
@@ -91,19 +109,17 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         LazyVStack(spacing: 4) {
           ForEach(columnItems[colIndex], id: \.id) { item in
             switch item {
-            case .status(let status):
-              if let mediaStatus = status.asMediaStatus {
-                GalleryMediaCell(
-                  mediaStatus: mediaStatus,
-                  routerPath: routerPath,
-                  client: client,
-                  isRemote: isRemote,
-                  filterContext: filterContext
-                )
-                .id(status.id)
-                .onAppear { fetcher.statusDidAppear(status: status) }
-                .onDisappear { fetcher.statusDidDisappear(status: status) }
-              }
+            case .media(let mediaStatus):
+              GalleryMediaCell(
+                mediaStatus: mediaStatus,
+                routerPath: routerPath,
+                client: client,
+                isRemote: isRemote,
+                filterContext: filterContext
+              )
+              .id(mediaStatus.status.id)
+              .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+              .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
             case .gap(let gap):
               if let gapLoader = fetcher as? GapLoadingFetcher {
                 TimelineGapView(gap: gap) {
@@ -124,7 +140,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .task(id: galleryItems.count) {
-      if galleryItems.count < 6 && nextPageState == .hasNextPage {
+      let mediaCount = galleryItems.filter { if case .media = $0 { return true } else { return false } }.count
+      if mediaCount < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }

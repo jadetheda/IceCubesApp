@@ -317,3 +317,7 @@
   - Re-integrated `TimelineGapView` directly into the single Masonry `HStack`. By placing it as a normal item into the first column, we restored gap fetching without breaking the masonry flow or causing ragged chunking artifacts.
   - Discovered that the nested `ProgressView` in `GalleryStatusesListView` was eagerly firing `fetchNextPage` because it was being placed sequentially after a normal `VStack` layout inside `TimelineListView`.
   - Moved the pagination `ProgressView` inside the first column's `LazyVStack` to ensure it genuinely lazily evaluates, fixing the aggressive infinite pagination and rate limit exhaustion bug.
+- 2026-07-21T18:00:00Z: **Fixed Gallery Mode Multiple Media Expansion and Compile Error**
+  - Resolved a Swift compiler error in `GalleryStatusesListView.swift` where `status.asMediaStatus` returned an array `[MediaStatus]` instead of an optional `MediaStatus?`.
+  - Introduced a `GalleryItem` enum with `.media(MediaStatus)` and `.gap(TimelineGap)` cases, enabling statuses with multiple media attachments to correctly render each image/video as its own item in the gallery masonry grid.
+  - Updated auto-pagination logic in `.task` to count total `.media` items instead of total status elements, ensuring pagination reliably triggers when fewer than 6 media items are visible in gallery mode.
