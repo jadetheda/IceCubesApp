@@ -38,6 +38,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
             }
           }
+          .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
       .redacted(reason: .placeholder)
@@ -153,6 +154,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           }
           Spacer(minLength: 0)
         }
+        .frame(minWidth: 0, maxWidth: .infinity)
       }
     }
     .task(id: statuses.count) {

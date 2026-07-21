@@ -340,3 +340,8 @@
   - **Gap Fetching Integration**: Implemented missing timeline Gap rendering into Gallery Mode. If you scroll back in time in Gallery mode, you'll now get the standard `TimelineGapView` block spanning the width of the grid, allowing you to load missing timeline history natively instead of just discarding the gap.
   - **Skeleton Loading Placeholders**: Replaced the simple `ProgressView()` in `.loading` state with a native, stable masonry skeleton grid using `.redacted(reason: .placeholder)`, matching the aesthetic experience of the default Timeline skeleton loading.
   - **Profile Media Pull-to-Refresh**: Added the `.refreshable` modifier to `AccountDetailMediaGridView`, allowing users to pull-to-refresh on a profile's Media tab, which was missing compared to the standard Posts tabs.
+
+- 2026-07-21T14:55:00Z: **Fixed Gallery Mode Single Image Full-Width Bug**
+  - **Issue:** When a user viewed a feed (like a custom List) that had very few media posts, or if a single post loaded first, the image would expand to take up the entire screen width instead of staying in its column.
+  - **Cause:** The masonry layout used an `HStack` containing `VStack`s for each column. If columns 1 and 2 were empty (because there was only 1 media item in column 0), the empty `VStack`s collapsed to 0 width. The `HStack` then allowed column 0 to expand and take 100% of the screen width.
+  - **Fix:** Added `.frame(minWidth: 0, maxWidth: .infinity)` to the column `VStack`s in `GalleryStatusesListView.swift`. This forces the `HStack` to distribute the screen width evenly among all columns, even if some of them are empty.
