@@ -10,7 +10,6 @@ import NukeUI
 public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
-
   @State private var fetcher: Fetcher
   private let isRemote: Bool
   private let client: MastodonClient
@@ -44,13 +43,9 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
-      makeGrid(for: statuses, nextPageState: nextPageState)
+      makeGrid(for: statuses.map { .status($0) }, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
-      let statuses = items.compactMap { item -> Status? in
-          if case let .status(status) = item { return status }
-          return nil
-      }
-      makeGrid(for: statuses, nextPageState: nextPageState)
+      makeGrid(for: items, nextPageState: nextPageState)
     }
   }
 
@@ -71,44 +66,68 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 
   @ViewBuilder
-  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
-    let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
+  private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
+    let galleryItems: [TimelineItem] = items.compactMap { item in
+        switch item {
+        case .status(let status):
+            return status.asMediaStatus != nil ? item : nil
+        case .gap:
+            return item
+        }
+    }
+    
     let columns = UserPreferences.shared.galleryColumns
     
-    // Distribute items into columns round-robin
-    let columnItems: [[MediaStatus]] = {
-      var items: [[MediaStatus]] = Array(repeating: [], count: columns)
-      for (index, status) in mediaStatuses.enumerated() {
-          items[index % columns].append(status)
+    let columnItems: [[TimelineItem]] = {
+      var cols: [[TimelineItem]] = Array(repeating: [], count: columns)
+      for (index, item) in galleryItems.enumerated() {
+          cols[index % columns].append(item)
       }
-      return items
+      return cols
     }()
     
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 4) {
-          ForEach(columnItems[colIndex]) { status in
-            GalleryMediaCell(
-              mediaStatus: status,
-              routerPath: routerPath,
-              client: client,
-              isRemote: isRemote,
-              filterContext: filterContext
-            )
-            .id(status.status.id)
-            .onAppear { fetcher.statusDidAppear(status: status.status) }
-            .onDisappear { fetcher.statusDidDisappear(status: status.status) }
+          ForEach(columnItems[colIndex], id: \.id) { item in
+            switch item {
+            case .status(let status):
+              if let mediaStatus = status.asMediaStatus {
+                GalleryMediaCell(
+                  mediaStatus: mediaStatus,
+                  routerPath: routerPath,
+                  client: client,
+                  isRemote: isRemote,
+                  filterContext: filterContext
+                )
+                .id(status.id)
+                .onAppear { fetcher.statusDidAppear(status: status) }
+                .onDisappear { fetcher.statusDidDisappear(status: status) }
+              }
+            case .gap(let gap):
+              if let gapLoader = fetcher as? GapLoadingFetcher {
+                TimelineGapView(gap: gap) {
+                   await gapLoader.loadGap(gap: gap)
+                }
+                .id(gap.id)
+                .listRowBackground(theme.primaryBackgroundColor)
+              }
+            }
+          }
+          
+          if colIndex == 0 {
+             makeNextPageRow(nextPageState: nextPageState)
+          } else {
+             Spacer(minLength: 0)
           }
         }
       }
     }
-    .task(id: statuses.count) {
-      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
+    .task(id: galleryItems.count) {
+      if galleryItems.count < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }
-    
-    makeNextPageRow(nextPageState: nextPageState)
   }
 }
 
@@ -156,6 +175,7 @@ public struct GalleryMediaCell: View {
                   Color.secondary.opacity(0.1)
                   ProgressView()
                 }
+                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
               }
             }
             .transition(.opacity)
@@ -259,7 +279,7 @@ public struct GalleryMediaCell: View {
 public struct GalleryAspectRatioModifier: ViewModifier {
     public let isSquare: Bool
     public let meta: MediaAttachment.MetaContainer.Meta?
-
+    
     public init(isSquare: Bool, meta: MediaAttachment.MetaContainer.Meta?) {
       self.isSquare = isSquare
       self.meta = meta

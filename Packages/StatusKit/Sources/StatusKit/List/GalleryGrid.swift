@@ -1,3 +1,5 @@
+// Reverted unused file, intentionally left empty or minimal to avoid breaking imports if any.
+// Reverting back to original GalleryGrid implementation from v2.1.4.3
 import DesignSystem
 import Env
 import Models
@@ -36,7 +38,7 @@ public struct GalleryGrid: View {
       }
       return items
     }()
-        
+            
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 4) {
@@ -50,6 +52,7 @@ public struct GalleryGrid: View {
             )
             .id(status.status.id)
           }
+          Spacer(minLength: 0)
         }
       }
     }

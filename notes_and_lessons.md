@@ -186,3 +186,11 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Solution 3**: Always append explicit `.id(status.id)` or `.id(item.id)` modifiers to cell views inside list/grid feeds to ensure robust resolution by the scroll proxy.
 
 
+## Concurrency-Safe Undo Timers in SwiftUI
+- **Observation**: Using standard `Timer.scheduledTimer` within highly isolated `@MainActor` structs or closures can occasionally trigger strict Swift 6 Sendable/Concurrency warnings or crashes (Exit Code 65).
+- **Solution**: To implement timeouts natively in SwiftUI views (like our undo-scroll-to-top timers), always prefer `Task { try? await Task.sleep(for: .seconds(timeout)) }` managed via an `@State private var undoTask: Task<Void, Never>?`. This cleanly inherits the surrounding actor context and safely mutates `@State` properties upon completion without escaping boundaries.
+- **Dynamic Tab ID resolution in SwiftUI**: When building highly customizable TabViews, do not hardcode list identities to static enumerations (e.g., `newValue == 0`). Instead, inject an environment variable (like `@Environment(\.currentTabId)`) at the `Tab` builder level. The underlying lists should compare any global tap pulses against this contextual environment variable, cleanly supporting arbitrary tab shuffling and duplicated view types (like multiple `TimelineListView` tabs).
+
+## Git Push and Commit Hygiene
+- **Observation**: When making iterative edits and bug fixes across multiple files, git working tree changes must be committed and pushed to remote `origin/main` so that the repository stays up-to-date.
+- **Solution**: Stage modified files, write a clear descriptive commit message, and execute `git push origin main` via terminal.

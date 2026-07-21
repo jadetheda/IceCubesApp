@@ -10,6 +10,7 @@ import SwiftUI
 @MainActor
 struct TimelineListView: View {
   @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
+  @Environment(\.currentTabId) private var currentTabId
 
   @Environment(MastodonClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
@@ -111,7 +112,7 @@ struct TimelineListView: View {
         }
       }
       .onChange(of: selectedTabScrollToTop) { _, newValue in
-        if newValue == 0, routerPath.path.isEmpty {
+        if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
           if let previous = viewModel.handleScrollToTopTrigger() {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
               scrollToIdAnimated = previous

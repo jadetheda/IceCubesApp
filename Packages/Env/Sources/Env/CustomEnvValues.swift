@@ -14,6 +14,7 @@ extension EnvironmentValues {
   @Entry public var isHomeTimeline: Bool = false
   @Entry public var indentationLevel: UInt = 0
   @Entry public var selectedTabScrollToTop: Int = -1
+  @Entry public var currentTabId: Int? = nil
   // Set to true when rendering inside the Notifications tab
   @Entry public var isNotificationsTab: Bool = false
 }

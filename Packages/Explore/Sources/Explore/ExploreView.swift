@@ -24,10 +24,39 @@ public struct ExploreView: View {
   @State private var trendingStatuses: [Status] = []
   @State private var trendingLinks: [Card] = []
   @State private var scrollToTopVisible = false
+  @State private var previousScrollPosition: String?
+  @State private var undoTask: Task<Void, Never>?
+  @State private var visibleSectionsCount: [String: Int] = [:]
+  @State private var scrollToIdAnimated: String?
+  @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
+  @Environment(\.currentTabId) private var currentTabId
 
   private var allSectionsEmpty: Bool {
     trendingLinks.isEmpty && trendingTags.isEmpty && trendingStatuses.isEmpty
       && suggestedAccounts.isEmpty
+  }
+
+  private func handleScrollToTopTrigger() -> String? {
+    guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
+    if let previous = previousScrollPosition, scrollToTopVisible {
+      previousScrollPosition = nil
+      undoTask?.cancel()
+      undoTask = nil
+      return previous
+    } else {
+      let topVisibleId = ["quick_access", "trending_tags", "suggested_accounts", "trending_statuses", "trending_links"].first { (visibleSectionsCount[$0] ?? 0) > 0 }
+      
+      if let first = topVisibleId {
+        previousScrollPosition = first
+        undoTask?.cancel()
+        undoTask = Task {
+          try? await Task.sleep(for: .seconds(UserPreferences.shared.undoScrollToTopTimeout))
+          guard !Task.isCancelled else { return }
+          previousScrollPosition = nil
+        }
+      }
+      return nil
+    }
   }
 
   public init() {}
@@ -141,6 +170,34 @@ public struct ExploreView: View {
       .task(id: searchQuery) {
         await search()
       }
+      .onChange(of: scrollToIdAnimated) { _, newValue in
+      if let newValue {
+        withAnimation {
+          proxy.scrollTo(newValue, anchor: .top)
+          scrollToIdAnimated = nil
+        }
+      }
+    }
+    .onChange(of: selectedTabScrollToTop) { _, newValue in
+      if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
+        if let previous = handleScrollToTopTrigger() {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            scrollToIdAnimated = previous
+          }
+        } else {
+          withAnimation {
+            proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+          }
+        }
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .statusBarTapped)) { _ in
+      if let previous = handleScrollToTopTrigger() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          scrollToIdAnimated = previous
+        }
+      }
+    }
     }
   }
 

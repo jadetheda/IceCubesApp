@@ -22,6 +22,14 @@ public struct NotificationsListView: View {
   @State private var isNotificationsPolicyPresented: Bool = false
   @State private var isNotificationsContentFilterPresented: Bool = false
   @State private var filter = NotificationsContentFilter.shared
+  
+  @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
+  @Environment(\.currentTabId) private var currentTabId
+  @State private var scrollToTopVisible = false
+  @State private var previousScrollPosition: String?
+  @State private var undoTask: Task<Void, Never>?
+  @State private var visibleNotificationsCount: [String: Int] = [:]
+  @State private var scrollToIdAnimated: String?
 
   let lockedType: Models.Notification.NotificationType?
   let lockedAccountId: String?
@@ -107,9 +115,44 @@ public struct NotificationsListView: View {
       }
   }
 
+  private func handleScrollToTopTrigger() -> String? {
+    guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
+    if let previous = previousScrollPosition, scrollToTopVisible {
+      previousScrollPosition = nil
+      undoTask?.cancel()
+      undoTask = nil
+      return previous
+    } else {
+      var topVisibleId: String? = nil
+      if case .display(let notifications, _) = viewState {
+        topVisibleId = notifications.first { (visibleNotificationsCount[$0.id] ?? 0) > 0 }?.id
+      }
+      if let first = topVisibleId {
+        previousScrollPosition = first
+        undoTask?.cancel()
+        undoTask = Task {
+          try? await Task.sleep(for: .seconds(UserPreferences.shared.undoScrollToTopTimeout))
+          guard !Task.isCancelled else { return }
+          previousScrollPosition = nil
+        }
+      }
+      return nil
+    }
+  }
+
   private var notificationsList: some View {
-    List {
-      if lockedAccountId == nil, let summary = policy?.summary {
+    ScrollViewReader { proxy in
+      List {
+        ScrollToView()
+          .frame(height: .layoutPadding)
+          .onAppear {
+            scrollToTopVisible = true
+          }
+          .onDisappear {
+            scrollToTopVisible = false
+          }
+          
+        if lockedAccountId == nil, let summary = policy?.summary {
         NotificationsHeaderFilteredView(filteredNotifications: summary)
       }
       notificationsView
@@ -136,6 +179,34 @@ public struct NotificationsListView: View {
           Text(title)
             .font(.headline)
             .accessibilityAddTraits(.isHeader)
+        }
+      }
+    }
+    .onChange(of: scrollToIdAnimated) { _, newValue in
+      if let newValue {
+        withAnimation {
+          proxy.scrollTo(newValue, anchor: .top)
+          scrollToIdAnimated = nil
+        }
+      }
+    }
+    .onChange(of: selectedTabScrollToTop) { _, newValue in
+      if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
+        if let previous = handleScrollToTopTrigger() {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            scrollToIdAnimated = previous
+          }
+        } else {
+          withAnimation {
+            proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+          }
+        }
+      }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: .statusBarTapped)) { _ in
+      if let previous = handleScrollToTopTrigger() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          scrollToIdAnimated = previous
         }
       }
     }
@@ -196,6 +267,7 @@ public struct NotificationsListView: View {
       NotificationsContentFilterView()
         .environment(theme)
     }
+    }
   }
 
   @ViewBuilder
@@ -246,6 +318,13 @@ public struct NotificationsListView: View {
             routerPath: routerPath,
             followRequests: account.followRequests
           )
+          .id(notification.id)
+          .onAppear {
+            visibleNotificationsCount[notification.id, default: 0] += 1
+          }
+          .onDisappear {
+            visibleNotificationsCount[notification.id, default: 0] -= 1
+          }
           .listRowInsets(
             .init(
               top: 12,

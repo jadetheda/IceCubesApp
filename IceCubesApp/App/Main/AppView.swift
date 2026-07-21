@@ -146,6 +146,7 @@ struct AppView: View {
     .overlay(alignment: .top) {
       ToastOverlayView()
     }
+    .environment(\.currentTabId, tab.id)
   }
 
   private func updateTab(with newTab: AppTab) {
@@ -187,6 +188,7 @@ struct AppView: View {
   var notificationsSecondaryColumn: some View {
     NotificationsTab(selectedTab: .constant(.notifications), lockedType: nil)
       .environment(\.isSecondaryColumn, true)
+      .environment(\.currentTabId, AppTab.notifications.id)
       .frame(maxWidth: .secondaryColumnWidth)
       .id(appAccountsManager.currentAccount.id)
   }
