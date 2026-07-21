@@ -124,43 +124,68 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 
   @ViewBuilder
-  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
-    let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
+  private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
+    let galleryItems: [GalleryItem] = items.flatMap { item -> [GalleryItem] in
+      switch item {
+      case .status(let status):
+        return status.asMediaStatus.map { .media($0) }
+      case .gap(let gap):
+        return [.gap(gap)]
+      }
+    }
+    
     let columns = UserPreferences.shared.galleryColumns
     
-    // Distribute items into columns round-robin
-    let columnItems: [[MediaStatus]] = {
-      var items: [[MediaStatus]] = Array(repeating: [], count: columns)
-      for (index, status) in mediaStatuses.enumerated() {
-          items[index % columns].append(status)
+    // Distribute items into columns round-robin, but force gaps into column 0
+    let columnItems: [[GalleryItem]] = {
+      var items: [[GalleryItem]] = Array(repeating: [], count: columns)
+      var colIndex = 0
+      for item in galleryItems {
+        if case .gap = item {
+          items[0].append(item)
+        } else {
+          items[colIndex].append(item)
+          colIndex = (colIndex + 1) % columns
+        }
       }
       return items
     }()
     
+    let mediaCount = galleryItems.filter { if case .media = $0 { return true }; return false }.count
+    
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         VStack(spacing: 4) {
-          ForEach(columnItems[colIndex]) { status in
-            GalleryMediaCell(
-              mediaStatus: status,
-              routerPath: routerPath,
-              client: client,
-              isRemote: isRemote,
-              filterContext: filterContext
-            )
-              .id(status.status.id)
-              .onAppear { fetcher.statusDidAppear(status: status.status) }
-              .onDisappear { fetcher.statusDidDisappear(status: status.status) }
+          ForEach(columnItems[colIndex]) { item in
+            switch item {
+            case .media(let mediaStatus):
+              GalleryMediaCell(
+                mediaStatus: mediaStatus,
+                routerPath: routerPath,
+                client: client,
+                isRemote: isRemote,
+                filterContext: filterContext
+              )
+              .id(mediaStatus.status.id)
+              .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+              .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+            case .gap(let gap):
+              if let gapLoader = fetcher as? GapLoadingFetcher {
+                TimelineGapView(gap: gap) {
+                  await gapLoader.loadGap(gap: gap)
+                }
+                .padding(.horizontal, .layoutPadding)
+                .padding(.vertical, 8)
+              }
+            }
           }
           Spacer(minLength: 0)
         }
         .frame(minWidth: 0, maxWidth: .infinity)
       }
     }
-    .task(id: statuses.count) {
-      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
-        // The cache-write lockup was resolved in TimelineViewModel.
-        // We can now auto-fetch empty pages as fast as the network allows without artificial sleeping.
+    .task(id: items.count) {
+      if mediaCount < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }
