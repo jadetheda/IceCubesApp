@@ -2,26 +2,21 @@ import DesignSystem
 import Env
 import Models
 import NetworkClient
-import SwiftUI
 import MediaUI
 import NukeUI
+import SwiftUI
 
 @MainActor
 public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
+
   @State private var fetcher: Fetcher
   private let isRemote: Bool
   private let client: MastodonClient
   private let filterContext: Filter.Context?
 
-  public init(
-    fetcher: Fetcher,
-    client: MastodonClient,
-    routerPath: RouterPath,
-    isRemote: Bool = false,
-    filterContext: Filter.Context? = nil
-  ) {
+  public init(fetcher: Fetcher, client: MastodonClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
     _fetcher = .init(initialValue: fetcher)
     self.isRemote = isRemote
     self.client = client
@@ -43,9 +38,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
-      makeGrid(for: statuses.map { .status($0) }, nextPageState: nextPageState)
+      makeGrid(for: statuses, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
-      makeGrid(for: items, nextPageState: nextPageState)
+      let statuses = items.compactMap { item -> Status? in
+          if case let .status(status) = item { return status }
+          return nil
+      }
+      makeGrid(for: statuses, nextPageState: nextPageState)
     }
   }
 
@@ -65,86 +64,46 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
   }
 
-  private enum GalleryItem: Identifiable {
-    case media(MediaStatus)
-    case gap(TimelineGap)
-    
-    var id: String {
-      switch self {
-      case .media(let media): return media.id
-      case .gap(let gap): return gap.id
-      }
-    }
-  }
-
   @ViewBuilder
-  private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
-    let galleryItems: [GalleryItem] = {
-      var itemsToReturn: [GalleryItem] = []
-      for item in items {
-          switch item {
-          case .status(let status):
-              for mediaStatus in status.asMediaStatus {
-                  itemsToReturn.append(.media(mediaStatus))
-              }
-          case .gap(let gap):
-              itemsToReturn.append(.gap(gap))
-          }
-      }
-      return itemsToReturn
-    }()
-    
+  private func makeGrid(for statuses: [Status], nextPageState: StatusesState.PagingState) -> some View {
+    let mediaStatuses = statuses.flatMap { $0.asMediaStatus }
     let columns = UserPreferences.shared.galleryColumns
     
-    let columnItems: [[GalleryItem]] = {
-      var cols: [[GalleryItem]] = Array(repeating: [], count: columns)
-      for (index, item) in galleryItems.enumerated() {
-          cols[index % columns].append(item)
+    // Distribute items into columns round-robin
+    let columnItems: [[MediaStatus]] = {
+      var items: [[MediaStatus]] = Array(repeating: [], count: columns)
+      for (index, status) in mediaStatuses.enumerated() {
+          items[index % columns].append(status)
       }
-      return cols
+      return items
     }()
     
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 4) {
-          ForEach(columnItems[colIndex], id: \.id) { item in
-            switch item {
-            case .media(let mediaStatus):
-              GalleryMediaCell(
-                mediaStatus: mediaStatus,
-                routerPath: routerPath,
-                client: client,
-                isRemote: isRemote,
-                filterContext: filterContext
-              )
-              .id(mediaStatus.status.id)
-              .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
-              .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
-            case .gap(let gap):
-              if let gapLoader = fetcher as? GapLoadingFetcher {
-                TimelineGapView(gap: gap) {
-                   await gapLoader.loadGap(gap: gap)
-                }
-                .id(gap.id)
-                .listRowBackground(theme.primaryBackgroundColor)
-              }
-            }
+          ForEach(columnItems[colIndex]) { status in
+            GalleryMediaCell(
+              mediaStatus: status,
+              routerPath: routerPath,
+              client: client,
+              isRemote: isRemote,
+              filterContext: filterContext
+            )
+              .id(status.status.id)
+              .onAppear { fetcher.statusDidAppear(status: status.status) }
+              .onDisappear { fetcher.statusDidDisappear(status: status.status) }
           }
-          
-          if colIndex == 0 {
-             makeNextPageRow(nextPageState: nextPageState)
-          } else {
-             Spacer(minLength: 0)
-          }
+          Spacer(minLength: 0)
         }
       }
     }
-    .task(id: galleryItems.count) {
-      let mediaCount = galleryItems.filter { if case .media = $0 { return true } else { return false } }.count
-      if mediaCount < 6 && nextPageState == .hasNextPage {
+    .task(id: statuses.count) {
+      if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }
+    
+    makeNextPageRow(nextPageState: nextPageState)
   }
 }
 
