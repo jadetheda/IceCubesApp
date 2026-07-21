@@ -51,15 +51,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   @ViewBuilder
   private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
     if nextPageState == .hasNextPage {
-      HStack {
-        Spacer()
-        ProgressView()
-        Spacer()
+      NextPageView {
+        try await fetcher.fetchNextPage()
       }
-      .padding()
-      .onAppear {
-        Task { try? await fetcher.fetchNextPage() }
-      }
+      .padding(.vertical)
       .listRowBackground(theme.primaryBackgroundColor)
     }
   }
@@ -99,8 +94,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
     .task(id: statuses.count) {
       if mediaStatuses.count < 6 && nextPageState == .hasNextPage {
-        // Throttle auto-fetching to prevent API flooding and UI freezes when there are no media posts
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        // The cache-write lockup was resolved in TimelineViewModel.
+        // We can now auto-fetch empty pages as fast as the network allows without artificial sleeping.
         try? await fetcher.fetchNextPage()
       }
     }

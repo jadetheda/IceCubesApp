@@ -321,3 +321,10 @@
   - Resolved a Swift compiler error in `GalleryStatusesListView.swift` where `status.asMediaStatus` returned an array `[MediaStatus]` instead of an optional `MediaStatus?`.
   - Introduced a `GalleryItem` enum with `.media(MediaStatus)` and `.gap(TimelineGap)` cases, enabling statuses with multiple media attachments to correctly render each image/video as its own item in the gallery masonry grid.
   - Updated auto-pagination logic in `.task` to count total `.media` items instead of total status elements, ensuring pagination reliably triggers when fewer than 6 media items are visible in gallery mode.
+
+- 2026-07-21T13:23:00Z: **Fixed Gallery Mode Infinite Fetch Loop and CPU Lockup**
+  - **Issue:** Gallery Mode locally filters for media. If a feed is mostly text, the `if mediaStatuses.count < 6` condition would trigger `fetchNextPage()` in a tight loop, blasting the Mastodon API for hundreds of posts in a second.
+  - **CPU Lockup:** Each fetched post immediately triggered `statusDidAppear`, which launched a concurrent `Task` to save `visibleStatuses` to disk. 1000 posts meant 1000 concurrent disk-write tasks, freezing the UI.
+  - **Fix 1:** Throttled the auto-fetch loop in `GalleryStatusesListView` with a 1-second delay.
+  - **Fix 2:** Debounced the `cache.setLatestSeenStatuses` disk write in `TimelineViewModel` using an `@ObservationIgnored private var cacheUpdateTask` and a 0.5-second cancellation delay.
+  - **Fix 3:** Restored `VStack` in `GalleryStatusesListView`'s columns to fix the nested `LazyVStack` massive gap layout bug.
