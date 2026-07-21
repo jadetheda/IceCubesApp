@@ -53,63 +53,23 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
-      makeGrid(for: statuses, nextPageState: nextPageState)
+      let items = statuses.map { TimelineItem.status($0) }
+      makeGrid(for: items, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
-      let segments = makeSegments(from: items)
-      ForEach(segments) { segment in
-        switch segment {
-        case .grid(_, let segmentStatuses):
-          makeGrid(for: segmentStatuses, nextPageState: segment.id == segments.last?.id ? nextPageState : .none)
-        case .gap(let gap):
-          if let gapLoader = fetcher as? GapLoadingFetcher {
-            TimelineGapView(gap: gap) {
-              await gapLoader.loadGap(gap: gap)
-            }
-            .padding(.horizontal, .layoutPadding)
-            .padding(.vertical, 8)
-          }
-        }
-      }
+      makeGrid(for: items, nextPageState: nextPageState)
     }
   }
 
-
-  private enum GallerySegment: Identifiable {
-    case grid(id: String, statuses: [Status])
+  private enum GalleryItem: Identifiable, Equatable {
+    case media(MediaStatus)
     case gap(TimelineGap)
 
     var id: String {
       switch self {
-      case .grid(let id, _):
-        return id
-      case .gap(let gap):
-        return gap.id
+      case .media(let media): return media.id
+      case .gap(let gap): return gap.id
       }
     }
-  }
-
-  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
-    var segments: [GallerySegment] = []
-    var currentStatuses: [Status] = []
-    
-    for item in items {
-      switch item {
-      case .status(let status):
-        currentStatuses.append(status)
-      case .gap(let gap):
-        if !currentStatuses.isEmpty {
-          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
-          currentStatuses = []
-        }
-        segments.append(.gap(gap))
-      }
-    }
-
-    if !currentStatuses.isEmpty {
-      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
-    }
-
-    return segments
   }
 
   @ViewBuilder
