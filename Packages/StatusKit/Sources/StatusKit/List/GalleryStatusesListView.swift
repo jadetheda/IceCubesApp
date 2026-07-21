@@ -26,8 +26,22 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   public var body: some View {
     switch fetcher.statusesState {
     case .loading:
-      ProgressView()
-        .listRowBackground(theme.primaryBackgroundColor)
+      let columns = UserPreferences.shared.galleryColumns
+      // Provide stable fake heights so the placeholders don't jitter on re-evaluation
+      let placeholderRatios: [CGFloat] = [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
+      HStack(alignment: .top, spacing: 4) {
+        ForEach(0..<columns, id: \.self) { colIndex in
+          VStack(spacing: 4) {
+            ForEach(0..<6, id: \.self) { rowIndex in
+              RoundedRectangle(cornerRadius: 8)
+                .fill(theme.secondaryBackgroundColor)
+                .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
+            }
+          }
+        }
+      }
+      .redacted(reason: .placeholder)
+      .allowsHitTesting(false)
     case .error:
       ErrorView(
         title: "status.error.title",
@@ -40,12 +54,61 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     case .display(let statuses, let nextPageState):
       makeGrid(for: statuses, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
-      let statuses = items.compactMap { item -> Status? in
-          if case let .status(status) = item { return status }
-          return nil
+      let segments = makeSegments(from: items)
+      ForEach(segments) { segment in
+        switch segment {
+        case .grid(_, let segmentStatuses):
+          makeGrid(for: segmentStatuses, nextPageState: segment.id == segments.last?.id ? nextPageState : .none)
+        case .gap(let gap):
+          if let gapLoader = fetcher as? GapLoadingFetcher {
+            TimelineGapView(gap: gap) {
+              await gapLoader.loadGap(gap: gap)
+            }
+            .padding(.horizontal, .layoutPadding)
+            .padding(.vertical, 8)
+          }
+        }
       }
-      makeGrid(for: statuses, nextPageState: nextPageState)
     }
+  }
+
+
+  private enum GallerySegment: Identifiable {
+    case grid(id: String, statuses: [Status])
+    case gap(TimelineGap)
+
+    var id: String {
+      switch self {
+      case .grid(let id, _):
+        return id
+      case .gap(let gap):
+        return gap.id
+      }
+    }
+  }
+
+  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
+    var segments: [GallerySegment] = []
+    var currentStatuses: [Status] = []
+    
+    for item in items {
+      switch item {
+      case .status(let status):
+        currentStatuses.append(status)
+      case .gap(let gap):
+        if !currentStatuses.isEmpty {
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+          currentStatuses = []
+        }
+        segments.append(.gap(gap))
+      }
+    }
+
+    if !currentStatuses.isEmpty {
+      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+    }
+
+    return segments
   }
 
   @ViewBuilder

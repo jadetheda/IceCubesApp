@@ -328,3 +328,10 @@
   - **Fix 1:** Throttled the auto-fetch loop in `GalleryStatusesListView` with a 1-second delay.
   - **Fix 2:** Debounced the `cache.setLatestSeenStatuses` disk write in `TimelineViewModel` using an `@ObservationIgnored private var cacheUpdateTask` and a 0.5-second cancellation delay.
   - **Fix 3:** Restored `VStack` in `GalleryStatusesListView`'s columns to fix the nested `LazyVStack` massive gap layout bug.
+
+- 2026-07-21T14:42:00Z: **Optimized Gallery Mode Load Speeds Using Timeline Architecture**
+  - **Identified Sluggishness:** The 1-second view-level sleep throttle we added to `.task(id: statuses.count)` was artificially slowing down Gallery Mode. If a user had 5 pages of text-only posts, the Gallery took 5 full seconds of pure sleep to traverse them to find images.
+  - **NextPageView Migration:** Replaced the manually constructed `makeNextPageRow` with the `DesignSystem`'s native `NextPageView`.
+    - *Benefit:* `NextPageView` automatically maintains its own `isLoadingNextPage` state to prevent concurrent API flooding natively, and provides a built-in "Retry" button UI if the fetch fails, replacing our naive `.onAppear { Task }`.
+  - **Throttle Removal:** Because `TimelineViewModel`'s cache disk-write lockup is now fixed, and `NextPageView` prevents concurrent fetch duplication, we entirely removed the 1-second throttle from the `GalleryStatusesListView` `.task`.
+  - *Outcome:* Gallery Mode now sprints through empty (text-only) pagination pages as fast as the network allows, drastically reducing the time it takes to fill the initial grid.

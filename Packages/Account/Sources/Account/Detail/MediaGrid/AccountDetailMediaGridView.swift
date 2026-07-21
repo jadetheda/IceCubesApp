@@ -123,5 +123,8 @@ public struct AccountDetailMediaGridView: View {
     #if !os(visionOS)
       .background(theme.primaryBackgroundColor)
     #endif
+    .refreshable {
+      await fetcher.fetchNewestStatuses(pullToRefresh: true)
+    }
   }
 }
