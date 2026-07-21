@@ -335,3 +335,8 @@
     - *Benefit:* `NextPageView` automatically maintains its own `isLoadingNextPage` state to prevent concurrent API flooding natively, and provides a built-in "Retry" button UI if the fetch fails, replacing our naive `.onAppear { Task }`.
   - **Throttle Removal:** Because `TimelineViewModel`'s cache disk-write lockup is now fixed, and `NextPageView` prevents concurrent fetch duplication, we entirely removed the 1-second throttle from the `GalleryStatusesListView` `.task`.
   - *Outcome:* Gallery Mode now sprints through empty (text-only) pagination pages as fast as the network allows, drastically reducing the time it takes to fill the initial grid.
+
+- 2026-07-21T14:48:00Z: **Matched Gallery Mode Parity with Default Timeline**
+  - **Gap Fetching Integration**: Implemented missing timeline Gap rendering into Gallery Mode. If you scroll back in time in Gallery mode, you'll now get the standard `TimelineGapView` block spanning the width of the grid, allowing you to load missing timeline history natively instead of just discarding the gap.
+  - **Skeleton Loading Placeholders**: Replaced the simple `ProgressView()` in `.loading` state with a native, stable masonry skeleton grid using `.redacted(reason: .placeholder)`, matching the aesthetic experience of the default Timeline skeleton loading.
+  - **Profile Media Pull-to-Refresh**: Added the `.refreshable` modifier to `AccountDetailMediaGridView`, allowing users to pull-to-refresh on a profile's Media tab, which was missing compared to the standard Posts tabs.
