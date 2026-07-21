@@ -9,6 +9,7 @@ import Nuke
 @MainActor
 @Observable class TimelineViewModel {
   var scrollToId: String?
+  @ObservationIgnored private var cacheUpdateTask: Task<Void, Never>?
   var statusesState: StatusesState = .loading
   var timeline: TimelineFilter = .home {
     willSet {
@@ -551,7 +552,10 @@ extension TimelineViewModel: GapLoadingFetcher {
     }
 
     if let client, timeline.supportNewestPagination {
-      Task {
+      cacheUpdateTask?.cancel()
+      cacheUpdateTask = Task {
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        guard !Task.isCancelled else { return }
         await cache.setLatestSeenStatuses(visibleStatuses, for: client, filter: timeline.id)
       }
     }
