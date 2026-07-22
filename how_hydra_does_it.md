@@ -10,16 +10,17 @@ Hydra is a React Native app built around the Reddit API (a clone of Apollo). Whe
 
 2. **FlashList Configuration:**
    - Hydra sets `masonry={true}` and `numColumns={2}` on a standard `<FlashList>`.
-   - It also enables `optimizeItemArrangement={true}`. This is a crucial feature of FlashList's masonry layout: it allows the layout algorithm to slightly reorder items to fill gaps, minimizing the uneven heights of columns at the bottom of the list.
+   - Based on FlashList v2 documentation, the `masonry` prop automatically enables a multi-column layout engine that determines the shortest column dynamically.
+   - It also explicitly enables `optimizeItemArrangement={true}` (though it's true by default in v2). This is a crucial feature of FlashList's masonry layout: it instructs the masonry engine to reduce differences in column height by actively modifying the item order. Instead of strictly distributing items in array-index sequence (which could leave jagged, uneven column endings if a massive image is at the very end), it dynamically slots items into columns to keep the bottom edge as flat as possible.
 
 3. **Deterministic Heights (The Core Secret):**
-   - The most critical aspect of Hydra's (and FlashList's) masonry success is that item dimensions are calculated **deterministically before rendering**.
+   - The most critical aspect of Hydra's (and FlashList's) masonry success is that item dimensions are calculated **deterministically before rendering**. FlashList v2's masonry layout determines heights based on the actual rendered component.
    - In `components/UI/Gallery/GalleryComponent.tsx`, Hydra calculates the exact width and height of every item using the screen width and the media's aspect ratio:
      ```typescript
      width: contentDimensions.width / 2,
      height: contentDimensions.width / 2 / item.mediaAspectRatio,
      ```
-   - Because the exact height of every item is known immediately (based on metadata from the Reddit API), FlashList's layout manager can pre-calculate the total height of all columns and assign items to the shortest column without waiting for images to load or relying on asynchronous layout passes.
+   - Because the exact height of every item is structurally enforced on the container immediately (based on metadata from the Reddit API), FlashList's layout manager can accurately evaluate column heights and execute its `optimizeItemArrangement` logic without waiting for the actual image payload to download or relying on asynchronous `onLayout` passes.
 
 4. **Pagination and Media Filtering:**
    - Hydra filters the Reddit posts on the client-side to extract only media items (images/videos) into a flat `galleryMedia` array.
