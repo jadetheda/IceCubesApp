@@ -43,11 +43,21 @@ public struct AccountStatusesListView: View {
   }
 
   public var body: some View {
-    List {
-      StatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
-        .listSectionSeparator(.hidden, edges: .top)
+    Group {
+      if TimelineContentFilter.shared.isGalleryMode {
+        ScrollView {
+          LazyVStack(spacing: 0) {
+            GalleryStatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
+          }
+        }
+      } else {
+        List {
+          StatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
+            .listSectionSeparator(.hidden, edges: .top)
+        }
+        .listStyle(.plain)
+      }
     }
-    .listStyle(.plain)
     #if !os(visionOS)
       .scrollContentBackground(.hidden)
       .background(theme.primaryBackgroundColor)
