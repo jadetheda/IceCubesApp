@@ -98,12 +98,16 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     
     let columns = UserPreferences.shared.galleryColumns
     
-    // Distribute items into columns to optimize layout (shortest column first), similar to FlashList optimizeItemArrangement
+    // Distribute items into columns to optimize layout.
+    // We calculate the masonry layout from the BOTTOM UP (oldest to newest).
+    // This ensures that when newer posts are loaded at the top, the existing posts
+    // retain their column assignments, preventing the entire grid from reshuffling
+    // and destroying the user's scroll position.
     let columnItems: [[GalleryItem]] = {
       var items: [[GalleryItem]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
-      for item in galleryItems {
+      for item in galleryItems.reversed() {
         if case .gap = item {
           items[0].append(item)
         } else if case .media(let mediaStatus) = item {
@@ -129,6 +133,12 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           columnHeights[shortestColIndex] += (1.0 / aspectRatio) + 0.1
         }
       }
+      
+      // Reverse each column's items so they are ordered newest to oldest (top to bottom)
+      for i in 0..<columns {
+        items[i].reverse()
+      }
+      
       return items
     }()
     

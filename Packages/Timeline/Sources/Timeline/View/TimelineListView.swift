@@ -106,7 +106,11 @@ struct TimelineListView: View {
       .onChange(of: scrollToIdAnimated) { _, newValue in
         if let newValue {
           withAnimation {
-            proxy.scrollTo(newValue, anchor: .top)
+            if TimelineContentFilter.shared.isGalleryMode {
+              proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+            } else {
+              proxy.scrollTo(newValue, anchor: .top)
+            }
             scrollToIdAnimated = nil
           }
         }
