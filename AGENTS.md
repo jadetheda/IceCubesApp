@@ -223,3 +223,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 - Keep views focused and single-purpose
 - Use descriptive names for state enums
 - Write SwiftUI code that looks and feels like SwiftUI
+
+# Project Rules
+- If any PNGs or binary assets are corrupt or missing, run `./IceCubesApp/heal_pngs.sh` to restore them from the local cache or remote tarball. Do not write custom download or curl scripts.
+
