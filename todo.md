@@ -6,12 +6,13 @@
 
 - [ ] We should remove the **Load Remote Media button** as its role has been superseded by the **automatic remote fallback** and **IceShrimp** **force Video fallback** features
 - [ ] Move the **Experimental Settings** section above the **General** section in **Settings**
+- [ ] "Ice Cube is built with the following open-source software" seems like it may be outdated, i think we've introduced new dependencies since then. Not sure.
 
 ### Gallery Mode & Media Layout Enhancements
 
-- [ ] The maximum gallery mode image height is way too small. **Hydra IS THE GALLERY MODE GOLD STANDARD and we should use their code as a guide for our implementation!** At the very least, set it as was higher.
 - [ ] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
-- [ ] Figure out how Hydra handles its gallery mode -- hell, maybe we can even (WITH CREDIT), borrow some of their code. 
+- [ ] OptimizeItemLayout=false option in experimental settings under gallery mode (in case people wanna disable the moving around)?
+- [ ] Ability to turn on thin lil margins on either side of gallery mode
 
 ### Bugs/Regressions
 
@@ -29,6 +30,7 @@
 
 ### App Configuration & Maintenance
 
+- [ ] Put Cached Server Emojis count below the Cached Posts counter in Settings > Account. Also include below the Clear Cache button a toggle to turn off the cache emotes feature. 
 - [ ] Figure out where *the second home* of the various **Experimental Settings** should be once they're finished
 
 ### Stretch goals
@@ -56,3 +58,18 @@
 ## Gallery Mode & Media Layout Enhancements
 
 - [x] **Broken feature:** In the **Media** tab on a user's page, replace **Media Grid** with **Gallery Mode**. It should still be called **Media Grid**, but opening it should launch the Gallery Mode masonry layout we've built. We tried to do this already, but it apparently didn't work.
+- [x] The maximum gallery mode image height is way too small. **Hydra IS THE GALLERY MODE GOLD STANDARD and we should use their code as a guide for our implementation!** At the very least, set it as was higher.
+- [x] Figure out how Hydra handles its gallery mode -- hell, maybe we can even (WITH CREDIT), borrow some of their code. 
+
+---
+
+# The Cutting Room Floor
+*(completed items that got deleted along the way instead of staying archived)*
+
+- [x] Removed the unnecessary **Display Mode** dropdown from a user's **…** menu.
+- [x] **View Local Timeline** on a user's **…** menu now appears **below** the **Message** action instead of at the top.
+- [x] Server emote caching now works as intended.
+- [x] **Enhancement:** Gallery Mode on profiles is now full-width.
+- [x] **Enhancement:** Added a **…** menu to the **Lists** tab (next to the compose button) containing the **Gallery Mode** toggle and the **Content Filter** popup, matching the Timeline tab.
+- [x] Removed the option to disable **"Require media to be loaded [to be detected as Seen]"**, since this should always remain enabled.
+- [x] Updated the app version to **2.1.4.4** in both the app metadata and the in-app **Settings** menu.
