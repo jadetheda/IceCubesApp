@@ -28,7 +28,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     case .loading:
       let columns = UserPreferences.shared.galleryColumns
       // Provide stable fake heights so the placeholders don't jitter on re-evaluation
-      let placeholderRatios: [CGFloat] = [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
+      let isSquare = UserPreferences.shared.galleryCropToSquare
+      let placeholderRatios: [CGFloat] = isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
       HStack(alignment: .top, spacing: 4) {
         ForEach(0..<columns, id: \.self) { colIndex in
           VStack(spacing: 4) {
@@ -301,29 +302,36 @@ public struct GalleryMediaCell: View {
 }
 
 public struct GalleryAspectRatioModifier: ViewModifier {
-    public let isSquare: Bool
-    public let meta: MediaAttachment.MetaContainer.Meta?
-    
-    public init(isSquare: Bool, meta: MediaAttachment.MetaContainer.Meta?) {
-      self.isSquare = isSquare
-      self.meta = meta
-    }
-    
-    public func body(content: Content) -> some View {
-        if isSquare {
-            content.aspectRatio(1, contentMode: .fit)
-        } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {
-            content
-                .aspectRatio(CGFloat(width) / CGFloat(height), contentMode: .fit)
-                .frame(maxHeight: 400)
-        } else {
-            // Masonry mode limits height to something reasonable without squishing it to 1:1,
-            // or just scales to fit the width. For Waterfall, the width is dictated by the column,
-            // so we just let it aspect fit/fill naturally.
-            // A max height prevents extremely tall single images from breaking the flow too badly.
-            content
-                .scaledToFit()
-                .frame(maxHeight: 400)
+  public let isSquare: Bool
+  public let meta: MediaAttachment.MetaContainer.Meta?
+
+  public init(isSquare: Bool, meta: MediaAttachment.MetaContainer.Meta?) {
+    self.isSquare = isSquare
+    self.meta = meta
+  }
+
+  public func body(content: Content) -> some View {
+    if isSquare {
+      Color.clear
+        .aspectRatio(1, contentMode: .fit)
+        .overlay {
+          content
         }
+        .clipped()
+    } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {
+      Color.clear
+        .aspectRatio(CGFloat(width) / CGFloat(height), contentMode: .fit)
+        .overlay {
+          content
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxHeight: 400, alignment: .top)
+        .clipped()
+    } else {
+      content
+        .scaledToFit()
+        .frame(maxHeight: 400)
+        .clipped()
     }
+  }
 }
