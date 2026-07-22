@@ -8,6 +8,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     }
 
     public let original: Meta?
+    public let small: Meta?
   }
 
   public enum SupportedType: String {
@@ -74,6 +75,17 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       remoteUrl: nil,
       description: nil,
       meta: nil)
+  }
+
+  /// The aspect ratio of the media, utilizing the `small` thumbnail if available to naturally clamp excessively tall images.
+  public var clampedAspectRatio: CGFloat? {
+    if let small = meta?.small, let width = small.width, let height = small.height, height > 0 {
+      return CGFloat(width) / CGFloat(height)
+    }
+    if let original = meta?.original, let width = original.width, let height = original.height, height > 0 {
+      return CGFloat(width) / CGFloat(height)
+    }
+    return nil
   }
 }
 

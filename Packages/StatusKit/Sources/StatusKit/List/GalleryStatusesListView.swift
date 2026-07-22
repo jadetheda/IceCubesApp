@@ -32,7 +32,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       let placeholderRatios: [CGFloat] = isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
       HStack(alignment: .top, spacing: 4) {
         ForEach(0..<columns, id: \.self) { colIndex in
-          VStack(spacing: 4) {
+          LazyVStack(spacing: 4) {
             ForEach(0..<6, id: \.self) { rowIndex in
               RoundedRectangle(cornerRadius: 8)
                 .fill(theme.secondaryBackgroundColor)
@@ -98,16 +98,35 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     
     let columns = UserPreferences.shared.galleryColumns
     
-    // Distribute items into columns round-robin, but force gaps into column 0
+    // Distribute items into columns to optimize layout (shortest column first), similar to FlashList optimizeItemArrangement
     let columnItems: [[GalleryItem]] = {
       var items: [[GalleryItem]] = Array(repeating: [], count: columns)
-      var colIndex = 0
+      var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
+      
       for item in galleryItems {
         if case .gap = item {
           items[0].append(item)
-        } else {
-          items[colIndex].append(item)
-          colIndex = (colIndex + 1) % columns
+        } else if case .media(let mediaStatus) = item {
+          // Find shortest column
+          var shortestColIndex = 0
+          var shortestHeight = columnHeights[0]
+          
+          for i in 1..<columns {
+            if columnHeights[i] < shortestHeight {
+              shortestHeight = columnHeights[i]
+              shortestColIndex = i
+            }
+          }
+          
+          items[shortestColIndex].append(item)
+          
+          // Estimate height of this item based on its aspect ratio to distribute evenly
+          let isSquare = UserPreferences.shared.galleryCropToSquare
+          let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+          
+          // The relative height is proportional to 1.0 / aspectRatio
+          // Add a small constant to account for padding
+          columnHeights[shortestColIndex] += (1.0 / aspectRatio) + 0.1
         }
       }
       return items
@@ -117,7 +136,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
-        VStack(spacing: 4) {
+        LazyVStack(spacing: 4) {
           ForEach(columnItems[colIndex]) { item in
             switch item {
             case .media(let mediaStatus):
@@ -211,7 +230,7 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, meta: mediaStatus.attachment.meta?.original))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio))
         .clipped()
         .contentShape(Rectangle())
       }
@@ -303,11 +322,11 @@ public struct GalleryMediaCell: View {
 
 public struct GalleryAspectRatioModifier: ViewModifier {
   public let isSquare: Bool
-  public let meta: MediaAttachment.MetaContainer.Meta?
+  public let aspectRatio: CGFloat?
 
-  public init(isSquare: Bool, meta: MediaAttachment.MetaContainer.Meta?) {
+  public init(isSquare: Bool, aspectRatio: CGFloat?) {
     self.isSquare = isSquare
-    self.meta = meta
+    self.aspectRatio = aspectRatio
   }
 
   public func body(content: Content) -> some View {
@@ -318,19 +337,16 @@ public struct GalleryAspectRatioModifier: ViewModifier {
           content
         }
         .clipped()
-    } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {
+    } else if let aspectRatio = aspectRatio {
       Color.clear
-        .aspectRatio(CGFloat(width) / CGFloat(height), contentMode: .fit)
+        .aspectRatio(aspectRatio, contentMode: .fit)
         .overlay {
           content
         }
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxHeight: 400, alignment: .top)
         .clipped()
     } else {
       content
         .scaledToFit()
-        .frame(maxHeight: 400)
         .clipped()
     }
   }
