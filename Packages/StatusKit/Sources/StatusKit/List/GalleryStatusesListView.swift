@@ -37,6 +37,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
                 .fill(theme.secondaryBackgroundColor)
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
             }
+            Spacer(minLength: 0)
           }
           .frame(minWidth: 0, maxWidth: .infinity)
         }
@@ -310,7 +311,7 @@ public struct GalleryAspectRatioModifier: ViewModifier {
     
     public func body(content: Content) -> some View {
         if isSquare {
-            content.aspectRatio(1, contentMode: .fill)
+            content.aspectRatio(1, contentMode: .fit)
         } else if let meta = meta, let width = meta.width, let height = meta.height, width > 0, height > 0 {
             content
                 .aspectRatio(CGFloat(width) / CGFloat(height), contentMode: .fit)
