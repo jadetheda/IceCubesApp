@@ -4,6 +4,7 @@ import Models
 import NetworkClient
 import StatusKit
 import SwiftUI
+import Timeline
 
 @MainActor
 public struct AccountStatusesListView: View {

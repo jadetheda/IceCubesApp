@@ -79,7 +79,7 @@ struct SearchResultsView: View {
         Section("explore.section.posts") {
           let contentFilter = TimelineContentFilter.shared
           if contentFilter.isGalleryMode {
-            let mediaStatuses = results.statuses.compactMap { $0.asMediaStatus }
+            let mediaStatuses = results.statuses.flatMap { $0.asMediaStatus }
             let columns = UserPreferences.shared.galleryColumns
             
             let columnItems: [[MediaStatus]] = {

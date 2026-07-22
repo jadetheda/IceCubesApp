@@ -17,7 +17,7 @@ struct TrendingPostsSection: View {
     Section("explore.section.trending.posts") {
       let contentFilter = TimelineContentFilter.shared
       if contentFilter.isGalleryMode {
-        let mediaStatuses = trendingStatuses.compactMap { $0.asMediaStatus }
+        let mediaStatuses = trendingStatuses.flatMap { $0.asMediaStatus }
         let displayedStatuses = Array(mediaStatuses.prefix(6))
         let columns = UserPreferences.shared.galleryColumns
         

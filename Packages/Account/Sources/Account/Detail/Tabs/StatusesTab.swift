@@ -145,7 +145,7 @@ private struct StatusesTabView: View {
 
     let contentFilter = TimelineContentFilter.shared
     if contentFilter.isGalleryMode {
-      let mediaStatuses = fetcher.pinned.compactMap { $0.asMediaStatus }
+      let mediaStatuses = fetcher.pinned.flatMap { $0.asMediaStatus }
       let columns = UserPreferences.shared.galleryColumns
       
       let columnItems: [[MediaStatus]] = {
