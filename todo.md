@@ -6,7 +6,6 @@
 
 - [ ] We should remove the **Load Remote Media button** as its role has been superseded by the **automatic remote fallback** and **IceShrimp** **force Video fallback** features
 - [ ] Move the **Experimental Settings** section above the **General** section in **Settings**
-- [ ] The maximum gallery mode image height is way too small. **Hydra IS THE GALLERY MODE GOLD STANDARD and we should use their code as a guide for our implementation!** At the very least, set it as was higher.
 
 ### Bugs/Regressions
 
@@ -17,6 +16,7 @@
 
 ### Gallery Mode & Media Layout Enhancements
 
+- [ ] The maximum gallery mode image height is way too small. **Hydra IS THE GALLERY MODE GOLD STANDARD and we should use their code as a guide for our implementation!** At the very least, set it as was higher.
 - [ ] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
 - [ ] Figure out how Hydra handles its gallery mode -- hell, maybe we can even (WITH CREDIT), borrow some of their code. 
 
@@ -24,7 +24,7 @@
 
 - [ ] **Broken feature:** Tapping on the tab you're jn sends you to the top of the page. Tapping it again should return you to your previous position, effectively acting as an undo for accidental taps. This should expire after **10 seconds** by default, with the timeout configurable under **Experimental Features**. **We attempted to implement this, but it isn't working.**
 - [ ] ~~**Finish started (?) feature:** While working through community feature requests, I'd like to mark individual feature requests (client-side only) with statuses such as **Pending**, **In Review**, etc. These categorizations should persist across app launches so I can track my progress.~~ update: Cancelled as it's not worth the hassle
-- [ ] I rather hate how the post view (at least on iOS) crops the images to like 5:4 whether there are multiple images. There should be a setting to turn that off!
+- [ ] I rather hate how the post view (at least on iOS(?)) crops the images to like 5:4 whether there are multiple images. There should be a setting to turn that off!
 - [ ] Investigate how Mastodon's open source code (which u should credit in attributions.md if you use) determines what is "Trending". IceShrimp does not support this feature on a server-level, so I'd like to have a toggle under IceShrimp workarounds which implements it on the client level. I'm not sure how their algorithm works -- maybe it's a simple sort by faves/boosts for a given time period thing, or maybe they have some complex thing like Reddit does for "Hot" and whatnot. Who knows? Hopefully you!
 
 ### App Configuration & Maintenance
