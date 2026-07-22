@@ -4,6 +4,7 @@ import Models
 import NetworkClient
 import StatusKit
 import SwiftUI
+import Timeline
 
 struct StatusesTab {
   let id = "statuses"
@@ -142,14 +143,65 @@ private struct StatusesTabView: View {
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
 
-    ForEach(fetcher.pinned) { status in
-      StatusRowExternalView(
-        viewModel: .init(
-          status: status,
-          client: client,
-          routerPath: routerPath,
-          filterContext: .account)
-      )
+    let contentFilter = TimelineContentFilter.shared
+    if contentFilter.isGalleryMode {
+      let mediaStatuses = fetcher.pinned.compactMap { $0.asMediaStatus }
+      let columns = UserPreferences.shared.galleryColumns
+      
+      let columnItems: [[MediaStatus]] = {
+        var items: [[MediaStatus]] = Array(repeating: [], count: columns)
+        var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
+        
+        for status in mediaStatuses {
+          var shortestColIndex = 0
+          var shortestHeight = columnHeights[0]
+          
+          for i in 1..<columns {
+            if columnHeights[i] < shortestHeight {
+              shortestHeight = columnHeights[i]
+              shortestColIndex = i
+            }
+          }
+          
+          items[shortestColIndex].append(status)
+          
+          let isSquare = UserPreferences.shared.galleryCropToSquare
+          let aspectRatio = isSquare ? 1.0 : (status.attachment.clampedAspectRatio ?? 1.0)
+          columnHeights[shortestColIndex] += (1.0 / aspectRatio) + 0.1
+        }
+        
+        return items
+      }()
+      
+      HStack(alignment: .top, spacing: 4) {
+        ForEach(0..<columns, id: \.self) { colIndex in
+          LazyVStack(spacing: 4) {
+            ForEach(columnItems[colIndex]) { mediaStatus in
+              GalleryMediaCell(
+                mediaStatus: mediaStatus,
+                routerPath: routerPath,
+                client: client,
+                isRemote: false,
+                filterContext: .account
+              )
+              .id(mediaStatus.status.id)
+            }
+            Spacer(minLength: 0)
+          }
+          .frame(minWidth: 0, maxWidth: .infinity)
+        }
+      }
+      .listRowInsets(EdgeInsets())
+    } else {
+      ForEach(fetcher.pinned) { status in
+        StatusRowExternalView(
+          viewModel: .init(
+            status: status,
+            client: client,
+            routerPath: routerPath,
+            filterContext: .account)
+        )
+      }
     }
 
     Rectangle()
