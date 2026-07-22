@@ -107,22 +107,29 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       var items: [[GalleryItem]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
+      var currentIndex = 0
       for item in galleryItems.reversed() {
         if case .gap = item {
           items[0].append(item)
         } else if case .media(let mediaStatus) = item {
-          // Find shortest column
-          var shortestColIndex = 0
-          var shortestHeight = columnHeights[0]
-          
-          for i in 1..<columns {
-            if columnHeights[i] < shortestHeight {
-              shortestHeight = columnHeights[i]
-              shortestColIndex = i
+          let targetColIndex: Int
+          if UserPreferences.shared.galleryOptimizeItemLayout {
+            // Find shortest column
+            var shortestColIndex = 0
+            var shortestHeight = columnHeights[0]
+            
+            for i in 1..<columns {
+              if columnHeights[i] < shortestHeight {
+                shortestHeight = columnHeights[i]
+                shortestColIndex = i
+              }
             }
+            targetColIndex = shortestColIndex
+          } else {
+            targetColIndex = currentIndex % columns
           }
           
-          items[shortestColIndex].append(item)
+          items[targetColIndex].append(item)
           
           // Estimate height of this item based on its aspect ratio to distribute evenly
           let isSquare = UserPreferences.shared.galleryCropToSquare
@@ -130,7 +137,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           
           // The relative height is proportional to 1.0 / aspectRatio
           // Add a small constant to account for padding
-          columnHeights[shortestColIndex] += (1.0 / aspectRatio) + 0.1
+          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+          currentIndex += 1
         }
       }
       

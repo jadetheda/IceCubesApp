@@ -152,22 +152,30 @@ private struct StatusesTabView: View {
         var items: [[MediaStatus]] = Array(repeating: [], count: columns)
         var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
         
+        var currentIndex = 0
         for status in mediaStatuses {
-          var shortestColIndex = 0
-          var shortestHeight = columnHeights[0]
-          
-          for i in 1..<columns {
-            if columnHeights[i] < shortestHeight {
-              shortestHeight = columnHeights[i]
-              shortestColIndex = i
+          let targetColIndex: Int
+          if UserPreferences.shared.galleryOptimizeItemLayout {
+            var shortestColIndex = 0
+            var shortestHeight = columnHeights[0]
+            
+            for i in 1..<columns {
+              if columnHeights[i] < shortestHeight {
+                shortestHeight = columnHeights[i]
+                shortestColIndex = i
+              }
             }
+            targetColIndex = shortestColIndex
+          } else {
+            targetColIndex = currentIndex % columns
           }
           
-          items[shortestColIndex].append(status)
+          items[targetColIndex].append(status)
           
           let isSquare = UserPreferences.shared.galleryCropToSquare
           let aspectRatio = isSquare ? 1.0 : (status.attachment.clampedAspectRatio ?? 1.0)
-          columnHeights[shortestColIndex] += (1.0 / aspectRatio) + 0.1
+          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+          currentIndex += 1
         }
         
         return items

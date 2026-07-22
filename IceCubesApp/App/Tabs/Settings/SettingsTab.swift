@@ -678,6 +678,9 @@ public struct ExperimentalSettingsView: View {
         Toggle(isOn: $preferences.galleryCropToSquare) {
           Label("settings.experimental.gallery-crop-square", systemImage: "crop")
         }
+        Toggle(isOn: $preferences.galleryOptimizeItemLayout) {
+          Label("settings.experimental.gallery-optimize-item-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
+        }
       }
       
       Section("settings.experimental.undo-scroll-to-top") {

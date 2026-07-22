@@ -10,7 +10,7 @@
 
 ### Gallery Mode & Media Layout Enhancements
 
-- [ ] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
+- [x] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
 - [ ] OptimizeItemLayout=false option in experimental settings under gallery mode (in case people wanna disable the moving around)?
 - [ ] Ability to turn on thin lil margins on either side of gallery mode
 
