@@ -199,6 +199,7 @@ private struct StatusesTabView: View {
           .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
+      .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
       .listRowInsets(EdgeInsets())
     } else {
       ForEach(fetcher.pinned) { status in

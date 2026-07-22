@@ -183,6 +183,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         .frame(minWidth: 0, maxWidth: .infinity)
       }
     }
+    .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
     .task(id: items.count) {
       if mediaCount < 6 && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()

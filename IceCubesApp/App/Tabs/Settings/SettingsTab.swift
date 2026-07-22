@@ -681,6 +681,9 @@ public struct ExperimentalSettingsView: View {
         Toggle(isOn: $preferences.galleryOptimizeItemLayout) {
           Label("settings.experimental.gallery-optimize-item-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
         }
+        Toggle(isOn: $preferences.galleryAddThinMargins) {
+          Label("settings.experimental.gallery-add-thin-margins", systemImage: "arrow.left.and.right")
+        }
       }
       
       Section("settings.experimental.undo-scroll-to-top") {
