@@ -355,3 +355,4 @@
 - 2026-07-21T15:36:00Z: **Resolved GalleryStatusesListView Swift Compilation Error**
   - **Issue:** `case .display` passed `[Status]` directly to `makeGrid(for: [TimelineItem])`, and `GalleryItem` enum definition had been overwritten by a residual `GallerySegment` snippet from an earlier patch.
   - **Fix:** Restored `GalleryItem` enum (`.media(MediaStatus)`, `.gap(TimelineGap)`), converted `[Status]` to `[TimelineItem]` in `case .display`, and removed the obsolete `makeSegments` chunking logic.
+.
