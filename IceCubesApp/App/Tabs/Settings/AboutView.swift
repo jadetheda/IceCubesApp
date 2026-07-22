@@ -107,6 +107,16 @@ struct AboutView: View {
           • [RevenueCat](https://github.com/RevenueCat/purchases-ios)
 
           • [SFSafeSymbols](https://github.com/SFSafeSymbols/SFSafeSymbols)
+
+          • [ButtonKit](https://github.com/Dean151/ButtonKit)
+
+          • [WrappingHStack](https://github.com/dkk/WrappingHStack)
+
+          • [Gifu](https://github.com/kaishin/Gifu)
+
+          • [TelemetryDeck](https://github.com/TelemetryDeck/SwiftSDK)
+
+          • [WishKit](https://github.com/wishkit/wishkit-ios)
           """
         )
         .multilineTextAlignment(.leading)

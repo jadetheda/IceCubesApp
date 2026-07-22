@@ -5,7 +5,7 @@
 ### Corrections
 
 - [x] We should remove the **Load Remote Media button** as its role has been superseded by the **automatic remote fallback** and **IceShrimp** **force Video fallback** features
-- [ ] Move the **Experimental Settings** section above the **General** section in **Settings**
+- [x] Move the **Experimental Settings** section above the **General** section in **Settings**
 - [ ] "Ice Cube is built with the following open-source software" seems like it may be outdated, i think we've introduced new dependencies since then. Not sure.
 
 ### Gallery Mode & Media Layout Enhancements
