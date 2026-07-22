@@ -32,3 +32,11 @@ Since SwiftUI (as of iOS 17) lacks a native `Masonry` or `StaggeredGrid` compone
 
 1. **Pre-calculated Heights are Mandatory:** Just like Hydra relies on `mediaAspectRatio` to calculate heights upfront, our SwiftUI implementation must ensure columns know exactly how tall an image will be before it loads. If SwiftUI has to wait for the image to load to expand the column, the column heights are constantly changing dynamically, leading to elements jumping between columns, massive gaps, and layout jitter.
 2. **True Lazy Evaluation vs VStack:** FlashList handles recycling natively. In our custom SwiftUI masonry layout (which uses an `HStack` of `VStack` columns), we do not get true cell recycling. Wrapping the entire grid in a `LazyVStack` helps defer the `NextPageView` pagination trigger, but the columns themselves must avoid infinite-height growth glitches (like the `.aspectRatio(1, contentMode: .fill)` issue we fixed earlier).
+
+5. **The Secret to "Clamped" Image Heights:**
+   - On the surface, it seems like Hydra's image heights are somewhat random—some images are allowed to be extremely long, while others are mysteriously capped.
+   - The secret lies in a subtle bug/feature in how Hydra calculates `mediaAspectRatio`. In `api/Posts.ts`, Hydra calculates the aspect ratio using:
+     `mediaAspectRatio = images[0][0].width / images[0][0].height;`
+   - `images[0][0]` does **not** refer to the original source image. It refers to the **lowest-resolution thumbnail** provided by the Reddit API's `resolutions` array (e.g., the 108px wide preview).
+   - For extremely tall images (like a 1080x10800 infographic), the Reddit API actively **crops** the generated thumbnails to prevent them from breaking UIs. For example, it might generate a 108x216 thumbnail (an aspect ratio of 0.5) instead of 108x1080.
+   - Because Hydra computes the aspect ratio based on this *thumbnail* rather than the uncropped *source* image, Hydra inadvertently inherits Reddit's thumbnail crop limits. This acts as a natural, server-side height clamp for the masonry layout. Images within Reddit's crop threshold render at their full aspect ratio, while excessively tall images are automatically constrained to the aspect ratio of their cropped thumbnail.
