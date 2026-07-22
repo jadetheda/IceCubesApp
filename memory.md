@@ -356,3 +356,10 @@
   - **Issue:** `case .display` passed `[Status]` directly to `makeGrid(for: [TimelineItem])`, and `GalleryItem` enum definition had been overwritten by a residual `GallerySegment` snippet from an earlier patch.
   - **Fix:** Restored `GalleryItem` enum (`.media(MediaStatus)`, `.gap(TimelineGap)`), converted `[Status]` to `[TimelineItem]` in `case .display`, and removed the obsolete `makeSegments` chunking logic.
 .
+- 2026-07-21T19:35:00Z: **Fixed Gallery Mode Vertical Gaps and Crop to Square Broken Behavior**
+  - **Issue 1:** The `Crop to Square` setting caused images to stretch unexpectedly and created massive vertical gaps in the masonry grid columns.
+  - **Cause 1:** `GalleryAspectRatioModifier` applied `.aspectRatio(1, contentMode: .fill)` when `isSquare` was true. Inside a `VStack` column with an unconstrained vertical axis, `.fill` prompted the view layout to expand its height infinitely (to the height of the tallest column), causing every square image to create a massive empty gap below it.
+  - **Fix 1:** Changed `contentMode: .fill` to `contentMode: .fit` in `GalleryAspectRatioModifier`.
+  - **Issue 2:** The skeleton loading state `.redacted` placeholders had massive vertical gaps between them.
+  - **Cause 2:** The `case .loading` view builder contained `VStack` columns inside the `HStack` without a trailing `Spacer(minLength: 0)`. SwiftUI centered the placeholders vertically in the unconstrained proposed height, breaking the tightly-packed masonry staggered look.
+  - **Fix 2:** Added `Spacer(minLength: 0)` to the bottom of the `VStack` in the `case .loading` condition, mirroring the layout structure used in `case .display`.
