@@ -222,3 +222,5 @@ To implement a "Trending" workaround on the client side:
 - We can fetch the Local Timeline (or federated timeline) and score statuses based on the Mastodon algorithm.
 - Variables like `threshold` and `score_halflife` should be configurable.
 - Sort the statuses by `decaying_score` descending.
+-e ## 2026-07-23T19:30:23Z - SwiftUI LazyVStack Constraint Lesson
+- **Lesson Learned**: Adding a large number of zero-height views (e.g. Color.clear.frame(height: 0)) consecutively at the top of a SwiftUI LazyVStack can cause the layout engine to collapse the entire stack, resulting in completely missing visual elements. Always distribute invisible placeholder anchors rather than clumping them together based on height calculations.

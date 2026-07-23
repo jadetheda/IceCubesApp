@@ -368,3 +368,6 @@
   - **Action:** Wiped corrupted local `IceCubesApp` workspace and performed a clean clone of the `jadetheda/IceCubesApp` repository on the `main` branch to resolve local Git index corruptions and loose object errors caused by the container sleep/wake cycles.
   - **Patches Applied:** Re-applied all custom local Node patches (`patch.cjs`, `patch_gallery.cjs`, `patch_gap.cjs`, etc.) to restore local visual and functional optimizations (masonry layout, lazy VStacks, gap-loading, skeleton loading fixes).
   - **Binary Healing:** Executed the `heal_pngs.sh` script to recover and verify all native image and asset binaries.
+-e ## 2026-07-23T19:30:19Z - Fixed gallery layout bug
+- Fixed an issue where the left column in Gallery Mode was completely empty by modifying how .anchor items are distributed (they are now spread evenly to prevent LazyVStack from collapsing). 
+- Fixed a duplicate ID issue in GalleryMediaCell where multiple items from the same post used the exact same SwiftUI view ID, causing layout conflicts.
