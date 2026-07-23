@@ -90,61 +90,54 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     let galleryItems: [GalleryItem] = items.flatMap { item -> [GalleryItem] in
       switch item {
       case .status(let status):
-        return status.asMediaStatus.map { .media($0) }
-      case .gap(let gap):
-        return [.gap(gap)]
+        return status.asMediaStatus.map { .media($0) } ?? []
+      case .gap:
+        return [] // Gaps are discarded in Gallery Mode
       }
     }
     
     let columns = UserPreferences.shared.galleryColumns
     
     // Distribute items into columns to optimize layout.
-    // We calculate the masonry layout from the BOTTOM UP (oldest to newest).
-    // This ensures that when newer posts are loaded at the top, the existing posts
-    // retain their column assignments, preventing the entire grid from reshuffling
-    // and destroying the user's scroll position.
+    // We calculate the masonry layout from the TOP DOWN (newest to oldest).
+    // This perfectly preserves chronological visual ordering (newest top-left)
+    // and ensures that when paginating (adding to the bottom), existing posts
+    // retain their column assignments.
     let columnItems: [[GalleryItem]] = {
       var items: [[GalleryItem]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
       var currentIndex = 0
-      for item in galleryItems.reversed() {
-        if case .gap = item {
-          items[0].append(item)
-        } else if case .media(let mediaStatus) = item {
-          let targetColIndex: Int
-          if UserPreferences.shared.galleryOptimizeItemLayout {
-            // Find shortest column
-            var shortestColIndex = 0
-            var shortestHeight = columnHeights[0]
-            
-            for i in 1..<columns {
-              if columnHeights[i] < shortestHeight {
-                shortestHeight = columnHeights[i]
-                shortestColIndex = i
-              }
+      for item in galleryItems {
+        guard case .media(let mediaStatus) = item else { continue }
+        
+        let targetColIndex: Int
+        if UserPreferences.shared.galleryOptimizeItemLayout {
+          // Find shortest column
+          var shortestColIndex = 0
+          var shortestHeight = columnHeights[0]
+          
+          for i in 1..<columns {
+            if columnHeights[i] < shortestHeight {
+              shortestHeight = columnHeights[i]
+              shortestColIndex = i
             }
-            targetColIndex = shortestColIndex
-          } else {
-            targetColIndex = currentIndex % columns
           }
-          
-          items[targetColIndex].append(item)
-          
-          // Estimate height of this item based on its aspect ratio to distribute evenly
-          let isSquare = UserPreferences.shared.galleryCropToSquare
-          let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
-          
-          // The relative height is proportional to 1.0 / aspectRatio
-          // Add a small constant to account for padding
-          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
-          currentIndex += 1
+          targetColIndex = shortestColIndex
+        } else {
+          targetColIndex = currentIndex % columns
         }
-      }
-      
-      // Reverse each column's items so they are ordered newest to oldest (top to bottom)
-      for i in 0..<columns {
-        items[i].reverse()
+        
+        items[targetColIndex].append(item)
+        
+        // Estimate height of this item based on its aspect ratio to distribute evenly
+        let isSquare = UserPreferences.shared.galleryCropToSquare
+        let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+        
+        // The relative height is proportional to 1.0 / aspectRatio
+        // Add a small constant to account for padding
+        columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+        currentIndex += 1
       }
       
       return items
