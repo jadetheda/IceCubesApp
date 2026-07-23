@@ -132,7 +132,7 @@ public struct TimelineView: View {
     }
     TimelineToolbarTagGroupButton(timeline: $timeline)
     
-    if case .list = timeline {
+    if case .list = timeline, !canFilterTimeline {
       ToolbarItem(placement: .navigationBarTrailing) {
         Menu {
           Toggle(isOn: Binding(
