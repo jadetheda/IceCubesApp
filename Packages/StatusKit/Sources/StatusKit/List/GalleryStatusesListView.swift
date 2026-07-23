@@ -149,41 +149,41 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGridChunk(for items: [TimelineItem]) -> some View {
-    var galleryNodes: [GalleryNode] = []
-    var currentAnchors: [String] = []
-    
-    for item in items {
-      switch item {
-      case .status(let status):
-        let mediaStatuses = status.asMediaStatus
-        if mediaStatuses.isEmpty {
-          currentAnchors.append(status.id)
-        } else {
-          for (index, mediaStatus) in mediaStatuses.enumerated() {
-            galleryNodes.append(GalleryNode(
-              id: mediaStatus.id,
-              mediaStatus: mediaStatus,
-              anchorIds: index == 0 ? currentAnchors : []
-            ))
-            if index == 0 { currentAnchors = [] }
-          }
-        }
-      case .gap:
-        break
-      }
-    }
-    
-    if !currentAnchors.isEmpty {
-      galleryNodes.append(GalleryNode(
-        id: currentAnchors.first!,
-        mediaStatus: nil,
-        anchorIds: currentAnchors
-      ))
-    }
-    
     let columns = UserPreferences.shared.galleryColumns
     
     let columnItems: [[GalleryNode]] = {
+      var galleryNodes: [GalleryNode] = []
+      var currentAnchors: [String] = []
+      
+      for item in items {
+        switch item {
+        case .status(let status):
+          let mediaStatuses = status.asMediaStatus
+          if mediaStatuses.isEmpty {
+            currentAnchors.append(status.id)
+          } else {
+            for (index, mediaStatus) in mediaStatuses.enumerated() {
+              galleryNodes.append(GalleryNode(
+                id: mediaStatus.id,
+                mediaStatus: mediaStatus,
+                anchorIds: index == 0 ? currentAnchors : []
+              ))
+              if index == 0 { currentAnchors = [] }
+            }
+          }
+        case .gap:
+          break
+        }
+      }
+      
+      if !currentAnchors.isEmpty {
+        galleryNodes.append(GalleryNode(
+          id: currentAnchors.first!,
+          mediaStatus: nil,
+          anchorIds: currentAnchors
+        ))
+      }
+      
       var items: [[GalleryNode]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
