@@ -63,13 +63,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
   }
 
-  private enum GalleryItem: Identifiable, Equatable {
-    case media(MediaStatus)
+  private struct GalleryNode: Identifiable, Equatable {
+    let id: String
+    let mediaStatus: MediaStatus?
+    let anchorIds: [String]
     
-    var id: String {
-      switch self {
-      case .media(let media): return media.id
-      }
+    static func == (lhs: GalleryNode, rhs: GalleryNode) -> Bool {
+      lhs.id == rhs.id
     }
   }
 
@@ -149,32 +149,49 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGridChunk(for items: [TimelineItem]) -> some View {
-    let galleryItems: [GalleryItem] = items.flatMap { item -> [GalleryItem] in
+    var galleryNodes: [GalleryNode] = []
+    var currentAnchors: [String] = []
+    
+    for item in items {
       switch item {
       case .status(let status):
         let mediaStatuses = status.asMediaStatus
         if mediaStatuses.isEmpty {
-          return []
+          currentAnchors.append(status.id)
         } else {
-          return mediaStatuses.map { .media($0) }
+          for (index, mediaStatus) in mediaStatuses.enumerated() {
+            galleryNodes.append(GalleryNode(
+              id: mediaStatus.id,
+              mediaStatus: mediaStatus,
+              anchorIds: index == 0 ? currentAnchors : []
+            ))
+            if index == 0 { currentAnchors = [] }
+          }
         }
       case .gap:
-        return [] // Gaps are handled at the chunk level
+        break
       }
+    }
+    
+    if !currentAnchors.isEmpty {
+      galleryNodes.append(GalleryNode(
+        id: currentAnchors.first!,
+        mediaStatus: nil,
+        anchorIds: currentAnchors
+      ))
     }
     
     let columns = UserPreferences.shared.galleryColumns
     
-    let columnItems: [[GalleryItem]] = {
-      var items: [[GalleryItem]] = Array(repeating: [], count: columns)
+    let columnItems: [[GalleryNode]] = {
+      var items: [[GalleryNode]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
       var currentIndex = 0
-      for item in galleryItems {
+      for node in galleryNodes {
         let targetColIndex: Int
         
-        switch item {
-        case .media(let mediaStatus):
+        if let mediaStatus = node.mediaStatus {
           if UserPreferences.shared.galleryOptimizeItemLayout {
             var shortestColIndex = 0
             var shortestHeight = columnHeights[0]
@@ -190,13 +207,16 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
             targetColIndex = currentIndex % columns
           }
           
-          items[targetColIndex].append(item)
+          items[targetColIndex].append(node)
           
           let isSquare = UserPreferences.shared.galleryCropToSquare
           var aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
           if aspectRatio <= 0 { aspectRatio = 1.0 }
           columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
           currentIndex += 1
+        } else {
+          // Trailing anchors with no media
+          items[0].append(node)
         }
       }
       
@@ -206,20 +226,26 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 0) {
-          ForEach(columnItems[colIndex]) { item in
-            switch item {
-            case .media(let mediaStatus):
-              GalleryMediaCell(
-                mediaStatus: mediaStatus,
-                routerPath: routerPath,
-                client: client,
-                isRemote: isRemote,
-                filterContext: filterContext
-              )
-              .id(mediaStatus.id)
-              .padding(.bottom, 4)
-              .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
-              .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+          ForEach(columnItems[colIndex]) { node in
+            VStack(spacing: 0) {
+              ForEach(node.anchorIds, id: \.self) { anchorId in
+                Color.clear
+                  .frame(height: 0)
+                  .id(anchorId)
+              }
+              if let mediaStatus = node.mediaStatus {
+                GalleryMediaCell(
+                  mediaStatus: mediaStatus,
+                  routerPath: routerPath,
+                  client: client,
+                  isRemote: isRemote,
+                  filterContext: filterContext
+                )
+                .id(mediaStatus.id)
+                .padding(.bottom, 4)
+                .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+                .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+              }
             }
           }
           Spacer(minLength: 0)
