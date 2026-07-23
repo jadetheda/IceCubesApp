@@ -32,11 +32,12 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       let placeholderRatios: [CGFloat] = isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
       HStack(alignment: .top, spacing: 4) {
         ForEach(0..<columns, id: \.self) { colIndex in
-          LazyVStack(spacing: 4) {
+          LazyVStack(spacing: 0) {
             ForEach(0..<6, id: \.self) { rowIndex in
               RoundedRectangle(cornerRadius: 8)
                 .fill(theme.secondaryBackgroundColor)
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
+                .padding(.bottom, 4)
             }
             Spacer(minLength: 0)
           }
@@ -64,14 +65,48 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   private enum GalleryItem: Identifiable, Equatable {
     case media(MediaStatus)
-    case gap(TimelineGap)
-
+    case anchor(String)
+    
     var id: String {
       switch self {
       case .media(let media): return media.id
-      case .gap(let gap): return gap.id
+      case .anchor(let id): return id
       }
     }
+  }
+
+  private struct GalleryChunk: Identifiable {
+    var id: String {
+      if let gap = gap { return gap.id }
+      return items.first?.id ?? UUID().uuidString
+    }
+    var items: [TimelineItem] = []
+    var gap: TimelineGap? = nil
+    var isGap: Bool { gap != nil }
+  }
+
+  private func chunkItems(_ items: [TimelineItem]) -> [GalleryChunk] {
+    var chunks: [GalleryChunk] = []
+    var currentChunk = GalleryChunk()
+    
+    for item in items {
+      switch item {
+      case .gap(let gap):
+        if !currentChunk.items.isEmpty {
+          chunks.append(currentChunk)
+          currentChunk = GalleryChunk()
+        }
+        chunks.append(GalleryChunk(gap: gap))
+      case .status:
+        currentChunk.items.append(item)
+      }
+    }
+    
+    if !currentChunk.items.isEmpty {
+      chunks.append(currentChunk)
+    }
+    
+    return chunks
   }
 
   @ViewBuilder
@@ -87,67 +122,170 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
+    let chunks = chunkItems(items)
+    
+    VStack(spacing: 0) {
+      ForEach(chunks) { chunk in
+        if chunk.isGap, let gap = chunk.gap {
+          if let gapLoader = fetcher as? GapLoadingFetcher {
+            TimelineGapView(gap: gap) {
+              await gapLoader.loadGap(gap: gap)
+            }
+            .padding(.horizontal, .layoutPadding)
+            .padding(.vertical, 8)
+          }
+        } else {
+          makeGridChunk(for: chunk.items)
+        }
+      }
+    }
+    .task(id: items.count) {
+      let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
+      if mediaCount < 6 && nextPageState == .hasNextPage {
+        try? await fetcher.fetchNextPage()
+      }
+    }
+    
+    makeNextPageRow(nextPageState: nextPageState)
+  }
+
+  @ViewBuilder
+  private func makeGridChunk(for items: [TimelineItem]) -> some View {
     let galleryItems: [GalleryItem] = items.flatMap { item -> [GalleryItem] in
       switch item {
       case .status(let status):
-        return status.asMediaStatus.map { .media($0) } ?? []
+        let mediaStatuses = status.asMediaStatus
+        if mediaStatuses.isEmpty {
+          return [.anchor(status.id)]
+        } else {
+          return mediaStatuses.map { .media($0) }
+        }
       case .gap:
-        return [] // Gaps are discarded in Gallery Mode
+        return [] // Gaps are handled at the chunk level
       }
     }
     
     let columns = UserPreferences.shared.galleryColumns
     
-    // Distribute items into columns to optimize layout.
-    // We calculate the masonry layout from the TOP DOWN (newest to oldest).
-    // This perfectly preserves chronological visual ordering (newest top-left)
-    // and ensures that when paginating (adding to the bottom), existing posts
-    // retain their column assignments.
     let columnItems: [[GalleryItem]] = {
       var items: [[GalleryItem]] = Array(repeating: [], count: columns)
       var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
       
       var currentIndex = 0
       for item in galleryItems {
-        guard case .media(let mediaStatus) = item else { continue }
-        
         let targetColIndex: Int
-        if UserPreferences.shared.galleryOptimizeItemLayout {
-          // Find shortest column
+        
+        switch item {
+        case .anchor:
+          // Anchors have zero height. We just append them to the current shortest column
+          // so they stay visually close to where they belong chronologically.
           var shortestColIndex = 0
           var shortestHeight = columnHeights[0]
-          
           for i in 1..<columns {
             if columnHeights[i] < shortestHeight {
               shortestHeight = columnHeights[i]
               shortestColIndex = i
             }
           }
-          targetColIndex = shortestColIndex
-        } else {
-          targetColIndex = currentIndex % columns
+          items[shortestColIndex].append(item)
+          continue
+          
+        case .media(let mediaStatus):
+          if UserPreferences.shared.galleryOptimizeItemLayout {
+            var shortestColIndex = 0
+            var shortestHeight = columnHeights[0]
+            
+            for i in 1..<columns {
+              if columnHeights[i] < shortestHeight {
+                shortestHeight = columnHeights[i]
+                shortestColIndex = i
+              }
+            }
+            targetColIndex = shortestColIndex
+          } else {
+            targetColIndex = currentIndex % columns
+          }
+          
+          items[targetColIndex].append(item)
+          
+          let isSquare = UserPreferences.shared.galleryCropToSquare
+          let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+          currentIndex += 1
         }
-        
-        items[targetColIndex].append(item)
-        
-        // Estimate height of this item based on its aspect ratio to distribute evenly
-        let isSquare = UserPreferences.shared.galleryCropToSquare
-        let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
-        
-        // The relative height is proportional to 1.0 / aspectRatio
-        // Add a small constant to account for padding
-        columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
-        currentIndex += 1
       }
       
       return items
     }()
     
-    let mediaCount = galleryItems.filter { if case .media = $0 { return true }; return false }.count
-    
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
-        LazyVStack(spacing: 4) {
+        LazyVStack(spacing: 0) {
+          ForEach(columnItems[colIndex]) { item in
+            switch item {
+            case .media(let mediaStatus):
+              GalleryMediaCell(
+                mediaStatus: mediaStatus,
+                routerPath: routerPath,
+                client: client,
+                isRemote: isRemote,
+                filterContext: filterContext
+              )
+              .id(mediaStatus.status.id)
+              .padding(.bottom, 4)
+              .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+              .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+            case .anchor(let statusId):
+              Color.clear
+                .frame(height: 0)
+                .id(statusId)
+            }
+          }
+          Spacer(minLength: 0)
+        }
+        .frame(minWidth: 0, maxWidth: .infinity)
+      }
+    }
+    .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+  }
+
+              shortestColIndex = i
+            }
+          }
+          items[shortestColIndex].append(item)
+          continue
+          
+        case .media(let mediaStatus):
+          if UserPreferences.shared.galleryOptimizeItemLayout {
+            var shortestColIndex = 0
+            var shortestHeight = columnHeights[0]
+            
+            for i in 1..<columns {
+              if columnHeights[i] < shortestHeight {
+                shortestHeight = columnHeights[i]
+                shortestColIndex = i
+              }
+            }
+            targetColIndex = shortestColIndex
+          } else {
+            targetColIndex = currentIndex % columns
+          }
+          
+          items[targetColIndex].append(item)
+          
+          let isSquare = UserPreferences.shared.galleryCropToSquare
+          let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+          currentIndex += 1
+        }
+      }
+      
+      return items
+    }()
+    
+    HStack(alignment: .top, spacing: 4) {
+      ForEach(0..<columns, id: .self) { colIndex in
+        LazyVStack(spacing: 0) {
           ForEach(columnItems[colIndex]) { item in
             switch item {
             case .media(let mediaStatus):
@@ -161,14 +299,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
               .id(mediaStatus.status.id)
               .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
               .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
-            case .gap(let gap):
-              if let gapLoader = fetcher as? GapLoadingFetcher {
-                TimelineGapView(gap: gap) {
-                  await gapLoader.loadGap(gap: gap)
-                }
-                .padding(.horizontal, .layoutPadding)
-                .padding(.vertical, 8)
-              }
+            case .anchor(let statusId):
+              Color.clear
+                .frame(height: 0)
+                .id(statusId)
             }
           }
           Spacer(minLength: 0)
@@ -177,12 +311,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
-    .task(id: items.count) {
-      if mediaCount < 6 && nextPageState == .hasNextPage {
-        try? await fetcher.fetchNextPage()
-      }
-    }
-    
+  }
+
     makeNextPageRow(nextPageState: nextPageState)
   }
 }
