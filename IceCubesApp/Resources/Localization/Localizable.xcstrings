@@ -86746,13 +86746,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto-Fallback to Remote Media"
+            "value": "Auto fallback to remote media"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto-Fallback to Remote Media"
+            "value": "Auto fallback to remote media"
           }
         },
         "es": {
@@ -86865,13 +86865,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fallback Delay: %@s"
+            "value": "Auto fallback delay: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fallback Delay: %@s"
+            "value": "Auto fallback delay: %@s"
           }
         },
         "es": {
@@ -86984,13 +86984,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Always Force Remote Media"
+            "value": "Always force remote media"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Always Force Remote Media"
+            "value": "Always force remote media"
           }
         },
         "es": {
@@ -87103,13 +87103,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hide Seen Posts"
+            "value": "Hide seen posts"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hide Seen Posts"
+            "value": "Hide seen posts"
           }
         },
         "es": {
@@ -87222,13 +87222,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mark as Seen After: %@s"
+            "value": "Mark as seen after: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mark as Seen After: %@s"
+            "value": "Mark as seen after: %@s"
           }
         },
         "es": {
@@ -87341,13 +87341,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only Mark Liked Posts as Seen"
+            "value": "Only mark liked posts as seen"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only Mark Liked Posts as Seen"
+            "value": "Only mark liked posts as seen"
           }
         },
         "es": {
@@ -87460,13 +87460,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Hide Button in Toolbar"
+            "value": "Show button in toolbar"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show Hide Button in Toolbar"
+            "value": "Show button in toolbar"
           }
         },
         "es": {
@@ -87698,13 +87698,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include Boosted Posts"
+            "value": "Include boosted posts"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include Boosted Posts"
+            "value": "Include boosted posts"
           }
         },
         "es": {
@@ -87817,13 +87817,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Persistent Toolbar Toggle"
+            "value": "Act as persistent toggle"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Persistent Toolbar Toggle"
+            "value": "Act as persistent toggle"
           }
         },
         "es": {
@@ -87936,13 +87936,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tracks seen posts in the background and lets you filter them out of your timeline."
+            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tracks seen posts in the background and lets you filter them out of your timeline."
+            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
           }
         },
         "es": {
@@ -88055,13 +88055,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Media Only\" in Filter Menu"
+            "value": "Show \"Gallery Mode\" in filter menu"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Media Only\" in Filter Menu"
+            "value": "Show \"Gallery Mode\" in filter menu"
           }
         },
         "es": {
@@ -88174,13 +88174,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a toggle to the timeline's filter menu to hide posts without media."
+            "value": "Adds a Gallery Mode toggle to the timeline filter menu."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a toggle to the timeline's filter menu to hide posts without media."
+            "value": "Adds a Gallery Mode toggle to the timeline filter menu."
           }
         },
         "es": {
@@ -89033,13 +89033,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Undo Scroll To Top"
+            "value": "Enable undo scroll to top"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Undo Scroll To Top"
+            "value": "Enable undo scroll to top"
           }
         },
         "es": {
@@ -89271,13 +89271,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fallback on Load Failure"
+            "value": "Fallback on load failure"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fallback on Load Failure"
+            "value": "Fallback on load failure"
           }
         },
         "es": {
@@ -89390,13 +89390,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable IceShrimp Workarounds"
+            "value": "Enable IceShrimp workarounds"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable IceShrimp Workarounds"
+            "value": "Enable IceShrimp workarounds"
           }
         },
         "es": {
@@ -89509,13 +89509,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Force Video Link Fallback"
+            "value": "Never load video (fallback)"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Force Video Link Fallback"
+            "value": "Never load video (fallback)"
           }
         },
         "es": {
@@ -89628,13 +89628,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alternative Tag Group Fetching"
+            "value": "Alternative tag group fetching"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Alternative Tag Group Fetching"
+            "value": "Alternative tag group fetching"
           }
         },
         "es": {
@@ -89747,13 +89747,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-Side Trending Calculations"
+            "value": "Client-side trending statuses"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-Side Trending Calculations"
+            "value": "Client-side trending statuses"
           }
         },
         "es": {
@@ -89866,13 +89866,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trending Algorithm Config"
+            "value": "Trending algorithm parameters"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trending Algorithm Config"
+            "value": "Trending algorithm parameters"
           }
         },
         "es": {
@@ -89985,13 +89985,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trending Post Threshold: %lld"
+            "value": "Post threshold: %lld"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trending Post Threshold: %lld"
+            "value": "Post threshold: %lld"
           }
         },
         "es": {
@@ -90104,13 +90104,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Score Half-Life: %.1f hours"
+            "value": "Score half-life: %.1f hours"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Score Half-Life: %.1f hours"
+            "value": "Score half-life: %.1f hours"
           }
         },
         "es": {
@@ -90443,7 +90443,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balance Column Heights"
+            "value": "Balance column heights"
           }
         }
       }
@@ -90454,7 +90454,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add Outer Margins"
+            "value": "Add thin outer margins"
           }
         }
       }
