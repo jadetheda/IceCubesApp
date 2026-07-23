@@ -195,3 +195,30 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 ## Multiple Media Status Representation in Gallery Mode
 - **Observation**: `status.asMediaStatus` on `Status` returns an array `[MediaStatus]`, containing one entry for each media attachment attached to that status.
 - **Fix**: In Gallery Mode, mapping statuses to items by treating `asMediaStatus` as a single element or using `compactMap` with `if let` drops multi-attachment posts or fails type checking. Expanding statuses into `.media(MediaStatus)` via a loop over `status.asMediaStatus` ensures every media attachment is rendered independently in the masonry grid, maintaining full context and interaction capability for each image/video cell.
+
+## Trending Algorithm Investigation
+Based on Mastodon's open-source Ruby on Rails codebase (`app/models/trends/statuses.rb`), the server-side trending algorithm for statuses calculates a score that decays over time.
+
+### The Algorithm
+1. **Base Metric**: `observed = reblogs_count + favourites_count`.
+2. **Threshold**: If `observed` is less than a minimum threshold (default `5`), the score is `0`.
+3. **Raw Score**: It uses a chi-squared style formula: `score = ((observed - expected)^2) / expected`. 
+   - `expected` is hardcoded to `1.0`.
+   - This simplifies to `(observed - 1)^2`.
+4. **Time Decay**: The score undergoes exponential decay based on a half-life.
+   - Default half-life is `1 hour`.
+   - `decaying_score = score * (0.5 ^ (hours_since_creation / score_halflife))`.
+   - This means a post's score drops by half every hour since it was created.
+
+### Eligibility Requirements
+A status is only eligible for trending if:
+- It is public.
+- The author's account is discoverable and not silenced.
+- It does not contain sensitive content (or spoiler text).
+- It is not a reply.
+
+### Client-Side Implementation considerations (e.g. for IceShrimp)
+To implement a "Trending" workaround on the client side:
+- We can fetch the Local Timeline (or federated timeline) and score statuses based on the Mastodon algorithm.
+- Variables like `threshold` and `score_halflife` should be configurable.
+- Sort the statuses by `decaying_score` descending.
