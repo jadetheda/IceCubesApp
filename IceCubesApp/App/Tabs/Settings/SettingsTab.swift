@@ -42,11 +42,11 @@ struct SettingsTabs: View {
       Form {
         appSection
         accountsSection
+        experimentalSection
         generalSection
         socialKeyboardSection
         streamHomeTimelineSection
         timelineFetchSection
-        experimentalSection
         otherSections
         cacheSection
       }
