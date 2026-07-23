@@ -14,6 +14,7 @@
 
 - [ ] We appear to have somehow broken the fix implemented earlier to address posts not showing as interacted with after leaving the view.
 - [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke
+- [ ] Coming out of Gallery Mode seems to jettison us to the top of the page.
 
 ### Features
 
