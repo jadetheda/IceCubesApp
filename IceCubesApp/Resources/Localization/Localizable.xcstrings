@@ -86746,13 +86746,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback to remote media"
+            "value": "Auto-Fallback to Remote Media"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback to remote media"
+            "value": "Auto-Fallback to Remote Media"
           }
         },
         "es": {
@@ -86865,13 +86865,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback delay: %@s"
+            "value": "Fallback Delay: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback delay: %@s"
+            "value": "Fallback Delay: %@s"
           }
         },
         "es": {
@@ -86984,13 +86984,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Always force remote media"
+            "value": "Always Force Remote Media"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Always force remote media"
+            "value": "Always Force Remote Media"
           }
         },
         "es": {
@@ -87222,13 +87222,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Required time to be detected as seen: %@s"
+            "value": "Mark as Seen After: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Required time to be detected as seen: %@s"
+            "value": "Mark as Seen After: %@s"
           }
         },
         "es": {
@@ -87341,13 +87341,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only detect liked posts as seen"
+            "value": "Only Mark Liked Posts as Seen"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only detect liked posts as seen"
+            "value": "Only Mark Liked Posts as Seen"
           }
         },
         "es": {
@@ -87460,13 +87460,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show button in header"
+            "value": "Show Hide Button in Toolbar"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show button in header"
+            "value": "Show Hide Button in Toolbar"
           }
         },
         "es": {
@@ -87579,13 +87579,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Require media to be loaded"
+            "value": "Require Media to Load"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Require media to be loaded"
+            "value": "Require Media to Load"
           }
         },
         "es": {
@@ -87698,13 +87698,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include boosts (hide if original seen)"
+            "value": "Include Boosted Posts"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include boosts (hide if original seen)"
+            "value": "Include Boosted Posts"
           }
         },
         "es": {
@@ -87817,13 +87817,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Button acts as a state toggle instead of one-off action"
+            "value": "Persistent Toolbar Toggle"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Button acts as a state toggle instead of one-off action"
+            "value": "Persistent Toolbar Toggle"
           }
         },
         "es": {
@@ -87936,13 +87936,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
+            "value": "Tracks seen posts in the background and lets you filter them out of your timeline."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
+            "value": "Tracks seen posts in the background and lets you filter them out of your timeline."
           }
         },
         "es": {
@@ -88055,13 +88055,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gallery Mode Toggle in Timeline Menu"
+            "value": "Show \"Media Only\" in Filter Menu"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gallery Mode Toggle in Timeline Menu"
+            "value": "Show \"Media Only\" in Filter Menu"
           }
         },
         "es": {
@@ -88174,13 +88174,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allows hiding posts without media from the timeline filter menu."
+            "value": "Adds a toggle to the timeline's filter menu to hide posts without media."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Allows hiding posts without media from the timeline filter menu."
+            "value": "Adds a toggle to the timeline's filter menu to hide posts without media."
           }
         },
         "es": {
@@ -88412,13 +88412,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keeps your home timeline up to date in real time using streaming when available. Disable in case of performance issues."
+            "value": "Keeps your home timeline up to date in real time using streaming. Turn off if performance degrades."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keeps your home timeline up to date in real time using streaming when available. Disable in case of performance issues."
+            "value": "Keeps your home timeline up to date in real time using streaming. Turn off if performance degrades."
           }
         },
         "es": {
@@ -88531,13 +88531,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Full timeline fetch"
+            "value": "Full Timeline Pre-Fetching"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Full timeline fetch"
+            "value": "Full Timeline Pre-Fetching"
           }
         },
         "es": {
@@ -88650,13 +88650,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap."
+            "value": "Fetches up to 800 new posts at once rather than 40 at a time, eliminating manual gap loading."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap."
+            "value": "Fetches up to 800 new posts at once rather than 40 at a time, eliminating manual gap loading."
           }
         },
         "es": {
@@ -89271,13 +89271,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Load Remote Media On Fail"
+            "value": "Fallback on Load Failure"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Load Remote Media On Fail"
+            "value": "Fallback on Load Failure"
           }
         },
         "es": {
@@ -89509,13 +89509,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Never Load Video (Fallback)"
+            "value": "Force Video Link Fallback"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Never Load Video (Fallback)"
+            "value": "Force Video Link Fallback"
           }
         },
         "es": {
@@ -89747,13 +89747,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-side Trending Statuses"
+            "value": "Client-Side Trending Calculations"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-side Trending Statuses"
+            "value": "Client-Side Trending Calculations"
           }
         },
         "es": {
@@ -89985,13 +89985,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Threshold: %lld"
+            "value": "Trending Post Threshold: %lld"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Threshold: %lld"
+            "value": "Trending Post Threshold: %lld"
           }
         },
         "es": {
@@ -90104,13 +90104,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Score Half-life: %.1f hours"
+            "value": "Score Half-Life: %.1f hours"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Score Half-life: %.1f hours"
+            "value": "Score Half-Life: %.1f hours"
           }
         },
         "es": {
@@ -90342,13 +90342,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server."
+            "value": "Resolves API, tag fetching, and media playback compatibility issues for users on IceShrimp instances."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server."
+            "value": "Resolves API, tag fetching, and media playback compatibility issues for users on IceShrimp instances."
           }
         },
         "es": {
@@ -90433,6 +90433,28 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server."
+          }
+        }
+      }
+    },
+    "settings.experimental.gallery-optimize-item-layout": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance Column Heights"
+          }
+        }
+      }
+    },
+    "settings.experimental.gallery-add-thin-margins": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Outer Margins"
           }
         }
       }
