@@ -86865,13 +86865,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback delay: %@s"
+            "value": "Fallback delay: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Auto fallback delay: %@s"
+            "value": "Fallback delay: %@s"
           }
         },
         "es": {
@@ -87222,13 +87222,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mark as seen after: %@s"
+            "value": "Time required to mark as seen: %@s"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Mark as seen after: %@s"
+            "value": "Time required to mark as seen: %@s"
           }
         },
         "es": {
@@ -87460,13 +87460,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show button in toolbar"
+            "value": "Show hide button in toolbar"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show button in toolbar"
+            "value": "Show hide button in toolbar"
           }
         },
         "es": {
@@ -87579,13 +87579,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Require Media to Load"
+            "value": "Require media to be loaded"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Require Media to Load"
+            "value": "Require media to be loaded"
           }
         },
         "es": {
@@ -87698,13 +87698,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include boosted posts"
+            "value": "Include boosts (hide if original is seen)"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Include boosted posts"
+            "value": "Include boosts (hide if original is seen)"
           }
         },
         "es": {
@@ -87817,13 +87817,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Act as persistent toggle"
+            "value": "Hide button acts as a persistent toggle"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Act as persistent toggle"
+            "value": "Hide button acts as a persistent toggle"
           }
         },
         "es": {
@@ -87936,13 +87936,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
+            "value": "Automatically tracks which posts you have seen and allows you to hide them from your timeline."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Automatically track which posts you have seen and allow hiding them from the timeline."
+            "value": "Automatically tracks which posts you have seen and allows you to hide them from your timeline."
           }
         },
         "es": {
@@ -88055,13 +88055,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Gallery Mode\" in filter menu"
+            "value": "Show \"Media Only\" in filter menu"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Gallery Mode\" in filter menu"
+            "value": "Show \"Media Only\" in filter menu"
           }
         },
         "es": {
@@ -88174,13 +88174,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a Gallery Mode toggle to the timeline filter menu."
+            "value": "Adds a toggle to the timeline's filter menu to hide text-only posts."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a Gallery Mode toggle to the timeline filter menu."
+            "value": "Adds a toggle to the timeline's filter menu to hide text-only posts."
           }
         },
         "es": {
@@ -88412,13 +88412,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keeps your home timeline up to date in real time using streaming. Turn off if performance degrades."
+            "value": "Keeps your home timeline up to date in real time using streaming. Disable if you experience performance issues."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Keeps your home timeline up to date in real time using streaming. Turn off if performance degrades."
+            "value": "Keeps your home timeline up to date in real time using streaming. Disable if you experience performance issues."
           }
         },
         "es": {
@@ -88531,13 +88531,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Full Timeline Pre-Fetching"
+            "value": "Full timeline fetch"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Full Timeline Pre-Fetching"
+            "value": "Full timeline fetch"
           }
         },
         "es": {
@@ -88650,13 +88650,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches up to 800 new posts at once rather than 40 at a time, eliminating manual gap loading."
+            "value": "Fetches all new timeline posts (up to 800) at once, instead of fetching the latest 40 and requiring you to manually load the gap."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fetches up to 800 new posts at once rather than 40 at a time, eliminating manual gap loading."
+            "value": "Fetches all new timeline posts (up to 800) at once, instead of fetching the latest 40 and requiring you to manually load the gap."
           }
         },
         "es": {
@@ -89509,13 +89509,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Never load video (fallback)"
+            "value": "Never load video (fallback to link)"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Never load video (fallback)"
+            "value": "Never load video (fallback to link)"
           }
         },
         "es": {
@@ -89747,13 +89747,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-side trending statuses"
+            "value": "Client-side trending calculations"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Client-side trending statuses"
+            "value": "Client-side trending calculations"
           }
         },
         "es": {
@@ -89985,13 +89985,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Post threshold: %lld"
+            "value": "Trending threshold: %lld"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Post threshold: %lld"
+            "value": "Trending threshold: %lld"
           }
         },
         "es": {
@@ -90342,13 +90342,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resolves API, tag fetching, and media playback compatibility issues for users on IceShrimp instances."
+            "value": "Fixes compatibility issues with IceShrimp instances, such as API, tag fetching, and media playback differences."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Resolves API, tag fetching, and media playback compatibility issues for users on IceShrimp instances."
+            "value": "Fixes compatibility issues with IceShrimp instances, such as API, tag fetching, and media playback differences."
           }
         },
         "es": {
@@ -90443,7 +90443,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Balance column heights"
+            "value": "Optimize grid layout"
           }
         }
       }
@@ -90454,7 +90454,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Add thin outer margins"
+            "value": "Add thin margins"
           }
         }
       }
