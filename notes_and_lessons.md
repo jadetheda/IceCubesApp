@@ -224,3 +224,5 @@ To implement a "Trending" workaround on the client side:
 - Sort the statuses by `decaying_score` descending.
 -e ## 2026-07-23T19:30:23Z - SwiftUI LazyVStack Constraint Lesson
 - **Lesson Learned**: Adding a large number of zero-height views (e.g. Color.clear.frame(height: 0)) consecutively at the top of a SwiftUI LazyVStack can cause the layout engine to collapse the entire stack, resulting in completely missing visual elements. Always distribute invisible placeholder anchors rather than clumping them together based on height calculations.
+-e ## 2026-07-23T19:59:42Z - SwiftUI LazyVStack Constraint Lesson (Updated)
+- **Lesson Learned**: Adding a large number of zero-height views consecutively at the top of a SwiftUI LazyVStack causes the layout engine to completely collapse that stack, rendering it invisible. Even distributing zero-height views across columns isn't sufficient if one column hits the limit before its first visible item. The only reliable solution is to completely filter out zero-height spacer items from the data source before rendering.

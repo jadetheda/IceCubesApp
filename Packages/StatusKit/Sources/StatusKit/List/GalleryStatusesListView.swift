@@ -65,12 +65,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   private enum GalleryItem: Identifiable, Equatable {
     case media(MediaStatus)
-    case anchor(String)
     
     var id: String {
       switch self {
       case .media(let media): return media.id
-      case .anchor(let id): return id
       }
     }
   }
@@ -156,7 +154,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       case .status(let status):
         let mediaStatuses = status.asMediaStatus
         if mediaStatuses.isEmpty {
-          return [.anchor(status.id)]
+          return []
         } else {
           return mediaStatuses.map { .media($0) }
         }
@@ -176,14 +174,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         let targetColIndex: Int
         
         switch item {
-        case .anchor:
-          // Distribute anchors evenly to prevent SwiftUI LazyVStack from collapsing 
-          // due to too many zero-height items at the start of a single column.
-          let targetColIndex = currentIndex % columns
-          items[targetColIndex].append(item)
-          currentIndex += 1
-          continue
-          
         case .media(let mediaStatus):
           if UserPreferences.shared.galleryOptimizeItemLayout {
             var shortestColIndex = 0
@@ -230,10 +220,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
               .padding(.bottom, 4)
               .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
               .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
-            case .anchor(let statusId):
-              Color.clear
-                .frame(height: 0)
-                .id(statusId)
             }
           }
           Spacer(minLength: 0)

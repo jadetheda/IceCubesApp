@@ -371,3 +371,5 @@
 -e ## 2026-07-23T19:30:19Z - Fixed gallery layout bug
 - Fixed an issue where the left column in Gallery Mode was completely empty by modifying how .anchor items are distributed (they are now spread evenly to prevent LazyVStack from collapsing). 
 - Fixed a duplicate ID issue in GalleryMediaCell where multiple items from the same post used the exact same SwiftUI view ID, causing layout conflicts.
+-e ## 2026-07-23T19:59:38Z - Fixed SwiftUI LazyVStack rendering collapse in Gallery Mode
+- Completely removed `.anchor` items (zero-height spacers) from the Gallery layout engine. Previously, if the timeline contained a large sequence of text-only posts, they were converted to 0-height `.anchor` items and evenly distributed to columns. This caused `LazyVStack` to silently collapse the column containing too many anchors before its first media item, resulting in the right column appearing completely blank. Filtering them out entirely prevents the rendering engine from breaking.
