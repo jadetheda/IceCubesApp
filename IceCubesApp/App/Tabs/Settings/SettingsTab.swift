@@ -42,11 +42,11 @@ struct SettingsTabs: View {
       Form {
         appSection
         accountsSection
-        experimentalSection
         generalSection
         socialKeyboardSection
         streamHomeTimelineSection
         timelineFetchSection
+        experimentalSection
         otherSections
         cacheSection
       }
@@ -677,12 +677,6 @@ public struct ExperimentalSettingsView: View {
         Stepper(String(format: NSLocalizedString("settings.experimental.gallery-columns", comment: ""), preferences.galleryColumns), value: $preferences.galleryColumns, in: 2...4)
         Toggle(isOn: $preferences.galleryCropToSquare) {
           Label("settings.experimental.gallery-crop-square", systemImage: "crop")
-        }
-        Toggle(isOn: $preferences.galleryOptimizeItemLayout) {
-          Label("settings.experimental.gallery-optimize-item-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
-        }
-        Toggle(isOn: $preferences.galleryAddThinMargins) {
-          Label("settings.experimental.gallery-add-thin-margins", systemImage: "arrow.left.and.right")
         }
       }
       

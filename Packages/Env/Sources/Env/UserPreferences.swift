@@ -37,8 +37,6 @@ import SwiftUI
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
     @AppStorage("gallery_columns") public var galleryColumns: Int = 2
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
-    @AppStorage("gallery_add_thin_margins") public var galleryAddThinMargins: Bool = false
-    @AppStorage("gallery_optimize_item_layout") public var galleryOptimizeItemLayout: Bool = true
     @AppStorage("undo_scroll_to_top_enabled") public var undoScrollToTopEnabled: Bool = true
     @AppStorage("undo_scroll_to_top_timeout") public var undoScrollToTopTimeout: Double = 10.0
 
@@ -293,16 +291,6 @@ import SwiftUI
   public var galleryCropToSquare: Bool {
     didSet {
       storage.galleryCropToSquare = galleryCropToSquare
-    }
-  }
-  public var galleryAddThinMargins: Bool {
-    didSet {
-      storage.galleryAddThinMargins = galleryAddThinMargins
-    }
-  }
-  public var galleryOptimizeItemLayout: Bool {
-    didSet {
-      storage.galleryOptimizeItemLayout = galleryOptimizeItemLayout
     }
   }
   public var inAppBrowserReaderView: Bool {
@@ -693,8 +681,6 @@ import SwiftUI
     autoDetectPostLanguage = storage.autoDetectPostLanguage
     galleryColumns = storage.galleryColumns
     galleryCropToSquare = storage.galleryCropToSquare
-    galleryAddThinMargins = storage.galleryAddThinMargins
-    galleryOptimizeItemLayout = storage.galleryOptimizeItemLayout
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout
     inAppBrowserReaderView = storage.inAppBrowserReaderView

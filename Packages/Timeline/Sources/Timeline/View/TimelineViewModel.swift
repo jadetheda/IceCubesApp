@@ -199,6 +199,7 @@ import Nuke
         guard let originalIndex = await self.datasource.indexOf(statusId: status.id) else { return }
         await self.datasource.replace(status, at: originalIndex)
         await self.cache()
+        await self.updateStatusesState()
       }
     }
   }
@@ -583,7 +584,7 @@ extension TimelineViewModel: GapLoadingFetcher {
               if allCached || !visibleStatuses.contains(where: { $0.id == status.id }) { break }
               try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
-            if !allCached { return }
+            //
           }
           
           var idToMark = status.id
