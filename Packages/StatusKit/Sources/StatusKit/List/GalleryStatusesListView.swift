@@ -177,17 +177,11 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         
         switch item {
         case .anchor:
-          // Anchors have zero height. We just append them to the current shortest column
-          // so they stay visually close to where they belong chronologically.
-          var shortestColIndex = 0
-          var shortestHeight = columnHeights[0]
-          for i in 1..<columns {
-            if columnHeights[i] < shortestHeight {
-              shortestHeight = columnHeights[i]
-              shortestColIndex = i
-            }
-          }
-          items[shortestColIndex].append(item)
+          // Distribute anchors evenly to prevent SwiftUI LazyVStack from collapsing 
+          // due to too many zero-height items at the start of a single column.
+          let targetColIndex = currentIndex % columns
+          items[targetColIndex].append(item)
+          currentIndex += 1
           continue
           
         case .media(let mediaStatus):
@@ -209,7 +203,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           items[targetColIndex].append(item)
           
           let isSquare = UserPreferences.shared.galleryCropToSquare
-          let aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+          var aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+          if aspectRatio <= 0 { aspectRatio = 1.0 }
           columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
           currentIndex += 1
         }
@@ -231,7 +226,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
                 isRemote: isRemote,
                 filterContext: filterContext
               )
-              .id(mediaStatus.status.id)
+              .id(mediaStatus.id)
               .padding(.bottom, 4)
               .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
               .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
