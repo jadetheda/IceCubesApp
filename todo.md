@@ -9,12 +9,15 @@
 - [ ] "Ice Cube is built with the following open-source software" seems like it may be outdated, i think we've introduced new dependencies since then. Not sure.
 
 ### Gallery Mode & Media Layout Enhancements
+- [ ] Check if the pagination logic still hardcodes the number 6 — when surely this number should be dynamic based on how many columns you have enabled? Basically even how much fits on screen at one time, so like maybe on iPad or something it would be different
 
-- [ ] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
+- [x] **Enhancement:** When Gallery Mode is enabled on profile pages, **Pinned Posts** now also display using the Gallery Mode masonry layout while still retaining their own 'pinned' section.
 - [ ] OptimizeItemLayout=false option in experimental settings under gallery mode (in case people wanna disable the moving around)?
 - [ ] Ability to turn on thin lil margins on either side of gallery mode
 
 ### Bugs/Regressions
+- [ ] Gallery Mode Page jumping in profiles, keeps shooting me back up to the bio
+- [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke
 
 - [x] **Somehow *Hide Seen Posts* is completely broken now. I keep seeing posts again and again across different sections, and the button does nothing.**
 - [x] We appear to have somehow broken the fix implemented earlier to address posts not showing as interacted with after leaving the view.

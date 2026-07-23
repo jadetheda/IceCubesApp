@@ -188,7 +188,6 @@ Button {
       Label("status.action.copy-link", systemImage: "link")
     }
 
-    
     if let lang = preferences.serverPreferences?.postLanguage
       ?? Locale.current.language.languageCode?.identifier
     {
