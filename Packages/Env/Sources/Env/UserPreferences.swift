@@ -102,6 +102,9 @@ import SwiftUI
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
     @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
     @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
+    @AppStorage("iceshrimp_trending") public var iceShrimpTrending: Bool = false
+    @AppStorage("iceshrimp_trending_threshold") public var iceShrimpTrendingThreshold: Int = 5
+    @AppStorage("iceshrimp_trending_halflife") public var iceShrimpTrendingHalfLife: Double = 1.0
 
     @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
 
@@ -488,6 +491,22 @@ import SwiftUI
       storage.neverLoadVideo = neverLoadVideo
     }
   }
+  public var iceShrimpTrending: Bool {
+    didSet {
+      storage.iceShrimpTrending = iceShrimpTrending
+    }
+  }
+  public var iceShrimpTrendingThreshold: Int {
+    didSet {
+      storage.iceShrimpTrendingThreshold = iceShrimpTrendingThreshold
+    }
+  }
+  public var iceShrimpTrendingHalfLife: Double {
+    didSet {
+      storage.iceShrimpTrendingHalfLife = iceShrimpTrendingHalfLife
+    }
+  }
+
   public var remoteMediaAlwaysForce: Bool {
     didSet {
       storage.remoteMediaAlwaysForce = remoteMediaAlwaysForce
@@ -722,6 +741,10 @@ import SwiftUI
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
     useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     neverLoadVideo = storage.neverLoadVideo
+    iceShrimpTrending = storage.iceShrimpTrending
+    iceShrimpTrendingThreshold = storage.iceShrimpTrendingThreshold
+    iceShrimpTrendingHalfLife = storage.iceShrimpTrendingHalfLife
+
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle

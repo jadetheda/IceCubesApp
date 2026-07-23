@@ -748,6 +748,22 @@ public struct ExperimentalSettingsView: View {
           Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
             Label("Alternative Tag Group Fetching", systemImage: "tag")
           }
+
+          Toggle(isOn: $preferences.iceShrimpTrending) {
+            Label("Client-side Trending Statuses", systemImage: "chart.line.uptrend.xyaxis")
+          }
+          if preferences.iceShrimpTrending {
+            VStack(alignment: .leading) {
+              Text("Trending Algorithm Config")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+              Stepper("Threshold: \(preferences.iceShrimpTrendingThreshold)", value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
+              Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
+                Text(String(format: "Score Half-life: %.1f hours", preferences.iceShrimpTrendingHalfLife))
+              }
+            }
+          }
+
         }
       } header: {
         Text("IceShrimp Workarounds")

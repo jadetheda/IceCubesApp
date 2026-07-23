@@ -257,10 +257,52 @@ extension ExploreView {
     let trendingLinks: [Card]
   }
 
+
+  private func fetchTrendingStatusesHelper() async throws -> [Status] {
+    if UserPreferences.shared.useIceShrimpWorkarounds, UserPreferences.shared.iceShrimpTrending {
+      var statuses: [Status] = []
+      do {
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: 40))
+      } catch {
+        return []
+      }
+      
+      let threshold = Double(UserPreferences.shared.iceShrimpTrendingThreshold)
+      let halfLife = UserPreferences.shared.iceShrimpTrendingHalfLife
+      
+      var scoredStatuses: [(Status, Double)] = []
+      let now = Date()
+      
+      for status in statuses {
+        guard status.visibility == .pub, status.inReplyToId == nil else { continue }
+        
+        let observed = Double(status.reblogsCount + status.favouritesCount)
+        let expected = 1.0
+        
+        var score = 0.0
+        if observed >= threshold {
+          score = pow(observed - expected, 2) / expected
+        }
+        
+        if score > 0 {
+          let hoursSinceCreation = now.timeIntervalSince(status.createdAt.asDate) / 3600.0
+          let decay = pow(0.5, hoursSinceCreation / halfLife)
+          let decayingScore = score * decay
+          scoredStatuses.append((status, decayingScore))
+        }
+      }
+      
+      scoredStatuses.sort { $0.1 > $1.1 }
+      return scoredStatuses.map { $0.0 }
+    }
+    
+    return try await client.get(endpoint: Trends.statuses(offset: nil))
+  }
+
   private func fetchTrendingsData() async throws -> TrendingData {
     async let suggestedAccounts: [Account] = client.get(endpoint: Accounts.suggestions)
     async let trendingTags: [Tag] = client.get(endpoint: Trends.tags)
-    async let trendingStatuses: [Status] = client.get(endpoint: Trends.statuses(offset: nil))
+    async let trendingStatuses: [Status] = fetchTrendingStatusesHelper()
     async let trendingLinks: [Card] = client.get(endpoint: Trends.links(offset: nil))
     return try await .init(
       suggestedAccounts: suggestedAccounts,

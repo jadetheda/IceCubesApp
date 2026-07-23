@@ -464,6 +464,44 @@ extension TimelineFilter {
     offset: Int?,
     limit: Int?
   ) async throws -> [Status] {
+
+    if self == .trending, UserPreferences.shared.useIceShrimpWorkarounds, UserPreferences.shared.iceShrimpTrending {
+      var statuses: [Status] = []
+      do {
+        // Fetch up to 40 public statuses to evaluate
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: false, limit: limit ?? 40))
+      } catch {
+        return []
+      }
+      
+      let threshold = Double(UserPreferences.shared.iceShrimpTrendingThreshold)
+      let halfLife = UserPreferences.shared.iceShrimpTrendingHalfLife
+      
+      var scoredStatuses: [(Status, Double)] = []
+      let now = Date()
+      
+      for status in statuses {
+        guard status.visibility == .pub, status.inReplyToId == nil else { continue }
+        
+        let observed = Double(status.reblogsCount + status.favouritesCount)
+        let expected = 1.0
+        
+        var score = 0.0
+        if observed >= threshold {
+          score = pow(observed - expected, 2) / expected
+        }
+        
+        if score > 0 {
+          let hoursSinceCreation = now.timeIntervalSince(status.createdAt.asDate) / 3600.0
+          let decay = pow(0.5, hoursSinceCreation / halfLife)
+          let decayingScore = score * decay
+          scoredStatuses.append((status, decayingScore))
+        }
+      }
+      
+      scoredStatuses.sort { $0.1 > $1.1 }
+      return scoredStatuses.map { $0.0 }
+    }
     if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled, UserPreferences.shared.useIceShrimpWorkarounds {
       return try await withThrowingTaskGroup(of: [Status].self) { group in
         for tag in tags {
