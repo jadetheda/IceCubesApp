@@ -228,5 +228,6 @@ Use SwiftUI's built-in property wrappers appropriately:
 - If any PNGs or binary assets are corrupt or missing, run `./heal_pngs.sh` (or `./IceCubesApp/heal_pngs.sh` from the workspace root) to restore them from the local cache or remote tarball. Do not write custom download or curl scripts.
 - **ABSOLUTE CRITICAL ADHERENCE TO CLAUDE.MD**: You must strictly obey and implement the architectural guidelines defined in `CLAUDE.md`—specifically the modern SwiftUI paradigms (No ViewModels, native `@State`/`@Binding` data flows, task modifiers, and avoiding nesting `@Observable` objects).
 - **EXCEPTIONAL CODE COMMENTING**: All written code must be thoroughly and beautifully documented. Explain *why* components are structured a certain way, document state bindings, describe side effects of tasks, and mark tricky areas with clear, human-readable explanations to ensure maintainability.
+- **MAXIMIZING QUOTA & REQUEST EFFICIENCY**: We must actively preserve our minuscule token quota by optimizing our execution flows. Minimize the number of AI requests made during tasks by planning carefully, performing comprehensive and consolidated edits, and avoiding unnecessary tool calls or conversational round-trips.
 
 

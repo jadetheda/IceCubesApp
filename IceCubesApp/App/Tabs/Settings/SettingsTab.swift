@@ -748,33 +748,44 @@ public struct ExperimentalSettingsView: View {
       .listRowBackground(theme.primaryBackgroundColor)
 
       Section {
-        Toggle("Enable IceShrimp Workarounds", isOn: $preferences.useIceShrimpWorkarounds)
+        // Toggle to enable/disable all IceShrimp compatibility workarounds.
+        // Binds directly to user preference and reveals advanced workarounds when enabled.
+        Toggle("settings.experimental.iceshrimp.workarounds", isOn: $preferences.useIceShrimpWorkarounds)
         if preferences.useIceShrimpWorkarounds {
-          Toggle("Never Load Video (Fallback)", isOn: $preferences.neverLoadVideo)
+          // Alternative video loading behavior to handle IceShrimp video format inconsistencies.
+          Toggle("settings.experimental.iceshrimp.never-load-video", isOn: $preferences.neverLoadVideo)
+          
+          // Enables alternative client-side tag merging if the instance does not support standard tag fetching.
           Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
-            Label("Alternative Tag Group Fetching", systemImage: "tag")
+            Label("settings.experimental.iceshrimp.alternative-tag-fetching", systemImage: "tag")
           }
 
+          // Activates client-side analytics to compile trending statuses if server trending endpoints are broken.
           Toggle(isOn: $preferences.iceShrimpTrending) {
-            Label("Client-side Trending Statuses", systemImage: "chart.line.uptrend.xyaxis")
+            Label("settings.experimental.iceshrimp.client-side-trending", systemImage: "chart.line.uptrend.xyaxis")
           }
           if preferences.iceShrimpTrending {
             VStack(alignment: .leading) {
-              Text("Trending Algorithm Config")
+              // Descriptive label for the custom algorithm parameters.
+              Text("settings.experimental.iceshrimp.trending-algorithm")
                 .font(.footnote)
                 .foregroundColor(.secondary)
-              Stepper("Threshold: \(preferences.iceShrimpTrendingThreshold)", value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
+              
+              // Custom stepper to adjust trend status thresholds. Uses localized formatting to show the dynamically bound threshold count.
+              Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
+              
+              // Custom stepper to modify the algorithm half-life parameter. Binds to preferences.iceShrimpTrendingHalfLife.
               Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
-                Text(String(format: "Score Half-life: %.1f hours", preferences.iceShrimpTrendingHalfLife))
+                Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
               }
             }
           }
 
         }
       } header: {
-        Text("IceShrimp Workarounds")
+        Text("settings.experimental.iceshrimp.header")
       } footer: {
-        Text("Fixes compatibility issues with IceShrimp instances. Toggle this if you are using an IceShrimp server.")
+        Text("settings.experimental.iceshrimp.footer")
       }
       .listRowBackground(theme.primaryBackgroundColor)
     }

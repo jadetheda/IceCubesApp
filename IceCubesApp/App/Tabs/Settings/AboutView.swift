@@ -82,40 +82,28 @@ struct AboutView: View {
       #endif
 
       Section {
+        // We use a single multiline Text block to render the open-source attributions.
+        // SwiftUI automatically parses markdown links within triple-quoted strings, 
+        // allowing us to build an elegant, interactive list without heavy View overhead.
+        // The list is kept single-spaced to maintain a compact, highly readable presentation.
         Text(
           """
-          • [EmojiText](https://github.com/divadretlaw/EmojiText)
-
-          • [HTML2Markdown](https://gitlab.com/mflint/HTML2Markdown)
-
-          • [KeychainSwift](https://github.com/evgenyneu/keychain-swift)
-
-          • [LRUCache](https://github.com/nicklockwood/LRUCache)
-
-          • [Bodega](https://github.com/mergesort/Bodega)
-
           • [Nuke](https://github.com/kean/Nuke)
-
-          • [SwiftSoup](https://github.com/scinfu/SwiftSoup.git)
-
-          • [Atkinson Hyperlegible](https://github.com/googlefonts/atkinson-hyperlegible)
-
-          • [OpenDyslexic](http://opendyslexic.org)
-
+          • [EmojiText](https://github.com/divadretlaw/EmojiText)
           • [SwiftUI-Introspect](https://github.com/siteline/SwiftUI-Introspect)
-
-          • [RevenueCat](https://github.com/RevenueCat/purchases-ios)
-
           • [SFSafeSymbols](https://github.com/SFSafeSymbols/SFSafeSymbols)
-
+          • [Bodega](https://github.com/mergesort/Bodega)
+          • [KeychainSwift](https://github.com/evgenyneu/keychain-swift)
+          • [HTML2Markdown](https://gitlab.com/mflint/HTML2Markdown)
+          • [SwiftSoup](https://github.com/scinfu/SwiftSoup.git)
+          • [LRUCache](https://github.com/nicklockwood/LRUCache)
           • [ButtonKit](https://github.com/Dean151/ButtonKit)
-
           • [WrappingHStack](https://github.com/dkk/WrappingHStack)
-
           • [Gifu](https://github.com/kaishin/Gifu)
-
+          • [Atkinson Hyperlegible](https://github.com/googlefonts/atkinson-hyperlegible)
+          • [OpenDyslexic](http://opendyslexic.org)
+          • [RevenueCat](https://github.com/RevenueCat/purchases-ios)
           • [TelemetryDeck](https://github.com/TelemetryDeck/SwiftSDK)
-
           • [WishKit](https://github.com/wishkit/wishkit-ios)
           """
         )
