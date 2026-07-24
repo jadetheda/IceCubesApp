@@ -18,6 +18,8 @@
 - [x] Coming out of Gallery Mode seems to jettison us to the top of the page.
 - [ ] Gallery Mode just doesn't load at all within the reposts tab in profiles
 - [ ] Undo Scroll to Top only works in certain tabs. Ideally it should work in all.
+- [ ] Boosts aren't being correctly detected as the same post as the original it seems (at least on Local, and at least when they're my own boosts) 
+- [ ] ACTUALLY, if they're my own boost, they should just always be hidden as Seen
 
 ### Features
 
