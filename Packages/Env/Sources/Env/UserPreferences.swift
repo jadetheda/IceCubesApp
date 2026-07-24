@@ -39,6 +39,7 @@ import SwiftUI
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
     @AppStorage("gallery_add_thin_margins") public var galleryAddThinMargins: Bool = false
     @AppStorage("gallery_optimize_item_layout") public var galleryOptimizeItemLayout: Bool = true
+    @AppStorage("gallery_round_corners") public var galleryRoundCorners: Bool = true
     @AppStorage("undo_scroll_to_top_enabled") public var undoScrollToTopEnabled: Bool = true
     @AppStorage("undo_scroll_to_top_timeout") public var undoScrollToTopTimeout: Double = 10.0
 
@@ -306,6 +307,11 @@ import SwiftUI
   public var galleryOptimizeItemLayout: Bool {
     didSet {
       storage.galleryOptimizeItemLayout = galleryOptimizeItemLayout
+    }
+  }
+  public var galleryRoundCorners: Bool {
+    didSet {
+      storage.galleryRoundCorners = galleryRoundCorners
     }
   }
 
@@ -715,6 +721,7 @@ import SwiftUI
     galleryCropToSquare = storage.galleryCropToSquare
     galleryAddThinMargins = storage.galleryAddThinMargins
     galleryOptimizeItemLayout = storage.galleryOptimizeItemLayout
+    galleryRoundCorners = storage.galleryRoundCorners
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout
     inAppBrowserReaderView = storage.inAppBrowserReaderView
