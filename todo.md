@@ -17,6 +17,7 @@
 - [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke
 - [x] Coming out of Gallery Mode seems to jettison us to the top of the page.
 - [ ] Gallery Mode just doesn't load at all within the reposts tab in profiles
+- [ ] Undo Scroll to Top only works in certain tabs. Ideally it should work in all.
 
 ### Features
 
