@@ -12,6 +12,8 @@
 
 ### Bugs/Regressions
 
+- [ ] The background of the Gallery Mode doesn't match the background of the theme
+- [ ] Gallery Mode in the Media tab in Profile doesn't support remote media fallback
 - [ ] We appear to have somehow broken the fix implemented earlier to address posts not showing as interacted with after leaving the view.
 - [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke
 - [ ] Undo Scroll to Top only works in certain tabs. Ideally it should work in all.
