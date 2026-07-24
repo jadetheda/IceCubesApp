@@ -87,7 +87,8 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
   }
 
   public var asMediaStatus: [MediaStatus] {
-    mediaAttachments.map { .init(status: self, attachment: $0) }
+    let attachments = mediaAttachments.isEmpty ? (reblog?.mediaAttachments ?? []) : mediaAttachments
+    return attachments.map { .init(status: self, attachment: $0) }
   }
 
   public init(
