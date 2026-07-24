@@ -15,45 +15,106 @@ public struct ConversationsListView: View {
   @State private var dataSource = ConversationsListDataSource()
   @State private var viewState: ConversationsListState = .loading
 
+  @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
+  @Environment(\.currentTabId) private var currentTabId
+  @State private var scrollToTopVisible = false
+  @State private var previousScrollPosition: String?
+  @State private var undoTask: Task<Void, Never>?
+  @State private var visibleConversationsCount: [String: Int] = [:]
+  @State private var scrollToIdAnimated: String?
+
   public init() {}
 
-  public var body: some View {
-    List {
-      conversationsView
-    }
-    .listStyle(.plain)
-    #if !os(visionOS)
-      .scrollContentBackground(.hidden)
-      .background(theme.primaryBackgroundColor)
-    #endif
-    .navigationTitle("conversations.navigation-title")
-    .navigationBarTitleDisplayMode(.inline)
-    .onChange(of: watcher.latestEvent?.id) {
-      if let latestEvent = watcher.latestEvent {
-        Task {
-          await handleStreamEvent(latestEvent)
+  private func handleScrollToTopTrigger() -> String? {
+    guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
+    if let previous = previousScrollPosition, scrollToTopVisible {
+      previousScrollPosition = nil
+      undoTask?.cancel()
+      undoTask = nil
+      return previous
+    } else {
+      var topVisibleId: String? = nil
+      if case .display(let conversations, _) = viewState {
+        topVisibleId = conversations.first { (visibleConversationsCount[$0.id] ?? 0) > 0 }?.id
+      }
+      
+      if let first = topVisibleId {
+        previousScrollPosition = first
+        undoTask?.cancel()
+        undoTask = Task {
+          try? await Task.sleep(for: .seconds(UserPreferences.shared.undoScrollToTopTimeout))
+          guard !Task.isCancelled else { return }
+          previousScrollPosition = nil
         }
       }
+      return nil
     }
-    .refreshable {
-      // note: this Task wrapper should not be necessary, but it reportedly crashes without it
-      // when refreshing on an empty list
-      Task {
-        SoundEffectManager.shared.playSound(.pull)
-        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
-        await fetchConversations()
-        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
-        SoundEffectManager.shared.playSound(.refresh)
+  }
+
+  public var body: some View {
+    ScrollViewReader { proxy in
+      List {
+        ScrollToView()
+          .frame(height: .layoutPadding)
+          .onAppear { scrollToTopVisible = true }
+          .onDisappear { scrollToTopVisible = false }
+
+        conversationsView
       }
-    }
-    .onAppear {
+      .listStyle(.plain)
+      #if !os(visionOS)
+        .scrollContentBackground(.hidden)
+        .background(theme.primaryBackgroundColor)
+      #endif
+      .navigationTitle("conversations.navigation-title")
+      .navigationBarTitleDisplayMode(.inline)
+      .onChange(of: watcher.latestEvent?.id) {
+        if let latestEvent = watcher.latestEvent {
+          Task {
+            await handleStreamEvent(latestEvent)
+          }
+        }
+      }
+      .onChange(of: scrollToIdAnimated) { _, newValue in
+        if let newValue {
+          withAnimation {
+            proxy.scrollTo(newValue, anchor: .top)
+            scrollToIdAnimated = nil
+          }
+        }
+      }
+      .onChange(of: selectedTabScrollToTop) { _, newValue in
+        if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
+          if let previous = handleScrollToTopTrigger() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              scrollToIdAnimated = previous
+            }
+          } else {
+            withAnimation {
+              proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+            }
+          }
+        }
+      }
+      .refreshable {
+        // note: this Task wrapper should not be necessary, but it reportedly crashes without it
+        // when refreshing on an empty list
+        Task {
+          SoundEffectManager.shared.playSound(.pull)
+          HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
+          await fetchConversations()
+          HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
+          SoundEffectManager.shared.playSound(.refresh)
+        }
+      }
+      .onAppear {
       if client.isAuth {
         Task {
           await fetchConversations()
         }
       }
     }
-    .onChange(of: client) { oldValue, newValue in
+      .onChange(of: client) { oldValue, newValue in
       guard oldValue.id != newValue.id else { return }
       dataSource.reset()
       viewState = .loading
@@ -97,6 +158,13 @@ public struct ConversationsListView: View {
             onFavorite: toggleFavorite,
             onBookmark: toggleBookmark
           )
+          .id(conversation.id)
+          .onAppear {
+            visibleConversationsCount[conversation.id, default: 0] += 1
+          }
+          .onDisappear {
+            visibleConversationsCount[conversation.id, default: 0] -= 1
+          }
         }
         .listSectionSeparator(.hidden, edges: .top)
         .listRowBackground(theme.primaryBackgroundColor)
