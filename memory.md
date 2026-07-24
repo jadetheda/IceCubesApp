@@ -389,3 +389,7 @@
 - 2026-07-24T00:44:00Z: **Added Trending Algorithm Selection**
   - **Issue:** Users wanted a way to swap between Mastodon's native Trending algorithm and a simple Sort by highest score for the Explore tab.
   - **Fix:** Added `TrendingAlgorithm` enum and `trendingSimpleScoreSearchLimit` to `UserPreferences`. Added picker and stepper to Experimental Settings. Modified `fetchTrendingStatusesHelper` in `ExploreView.swift` to intercept the request and calculate a simple local score (favorites + reblogs) sorted in descending order when "Simple Score" is selected.
+- 2026-07-24T01:03:00Z: **Fixed ConversationsListView Bracket Imbalance**
+  - **Issue:** A compilation error occurred because `private var conversationsView` was nested inside a local scope rather than the struct scope.
+  - **Cause:** In a previous turn, a closing bracket for the `body` property was omitted.
+  - **Fix:** Restored the closing bracket for the `body` property in `ConversationsListView.swift`.
