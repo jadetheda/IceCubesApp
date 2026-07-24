@@ -36,6 +36,9 @@ public struct AccountDetailView: View {
   @State private var tabManager: AccountTabManager?
 
   @State private var displayTitle: Bool = false
+  
+  @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
+  @Environment(\.currentTabId) private var currentTabId
 
   /// When coming from a URL like a mention tap in a status.
   public init(accountId: String) {
@@ -172,6 +175,13 @@ public struct AccountDetailView: View {
         )
       }
     )
+    .onChange(of: selectedTabScrollToTop) { _, newValue in
+      if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
+        withAnimation {
+          proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+        }
+      }
+    }
     .edgesIgnoringSafeArea(.top)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
