@@ -20,7 +20,6 @@
 
 ### Features
 
-- [ ] ~~**Finish started (?) feature:** While working through community feature requests, I'd like to mark individual feature requests (client-side only) with statuses such as **Pending**, **In Review**, etc. These categorizations should persist across app launches so I can track my progress.~~ update: Cancelled as it's not worth the hassle
 - [ ] I rather hate how the post view (at least on iOS(?)) crops the images to like 5:4 whether there are multiple images. There should be a setting to turn that off!
 - [ ] Add dropdown to change the IceShrimp trending algorithm between the Mastodon algorithm and a simple Sort by Highest for the past day (like Reddit)
 - [ ] Make Match System in themes also switch between the light and dark variant of themes depending on which your device is selected
