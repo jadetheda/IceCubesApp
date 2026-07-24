@@ -4,17 +4,19 @@
 
 ### Corrections
 
-- [x] The open source software credits are formatted incorrectly now (check the old version)
+- [ ] The open source software credits are formatted incorrectly now (check the old version)
 
 ### Gallery Mode & Media Layout Enhancements
 
 - [ ] Check if the pagination logic still hardcodes the number 6 — when surely this number should be dynamic based on how many columns you have enabled? Basically even how much fits on screen at one time, so like maybe on iPad or something it would be different
+- [ ] Option (enabled by default) to round the edges of the images in Gallery Mode (for similarity to the rest of the UI)
 
 ### Bugs/Regressions
 
 - [ ] We appear to have somehow broken the fix implemented earlier to address posts not showing as interacted with after leaving the view.
 - [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke
-- [ ] Coming out of Gallery Mode seems to jettison us to the top of the page.
+- [x] Coming out of Gallery Mode seems to jettison us to the top of the page.
+- [ ] Gallery Mode just doesn't load at all within the reposts tab in profiles
 
 ### Features
 
