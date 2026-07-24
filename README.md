@@ -26,7 +26,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 - **Content Filters for Notifications**
 - **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
-- **Load Remote Media button & auto-fallback** (for when your server doesn’t have media cached)
+- **Media load auto-fallback on fail** (for when your server doesn’t have media cached)
 * **More places to access remote Local Timelines**
 * **Special IceShrimp.NET support**
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
