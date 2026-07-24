@@ -94,6 +94,13 @@ public struct AccountDetailView: View {
         .scrollContentBackground(.hidden)
         .background(theme.primaryBackgroundColor)
       #endif
+      .onChange(of: selectedTabScrollToTop) { _, newValue in
+        if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
+          withAnimation {
+            proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+          }
+        }
+      }
     }
     .onAppear {
       guard reasons != .placeholder else { return }
@@ -175,13 +182,6 @@ public struct AccountDetailView: View {
         )
       }
     )
-    .onChange(of: selectedTabScrollToTop) { _, newValue in
-      if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
-        withAnimation {
-          proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
-        }
-      }
-    }
     .edgesIgnoringSafeArea(.top)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
