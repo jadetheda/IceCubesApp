@@ -225,3 +225,12 @@ Segmenting the masonry grid into chunks (`makeSegments` / `GallerySegment.grid`/
   1. Add a `statusId` optional property to `GalleryNode`, populated with `status.id` only for the first attachment (`index == 0`) of a media status.
   2. Bind `.id(node.statusId)` to the container `VStack` wrapping the cell in the masonry grid.
   3. Remove the Gallery Mode override in `TimelineListView.swift` so it uses the actual unread `statusId` (like List Mode) instead of forcing a scroll to the absolute top.
+- **Seen Posts Logic (User Boosts)**: When updating options to treat boosts as the same post (hideSeenPostsIncludeBoosts), we must explicitly consider the current user's authored boost as a "seen" indicator for the original post, avoiding the post reappearing unnecessarily.
+
+### Undo Scroll to Top Consistency
+- **Observation:** IceCubesApp uses a global `@Environment(\.selectedTabScrollToTop)` integer broadcasted by `AppView` whenever a tab bar icon is tapped.
+- **Implementation:** To support undo scroll-to-top, a list view must implement a `ScrollToView` anchor at the top, a `visibleCount` dictionary tracking `.onAppear`/`.onDisappear` per item ID, and an `undoTask` timer intercepting the broadcast. Not all tabs natively had this (e.g. Conversations/Messages and Profile were missing it). Any newly introduced top-level tab must manually replicate this tracking logic if it wants undoable scrolling.
+
+### Media Attachments on Boosts
+- **Observation:** `Status.mediaAttachments` is always empty for boosts. Mastodon places all attachments exclusively on `Status.reblog.mediaAttachments`.
+- **Lesson:** `asMediaStatus` is the core transformation pipeline for Gallery Mode. Failing to fallback to `reblog?.mediaAttachments` will instantly drop all boosts from media-only grids.
