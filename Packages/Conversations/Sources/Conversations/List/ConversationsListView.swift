@@ -123,6 +123,7 @@ public struct ConversationsListView: View {
       }
     }
   }
+}
 
   @ViewBuilder
   private var conversationsView: some View {
