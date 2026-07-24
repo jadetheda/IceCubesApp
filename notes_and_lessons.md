@@ -222,9 +222,22 @@ To implement a "Trending" workaround on the client side:
 - We can fetch the Local Timeline (or federated timeline) and score statuses based on the Mastodon algorithm.
 - Variables like `threshold` and `score_halflife` should be configurable.
 - Sort the statuses by `decaying_score` descending.
--e ## 2026-07-23T19:30:23Z - SwiftUI LazyVStack Constraint Lesson
+## 2026-07-23T19:30:23Z - SwiftUI LazyVStack Constraint Lesson
 - **Lesson Learned**: Adding a large number of zero-height views (e.g. Color.clear.frame(height: 0)) consecutively at the top of a SwiftUI LazyVStack can cause the layout engine to collapse the entire stack, resulting in completely missing visual elements. Always distribute invisible placeholder anchors rather than clumping them together based on height calculations.
--e ## 2026-07-23T19:59:42Z - SwiftUI LazyVStack Constraint Lesson (Updated)
+
+## 2026-07-23T19:59:42Z - SwiftUI LazyVStack Constraint Lesson (Updated)
 - **Lesson Learned**: Adding a large number of zero-height views consecutively at the top of a SwiftUI LazyVStack causes the layout engine to completely collapse that stack, rendering it invisible. Even distributing zero-height views across columns isn't sufficient if one column hits the limit before its first visible item. The only reliable solution is to completely filter out zero-height spacer items from the data source before rendering.
--e ## 2026-07-23T22:52:12Z - SwiftUI ViewBuilder Constraint Lesson
+
+## 2026-07-23T22:52:12Z - SwiftUI ViewBuilder Constraint Lesson
 - **Lesson Learned**: You cannot place arbitrary Swift control flow statements (like standard `for` loops or complex `switch` logic that mutates local arrays) directly inside a function or property marked with `@ViewBuilder`. If you need to map or reduce data before rendering, extract that logic into a local closure that returns the final array, and then use `ForEach` inside the `@ViewBuilder` to render the UI.
+
+## 2026-07-23T23:15:00Z - Gallery Mode Scroll-to-ID Catch-up Bug
+> ⚠️ **IMPORTANT DISCLAIMER**: This entry represents the unverified analysis and opinion of a Gemini 3.5 Flash model due to Pro preview quota exhaustion. This hypothesis has NOT been compiled, run, or verified, and is highly likely to contain inaccuracies or be entirely incorrect. Do not execute or rely on this plan without extensive manual verification.
+- **Observation**: Standard timelines use `Status.id` to store scroll positions and handle "catch up" scrolling (via the unread statuses button tap which modifies `scrollToIdAnimated`).
+- **Root Cause**:
+  1. In `GalleryStatusesListView.swift`, cells are keyed with `mediaStatus.id` (which corresponds to `attachment.id`), while trailing non-media posts are mapped to `anchorIds` (keyed with `status.id`). This means any status with media is never registered under its parent `status.id` in the SwiftUI view hierarchy, so `ScrollViewProxy.scrollTo(statusId)` fails silently.
+  2. In `TimelineListView.swift`, the unread statuses tap handler intercepts `scrollToIdAnimated` in Gallery Mode and forces a scroll to the top (`proxy.scrollTo(ScrollToView.Constants.scrollToTop)`), completely bypassing the targeted catch-up status ID.
+- **Solution Plan**:
+  1. Add a `statusId` optional property to `GalleryNode` that is only populated with `status.id` for the first attachment (`index == 0`) of a media status.
+  2. Bind `.id(node.statusId)` to the container `VStack` wrapping the cell inside the masonry grid in `GalleryStatusesListView.swift`.
+  3. Remove the Gallery Mode override in `TimelineListView.swift` so that it uses the actual unread `statusId` (like List Mode) instead of forcing a scroll to the absolute top.
