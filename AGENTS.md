@@ -78,6 +78,10 @@ When writing Python scripts, shell commands, or architectures intended to run of
 - **Root Cause**: Adding properties to a struct (`TimelineContentFilter.Snapshot`) without providing default initializer values breaks any existing instantiations, specifically in test targets (`TimelineViewModelTests.swift`).
 - **Solution**: Always provide default values (e.g. `isGalleryMode: Bool = false`) in the custom `init()` of structs if modifying them, to prevent compilation failures across the codebase.
 
+## 🐛 Exit Code 65 Logs (ScrollViewReader proxy out of scope)
+- **Root Cause**: When adding modifiers (like `.onChange`) that reference a `proxy` from a `ScrollViewReader { proxy in }`, placing the modifier outside the `ScrollViewReader` block causes a `cannot find 'proxy' in scope` compilation error.
+- **Solution**: Always ensure that any modifiers utilizing `proxy` are nested *inside* the `ScrollViewReader` closure.
+
 # CLAUDE.md (Imported Guidelines)
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
