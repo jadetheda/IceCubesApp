@@ -377,3 +377,15 @@
 - 2026-07-24T00:26:00Z: **Added Undo Scroll to Top and Scroll to Top for All Tabs**
   - **Issue:** `selectedTabScrollToTop` and its associated "Undo Scroll to Top" timer only worked in Timeline, Explore, and Notifications. Tapping the Messages tab or Profile tab while already viewing them did nothing.
   - **Fix:** Implemented `@Environment(\.selectedTabScrollToTop)` interceptors in `ConversationsListView` (Messages Tab) and `AccountDetailView` (Profile Tab). Ported the `handleScrollToTopTrigger` logic, leveraging `visibleConversationsCount` to snap back to the exact previous scroll position if the user taps the tab bar icon twice within the timeout window.
+- 2026-07-24T00:43:00Z: **Added Gallery Mode Corner Rounding**
+  - **Issue:** The images in Gallery Mode were sharp squares/rectangles, but the rest of the UI has rounded corners.
+  - **Fix:** Added `@AppStorage("gallery_round_corners")` to `UserPreferences` (enabled by default) and modified `GalleryStatusesListView.swift` to add `.clipShape`, `.contentShape`, and placeholder corner radiuses based on the preference. Added toggle to Experimental Settings.
+- 2026-07-24T00:44:00Z: **Added Trending Algorithm Selection**
+  - **Issue:** Users wanted a way to swap between Mastodon's native Trending algorithm and a simple Sort by highest score for the Explore tab.
+  - **Fix:** Added `TrendingAlgorithm` enum and `trendingSimpleScoreSearchLimit` to `UserPreferences`. Added picker and stepper to Experimental Settings. Modified `fetchTrendingStatusesHelper` in `ExploreView.swift` to intercept the request and calculate a simple local score (favorites + reblogs) sorted in descending order when "Simple Score" is selected.
+- 2026-07-24T00:43:00Z: **Added Gallery Mode Corner Rounding**
+  - **Issue:** The images in Gallery Mode were sharp squares/rectangles, but the rest of the UI has rounded corners.
+  - **Fix:** Added `@AppStorage("gallery_round_corners")` to `UserPreferences` (enabled by default) and modified `GalleryStatusesListView.swift` to add `.clipShape`, `.contentShape`, and placeholder corner radiuses based on the preference. Added toggle to Experimental Settings.
+- 2026-07-24T00:44:00Z: **Added Trending Algorithm Selection**
+  - **Issue:** Users wanted a way to swap between Mastodon's native Trending algorithm and a simple Sort by highest score for the Explore tab.
+  - **Fix:** Added `TrendingAlgorithm` enum and `trendingSimpleScoreSearchLimit` to `UserPreferences`. Added picker and stepper to Experimental Settings. Modified `fetchTrendingStatusesHelper` in `ExploreView.swift` to intercept the request and calculate a simple local score (favorites + reblogs) sorted in descending order when "Simple Score" is selected.
