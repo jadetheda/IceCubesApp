@@ -105,6 +105,10 @@ import SwiftUI
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
     @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
     @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
+    
+    @AppStorage("trending_algorithm") public var trendingAlgorithm: TrendingAlgorithm = .mastodon
+    @AppStorage("trending_simple_score_search_limit") public var trendingSimpleScoreSearchLimit: Int = 40
+
     @AppStorage("iceshrimp_trending") public var iceShrimpTrending: Bool = false
     @AppStorage("iceshrimp_trending_threshold") public var iceShrimpTrendingThreshold: Int = 5
     @AppStorage("iceshrimp_trending_halflife") public var iceShrimpTrendingHalfLife: Double = 1.0
@@ -510,6 +514,14 @@ import SwiftUI
       storage.neverLoadVideo = neverLoadVideo
     }
   }
+  
+  public var trendingAlgorithm: TrendingAlgorithm {
+    didSet { storage.trendingAlgorithm = trendingAlgorithm }
+  }
+  public var trendingSimpleScoreSearchLimit: Int {
+    didSet { storage.trendingSimpleScoreSearchLimit = trendingSimpleScoreSearchLimit }
+  }
+
   public var iceShrimpTrending: Bool {
     didSet {
       storage.iceShrimpTrending = iceShrimpTrending
@@ -565,6 +577,23 @@ import SwiftUI
 
   public func getRealMaxIndent() -> UInt {
     showReplyIndentation ? maxReplyIndentation : 0
+  }
+
+  
+  public enum TrendingAlgorithm: String, CaseIterable, Identifiable {
+    case mastodon
+    case simpleScore
+    
+    public var id: String { rawValue }
+    
+    public var description: String {
+      switch self {
+      case .mastodon:
+        return "Mastodon (Default)"
+      case .simpleScore:
+        return "Simple Score (Local calculation)"
+      }
+    }
   }
 
   public enum SwipeActionsIconStyle: String, CaseIterable {
@@ -763,6 +792,10 @@ import SwiftUI
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
     useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     neverLoadVideo = storage.neverLoadVideo
+    
+    trendingAlgorithm = storage.trendingAlgorithm
+    trendingSimpleScoreSearchLimit = storage.trendingSimpleScoreSearchLimit
+
     iceShrimpTrending = storage.iceShrimpTrending
     iceShrimpTrendingThreshold = storage.iceShrimpTrendingThreshold
     iceShrimpTrendingHalfLife = storage.iceShrimpTrendingHalfLife
