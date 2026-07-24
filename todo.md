@@ -28,6 +28,7 @@
 - [ ] Add status.server to instance info
 - [ ] toggle to set separate custom theme settings for light/dark
 - [ ] easy probably: Animated emojis
+- [ ] optional (off by default) button in timeline menu to hide the pinned items temporarily 
 
 ### App Configuration & Maintenance
 
