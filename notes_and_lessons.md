@@ -1,49 +1,19 @@
 # Notes and Lessons
 
-## The `a-shell mini` Workflow for iOS Development
-The primary development environment for this project is highly unconventional: writing Swift/SwiftUI for an iOS app from within AI Studio, entirely operated from an iOS device, using `a-shell mini` for version control.
+## iOS Development & Deployment Pipeline
+The primary development environment for this project is highly unconventional: writing Swift/SwiftUI for an iOS app from within AI Studio, with no Mac, Xcode, or paid Apple Developer account.
 
 **Why this is necessary:**
 AI Studio's native GitHub push mechanism is destructive to complex Xcode projects. It ignores `.gitignore` rules, bloats the repo with binary files, and mangles file structures. We strictly avoid it.
 
-**The Workflow:**
+**Current Workflow:**
 1. **Code Generation:** Modify the Ice Cubes source code here in AI Studio inside the isolated `/ios-workspace` sandbox.
-2. **Export:** Use the web dashboard provided by the preview server to download just the `/ios-workspace` as a clean `.zip` archive.
-3. **File Management:** Save the `.zip` directly into the `a-shell mini` folder in the iOS Files app.
-4. **Git Operations (in `a-shell mini`):**
-   - Unzip the downloaded archive.
-   - Use `cp -a` or `rsync` to overwrite the files in your locally cloned Git repository.
-   - Run `git add .`, `git commit`, and `git push`.
-5. **Compilation:** The GitHub push triggers the `.github/workflows/ios-build-distribute.yml` Action, which produces an **unsigned** `.ipa`.
-6. **Distribution (No Apple Dev Account):** Download the unsigned `.ipa` artifact from GitHub Actions and sideload it onto your device using **SideStore** or **AltStore** (SideStore is recommended for on-device refreshing without a computer).
+2. **Push:** The agent pushes directly via the `/api/push` endpoint on request — no user interaction with the web dashboard needed. This commits and pushes straight from the AI Studio server using a `GITHUB_PAT` stored in AI Studio Secrets (env var), with no manual git commands, PAT-typing, or on-device steps.
+3. **Compilation:** Builds run on **Codemagic**, manually triggered by the user from the Codemagic UI (not on automatic push). This produces an **unsigned** `.ipa`.
+4. **Distribution (No Apple Dev Account):** Download the unsigned `.ipa` artifact from Codemagic and sideload it onto your device using **LiveContainer**.
 
 **The Reality of the Feedback Loop:**
-You are essentially "coding blind." You cannot run local Xcode previews. Every UI tweak or logic change requires downloading the isolated ZIP from the AI Studio web interface, pushing via `a-shell mini`, waiting 10-15 minutes for GitHub Actions to compile an unsigned `.ipa`, and sideloading it via SideStore. It is slow, but entirely possible to build and test native iOS apps directly from an iPhone without a Mac or a paid Apple developer account.
-
-## GitHub Authentication in `a-shell mini`
-Because `a-shell mini` cannot launch interactive web OAuth flows for Git, you must use a GitHub Personal Access Token (PAT) for HTTPS authentication.
-
-**Step 1: Generate a Token**
-1. Go to github.com in Safari and sign in.
-2. Navigate to **Settings** > **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
-3. Click **Generate new token (classic)**.
-4. Set an expiration and check the `repo` scope.
-5. Generate and copy the token. Store it securely (e.g., Apple Passwords).
-
-**Step 2: Clone the Repository in `a-shell mini`**
-When cloning the repository for the first time, embed the token in the URL:
-`git clone https://YOUR_USERNAME:YOUR_TOKEN@github.com/YOUR_USERNAME/YOUR_REPO.git`
-
-**Step 3: Configure Git Identity**
-Set up your global Git configuration so your commits are attributed correctly:
-`git config --global user.name "Your Name"`
-`git config --global user.email "your.email@example.com"`
-
-**Step 4: Managing Token Caching (Optional)**
-If you cloned via normal HTTPS without the token in the URL, `a-shell mini` will prompt you for a username and password upon `git push`. Enter your GitHub username, and paste the PAT as your password. You can tell Git to cache credentials temporarily so you don't have to paste the token every time:
-`git config --global credential.helper store`
-
-Using a PAT ensures you can smoothly pull, commit, and push from `a-shell mini` without being blocked by interactive authentication screens.
+You are essentially "coding blind." You cannot run local Xcode previews. Every UI tweak or logic change requires the agent to push from AI Studio, then the user manually starting a Codemagic build, waiting 10-15 minutes for it to compile an unsigned `.ipa`, and sideloading it via LiveContainer. It is slow, but entirely possible to build and test native iOS apps directly from an iPhone without a Mac or a paid Apple developer account.
 
 ## ⚠️ Mobile Extraction False Positives
 When working with source code within AI Studio and extracting it on an iOS device (`a-Shell mini`), there is a very high likelihood of Git detecting "false positive" modifications. 
@@ -53,7 +23,7 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 1. **File Permissions (`chmod`)**: `a-Shell mini` is a sandboxed iOS app. When you unzip files and copy them over, executable flags (like `100755` on shell scripts or binaries) are often wiped to `100644`. Git detects this as a file modification (`old mode 100755 new mode 100644`).
 2. **Line Endings (CRLF vs LF)**: Sometimes, archiving and unarchiving text files across environments accidentally normalizes or converts line endings. If LF (`\n`) is converted to CRLF (`\r\n`), Git will flag the entire file as modified.
 
-**The Fix:** We have hardcoded protective Git configurations into the `apply_and_push.sh` script to neutralize these threats before committing:
+**The Fix:** Apply protective Git configurations whenever workspace files are extracted or synced from a ZIP payload (e.g. via `wipe_and_load.mjs` / `sync_repo.sh`) to neutralize these threats before committing:
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
 - `git config core.autocrlf input` (Normalizes line endings on commit).
 
@@ -85,6 +55,10 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
   - When applying multiple non-adjacent edits, use the `multi_edit_file` tool rather than running several consecutive `edit_file` calls.
   - Leverage parallel background commands for independent operations where the output of one is not needed for the next.
 
+## Toolbar Buttons Collapsing into Broken Ellipsis Menu
+- **Observation**: Wrapping dynamic/conditional toolbar buttons (e.g. stream toggle, hide-read-posts) in `ToolbarItemGroup(placement: .topBarTrailing)` causes SwiftUI to sometimes group them into a non-functional `...` overflow menu instead of showing them directly.
+- **Solution**: Don't use `ToolbarItemGroup` for this. Emit each button as its own `ToolbarItem(placement: .topBarTrailing)` conditionally from a `@ToolbarContentBuilder` property instead — each item only appears in the toolbar when active, and none of them get swallowed into an overflow menu.
+
 ## Tag Groups Feature Architecture
 - **Data Model & Persistence**: Tag groups use a SwiftData `@Model` (`TagGroup`), allowing `@Query` to keep the UI in sync automatically.
 - **Model ↔ Timeline Filter Decoupling**: The app decouples the SwiftData `TagGroup` model (in the `Models` package) from the `TimelineFilter.tagGroup` enum (in the `Timeline` package). The Timeline package has no SwiftData dependency. the app layer copies data between them.
@@ -94,6 +68,7 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Limitation**: The Mastodon API `any[]` array query for `Timelines.hashtag` acts as a server-side OR merge, but it seems to limit or miss results compared to doing separate full text searches.
 - **Solution**: For tag groups (which contain multiple hashtags), it's more reliable to fetch each tag individually using separate API calls (`Timelines.hashtag(tag: cleanTag)`) and merge the results client-side, filtering out duplicates using a Set of Status IDs. This approach ensures a comprehensive list of statuses is retrieved.
 - **Mastodon API Hash Symbol Encoding**: When hitting `/api/v1/timelines/tag/:hashtag`, the hashtag must NOT include the `#` symbol. If `#` is included in the Swift `URLComponents.path`, it can either truncate the path (acting as a fragment) causing 404s, or encode as `%23`. While Mastodon core strips `%23` in `any[]` parameters, some forks and older versions do not, leading to silent filtering (0 matches for the encoded tag). Always sanitize and strip `#` from tag queries before sending them to the Mastodon API.
+- **Don't fan out concurrent requests per tag**: Firing one concurrent API request per hashtag in a tag group (e.g. 10 simultaneous requests for a 10-tag group) to work around the `any[]` limitation is effectively a mini-DDoS against the instance and was reverted. Fetch/merge individual tags, but do it without blasting an instance with a burst of parallel requests — throttle or serialize the calls instead.
 
 ## Client-Side Tag Group Merging & Data Loss
 - **Bug**: Client-side merging of timelines (like Tag Groups) combined results from multiple API calls and truncated them using `.prefix(limit)` to match standard pagination counts.
@@ -104,6 +79,7 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Exposed Properties on UserPreferences**: `UserPreferences` in the `Env` package uses a nested `Storage` class with `@AppStorage` wrappers to handle UserDefaults. When adding new settings (like `tagGroupsClientSideMergeEnabled` or `undoScrollToTopEnabled`), adding them only to the `Storage` class is insufficient. You must also expose a matching `public var` on the main `UserPreferences` class itself (with `didSet` propagating to `storage`) AND ensure the initial value is synced back from `storage` inside the `init()` method. Failure to do so will result in a compiler failure (Exit Code 65) when other files attempt to access it.
 - **Default Initializers in Structs**: Adding properties to an existing struct (e.g. `TimelineContentFilter.Snapshot`) without providing default values inside the struct's custom initializers will break all existing instantiations, particularly in independent test targets (`TimelineViewModelTests.swift`). Always specify sensible defaults (e.g., `isGalleryMode: Bool = false`) in struct initializers.
 - **Swift String Interpolation safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing `\"%.1f\"` will cause compiler crashes (Exit Code 65). Always write `%.1f` directly without backslash-escaping double-quotes.
+- **`@ViewBuilder` control flow**: You cannot place arbitrary Swift control flow statements (standard `for` loops or complex `switch` logic that mutates local arrays) directly inside a function or property marked `@ViewBuilder`. Extract that logic into a local closure that returns the final array, then use `ForEach` inside the `@ViewBuilder` to render the UI.
 
 ## Phanpy-Style Boost Carousel Architecture
 - **Background**: Phanpy groups multiple consecutive boosts (reblogs) from different accounts into a single, horizontally scrollable carousel to prevent the home timeline from becoming cluttered with a "wall of boosts."
@@ -152,29 +128,14 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Scroll Tracking in SwiftUI Lists**: When tracking visible items using `.onAppear` and `.onDisappear`, inserting into a flat array (`insert(at: 0)`) only tracks chronological appearance order. To find the true spatial top-most visible item, you must iterate over your ordered datasource and find the first item whose ID currently exists in the tracked visible set.
 - **Status Bar Tap Conflicts**: When using an overlay `UIWindow` to intercept status bar taps, returning `nil` in `hitTest` allows the system to also process the tap and perform native scroll-to-top. Any manual `proxy.scrollTo` triggered concurrently while the user is *not* at the top will aggressively fight the native scroll animation. Manual scroll-to-top undo must strictly only execute when the user is *already* at the top.
 
-## Masonry Grid Layout Bug (Nested Lazy Containers)
-- **Observation**: Placing `LazyVStack` inside an `HStack` inside another lazy container (like a `List` or `ScrollView`) completely breaks SwiftUI's height calculation logic, especially when children contain asynchronously loaded media (like `LazyImage`).
-- **Consequence**: Users will see massive, inexplicable gaps between images as the outer lazy container receives an unbounded or incorrect height calculation from the inner `LazyVStack`s resolving at different times.
-- **Solution**: Always use standard `VStack` for the columns of a masonry `HStack`, allowing the `List` or `ScrollView` to correctly calculate the grid's total height as a single block. Inner items using `LazyImage` will still load efficiently when entering the bounds.
-
-## Masonry Grid VStack Centering (The "Grid" Bug)
-- **Observation**: When building a Masonry grid using `HStack(alignment: .top)` containing multiple standard `VStack` columns, SwiftUI's layout system will propose the height of the tallest column to the shorter columns. If the shorter `VStack`s contain only inflexible content or lack a trailing `Spacer`, they will center their content vertically within the proposed height, creating massive top and bottom gaps and unintentionally aligning rows across columns like a standard grid.
-- **Consequence**: Users will report "vertical gaps" and state the "masonry seems completely broken" because rows magically align across independent columns.
-- **Solution**: Always add a `Spacer(minLength: 0)` to the bottom of the `VStack` columns inside the `HStack(alignment: .top)`. This consumes the excess proposed height, pushing the inflexible content to the top and maintaining the tightly packed staggered look expected in a masonry layout. Additionally, ensure that loading placeholders (`ZStack` with `Color`) explicitly use `.aspectRatio(1, contentMode: .fit)` if they lack metadata, preventing them from infinitely expanding to fill available vertical space.
-
 ## Complete Experimental Settings Localization
 - **Observation**: Adding new features and settings in English under `Localizable.xcstrings` without corresponding translations for other supported languages causes non-English users to see raw localization identifier keys (like `settings.experimental.title`) in the UI.
 - **Solution**: Always supply comprehensive native localizations for all new UI keys in all 19 supported languages to preserve a polished user experience regardless of the user's active device locale.
 
 ## Managing CI/CD Automated Triggering
-- **Observation**: Automatic CI build triggers (such as `push` events under Codemagic `triggering` in `codemagic.yaml` or `push` triggers in `.github/workflows/`) run compile routines on every commit, creating substantial workflow clutter and spamming developers with failed/incomplete build notices during highly iterative developer turns.
-- **Solution**: Keep automated push triggers commented out or deactivated in `codemagic.yaml` and `.github/workflows` to prevent automatic compiles on intermediate/WIP commits. Active builds should be run on-demand via manual triggers (`workflow_dispatch` in GitHub or via Codemagic UI).
-
-## Chunked Masonry Gallery feeds (Gaps & Laziness)
-- **Observation**: Flattening a timeline state containing gaps into a single monolithic grid completely breaks two critical aspects of feed browsing:
-  1. Gaps are discarded, so users cannot see or load missing statuses between historical positions and the top of the timeline (making it impossible to "scroll up past" the initial load point).
-  2. All statuses are flattened into one giant parent view inside a non-lazy scroll container, prompting the system to run `onAppear` on all images simultaneously. This chokes Nuke's image downloading/rendering queues, causing many images to load endlessly.
-- **Solution**: Segment the timeline `[TimelineItem]` stream into an array of distinct chunks (`grid` and `gap`). Within `GalleryStatusesListView`, render each contiguous grid chunk using a masonry `HStack` and each gap using `TimelineGapView` loader. Put these chunks inside a `LazyVStack` so that only the visible sections are evaluated, loaded, and requested at any one time.
+> Note: Builds are started manually from the Codemagic UI — not on push.
+- **Observation**: Automatic CI build triggers (a `push` event under Codemagic's `triggering` block in `codemagic.yaml`) run compile routines on every commit, creating substantial workflow clutter and spamming failed/incomplete build notices during highly iterative developer turns.
+- **Solution**: Automated push triggers are commented out/deactivated in `codemagic.yaml`. Builds are run on-demand, manually, from the Codemagic UI — never assume a push will trigger a build.
 
 ## Scroll-to-Top Undo Gesture Conflict & ID Resolution
 - **Observation**: Tapping the status bar on iOS triggers a native UIKit scroll-to-top gesture on any active scroll views. If a manual scroll-to-bottom/undo animation is triggered at the exact same moment on a status bar tap when already at the top, the UIKit layout engine and SwiftUI's `ScrollViewProxy` fight, and UIKit's gesture cancels the SwiftUI animation.
@@ -191,10 +152,6 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Solution**: To implement timeouts natively in SwiftUI views (like our undo-scroll-to-top timers), always prefer `Task { try? await Task.sleep(for: .seconds(timeout)) }` managed via an `@State private var undoTask: Task<Void, Never>?`. This cleanly inherits the surrounding actor context and safely mutates `@State` properties upon completion without escaping boundaries.
 - **Dynamic Tab ID resolution in SwiftUI**: When building highly customizable TabViews, do not hardcode list identities to static enumerations (e.g., `newValue == 0`). Instead, inject an environment variable (like `@Environment(\.currentTabId)`) at the `Tab` builder level. The underlying lists should compare any global tap pulses against this contextual environment variable, cleanly supporting arbitrary tab shuffling and duplicated view types (like multiple `TimelineListView` tabs).
 
-
-## Multiple Media Status Representation in Gallery Mode
-- **Observation**: `status.asMediaStatus` on `Status` returns an array `[MediaStatus]`, containing one entry for each media attachment attached to that status.
-- **Fix**: In Gallery Mode, mapping statuses to items by treating `asMediaStatus` as a single element or using `compactMap` with `if let` drops multi-attachment posts or fails type checking. Expanding statuses into `.media(MediaStatus)` via a loop over `status.asMediaStatus` ensures every media attachment is rendered independently in the masonry grid, maintaining full context and interaction capability for each image/video cell.
 
 ## Trending Algorithm Investigation
 Based on Mastodon's open-source Ruby on Rails codebase (`app/models/trends/statuses.rb`), the server-side trending algorithm for statuses calculates a score that decays over time.
@@ -222,22 +179,49 @@ To implement a "Trending" workaround on the client side:
 - We can fetch the Local Timeline (or federated timeline) and score statuses based on the Mastodon algorithm.
 - Variables like `threshold` and `score_halflife` should be configurable.
 - Sort the statuses by `decaying_score` descending.
-## 2026-07-23T19:30:23Z - SwiftUI LazyVStack Constraint Lesson
-- **Lesson Learned**: Adding a large number of zero-height views (e.g. Color.clear.frame(height: 0)) consecutively at the top of a SwiftUI LazyVStack can cause the layout engine to collapse the entire stack, resulting in completely missing visual elements. Always distribute invisible placeholder anchors rather than clumping them together based on height calculations.
+## Gallery Mode: Trials & Tribulations
+> Gallery Mode's masonry grid has been the single most iterated-on, reverted-on part of this codebase. These are grouped together because several "fixes" were themselves undone once they caused a different regression — read the whole section before touching this layout again.
 
-## 2026-07-23T19:59:42Z - SwiftUI LazyVStack Constraint Lesson (Updated)
-- **Lesson Learned**: Adding a large number of zero-height views consecutively at the top of a SwiftUI LazyVStack causes the layout engine to completely collapse that stack, rendering it invisible. Even distributing zero-height views across columns isn't sufficient if one column hits the limit before its first visible item. The only reliable solution is to completely filter out zero-height spacer items from the data source before rendering.
+### Chunking the Grid — Don't
+Segmenting the masonry grid into chunks (`makeSegments` / `GallerySegment.grid`/`.gap`) was tried twice (2026-07-20, and accidentally reintroduced 2026-07-21) and reverted both times because it caused severe visual layout gaps, images spanning out of columns, and vertical jittering on load.
+- **Correct, current solution**: Keep the masonry grid as a **single, continuous** `HStack` of columns — this is the "gold standard" layout. Represent items with a `GalleryItem` enum (`.media(MediaStatus)` / `.gap(TimelineGap)`) and force `.gap` items into column 0 as normal items in the flow, rendered via `TimelineGapView`. Wrap this single masonry `HStack` inside the *outer* `LazyVStack` (in `TimelineListView`/`AccountDetailMediaGridView`), not per-chunk lazy containers — that outer laziness alone is what prevents the grid from evaluating until scrolled into view.
 
-## 2026-07-23T22:52:12Z - SwiftUI ViewBuilder Constraint Lesson
-- **Lesson Learned**: You cannot place arbitrary Swift control flow statements (like standard `for` loops or complex `switch` logic that mutates local arrays) directly inside a function or property marked with `@ViewBuilder`. If you need to map or reduce data before rendering, extract that logic into a local closure that returns the final array, and then use `ForEach` inside the `@ViewBuilder` to render the UI.
+### Nested Lazy Containers Break Height Calculation
+- **Observation**: Placing `LazyVStack` inside an `HStack` inside another lazy container (like a `List` or `ScrollView`) completely breaks SwiftUI's height calculation logic, especially when children contain asynchronously loaded media (like `LazyImage`). Users see massive, inexplicable gaps between images.
+- **Solution**: Always use a standard `VStack` for the columns of a masonry `HStack`, allowing the outer `List`/`ScrollView` to calculate the grid's total height as a single block. Inner items using `LazyImage` still load efficiently when entering the bounds.
 
-## 2026-07-23T23:15:00Z - Gallery Mode Scroll-to-ID Catch-up Bug
+### VStack Column Centering (The "Grid" Bug)
+- **Observation**: In `HStack(alignment: .top)` with standard `VStack` columns, SwiftUI proposes the tallest column's height to the shorter ones. Without a trailing `Spacer`, shorter columns center their content vertically instead of staying packed at the top — rows end up magically aligning across independent columns, looking like a broken masonry.
+- **Solution**: Add `Spacer(minLength: 0)` to the bottom of every column `VStack`. Also give loading placeholders `.aspectRatio(1, contentMode: .fit)` if they lack metadata, so they don't infinitely expand.
+- **Related bug — `.fill` vs `.fit` on cropped images**: A "Crop to Square" option applying `.aspectRatio(1, contentMode: .fill)` inside one of these unconstrained-height columns makes SwiftUI propose an unbounded height and stretch the image to fill it, producing huge empty gaps below "square" images. Use `.fit`, not `.fill`.
+- **Related bug — duplicate cell IDs**: A post with multiple media attachments needs each `GalleryMediaCell` keyed by the attachment's own ID, not the parent post's `status.id` — reusing the post ID across attachments causes SwiftUI view-identity conflicts that break layout and long-press/context-menu targeting.
+
+### Multiple Media Attachments Per Post
+- **Observation**: `status.asMediaStatus` returns an array `[MediaStatus]` — one entry per media attachment on that status.
+- **Fix**: Treating it as a single element, or `compactMap`/`if let`-ing it, silently drops multi-attachment posts. Loop over `status.asMediaStatus` and expand each into its own `.media(MediaStatus)` item so every attachment renders independently in the grid.
+
+### Zero-Height Anchor Items Collapsing LazyVStack
+> This went through three iterations — the first two each caused a different bug. The solution below is the one that actually stuck.
+- **Attempt 1 (wrong)**: Distribute consecutive zero-height spacer/"anchor" views (used to preserve chronological place for text-only posts) evenly across columns. One column could still accumulate too many anchors before its first real item, silently collapsing that column.
+- **Attempt 2 (wrong)**: Filter zero-height anchor items out of the data source entirely. This fixed the collapse, but broke timeline place-saving — text-only posts vanished from the layout, so scroll position and "catch up" tracking lost their reference points.
+- **Solution (current, correct)**: Don't render anchors as their own zero-height root-level items. Bundle each text-only anchor status into the same parent container (a `GalleryNode` struct) as the next media item that follows it — interspersed in order, without ever handing `LazyVStack` a run of consecutive zero-height root children.
+
+### Pagination Stalls & Silent Failures
+- **Sparse-media threshold stall**: An auto-fetch condition written as `mediaStatuses.count > 0 && mediaStatuses.count < 6` will stall forever if the very first fetched page has zero media items — `count > 0` is never true, so the fetch never starts. Use just `mediaStatuses.count < 6`.
+- **Pagination trigger silently stops firing**: If the pagination sentinel (`NextPageView` / a manual `.task` trigger) sits inside a plain `ScrollView { VStack { ... } }`, SwiftUI evaluates it eagerly on mount — its `.task` fires once and never again once the user scrolls, so infinite scroll appears "stuck." Wrap the outer container in `LazyVStack` so the pagination view only instantiates once scrolled to.
+- Prefer Design System's built-in `NextPageView` over a hand-rolled `.onAppear { Task { ... } }` row — it natively guards against concurrent duplicate fetches and ships a retry-on-failure UI.
+
+### Long-Press Highlighting the Whole Grid
+- **Observation**: Attaching `.contextMenu` to a whole `Button` styled with `.buttonStyle(.plain)` inside a nested `LazyVStack`/`HStack` masonry layout can cause a long-press to visually highlight every cell in the grid, not just the tapped one.
+- **Fix**: Attach `.contextMenu` directly to the image `Group` inside the button's label (not the button itself), and add `.contentShape(.contextMenuPreview, Rectangle())` so the highlight anchors precisely to the tapped image.
+
+### Unread "Catch-Up" Scroll Targeting — Unverified
 > ⚠️ **IMPORTANT DISCLAIMER**: This entry represents the unverified analysis and opinion of a Gemini 3.5 Flash model due to Pro preview quota exhaustion. This hypothesis has NOT been compiled, run, or verified, and is highly likely to contain inaccuracies or be entirely incorrect. Do not execute or rely on this plan without extensive manual verification.
 - **Observation**: Standard timelines use `Status.id` to store scroll positions and handle "catch up" scrolling (via the unread statuses button tap which modifies `scrollToIdAnimated`).
-- **Root Cause**:
-  1. In `GalleryStatusesListView.swift`, cells are keyed with `mediaStatus.id` (which corresponds to `attachment.id`), while trailing non-media posts are mapped to `anchorIds` (keyed with `status.id`). This means any status with media is never registered under its parent `status.id` in the SwiftUI view hierarchy, so `ScrollViewProxy.scrollTo(statusId)` fails silently.
-  2. In `TimelineListView.swift`, the unread statuses tap handler intercepts `scrollToIdAnimated` in Gallery Mode and forces a scroll to the top (`proxy.scrollTo(ScrollToView.Constants.scrollToTop)`), completely bypassing the targeted catch-up status ID.
-- **Solution Plan**:
-  1. Add a `statusId` optional property to `GalleryNode` that is only populated with `status.id` for the first attachment (`index == 0`) of a media status.
-  2. Bind `.id(node.statusId)` to the container `VStack` wrapping the cell inside the masonry grid in `GalleryStatusesListView.swift`.
-  3. Remove the Gallery Mode override in `TimelineListView.swift` so that it uses the actual unread `statusId` (like List Mode) instead of forcing a scroll to the absolute top.
+- **Root Cause (hypothesized)**:
+  1. In `GalleryStatusesListView.swift`, cells are keyed with `mediaStatus.id` (the attachment ID), while trailing non-media posts are mapped to `anchorIds` (keyed with `status.id`). Any status with media is never registered under its parent `status.id`, so `ScrollViewProxy.scrollTo(statusId)` fails silently.
+  2. In `TimelineListView.swift`, the unread statuses tap handler intercepts `scrollToIdAnimated` in Gallery Mode and forces a scroll to the top, completely bypassing the targeted catch-up status ID.
+- **Solution Plan (unverified)**:
+  1. Add a `statusId` optional property to `GalleryNode`, populated with `status.id` only for the first attachment (`index == 0`) of a media status.
+  2. Bind `.id(node.statusId)` to the container `VStack` wrapping the cell in the masonry grid.
+  3. Remove the Gallery Mode override in `TimelineListView.swift` so it uses the actual unread `statusId` (like List Mode) instead of forcing a scroll to the absolute top.
