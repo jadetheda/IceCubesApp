@@ -234,3 +234,7 @@ Segmenting the masonry grid into chunks (`makeSegments` / `GallerySegment.grid`/
 ### Media Attachments on Boosts
 - **Observation:** `Status.mediaAttachments` is always empty for boosts. Mastodon places all attachments exclusively on `Status.reblog.mediaAttachments`.
 - **Lesson:** `asMediaStatus` is the core transformation pipeline for Gallery Mode. Failing to fallback to `reblog?.mediaAttachments` will instantly drop all boosts from media-only grids.
+
+### Trending Algorithms
+- **Observation:** Mastodon provides a default `/api/v1/trends/statuses` endpoint. However, IceCubesApp allows clients to fetch a generic public timeline (`Timelines.pub`) and sort locally to simulate different trending algorithms (like iceShrimp or simple top score).
+- **Implementation:** Added `TrendingAlgorithm` enum to `UserPreferences` and intercepted `fetchTrendingStatusesHelper` to apply a local score metric when "Simple Score" is selected, respecting a configurable search limit.
