@@ -34,7 +34,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         ForEach(0..<columns, id: \.self) { colIndex in
           LazyVStack(spacing: 0) {
             ForEach(0..<6, id: \.self) { rowIndex in
-              RoundedRectangle(cornerRadius: 8)
+              RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0)
                 .fill(theme.secondaryBackgroundColor)
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
                 .padding(.bottom, 4)
@@ -320,8 +320,9 @@ public struct GalleryMediaCell: View {
         }
         .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio))
         .clipped()
-        .contentShape(Rectangle())
-        .contentShape(.contextMenuPreview, Rectangle())
+        .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
+        .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
+        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contextMenu {
           if let viewModel {
             StatusRowContextMenu(
