@@ -321,27 +321,28 @@ public struct GalleryMediaCell: View {
         .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio))
         .clipped()
         .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .contextMenu {
-        if let viewModel {
-          StatusRowContextMenu(
-            viewModel: viewModel,
-            showTextForSelection: $showSelectableText,
-            isBlockConfirmationPresented: $isBlockConfirmationPresented,
-            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
-          )
-          .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
-          .tint(.primary)
-          .onAppear {
-            Task {
-              await viewModel.loadAuthorRelationship()
+        .contentShape(.contextMenuPreview, Rectangle())
+        .contextMenu {
+          if let viewModel {
+            StatusRowContextMenu(
+              viewModel: viewModel,
+              showTextForSelection: $showSelectableText,
+              isBlockConfirmationPresented: $isBlockConfirmationPresented,
+              isShareAsImageSheetPresented: $isShareAsImageSheetPresented
+            )
+            .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
+            .tint(.primary)
+            .onAppear {
+              Task {
+                await viewModel.loadAuthorRelationship()
+              }
             }
+          } else {
+            ProgressView()
           }
-        } else {
-          ProgressView()
         }
       }
+      .buttonStyle(.plain)
       .onAppear {
         if viewModel == nil {
           viewModel = StatusRowViewModel(
