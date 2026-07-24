@@ -94,3 +94,20 @@ IceCubesApp.xcconfig
 buildServer.json
 /.playwright-mcp
 png_backup.json
+
+# AI Studio / Web Preview Environment
+node_modules/
+dist/
+src/
+package.json
+bun.lock
+tsconfig.json
+vite.config.ts
+index.html
+metadata.json
+png_guardian.cjs
+png_backup.json
+png_backup.json.gz
+.env
+.env.example
+

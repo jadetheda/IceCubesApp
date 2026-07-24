@@ -1,6 +1,0 @@
-{
-  "name": "Ice Cubes",
-  "description": "Ice Cubes is a gorgeous, fully-featured, multiplatform Mastodon client built entirely with SwiftUI.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
