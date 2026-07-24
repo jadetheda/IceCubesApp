@@ -147,11 +147,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     makeNextPageRow(nextPageState: nextPageState)
   }
 
-  @ViewBuilder
-  private func makeGridChunk(for items: [TimelineItem]) -> some View {
+  private func computeGalleryNodes(for items: [TimelineItem]) -> [GalleryNode] {
     var galleryNodes: [GalleryNode] = []
     var currentAnchors: [String] = []
-    
+
     for item in items {
       switch item {
       case .status(let status):
@@ -172,7 +171,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         break
       }
     }
-    
+
     if !currentAnchors.isEmpty {
       galleryNodes.append(GalleryNode(
         id: currentAnchors.first!,
@@ -180,49 +179,56 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         anchorIds: currentAnchors
       ))
     }
-    
-    let columns = UserPreferences.shared.galleryColumns
-    
-    let columnItems: [[GalleryNode]] = {
-      var items: [[GalleryNode]] = Array(repeating: [], count: columns)
-      var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
-      
-      var currentIndex = 0
-      for node in galleryNodes {
-        let targetColIndex: Int
-        
-        if let mediaStatus = node.mediaStatus {
-          if UserPreferences.shared.galleryOptimizeItemLayout {
-            var shortestColIndex = 0
-            var shortestHeight = columnHeights[0]
-            
-            for i in 1..<columns {
-              if columnHeights[i] < shortestHeight {
-                shortestHeight = columnHeights[i]
-                shortestColIndex = i
-              }
+
+    return galleryNodes
+  }
+
+  private func computeColumnItems(from galleryNodes: [GalleryNode], columns: Int) -> [[GalleryNode]] {
+    var items: [[GalleryNode]] = Array(repeating: [], count: columns)
+    var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
+
+    var currentIndex = 0
+    for node in galleryNodes {
+      let targetColIndex: Int
+
+      if let mediaStatus = node.mediaStatus {
+        if UserPreferences.shared.galleryOptimizeItemLayout {
+          var shortestColIndex = 0
+          var shortestHeight = columnHeights[0]
+
+          for i in 1..<columns {
+            if columnHeights[i] < shortestHeight {
+              shortestHeight = columnHeights[i]
+              shortestColIndex = i
             }
-            targetColIndex = shortestColIndex
-          } else {
-            targetColIndex = currentIndex % columns
           }
-          
-          items[targetColIndex].append(node)
-          
-          let isSquare = UserPreferences.shared.galleryCropToSquare
-          var aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
-          if aspectRatio <= 0 { aspectRatio = 1.0 }
-          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
-          currentIndex += 1
+          targetColIndex = shortestColIndex
         } else {
-          // Trailing anchors with no media
-          items[0].append(node)
+          targetColIndex = currentIndex % columns
         }
+
+        items[targetColIndex].append(node)
+
+        let isSquare = UserPreferences.shared.galleryCropToSquare
+        var aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+        if aspectRatio <= 0 { aspectRatio = 1.0 }
+        columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
+        currentIndex += 1
+      } else {
+        // Trailing anchors with no media
+        items[0].append(node)
       }
-      
-      return items
-    }()
-    
+    }
+
+    return items
+  }
+
+  @ViewBuilder
+  private func makeGridChunk(for items: [TimelineItem]) -> some View {
+    let galleryNodes = computeGalleryNodes(for: items)
+    let columns = UserPreferences.shared.galleryColumns
+    let columnItems = computeColumnItems(from: galleryNodes, columns: columns)
+
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
         LazyVStack(spacing: 0) {
@@ -254,182 +260,5 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
     }
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
-  }
-}
-
-@MainActor
-public struct GalleryMediaCell: View {
-  public let mediaStatus: MediaStatus
-  public let routerPath: RouterPath
-  public let client: MastodonClient
-  public let isRemote: Bool
-  public let filterContext: Filter.Context?
-
-  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: MastodonClient, isRemote: Bool, filterContext: Filter.Context?) {
-    self.mediaStatus = mediaStatus
-    self.routerPath = routerPath
-    self.client = client
-    self.isRemote = isRemote
-    self.filterContext = filterContext
-  }
-
-  @State private var viewModel: StatusRowViewModel?
-  @State private var showSelectableText: Bool = false
-  @State private var isBlockConfirmationPresented = false
-  @State private var isShareAsImageSheetPresented = false
-
-  public var body: some View {
-    let isSquare = UserPreferences.shared.galleryCropToSquare
-    if let url = mediaStatus.attachment.url {
-      Button {
-        if let viewModel {
-          viewModel.navigateToDetail()
-        } else {
-          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
-        }
-      } label: {
-        Group {
-          switch mediaStatus.attachment.supportedType {
-          case .image:
-            LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
-              if let image = state.image {
-                image
-                  .resizable()
-                  .scaledToFill()
-              } else {
-                ZStack {
-                  Color.secondary.opacity(0.1)
-                  ProgressView()
-                }
-                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
-              }
-            }
-            .transition(.opacity)
-          case .gifv, .video:
-            MediaUIAttachmentVideoView(viewModel: .init(url: url))
-              .allowsHitTesting(false)
-          default:
-            EmptyView()
-          }
-        }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio))
-        .clipped()
-        .contentShape(Rectangle())
-      }
-      .buttonStyle(.plain)
-      .contextMenu {
-        if let viewModel {
-          StatusRowContextMenu(
-            viewModel: viewModel,
-            showTextForSelection: $showSelectableText,
-            isBlockConfirmationPresented: $isBlockConfirmationPresented,
-            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
-          )
-          .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
-          .tint(.primary)
-          .onAppear {
-            Task {
-              await viewModel.loadAuthorRelationship()
-            }
-          }
-        } else {
-          ProgressView()
-        }
-      }
-      .onAppear {
-        if viewModel == nil {
-          viewModel = StatusRowViewModel(
-            status: mediaStatus.status,
-            client: client,
-            routerPath: routerPath,
-            isRemote: isRemote,
-            filterContext: filterContext
-          )
-        }
-      }
-      .sheet(isPresented: $showSelectableText) {
-        if let viewModel {
-          let content =
-            viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-            ?? viewModel.status.content.asSafeMarkdownAttributedString
-          StatusRowSelectableTextView(content: content)
-        }
-      }
-      .alert(
-        isPresented: Binding(
-          get: { viewModel?.showDeleteAlert ?? false },
-          set: { viewModel?.showDeleteAlert = $0 }
-        ),
-        content: {
-          Alert(
-            title: Text("status.action.delete.confirm.title"),
-            message: Text("status.action.delete.confirm.message"),
-            primaryButton: .destructive(
-              Text("status.action.delete")
-            ) {
-              Task {
-                if let viewModel {
-                  try? await viewModel.delete()
-                }
-              }
-            },
-            secondaryButton: .cancel()
-          )
-        }
-      )
-      .confirmationDialog(
-        "",
-        isPresented: $isBlockConfirmationPresented
-      ) {
-        Button("account.action.block", role: .destructive) {
-          Task {
-            do {
-              if let viewModel {
-                let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
-                viewModel.authorRelationship = try await client.post(
-                  endpoint: Accounts.block(id: operationAccount.id))
-              }
-            } catch {}
-          }
-        }
-      }
-      .environment(
-        StatusDataControllerProvider.shared.dataController(
-          for: viewModel?.finalStatus ?? mediaStatus.status,
-          client: client)
-      )
-    }
-  }
-}
-
-public struct GalleryAspectRatioModifier: ViewModifier {
-  public let isSquare: Bool
-  public let aspectRatio: CGFloat?
-
-  public init(isSquare: Bool, aspectRatio: CGFloat?) {
-    self.isSquare = isSquare
-    self.aspectRatio = aspectRatio
-  }
-
-  public func body(content: Content) -> some View {
-    if isSquare {
-      Color.clear
-        .aspectRatio(1, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else if let aspectRatio = aspectRatio {
-      Color.clear
-        .aspectRatio(aspectRatio, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else {
-      content
-        .scaledToFit()
-        .clipped()
-    }
   }
 }
