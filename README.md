@@ -27,10 +27,11 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 - **Content Filters for Notifications**
 - **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
 - **Load Remote Media button & auto-fallback** (for when your server doesn’t have media cached)
-* ~**More places to access remote Local Timelines**~ not quite yet
+* **More places to access remote Local Timelines**
 * **Special IceShrimp.NET support**
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
 * **Server emote caching**
+* **Undo scroll-to-top** (tap the tab again to undo)
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
