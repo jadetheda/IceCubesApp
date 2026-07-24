@@ -147,59 +147,60 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     makeNextPageRow(nextPageState: nextPageState)
   }
 
-  private func computeGalleryNodes(for items: [TimelineItem]) -> [GalleryNode] {
-    var galleryNodes: [GalleryNode] = []
-    var currentAnchors: [String] = []
-
-    for item in items {
-      switch item {
-      case .status(let status):
-        let mediaStatuses = status.asMediaStatus
-        if mediaStatuses.isEmpty {
-          currentAnchors.append(status.id)
-        } else {
-          for (index, mediaStatus) in mediaStatuses.enumerated() {
-            galleryNodes.append(GalleryNode(
-              id: mediaStatus.id,
-              mediaStatus: mediaStatus,
-              anchorIds: index == 0 ? currentAnchors : []
-            ))
-            if index == 0 { currentAnchors = [] }
+  @ViewBuilder
+  private func makeGridChunk(for items: [TimelineItem]) -> some View {
+    let columns = UserPreferences.shared.galleryColumns
+    
+    let columnItems: [[GalleryNode]] = {
+      var galleryNodes: [GalleryNode] = []
+      var currentAnchors: [String] = []
+      
+      for item in items {
+        switch item {
+        case .status(let status):
+          let mediaStatuses = status.asMediaStatus
+          if mediaStatuses.isEmpty {
+            currentAnchors.append(status.id)
+          } else {
+            for (index, mediaStatus) in mediaStatuses.enumerated() {
+              galleryNodes.append(GalleryNode(
+                id: mediaStatus.id,
+                mediaStatus: mediaStatus,
+                anchorIds: index == 0 ? currentAnchors : []
+              ))
+              if index == 0 { currentAnchors = [] }
+            }
           }
+        case .gap:
+          break
         }
-      case .gap:
-        break
       }
-    }
-
-    if !currentAnchors.isEmpty {
-      galleryNodes.append(GalleryNode(
-        id: currentAnchors.first!,
-        mediaStatus: nil,
-        anchorIds: currentAnchors
-      ))
-    }
-
-    return galleryNodes
-  }
-
-  private func computeColumnItems(from galleryNodes: [GalleryNode], columns: Int) -> [[GalleryNode]] {
-    var items: [[GalleryNode]] = Array(repeating: [], count: columns)
-    var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
-
-    var currentIndex = 0
-    for node in galleryNodes {
-      let targetColIndex: Int
-
-      if let mediaStatus = node.mediaStatus {
-        if UserPreferences.shared.galleryOptimizeItemLayout {
-          var shortestColIndex = 0
-          var shortestHeight = columnHeights[0]
-
-          for i in 1..<columns {
-            if columnHeights[i] < shortestHeight {
-              shortestHeight = columnHeights[i]
-              shortestColIndex = i
+      
+      if !currentAnchors.isEmpty {
+        galleryNodes.append(GalleryNode(
+          id: currentAnchors.first!,
+          mediaStatus: nil,
+          anchorIds: currentAnchors
+        ))
+      }
+      
+      var items: [[GalleryNode]] = Array(repeating: [], count: columns)
+      var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
+      
+      var currentIndex = 0
+      for node in galleryNodes {
+        let targetColIndex: Int
+        
+        if let mediaStatus = node.mediaStatus {
+          if UserPreferences.shared.galleryOptimizeItemLayout {
+            var shortestColIndex = 0
+            var shortestHeight = columnHeights[0]
+            
+            for i in 1..<columns {
+              if columnHeights[i] < shortestHeight {
+                shortestHeight = columnHeights[i]
+                shortestColIndex = i
+              }
             }
           }
           targetColIndex = shortestColIndex
