@@ -695,6 +695,19 @@ public struct ExperimentalSettingsView: View {
           Stepper(String(format: NSLocalizedString("settings.experimental.undo-scroll-to-top.timeout", comment: ""), preferences.undoScrollToTopTimeout), value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
         }
       }
+      
+      Section("settings.experimental.explore-trending") {
+        Picker("Trending Algorithm", selection: $preferences.trendingAlgorithm) {
+          ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
+            Text(algorithm.description).tag(algorithm)
+          }
+        }
+        
+        if preferences.trendingAlgorithm == .simpleScore {
+          Stepper(String(format: NSLocalizedString("Posts to Search: %d", comment: ""), preferences.trendingSimpleScoreSearchLimit), value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
+        }
+      }
+
       Section("settings.experimental.media") {
         Toggle(isOn: $preferences.remoteMediaAutoFallback) {
           Label("settings.experimental.remote-media-auto-fallback", systemImage: "photo.badge.arrow.down")
