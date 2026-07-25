@@ -410,3 +410,6 @@
   - **Dev Server:** Regenerated the ignored `/server.js` file and restarted the development server to host the live-updating status dashboard on port 3000.
 
 
+- 2026-07-25T13:41:00Z: **Reverted AI Gallery Constraints and Fixed Spacer Glitch**
+  - **Issue:** A previous AI attempt to fix layout gaps in the Fullscreen Gallery incorrectly forced all unmeasured images to crop to 1:1 squares by overriding the aspect ratio modifier, which the user despised.
+  - **Fix:** Reverted the unwanted `finalRatio` clipping logic in `GalleryAspectRatioModifier` (restoring `.scaledToFit()`). Identified that the "big gaps" were not caused by missing metadata, but by a known SwiftUI layout glitch where `Spacer(minLength: 0)` placed at the bottom of a `LazyVStack` inside a ScrollView unpredictably expands and captures infinite/incorrect layout height when items dynamically load and resize. Removed the `Spacer`s from the `LazyVStack`s in `GalleryStatusesListView.swift` to allow the grid to stack items naturally.

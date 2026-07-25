@@ -39,7 +39,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
                 .padding(.bottom, 4)
             }
-            Spacer(minLength: 0)
           }
           .frame(minWidth: 0, maxWidth: .infinity)
         }
@@ -293,7 +292,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
               }
             }
           }
-          Spacer(minLength: 0)
         }
         .frame(minWidth: 0, maxWidth: .infinity)
       }
@@ -464,14 +462,24 @@ public struct GalleryAspectRatioModifier: ViewModifier {
   }
 
   public func body(content: Content) -> some View {
-    let resolvedRatio = isSquare ? 1.0 : (aspectRatio ?? 1.0)
-    let finalRatio = resolvedRatio > 0 ? resolvedRatio : 1.0
-    
-    Color.clear
-      .aspectRatio(finalRatio, contentMode: .fit)
-      .overlay {
-        content
-      }
-      .clipped()
+    if isSquare {
+      Color.clear
+        .aspectRatio(1, contentMode: .fit)
+        .overlay {
+          content
+        }
+        .clipped()
+    } else if let aspectRatio = aspectRatio {
+      Color.clear
+        .aspectRatio(aspectRatio, contentMode: .fit)
+        .overlay {
+          content
+        }
+        .clipped()
+    } else {
+      content
+        .scaledToFit()
+        .clipped()
+    }
   }
 }
