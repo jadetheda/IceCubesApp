@@ -465,6 +465,28 @@ extension TimelineFilter {
     limit: Int?
   ) async throws -> [Status] {
 
+    if self == .trending, UserPreferences.shared.trendingAlgorithm == .simpleScore {
+      var statuses: [Status] = []
+      do {
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: false, limit: UserPreferences.shared.trendingSimpleScoreSearchLimit))
+      } catch {
+        return []
+      }
+      
+      var scoredStatuses: [(Status, Int)] = []
+      for status in statuses {
+        guard status.visibility == .pub, status.inReplyToId == nil else { continue }
+        let score = status.reblogsCount + status.favouritesCount
+        scoredStatuses.append((status, score))
+      }
+      
+      scoredStatuses.sort { $0.1 > 
+
+    .1 }
+      return scoredStatuses.map { $0.0 }
+    }
+
+
     if self == .trending, UserPreferences.shared.useIceShrimpWorkarounds, UserPreferences.shared.iceShrimpTrending {
       var statuses: [Status] = []
       do {

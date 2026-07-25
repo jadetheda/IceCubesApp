@@ -696,15 +696,15 @@ public struct ExperimentalSettingsView: View {
         }
       }
       
-      Section("settings.experimental.explore-trending") {
-        Picker("Trending Algorithm", selection: $preferences.trendingAlgorithm) {
+      Section("Trending Algorithm") {
+        Picker("Algorithm", selection: $preferences.trendingAlgorithm) {
           ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
             Text(algorithm.description).tag(algorithm)
           }
         }
         
         if preferences.trendingAlgorithm == .simpleScore {
-          Stepper(String(format: NSLocalizedString("Posts to Search: %d", comment: ""), preferences.trendingSimpleScoreSearchLimit), value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
+          Stepper("Posts to Search: \(preferences.trendingSimpleScoreSearchLimit)", value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
         }
       }
 
