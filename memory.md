@@ -404,3 +404,9 @@
   - **Cause:** In a previous turn, an `.onChange(of: selectedTabScrollToTop)` modifier containing the `proxy` was placed at the end of the view, outside the `ScrollViewReader` closure.
   - **Fix:** Moved the `.onChange` block inside the `ScrollViewReader` block just before the `.onAppear` modifier. Also restored `package.json` and `metadata.json` for the web preview server.
 
+- 2026-07-25T17:34:00Z: **Repaired Git Object Corruption and Restored Developer Dashboard Server**
+  - **Issue:** The Git repository suffered a loose object corruption on wake up from scale-to-zero.
+  - **Fix:** Safely removed the corrupted `.git` directory, re-initialized Git, configured the remote origin, fetched all objects/refs, and hard reset branch tracking to `origin/main` (where all latest fixes are securely pushed).
+  - **Dev Server:** Regenerated the ignored `/server.js` file and restarted the development server to host the live-updating status dashboard on port 3000.
+
+
