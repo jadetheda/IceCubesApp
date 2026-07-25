@@ -480,9 +480,7 @@ extension TimelineFilter {
         scoredStatuses.append((status, score))
       }
       
-      scoredStatuses.sort { $0.1 > 
-
-    .1 }
+      scoredStatuses.sort { $0.1 > $1.1 }
       return scoredStatuses.map { $0.0 }
     }
 
