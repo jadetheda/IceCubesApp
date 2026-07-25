@@ -487,7 +487,7 @@ extension TimelineFilter {
     }
 
 
-    if self == .trending, UserPreferences.shared.useIceShrimpWorkarounds, UserPreferences.shared.iceShrimpTrending {
+    if self == .trending, UserPreferences.shared.trendingAlgorithm == .decayingScore {
       var statuses: [Status] = []
       do {
         // Fetch up to 40 public statuses to evaluate

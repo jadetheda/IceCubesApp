@@ -705,6 +705,18 @@ public struct ExperimentalSettingsView: View {
         
         if preferences.trendingAlgorithm == .simpleScore {
           Stepper("Posts to Search: \(preferences.trendingSimpleScoreSearchLimit)", value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
+        } else if preferences.trendingAlgorithm == .decayingScore {
+          VStack(alignment: .leading) {
+            Text("settings.experimental.iceshrimp.trending-algorithm")
+              .font(.footnote)
+              .foregroundColor(.secondary)
+            
+            Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
+            
+            Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
+              Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
+            }
+          }
         }
       }
 
@@ -776,26 +788,7 @@ public struct ExperimentalSettingsView: View {
             Label("settings.experimental.iceshrimp.alternative-tag-fetching", systemImage: "tag")
           }
 
-          // Activates client-side analytics to compile trending statuses if server trending endpoints are broken.
-          Toggle(isOn: $preferences.iceShrimpTrending) {
-            Label("settings.experimental.iceshrimp.client-side-trending", systemImage: "chart.line.uptrend.xyaxis")
-          }
-          if preferences.iceShrimpTrending {
-            VStack(alignment: .leading) {
-              // Descriptive label for the custom algorithm parameters.
-              Text("settings.experimental.iceshrimp.trending-algorithm")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-              
-              // Custom stepper to adjust trend status thresholds. Uses localized formatting to show the dynamically bound threshold count.
-              Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
-              
-              // Custom stepper to modify the algorithm half-life parameter. Binds to preferences.iceShrimpTrendingHalfLife.
-              Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
-                Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
-              }
-            }
-          }
+
 
         }
       } header: {

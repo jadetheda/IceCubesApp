@@ -583,6 +583,7 @@ import SwiftUI
   public enum TrendingAlgorithm: String, CaseIterable, Identifiable {
     case mastodon
     case simpleScore
+    case decayingScore
     
     public var id: String { rawValue }
     
@@ -591,7 +592,9 @@ import SwiftUI
       case .mastodon:
         return "Mastodon (Default)"
       case .simpleScore:
-        return "Simple Score (Local calculation)"
+        return "Simple Score"
+      case .decayingScore:
+        return "Decaying Score (IceShrimp fallback)"
       }
     }
   }

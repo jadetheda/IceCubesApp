@@ -283,7 +283,7 @@ extension ExploreView {
       return scoredStatuses.map { $0.0 }
     }
 
-    if UserPreferences.shared.useIceShrimpWorkarounds, UserPreferences.shared.iceShrimpTrending {
+    if UserPreferences.shared.trendingAlgorithm == .decayingScore {
       var statuses: [Status] = []
       do {
         statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: 40))
