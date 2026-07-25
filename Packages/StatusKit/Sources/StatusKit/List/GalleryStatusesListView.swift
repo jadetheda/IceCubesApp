@@ -160,7 +160,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
     let chunks = chunkItems(items)
     
-    Group {
+    VStack(spacing: 0) {
       ForEach(chunks) { chunk in
         if chunk.isGap, let gap = chunk.gap {
           if let gapLoader = fetcher as? GapLoadingFetcher {
@@ -269,7 +269,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
     HStack(alignment: .top, spacing: 4) {
       ForEach(0..<columns, id: \.self) { colIndex in
-        VStack(spacing: 0) {
+        LazyVStack(spacing: 0) {
           ForEach(columnItems[colIndex]) { node in
             VStack(spacing: 0) {
               ForEach(node.anchorIds, id: \.self) { anchorId in
@@ -296,6 +296,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         .frame(minWidth: 0, maxWidth: .infinity)
       }
     }
+    .clipped()
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
   }
 }
