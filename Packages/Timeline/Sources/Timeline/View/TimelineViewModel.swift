@@ -497,6 +497,9 @@ extension TimelineViewModel: GapLoadingFetcher {
       if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
         isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
       }
+      if !isSeen, status.account.id == CurrentAccount.shared.account?.id {
+        isSeen = true
+      }
       return !isSeen
     }.map(\.id)
 
@@ -906,6 +909,9 @@ extension TimelineViewModel {
       var _isSeen = SeenPostsManager.shared.isSeen(id: event.status.id)
       if !_isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = event.status.reblog {
         _isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
+      }
+      if !_isSeen, event.status.account.id == CurrentAccount.shared.account?.id {
+        _isSeen = true
       }
       isSeen = _isSeen
     } else {

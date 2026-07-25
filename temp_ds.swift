@@ -261,9 +261,6 @@ actor TimelineDatasource {
         isSeen = true
       }
     }
-    if status.account.id == CurrentAccount.shared.account?.id {
-      isSeen = true
-    }
 
     return !isHidden
       && (showReplies || status.inReplyToId == nil
