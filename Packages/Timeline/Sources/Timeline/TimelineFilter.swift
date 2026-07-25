@@ -468,7 +468,7 @@ extension TimelineFilter {
     if self == .trending, UserPreferences.shared.trendingAlgorithm == .simpleScore {
       var statuses: [Status] = []
       do {
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: false, limit: UserPreferences.shared.trendingSimpleScoreSearchLimit))
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: true, limit: UserPreferences.shared.trendingSimpleScoreSearchLimit))
       } catch {
         return []
       }
@@ -489,7 +489,7 @@ extension TimelineFilter {
       var statuses: [Status] = []
       do {
         // Fetch up to 40 public statuses to evaluate
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: false, limit: limit ?? 40))
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: true, limit: limit ?? 40))
       } catch {
         return []
       }

@@ -272,7 +272,7 @@ extension ExploreView {
     if preferences.trendingAlgorithm == .simpleScore {
       var statuses: [Status] = []
       do {
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: preferences.trendingSimpleScoreSearchLimit))
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: true, limit: preferences.trendingSimpleScoreSearchLimit))
       } catch {
         return []
       }
@@ -291,7 +291,7 @@ extension ExploreView {
     if preferences.trendingAlgorithm == .decayingScore {
       var statuses: [Status] = []
       do {
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: 40))
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: true, limit: 40))
       } catch {
         return []
       }
