@@ -9,6 +9,7 @@ import SwiftUI
 @MainActor
 public struct ExploreView: View {
   @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var preferences
   @Environment(MastodonClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
 
@@ -37,7 +38,7 @@ public struct ExploreView: View {
   }
 
   private func handleScrollToTopTrigger() -> String? {
-    guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
+    guard preferences.undoScrollToTopEnabled else { return nil }
     if let previous = previousScrollPosition, scrollToTopVisible {
       previousScrollPosition = nil
       undoTask?.cancel()
@@ -50,7 +51,7 @@ public struct ExploreView: View {
         previousScrollPosition = first
         undoTask?.cancel()
         undoTask = Task {
-          try? await Task.sleep(for: .seconds(UserPreferences.shared.undoScrollToTopTimeout))
+          try? await Task.sleep(for: .seconds(preferences.undoScrollToTopTimeout))
           guard !Task.isCancelled else { return }
           previousScrollPosition = nil
         }
@@ -66,11 +67,13 @@ public struct ExploreView: View {
       List {
         scrollToTopView
         if !isLoaded {
-          QuickAccessView(
-            trendingLinks: trendingLinks,
-            suggestedAccounts: suggestedAccounts,
-            trendingTags: trendingTags
-          )
+          if !preferences.useIceShrimpWorkarounds {
+            QuickAccessView(
+              trendingLinks: trendingLinks,
+              suggestedAccounts: suggestedAccounts,
+              trendingTags: trendingTags
+            )
+          }
           loadingView
         } else if !searchQuery.isEmpty {
           if let results = results[searchQuery] {
@@ -112,12 +115,14 @@ public struct ExploreView: View {
           #endif
           .listRowSeparator(.hidden)
         } else {
-          QuickAccessView(
-            trendingLinks: trendingLinks,
-            suggestedAccounts: suggestedAccounts,
-            trendingTags: trendingTags
-          )
-          .padding(.bottom, 4)
+          if !preferences.useIceShrimpWorkarounds {
+            QuickAccessView(
+              trendingLinks: trendingLinks,
+              suggestedAccounts: suggestedAccounts,
+              trendingTags: trendingTags
+            )
+            .padding(.bottom, 4)
+          }
 
           if !trendingTags.isEmpty {
             TrendingTagsSection(trendingTags: trendingTags)
@@ -264,10 +269,10 @@ extension ExploreView {
 
   private func fetchTrendingStatusesHelper() async throws -> [Status] {
     
-    if UserPreferences.shared.trendingAlgorithm == .simpleScore {
+    if preferences.trendingAlgorithm == .simpleScore {
       var statuses: [Status] = []
       do {
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: UserPreferences.shared.trendingSimpleScoreSearchLimit))
+        statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: preferences.trendingSimpleScoreSearchLimit))
       } catch {
         return []
       }
@@ -283,7 +288,7 @@ extension ExploreView {
       return scoredStatuses.map { $0.0 }
     }
 
-    if UserPreferences.shared.trendingAlgorithm == .decayingScore {
+    if preferences.trendingAlgorithm == .decayingScore {
       var statuses: [Status] = []
       do {
         statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: false, limit: 40))
@@ -291,8 +296,8 @@ extension ExploreView {
         return []
       }
       
-      let threshold = Double(UserPreferences.shared.iceShrimpTrendingThreshold)
-      let halfLife = UserPreferences.shared.iceShrimpTrendingHalfLife
+      let threshold = Double(preferences.iceShrimpTrendingThreshold)
+      let halfLife = preferences.iceShrimpTrendingHalfLife
       
       var scoredStatuses: [(Status, Double)] = []
       let now = Date()
