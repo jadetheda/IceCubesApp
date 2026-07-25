@@ -234,14 +234,18 @@ public struct ExploreView: View {
 extension ExploreView {
   private func fetchTrending() async {
     do {
-      let data = try await fetchTrendingsData()
+      let data = await fetchTrendingsData()
       suggestedAccounts = data.suggestedAccounts
       trendingTags = data.trendingTags
       trendingStatuses = data.trendingStatuses
       trendingLinks = data.trendingLinks
 
-      suggestedAccountsRelationShips = try await client.get(
-        endpoint: Accounts.relationships(ids: suggestedAccounts.map(\.id)))
+      if !suggestedAccounts.isEmpty {
+        suggestedAccountsRelationShips = try await client.get(
+          endpoint: Accounts.relationships(ids: suggestedAccounts.map(\.id)))
+      } else {
+        suggestedAccountsRelationShips = []
+      }
       withAnimation {
         isLoaded = true
       }
@@ -319,12 +323,48 @@ extension ExploreView {
     return try await client.get(endpoint: Trends.statuses(offset: nil))
   }
 
-  private func fetchTrendingsData() async throws -> TrendingData {
-    async let suggestedAccounts: [Account] = client.get(endpoint: Accounts.suggestions)
-    async let trendingTags: [Tag] = client.get(endpoint: Trends.tags)
-    async let trendingStatuses: [Status] = fetchTrendingStatusesHelper()
-    async let trendingLinks: [Card] = client.get(endpoint: Trends.links(offset: nil))
-    return try await .init(
+  /// Fetches suggested accounts with a safe fallback on network or API failure (e.g. on Iceshrimp.NET instances where the suggestions endpoint is not implemented)
+  private func fetchSuggestedAccountsSafe() async -> [Account] {
+    do {
+      return try await client.get(endpoint: Accounts.suggestions)
+    } catch {
+      return []
+    }
+  }
+
+  /// Fetches trending tags with a safe fallback on network or API failure (e.g. on Iceshrimp.NET instances where trends endpoints are not implemented)
+  private func fetchTrendingTagsSafe() async -> [Tag] {
+    do {
+      return try await client.get(endpoint: Trends.tags)
+    } catch {
+      return []
+    }
+  }
+
+  /// Fetches trending statuses with a safe fallback on network or API failure
+  private func fetchTrendingStatusesSafe() async -> [Status] {
+    do {
+      return try await fetchTrendingStatusesHelper()
+    } catch {
+      return []
+    }
+  }
+
+  /// Fetches trending links with a safe fallback on network or API failure (e.g. on Iceshrimp.NET instances where trends endpoints are not implemented)
+  private func fetchTrendingLinksSafe() async -> [Card] {
+    do {
+      return try await client.get(endpoint: Trends.links(offset: nil))
+    } catch {
+      return []
+    }
+  }
+
+  private func fetchTrendingsData() async -> TrendingData {
+    async let suggestedAccounts: [Account] = fetchSuggestedAccountsSafe()
+    async let trendingTags: [Tag] = fetchTrendingTagsSafe()
+    async let trendingStatuses: [Status] = fetchTrendingStatusesSafe()
+    async let trendingLinks: [Card] = fetchTrendingLinksSafe()
+    return await .init(
       suggestedAccounts: suggestedAccounts,
       trendingTags: trendingTags,
       trendingStatuses: trendingStatuses,
