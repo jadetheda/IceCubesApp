@@ -413,3 +413,8 @@
 - 2026-07-25T13:41:00Z: **Reverted AI Gallery Constraints and Fixed Spacer Glitch**
   - **Issue:** A previous AI attempt to fix layout gaps in the Fullscreen Gallery incorrectly forced all unmeasured images to crop to 1:1 squares by overriding the aspect ratio modifier, which the user despised.
   - **Fix:** Reverted the unwanted `finalRatio` clipping logic in `GalleryAspectRatioModifier` (restoring `.scaledToFit()`). Identified that the "big gaps" were not caused by missing metadata, but by a known SwiftUI layout glitch where `Spacer(minLength: 0)` placed at the bottom of a `LazyVStack` inside a ScrollView unpredictably expands and captures infinite/incorrect layout height when items dynamically load and resize. Removed the `Spacer`s from the `LazyVStack`s in `GalleryStatusesListView.swift` to allow the grid to stack items naturally.
+
+- 2026-07-25T13:54:00Z: **Fixed Gallery Mode Nested-Lazy Recycling Gap Overlay Bug**
+  - **Issue:** When scrolling down in Gallery Mode, images from above the loading gap would temporarily overlap or render inside the gap's screen area, creating severe visual clutter and double-rendering glitches.
+  - **Fix:** Solved the nested lazy-recycling conflict in `GalleryStatusesListView.swift`. Replaced the outer wrapping `VStack` in `makeGrid(for:nextPageState:)` with a transparent `Group`, which flattens the grid chunks and `TimelineGapView`s as direct first-class siblings in the parent lazy container (ScrollView/List). Converted the inner column containers in `makeGridChunk(for:)` from `LazyVStack` to standard `VStack`. This removes the nested lazy view viewport calculation mismatch and ensures cell views are statically bound to their chunk rather than being recycled or duplicated inside the gap area.
+
