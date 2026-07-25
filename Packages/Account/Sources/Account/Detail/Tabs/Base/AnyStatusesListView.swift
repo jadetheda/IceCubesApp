@@ -111,7 +111,7 @@ struct AnyStatusesListView: View {
       fetcher: f,
       client: client,
       routerPath: routerPath,
-      isRemote: true,
+      isRemote: false,
       filterContext: .account
     )
   }

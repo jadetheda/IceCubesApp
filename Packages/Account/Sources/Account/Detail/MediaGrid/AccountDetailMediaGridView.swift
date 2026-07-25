@@ -104,7 +104,7 @@ public struct AccountDetailMediaGridView: View {
           fetcher: fetcher,
           client: client,
           routerPath: routerPath,
-          isRemote: true
+          isRemote: false
         )
       }
       .padding(.top, .layoutPadding)
