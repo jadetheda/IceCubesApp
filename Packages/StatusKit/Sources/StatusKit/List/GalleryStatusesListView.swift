@@ -325,7 +325,7 @@ public struct GalleryMediaCell: View {
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
-    let isIceShrimp = mediaStatus.status.account.url?.lowercased().contains("iceshrimp") == true
+    let isIceShrimp = mediaStatus.status.account.url?.absoluteString.lowercased().contains("iceshrimp") == true
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let useRemoteMedia = UserPreferences.shared.remoteMediaAlwaysForce
     let resolvedUrl = useRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
