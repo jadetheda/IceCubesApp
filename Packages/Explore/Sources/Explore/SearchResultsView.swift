@@ -134,6 +134,7 @@ struct SearchResultsView: View {
               }
             }
             .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+            .listRowBackground(theme.primaryBackgroundColor)
             .listRowInsets(EdgeInsets())
           } else {
             ForEach(results.statuses) { status in

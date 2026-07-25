@@ -107,6 +107,45 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     return chunks
   }
 
+
+  private enum GallerySegment: Identifiable {
+    case grid(id: String, statuses: [Status])
+    case gap(TimelineGap)
+
+    var id: String {
+      switch self {
+      case .grid(let id, _):
+        return id
+      case .gap(let gap):
+        return gap.id
+      }
+    }
+  }
+
+  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
+    var segments: [GallerySegment] = []
+    var currentStatuses: [Status] = []
+    
+    for item in items {
+      switch item {
+      case .status(let status):
+        currentStatuses.append(status)
+      case .gap(let gap):
+        if !currentStatuses.isEmpty {
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+          currentStatuses = []
+        }
+        segments.append(.gap(gap))
+      }
+    }
+
+    if !currentStatuses.isEmpty {
+      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+    }
+
+    return segments
+  }
+
   @ViewBuilder
   private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
     if nextPageState == .hasNextPage {
@@ -286,7 +325,12 @@ public struct GalleryMediaCell: View {
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
-    if let url = mediaStatus.attachment.url {
+    let isIceShrimp = mediaStatus.status.account.url?.lowercased().contains("iceshrimp") == true
+    let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
+    let useRemoteMedia = UserPreferences.shared.remoteMediaAlwaysForce
+    let resolvedUrl = useRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
+    let fallbackUrl = fallback ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
+    if let url = resolvedUrl {
       Button {
         if let viewModel {
           viewModel.navigateToDetail()
@@ -312,7 +356,7 @@ public struct GalleryMediaCell: View {
             }
             .transition(.opacity)
           case .gifv, .video:
-            MediaUIAttachmentVideoView(viewModel: .init(url: url))
+            MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
               .allowsHitTesting(false)
           default:
             EmptyView()

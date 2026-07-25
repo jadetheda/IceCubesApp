@@ -103,7 +103,8 @@ public struct AccountDetailMediaGridView: View {
         GalleryStatusesListView(
           fetcher: fetcher,
           client: client,
-          routerPath: routerPath
+          routerPath: routerPath,
+          isRemote: true
         )
       }
       .padding(.top, .layoutPadding)
@@ -123,6 +124,9 @@ public struct AccountDetailMediaGridView: View {
     #if !os(visionOS)
       .background(theme.primaryBackgroundColor)
     #endif
+    .refreshable {
+      await fetcher.fetchNewestStatuses(pullToRefresh: true)
+    }
     .refreshable {
       await fetcher.fetchNewestStatuses(pullToRefresh: true)
     }

@@ -30,6 +30,7 @@ struct AnyStatusesListView: View {
   var body: some View {
     if contentFilter.isGalleryMode {
       AnyView(unboxedGallery(fetcher))
+        .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
     } else {
       switch fetcher.statusesState {
@@ -110,7 +111,7 @@ struct AnyStatusesListView: View {
       fetcher: f,
       client: client,
       routerPath: routerPath,
-      isRemote: false,
+      isRemote: true,
       filterContext: .account
     )
   }
