@@ -464,24 +464,14 @@ public struct GalleryAspectRatioModifier: ViewModifier {
   }
 
   public func body(content: Content) -> some View {
-    if isSquare {
-      Color.clear
-        .aspectRatio(1, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else if let aspectRatio = aspectRatio {
-      Color.clear
-        .aspectRatio(aspectRatio, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else {
-      content
-        .scaledToFit()
-        .clipped()
-    }
+    let resolvedRatio = isSquare ? 1.0 : (aspectRatio ?? 1.0)
+    let finalRatio = resolvedRatio > 0 ? resolvedRatio : 1.0
+    
+    Color.clear
+      .aspectRatio(finalRatio, contentMode: .fit)
+      .overlay {
+        content
+      }
+      .clipped()
   }
 }
