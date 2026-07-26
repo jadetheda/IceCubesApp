@@ -10,6 +10,12 @@ public struct Instance: Codable, Sendable, Hashable {
     hasher.combine(domain)
   }
 
+  public struct Stats: Codable, Sendable {
+    public let userCount: Int?
+    public let statusCount: Int?
+    public let domainCount: Int?
+  }
+
   public struct Usage: Codable, Sendable {
     public struct Users: Codable, Sendable {
       public let activeMonth: Int?
@@ -66,6 +72,7 @@ public struct Instance: Codable, Sendable, Hashable {
   public let shortDescription: String?
   public let version: String
   public let apiVersions: APIVersions?
+  public let stats: Stats?
   public let usage: Usage?
   public let languages: [String]?
   public let registrations: Registrations

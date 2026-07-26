@@ -28,6 +28,7 @@ public struct InstanceInfoSection: View {
 
   public var body: some View {
     Section("instance.info.section.info") {
+      LabeledContent("Server", value: instance.domain)
       LabeledContent("instance.info.name", value: instance.title)
       if instance.shortDescription != nil {
         Text(instance.shortDescription!)
@@ -40,6 +41,14 @@ public struct InstanceInfoSection: View {
       if let apiVersions = instance.apiVersions {
         LabeledContent("API Versions") {
           Text(apiVersions.mastodon.map { String($0) } ?? "Unknown").monospaced()
+        }
+      }
+      if let stats = instance.stats {
+        if let userCount = stats.userCount {
+          LabeledContent("Users", value: format(userCount))
+        }
+        if let statusCount = stats.statusCount {
+          LabeledContent("Statuses", value: format(statusCount))
         }
       }
       if let activeMonth = instance.usage?.users?.activeMonth {
