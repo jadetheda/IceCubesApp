@@ -10,63 +10,32 @@
 - **Iceshrimp API Support Divergences**:
   - *Explore/Trends Failure*: On Iceshrimp.NET instances, standard Mastodon trend and suggestion endpoints return 404/405 errors. Fetching these in a combined `async let` throws and halts the entire Explore tab. By writing individual safe fetcher helper methods (`fetchSuggestedAccountsSafe`, `fetchTrendingTagsSafe`, etc.) that catch HTTP errors and return empty lists, the Explore tab remains operational on diverged instances.
   - *Explore UI Workarounds*: Because Iceshrimp misses endpoints like `trends/links` and `suggestions`, the quick access picker buttons in the Explore tab become useless/broken. Wrapping the `QuickAccessView` with a `!preferences.useIceShrimpWorkarounds` check cleanly avoids presenting unavailable features.
-  - *Masonry Layout Discrepancies*: When building custom masonry layouts (like `GalleryStatusesListView`), the view modifier responsible for clipping the image MUST strictly adhere to the aspect ratio assumed by the pre-calculation algorithm. If the algorithm falls back to an aspect ratio of `1.0` (because dimensions are missing from the API), the view MUST be clipped to `1.0` (e.g. `Color.clear.aspectRatio(1.0).overlay{...}`). Allowing the view to resolve its intrinsic height dynamically via `.scaledToFit()` will break the layout columns, causing massive visual gaps.
   - *Quote Routing*: Quote timelines are mapped to `statuses/{id}/quotes` but on Iceshrimp they exist under `pleroma/statuses/{id}/quotes`. By checking `use_iceshrimp_workarounds` from `UserDefaults.standard` directly inside the decoupled `Statuses.swift` endpoint mapping, we achieve seamless and compile-safe dynamic quote routing without breaking package dependencies.
 
-## The `a-shell mini` Workflow for iOS Development
-The primary development environment for this project is highly unconventional: writing Swift/SwiftUI for an iOS app from within AI Studio, entirely operated from an iOS device, using `a-shell mini` for version control.
+## iOS Development & Deployment Pipeline
+The primary development environment for this project is highly unconventional: writing Swift/SwiftUI for an iOS app from within AI Studio, with no Mac, Xcode, or paid Apple Developer account.
 
 **Why this is necessary:**
 AI Studio's native GitHub push mechanism is destructive to complex Xcode projects. It ignores `.gitignore` rules, bloats the repo with binary files, and mangles file structures. We strictly avoid it.
 
-**The Workflow:**
+**Current Workflow:**
 1. **Code Generation:** Modify the Ice Cubes source code here in AI Studio inside the isolated `/ios-workspace` sandbox.
-2. **Export:** Use the web dashboard provided by the preview server to download just the `/ios-workspace` as a clean `.zip` archive.
-3. **File Management:** Save the `.zip` directly into the `a-shell mini` folder in the iOS Files app.
-4. **Git Operations (in `a-shell mini`):**
-   - Unzip the downloaded archive.
-   - Use `cp -a` or `rsync` to overwrite the files in your locally cloned Git repository.
-   - Run `git add .`, `git commit`, and `git push`.
-5. **Compilation:** The GitHub push triggers the `.github/workflows/ios-build-distribute.yml` Action, which produces an **unsigned** `.ipa`.
-6. **Distribution (No Apple Dev Account):** Download the unsigned `.ipa` artifact from GitHub Actions and sideload it onto your device using **SideStore** or **AltStore** (SideStore is recommended for on-device refreshing without a computer).
+2. **Push:** The agent pushes directly via the `/api/push` endpoint on request — no user interaction with a web dashboard needed. This commits and pushes straight from the AI Studio server using a `GITHUB_PAT` stored in AI Studio Secrets (env var), with no manual git commands or on-device steps.
+3. **Compilation:** Builds run on **Codemagic**, manually triggered by the user from the Codemagic UI (not on automatic push).
+4. **Distribution (No Apple Dev Account):** Download the unsigned `.ipa` artifact from Codemagic and sideload it onto the device using **LiveContainer**.
 
 **The Reality of the Feedback Loop:**
-You are essentially "coding blind." You cannot run local Xcode previews. Every UI tweak or logic change requires downloading the isolated ZIP from the AI Studio web interface, pushing via `a-shell mini`, waiting 10-15 minutes for GitHub Actions to compile an unsigned `.ipa`, and sideloading it via SideStore. It is slow, but entirely possible to build and test native iOS apps directly from an iPhone without a Mac or a paid Apple developer account.
+You are essentially "coding blind." You cannot run local Xcode previews. Every UI tweak or logic change requires the agent to push from AI Studio, then the user manually starting a Codemagic build, waiting for it to compile an unsigned `.ipa`, and sideloading it via LiveContainer. It is slow, but entirely possible to build and test native iOS apps directly from an iPhone without a Mac or a paid Apple developer account.
 
-## GitHub Authentication in `a-shell mini`
-Because `a-shell mini` cannot launch interactive web OAuth flows for Git, you must use a GitHub Personal Access Token (PAT) for HTTPS authentication.
+## ⚠️ Workspace Sync/Extraction False Positives
+When workspace files are extracted or re-cloned from a ZIP/git payload (historically via on-device `a-Shell mini`, currently via `sync_repo.sh`), there is a very high likelihood of Git detecting "false positive" modifications.
 
-**Step 1: Generate a Token**
-1. Go to github.com in Safari and sign in.
-2. Navigate to **Settings** > **Developer settings** > **Personal access tokens** > **Tokens (classic)**.
-3. Click **Generate new token (classic)**.
-4. Set an expiration and check the `repo` scope.
-5. Generate and copy the token. Store it securely (e.g., Apple Passwords).
+These occur because certain extraction/copy paths don't respect UNIX file system nuances the way a native macOS/Linux environment would. The two biggest offenders are:
 
-**Step 2: Clone the Repository in `a-shell mini`**
-When cloning the repository for the first time, embed the token in the URL:
-`git clone https://YOUR_USERNAME:YOUR_TOKEN@github.com/YOUR_USERNAME/YOUR_REPO.git`
-
-**Step 3: Configure Git Identity**
-Set up your global Git configuration so your commits are attributed correctly:
-`git config --global user.name "Your Name"`
-`git config --global user.email "your.email@example.com"`
-
-**Step 4: Managing Token Caching (Optional)**
-If you cloned via normal HTTPS without the token in the URL, `a-shell mini` will prompt you for a username and password upon `git push`. Enter your GitHub username, and paste the PAT as your password. You can tell Git to cache credentials temporarily so you don't have to paste the token every time:
-`git config --global credential.helper store`
-
-Using a PAT ensures you can smoothly pull, commit, and push from `a-shell mini` without being blocked by interactive authentication screens.
-
-## ⚠️ Mobile Extraction False Positives
-When working with source code within AI Studio and extracting it on an iOS device (`a-Shell mini`), there is a very high likelihood of Git detecting "false positive" modifications. 
-
-These occur because standard iOS file extraction and basic `cp` commands do not respect UNIX file system nuances the way a native macOS/Linux environment would. The two biggest offenders are:
-
-1.  **File Permissions (`chmod`)**: `a-Shell mini` is a sandboxed iOS app. When you unzip files and copy them over, executable flags (like `100755` on shell scripts or binaries) are often wiped to `100644`. Git detects this as a file modification (`old mode 100755 new mode 100644`).
+1.  **File Permissions (`chmod`)**: Sandboxed extraction environments often wipe executable flags (like `100755` on shell scripts or binaries) to `100644`. Git detects this as a file modification (`old mode 100755 new mode 100644`).
 2.  **Line Endings (CRLF vs LF)**: Sometimes, archiving and unarchiving text files across environments accidentally normalizes or converts line endings. If LF (`\n`) is converted to CRLF (`\r\n`), Git will flag the entire file as modified.
 
-**The Fix:** We have hardcoded protective Git configurations into the `apply_and_push.sh` script to neutralize these threats before committing:
+**The Fix:** Apply protective Git configurations whenever workspace files are extracted or synced from a ZIP payload (e.g. via `sync_repo.sh`) to neutralize these threats before committing:
 - `git config core.fileMode false` (Forces Git to ignore executable bit changes).
 - `git config core.autocrlf input` (Normalizes line endings on commit).
 
@@ -111,12 +80,6 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
   1. **Debounce**: Implement time-based debouncing using `CACurrentMediaTime()` to filter out rapid-fire hits from the same touch cycle, ensuring notifications are posted exactly once.
   2. **Interference Mitigation**: Ensure the intercepting window remains strictly passive by returning `nil` inside `hitTest`. This allows UIKit to continue standard touch propagation so that native system gestures (such as scrolling to top, accessing Notification/Control Center, and swiping on the Dynamic Island) are never blocked or interfered with.
 
-## SwiftUI Masonry, Cell Aspect Ratio Placeholders & Jitter Control
-- **Observation**: When loading images inside a masonry-like grid (`LazyVStack` columns inside an `HStack`), cell heights will collapse to 0 before loading finishes if the layout doesn't specify a fixed or default aspect ratio. When images load, this causes dramatic size changes and vertical jumping/jittering of the scroll view.
-- **Solution**:
-  1. **Default Aspect Ratio**: Providing a default `16:9` aspect ratio placeholder constraint when metadata is missing ensures the bounds are pre-allocated, preventing vertical page jumps.
-  2. **Lazy Views Nesting Rules**: Nesting `LazyVStack`s inside other lazy views can break scroll behavior and cause dynamic height re-calculations; wrapping the parallel columnar `LazyVStack`s inside a standard non-lazy `VStack` segment loop preserves native performance, scroll position, and correct pagination triggers.
-
 ## Workspace Synchronization & Sandbox File Integrity
 - **Observation**: To synchronize or refresh the workspace against the remote GitHub repository, the `ios-workspace` can be cleanly re-cloned using the developer's Personal Access Token (PAT).
 - **Consequence**: Modifying, deleting, or re-cloning the files inside `ios-workspace` alters the local file hashes. If the local integrity manifest is not synchronized, it can trigger the SHA-256 validation scanner and trip corruption alarms.
@@ -126,14 +89,19 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Observation**: When triggering actions based on active tab double-taps (such as scroll-to-top and scroll-undo), standard state properties (like `currentTabId` or `selectedTab`) are useless. Because the active tab ID remains unchanged when tapped twice, standard `.onChange` state observers never fire.
 - **Consequence**: Attempting to drive transient events using persistent state variables results in silent failures for consecutive active-tab clicks.
 - **Solution**: Model transient view actions as an event-pulse rather than a persistent state. Define a primitive environment value (like `selectedTabScrollToTop: Int`) that temporarily registers the tapped tab's ID on active-click, then resets to `-1` after a 100ms delay. Nested views listen to changes on this integer pulse, executing scroll actions exactly once per tap while remaining fully decoupled from app-level enum types.
-## SwiftUI Masonry Grid vs Row-based Chunking
-- **Observation**: Row-based chunking (`LazyVStack { HStack }`) seems like a good idea for laziness and gaps, but in practice, prepending items to the data source shifts the chunk alignment, causing all row IDs to change and breaking scroll position. Furthermore, it prevents a true masonry layout where items in different columns slide past each other.
-- **Solution**: The "gold standard" for a true masonry grid in SwiftUI (pre-iOS 16 Layout) is `HStack { LazyVStack }`. To avoid the nested `LazyVStack` layout collapse bug, the outermost container inside the `ScrollView` MUST be a standard `VStack`. This provides the best compromise of performance, stable scroll identifiers (since each item maintains its structural position in its column), and true masonry appearance, even though full-width gap items must be discarded in this mode.
-
 ## Optimized Binary Integrity Tracking
 - **Observation**: Tracking SHA-256 hashes for all binary files (such as thousands of alternate icons, assets, video/audio resources, and binaries) during integrity checks is highly resource-intensive and computationally pointless.
 - **Consequence**: Full scanning introduces high CPU/disk usage, makes manifest creation/checking slow, and can trigger false-positive corruptions when file systems naturally mutate metadata.
 - **Solution**: Since binary files are usually extracted/updated as a collective unit (if one is broken, all of them are broken), tracking exactly one small, stable representative binary file (e.g., `AppIcon.icon/Assets/puple_cube.png`) is completely sufficient. All other binary extensions can be safely bypassed during scanning to achieve near-instantaneous integrity checks and manifest updates.
+
+## Gallery Mode: Masonry Layout — Trials & Current Status
+> ⚠️ **Status as of 2026-07-26: still unresolved.** The masonry grid still has layout gap bugs. An experimental `galleryUnboundedLargeImages` setting plus aspect-ratio clamping in `MediaAttachment.swift` was tried and reverted — it did not fix the gaps. This needs a proper structural fix, not another point patch. Read the rest of this section first — several plausible-looking fixes below were already tried and are documented so we don't repeat them.
+
+- **Chunking vs. single continuous grid**: A single continuous grid (`HStack { LazyVStack columns }`) that discards timeline gaps entirely is simplest and avoids row-shift bugs, but breaks "scroll up" gap-loading in Gallery Mode. To preserve gap-loading, the grid was changed to break the item list into chunks separated by full-width `TimelineGap` loader views — this is the **current** approach, not the single continuous grid.
+- **Anchors for excluded items**: If an item is deliberately excluded from the rendered grid (e.g. text-only posts), `proxy.scrollTo(id)` for that ID silently fails and strands the user at the top. Fix: inject zero-height, invisible anchor views carrying that item's `.id()` into the layout so `ScrollViewReader` has something to resolve to, without affecting visual structure. This is also the **current** approach.
+- **Calculation direction**: Column heights must be calculated top-down (newest to oldest), not bottom-up. Bottom-up calculation backfires on bottom-pagination — every new item shifts every existing item's "distance from the bottom," reshuffling the whole grid — and also produces incorrect left-to-right chronological ordering for the top row.
+- **Aspect ratio fallbacks**: When an image's dimensions are unknown (`meta` missing), the masonry pre-calculation engine assumes a default aspect ratio. The view modifier that actually renders/clips the image **must** enforce that exact same fallback ratio — never let it resolve intrinsically via `.scaledToFit()`/unbounded sizing. Any mismatch between the assumed ratio and the rendered ratio is what causes column height bookkeeping to go out of sync and produces large vertical gaps. (The default fallback ratio itself has changed more than once — `1.0`, then `16:9` — so don't assume a specific value is current without checking `GalleryAspectRatioModifier`.)
+- **Jitter on load**: Cell heights collapse to 0 before an image loads if no default/fixed aspect ratio is specified, causing dramatic size changes and vertical jumping as images resolve. A placeholder aspect ratio prevents this. Also, nesting `LazyVStack`s inside other lazy containers breaks scroll behavior and height recalculation — wrap the parallel columnar `LazyVStack`s inside a standard non-lazy `VStack` segment instead.
 
 ## Adherence to CLAUDE.md and Self-Documentation Rules
 - **Observation**: SwiftUI features require strict architectural alignment with `CLAUDE.md` to avoid rendering bugs and layout collapse, and files require self-documenting code to remain clear. Additionally, quota optimization is essential to keep agent interactions lean.
@@ -162,16 +130,6 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 
 
 
-## Masonry Layout Direction vs Reshuffling in SwiftUI
-- **Observation**: If a masonry grid (made of an `HStack` of `LazyVStacks`) calculates its column heights bottom-up (using `.reversed()`) to prevent top-refresh reshuffling, it inadvertently causes full-grid reshuffling upon bottom-pagination because every new item added to the bottom changes the index offset from the bottom for all existing items.
-- **Consequence**: Users scrolling down in Gallery Mode experienced layout jitter and columns swapping places. Furthermore, bottom-up calculation caused the visual order (left-to-right) of the top-most items to be completely incorrect (oldest on the left, newest on the right) for grids with an even number of items.
-- **Solution**: Masonry layout calculations MUST be performed top-down (from newest to oldest). This guarantees perfect chronological visual ordering at the top-left, and ensures that items added to the bottom during pagination do not alter the column assignments of existing posts.
-
-## ScrollViewReader & View Exclusion
-- **Observation**: If a View is intentionally excluded from a `ForEach` render pass (such as filtering out text-only posts in a Gallery view), any attempt to `proxy.scrollTo(id)` to that excluded item will silently fail, leaving the user stranded at the top of the ScrollView (newest items).
-- **Solution**: Inject zero-height, invisible `Color.clear.frame(height: 0).id(item.id)` anchors into the layout for the excluded items. This satisfies `ScrollViewReader` and accurately snaps the scroll offset to the correct chronological position within a complex masonry layout without impacting the visual structure.
-- **Timeline Gaps in Grids**: Instead of dropping timeline gaps to preserve strict grid constraints, break the timeline `items` array into chunks separated by `gap` elements. Render multiple masonry grid blocks vertically, interleaved with full-width gap loader views. This preserves continuity and pagination features without breaking columns.
-
 ## Variable Declarations in ViewBuilder Closures
 - **Observation**: Declaring local variables within complex SwiftUI helper closures or view hierarchies must strictly follow Swift's property declaration semantics. If a variable is mutated or reassigned inside a scope, it must be properly prefixed with the `var` keyword.
 - **Consequence**: Omitting the `var` keyword in a property assignment (e.g., `shortestColIndex = i` instead of `var shortestColIndex = i`) can lead to confusing compiler diagnostic warnings/errors (Exit Code 65).
@@ -182,9 +140,5 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Observation**: Running the `sync_repo.sh` script completely refreshes the local workspace from GitHub. If the script is run with `bash sync_repo.sh`, it avoids permission blocks on standard shells.
 - **Consequence**: The workspace is cleanly cloned and is fully in sync with origin/main.
 - **Action**: Always run the `/api/integrity/update` POST request immediately following a sync to keep AI Studio's integrity validation happy.
-
-## Gallery Mode Masonry Layout Gaps Status (July 2026)
-- **Observation**: The masonry layout gaps in `GalleryStatusesListView` are still not fully resolved. We experimented with a custom `galleryUnboundedLargeImages` setting and aspect ratio clamping in `MediaAttachment.swift`, but decided to revert these changes because they did not successfully eliminate the gaps.
-- **Decision**: Tabled this layout gap issue for now. Future layout fixes will require a more comprehensive structural solution to prevent column height discrepancies.
 
 
