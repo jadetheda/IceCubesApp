@@ -183,3 +183,8 @@ These occur because standard iOS file extraction and basic `cp` commands do not 
 - **Consequence**: The workspace is cleanly cloned and is fully in sync with origin/main.
 - **Action**: Always run the `/api/integrity/update` POST request immediately following a sync to keep AI Studio's integrity validation happy.
 
+## Gallery Mode Masonry Layout Gaps Status (July 2026)
+- **Observation**: The masonry layout gaps in `GalleryStatusesListView` are still not fully resolved. We experimented with a custom `galleryUnboundedLargeImages` setting and aspect ratio clamping in `MediaAttachment.swift`, but decided to revert these changes because they did not successfully eliminate the gaps.
+- **Decision**: Tabled this layout gap issue for now. Future layout fixes will require a more comprehensive structural solution to prevent column height discrepancies.
+
+
