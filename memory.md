@@ -1,6 +1,8 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-07-26 UTC: Reverted experimental `galleryUnboundedLargeImages` setting and removed aspect ratio clamping from `MediaAttachment.swift`. Recognized that clamping is no longer necessary to fix masonry layout gaps, as the view modifier now properly enforces the engine's calculated aspect ratio directly.
+- 2026-07-26 UTC: Bug Fix: Fixed a missing closing bracket `}` in `SettingsTab.swift` caused by migrating the Trending Algorithm picker inside the IceShrimp workarounds toggle section. This prevents a critical compiler failure.
 - 2026-07-26 UTC: Corrected cache section logic: Relocated `cachedEmojisCount` display from the global `SettingsTab.swift` to the account-specific `AccountSettingView.swift` to align with the existing `cachedPostsCount` section.
 - 2026-07-26 UTC: Fixed a cache identifier bug in `CustomEmojiCache` clearing logic. Replaced `client.id` (which is a hashed string) with `server` (the raw domain) to properly match and purge the `.json` files when "Clear Cache" is tapped in `AccountSettingView`.
 - 2026-07-26 UTC: Relocated the "Cache Server Emojis" setting toggle from `ContentSettingsView.swift` to the `cacheSection` inside `SettingsTab.swift`, placing it directly next to the "empty cache" (media clear cache) action button.

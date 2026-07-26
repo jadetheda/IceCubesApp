@@ -248,7 +248,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         items[targetColIndex].append(node)
 
         let isSquare = UserPreferences.shared.galleryCropToSquare
-        let actualRatio = UserPreferences.shared.galleryUnboundedLargeImages ? mediaStatus.attachment.originalAspectRatio : mediaStatus.attachment.clampedAspectRatio
+        let actualRatio = mediaStatus.attachment.aspectRatio
         var aspectRatio = isSquare ? 1.0 : (actualRatio ?? 1.0)
         if aspectRatio <= 0 { aspectRatio = 1.0 }
         columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
@@ -362,11 +362,7 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(
-          isSquare: isSquare,
-          aspectRatio: UserPreferences.shared.galleryUnboundedLargeImages ? mediaStatus.attachment.originalAspectRatio : mediaStatus.attachment.clampedAspectRatio,
-          unboundedLargeImages: UserPreferences.shared.galleryUnboundedLargeImages
-        ))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
@@ -461,13 +457,11 @@ public struct GalleryMediaCell: View {
 public struct GalleryAspectRatioModifier: ViewModifier {
   public let isSquare: Bool
   public let aspectRatio: CGFloat?
-  public let unboundedLargeImages: Bool
-
-  public init(isSquare: Bool, aspectRatio: CGFloat?, unboundedLargeImages: Bool) {
+  
+  public init(isSquare: Bool, aspectRatio: CGFloat?) {
     self.isSquare = isSquare
     self.aspectRatio = aspectRatio
-    self.unboundedLargeImages = unboundedLargeImages
-  }
+      }
 
   public func body(content: Content) -> some View {
     if isSquare {
@@ -483,10 +477,6 @@ public struct GalleryAspectRatioModifier: ViewModifier {
         .overlay {
           content
         }
-        .clipped()
-    } else if unboundedLargeImages {
-      content
-        .scaledToFit()
         .clipped()
     } else {
       Color.clear
