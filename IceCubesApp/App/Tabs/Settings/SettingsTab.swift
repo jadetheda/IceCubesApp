@@ -695,30 +695,6 @@ public struct ExperimentalSettingsView: View {
           Stepper(String(format: NSLocalizedString("settings.experimental.undo-scroll-to-top.timeout", comment: ""), preferences.undoScrollToTopTimeout), value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
         }
       }
-      
-      Section("Trending Algorithm") {
-        Picker("Algorithm", selection: $preferences.trendingAlgorithm) {
-          ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
-            Text(algorithm.description).tag(algorithm)
-          }
-        }
-        
-        if preferences.trendingAlgorithm == .simpleScore {
-          Stepper("Posts to Search: \(preferences.trendingSimpleScoreSearchLimit)", value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
-        } else if preferences.trendingAlgorithm == .decayingScore {
-          VStack(alignment: .leading) {
-            Text("settings.experimental.iceshrimp.trending-algorithm")
-              .font(.footnote)
-              .foregroundColor(.secondary)
-            
-            Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
-            
-            Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
-              Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
-            }
-          }
-        }
-      }
 
       Section("settings.experimental.media") {
         Toggle(isOn: $preferences.remoteMediaAutoFallback) {
@@ -783,14 +759,33 @@ public struct ExperimentalSettingsView: View {
           // Alternative video loading behavior to handle IceShrimp video format inconsistencies.
           Toggle("settings.experimental.iceshrimp.never-load-video", isOn: $preferences.neverLoadVideo)
           
+          
           // Enables alternative client-side tag merging if the instance does not support standard tag fetching.
           Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
             Label("settings.experimental.iceshrimp.alternative-tag-fetching", systemImage: "tag")
           }
 
-
-
-        }
+          Picker("Algorithm", selection: $preferences.trendingAlgorithm) {
+            ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
+              Text(algorithm.description).tag(algorithm)
+            }
+          }
+          
+          if preferences.trendingAlgorithm == .simpleScore {
+            Stepper("Posts to Search: \(preferences.trendingSimpleScoreSearchLimit)", value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
+          } else if preferences.trendingAlgorithm == .decayingScore {
+            VStack(alignment: .leading) {
+              Text("settings.experimental.iceshrimp.trending-algorithm")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+              
+              Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
+              
+              Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
+                Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
+              }
+            }
+          }
       } header: {
         Text("settings.experimental.iceshrimp.header")
       } footer: {
