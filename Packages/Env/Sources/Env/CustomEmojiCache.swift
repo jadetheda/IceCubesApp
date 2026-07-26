@@ -32,4 +32,53 @@ public actor CustomEmojiCache {
       try data.write(to: url)
     } catch {}
   }
+
+  public func cachedEmojisCount(for client: String) async -> Int {
+    let url = fileURL(for: client)
+    do {
+      let data = try Data(contentsOf: url)
+      let emojis = try decoder.decode([Emoji].self, from: data)
+      return emojis.count
+    } catch {
+      return 0
+    }
+  }
+
+  public func clearCache(for client: String) async {
+    let url = fileURL(for: client)
+    try? FileManager.default.removeItem(at: url)
+  }
+
+  public func cachedEmojisCount() async -> Int {
+    let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+    do {
+      let content = try FileManager.default.contentsOfDirectory(
+        at: directory, includingPropertiesForKeys: nil)
+      var total = 0
+      for fileURL in content {
+        if fileURL.lastPathComponent.hasPrefix("CustomEmojis-") && fileURL.pathExtension == "json" {
+          if let data = try? Data(contentsOf: fileURL),
+             let emojis = try? decoder.decode([Emoji].self, from: data) {
+            total += emojis.count
+          }
+        }
+      }
+      return total
+    } catch {
+      return 0
+    }
+  }
+
+  public func clearCache() async {
+    let directory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+    do {
+      let content = try FileManager.default.contentsOfDirectory(
+        at: directory, includingPropertiesForKeys: nil)
+      for fileURL in content {
+        if fileURL.lastPathComponent.hasPrefix("CustomEmojis-") && fileURL.pathExtension == "json" {
+          try? FileManager.default.removeItem(at: fileURL)
+        }
+      }
+    } catch {}
+  }
 }

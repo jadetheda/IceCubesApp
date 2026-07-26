@@ -429,7 +429,11 @@ struct SettingsTabs: View {
   }
 
   private var cacheSection: some View {
-    Section {
+    @Bindable var preferences = preferences
+    return Section {
+      Toggle(isOn: $preferences.cacheServerEmotes) {
+        Text("settings.other.cache-server-emotes")
+      }
       if cachedRemoved {
         Text("action.done")
           .transition(.move(edge: .leading))

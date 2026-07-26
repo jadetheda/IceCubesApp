@@ -20,6 +20,7 @@ struct AccountSettingsView: View {
   @Environment(RouterPath.self) private var routerPath
 
   @State private var cachedPostsCount: Int = 0
+  @State private var cachedEmojisCount: Int = 0
   @State private var timelineCache = TimelineCache()
 
   let account: Account
@@ -61,11 +62,15 @@ struct AccountSettingsView: View {
       Section {
         Label(
           "settings.account.cached-posts-\(String(cachedPostsCount))", systemImage: "internaldrive")
+        Label("Cached Emojis: \(String(cachedEmojisCount))", systemImage: "face.smiling")
         Button("settings.account.action.delete-cache", role: .destructive) {
           Task {
             await timelineCache.clearCache(for: appAccountsManager.currentClient.id)
+            await CustomEmojiCache.shared.clearCache(for: appAccountsManager.currentClient.server)
             cachedPostsCount = await timelineCache.cachedPostsCount(
               for: appAccountsManager.currentClient.id)
+            cachedEmojisCount = await CustomEmojiCache.shared.cachedEmojisCount(
+              for: appAccountsManager.currentClient.server)
           }
         }
       }
@@ -115,6 +120,8 @@ struct AccountSettingsView: View {
     .task {
       cachedPostsCount = await timelineCache.cachedPostsCount(
         for: appAccountsManager.currentClient.id)
+      cachedEmojisCount = await CustomEmojiCache.shared.cachedEmojisCount(
+        for: appAccountsManager.currentClient.server)
     }
     .navigationTitle(account.safeDisplayName)
     #if !os(visionOS)
