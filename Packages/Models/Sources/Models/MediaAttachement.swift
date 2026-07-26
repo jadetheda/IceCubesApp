@@ -84,6 +84,14 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     }
     return nil
   }
+
+  /// The aspect ratio of the media, clamped to sane bounds so a single very
+  /// wide (panorama) or very tall (screenshot) attachment can't blow out
+  /// masonry/grid layouts that size cells from this value.
+  public var clampedAspectRatio: CGFloat? {
+    guard let ratio = aspectRatio else { return nil }
+    return min(max(ratio, 0.5), 2.0)
+  }
 }
 
 extension MediaAttachment: Sendable {}
