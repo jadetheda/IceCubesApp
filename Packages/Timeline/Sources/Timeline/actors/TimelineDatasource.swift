@@ -26,15 +26,16 @@ actor TimelineDatasource {
   func getFiltered(seen: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
-    
+    let currentAccountId = await CurrentAccount.shared.account?.id
+
     let actualSeen: Set<String>? = seen
-    
+
     var filtered: [Status] = []
     var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -45,9 +46,10 @@ actor TimelineDatasource {
   func getFilteredItems(seen: Set<String>? = nil) async -> [TimelineItem] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
-    
+    let currentAccountId = await CurrentAccount.shared.account?.id
+
     let actualSeen = seen
-    
+
     var filtered: [TimelineItem] = []
     var realIds: Set<String> = []
     for item in items {
@@ -56,7 +58,7 @@ actor TimelineDatasource {
         filtered.append(item)
       case .status(let status):
         let realId = status.reblog?.id ?? status.id
-        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen) {
+        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId) {
           filtered.append(item)
           realIds.insert(realId)
         }
@@ -65,13 +67,14 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> [Status] {
+  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) async -> [Status] {
+    let currentAccountId = await CurrentAccount.shared.account?.id
     var filtered: [Status] = []
     var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen, currentAccountId: currentAccountId) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -113,7 +116,8 @@ actor TimelineDatasource {
 
   // MARK: - Status Operations
 
-  func hideReadPosts(seen: Set<String>, includeBoosts: Bool) {
+  func hideReadPosts(seen: Set<String>, includeBoosts: Bool) async {
+    let currentAccountId = await CurrentAccount.shared.account?.id
     items.removeAll { item in
       if case .status(let status) = item {
         if seen.contains(status.id) {
@@ -122,7 +126,7 @@ actor TimelineDatasource {
         if includeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
           return true
         }
-        if status.account.id == CurrentAccount.shared.account?.id {
+        if status.account.id == currentAccountId {
           return true
         }
       }
@@ -234,7 +238,7 @@ actor TimelineDatasource {
 
   // MARK: - Private Helpers
 
-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) -> Bool {
+  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, currentAccountId: String? = nil) -> Bool {
     let isHidden = if let filterContext {
       status.isHidden(in: filterContext)
     } else {
@@ -261,7 +265,7 @@ actor TimelineDatasource {
         isSeen = true
       }
     }
-    if status.account.id == CurrentAccount.shared.account?.id {
+    if status.account.id == currentAccountId {
       isSeen = true
     }
 
