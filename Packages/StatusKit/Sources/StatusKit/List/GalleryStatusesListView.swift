@@ -361,7 +361,7 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio, unboundedLargeImages: UserPreferences.shared.galleryUnboundedLargeImages))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
@@ -456,10 +456,12 @@ public struct GalleryMediaCell: View {
 public struct GalleryAspectRatioModifier: ViewModifier {
   public let isSquare: Bool
   public let aspectRatio: CGFloat?
+  public let unboundedLargeImages: Bool
 
-  public init(isSquare: Bool, aspectRatio: CGFloat?) {
+  public init(isSquare: Bool, aspectRatio: CGFloat?, unboundedLargeImages: Bool) {
     self.isSquare = isSquare
     self.aspectRatio = aspectRatio
+    self.unboundedLargeImages = unboundedLargeImages
   }
 
   public func body(content: Content) -> some View {
@@ -477,9 +479,16 @@ public struct GalleryAspectRatioModifier: ViewModifier {
           content
         }
         .clipped()
-    } else {
+    } else if unboundedLargeImages {
       content
         .scaledToFit()
+        .clipped()
+    } else {
+      Color.clear
+        .aspectRatio(1, contentMode: .fit)
+        .overlay {
+          content
+        }
         .clipped()
     }
   }

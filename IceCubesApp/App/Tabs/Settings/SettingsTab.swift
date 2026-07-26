@@ -684,6 +684,9 @@ public struct ExperimentalSettingsView: View {
         Toggle(isOn: $preferences.galleryRoundCorners) {
           Label("Round corners", systemImage: "squareshape")
         }
+        Toggle(isOn: $preferences.galleryUnboundedLargeImages) {
+          Label("settings.experimental.gallery-unbounded-large-images", systemImage: "arrow.up.left.and.arrow.down.right")
+        }
         Toggle(isOn: $preferences.galleryAddThinMargins) {
           Label("settings.experimental.gallery-add-thin-margins", systemImage: "arrow.left.and.right")
         }
