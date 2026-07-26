@@ -77,6 +77,14 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       meta: nil)
   }
 
+  /// The original aspect ratio of the media, without thumbnail clamping.
+  public var originalAspectRatio: CGFloat? {
+    if let original = meta?.original, let width = original.width, let height = original.height, height > 0 {
+      return CGFloat(width) / CGFloat(height)
+    }
+    return nil
+  }
+
   /// The aspect ratio of the media, utilizing the `small` thumbnail if available to naturally clamp excessively tall images.
   public var clampedAspectRatio: CGFloat? {
     if let small = meta?.small, let width = small.width, let height = small.height, height > 0 {

@@ -248,7 +248,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         items[targetColIndex].append(node)
 
         let isSquare = UserPreferences.shared.galleryCropToSquare
-        var aspectRatio = isSquare ? 1.0 : (mediaStatus.attachment.clampedAspectRatio ?? 1.0)
+        let actualRatio = UserPreferences.shared.galleryUnboundedLargeImages ? mediaStatus.attachment.originalAspectRatio : mediaStatus.attachment.clampedAspectRatio
+        var aspectRatio = isSquare ? 1.0 : (actualRatio ?? 1.0)
         if aspectRatio <= 0 { aspectRatio = 1.0 }
         columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
         currentIndex += 1
@@ -361,7 +362,11 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.clampedAspectRatio, unboundedLargeImages: UserPreferences.shared.galleryUnboundedLargeImages))
+        .modifier(GalleryAspectRatioModifier(
+          isSquare: isSquare,
+          aspectRatio: UserPreferences.shared.galleryUnboundedLargeImages ? mediaStatus.attachment.originalAspectRatio : mediaStatus.attachment.clampedAspectRatio,
+          unboundedLargeImages: UserPreferences.shared.galleryUnboundedLargeImages
+        ))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))

@@ -793,6 +793,7 @@ public struct ExperimentalSettingsView: View {
               }
             }
           }
+        }
       } header: {
         Text("settings.experimental.iceshrimp.header")
       } footer: {
