@@ -385,3 +385,7 @@
   - Reverted the inner image `.aspectRatio` content mode back to `.fill` to prevent letterboxing, which was causing the container's corner rounding to appear broken on images that didn't fill the frame.
   - Implemented dynamic aspect ratio resolution using an internal `@State` variable (`loadedAspectRatio`) inside `MediaGridCell` and `MediaPreview`. When an image without metadata loads, we now extract its intrinsic aspect ratio directly from `state.imageContainer?.image.size`, clamp it to `[0.25, 4.0]`, and apply it to the outer container. This allows the image to adopt its natural shape instantly without clipping issues or broken rounded corners.
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+
+- 2026-07-28T01:05:00Z: **Restored Individual Rounded Corners in Grid**
+  - Added `.cornerRadius(10)` to `MediaGridCell` so that individual images displayed within the multi-image grid retain their own rounded corners, rather than relying solely on the outer bounding box of the grid layout.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
