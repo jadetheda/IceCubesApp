@@ -368,4 +368,10 @@
   - Modified `StatusRowMediaGridView`'s default rendering block (for >4 images) to stack images vertically and span the full width, capping height at `gridHeight * 0.75` to achieve a "super wide" layout as requested.
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
 
+- 2026-07-27T23:37:00Z: **Reverted Vertical Stack for >4 Images and Fixed Single Image Routing**
+  - Reverted the `default:` case in `StatusRowMediaGridView` (which stacked 5+ images vertically) back to a standard 2-column wrapping grid, matching expected Bluesky UI conventions for dense media layouts.
+  - Corrected `StatusRowMediaPreviewView` routing so that `StatusRowMediaGridView` handles `attachments.count == 1` when grid mode is enabled, overriding the legacy `FeaturedImagePreView` which restricted height to 450.
+  - Applied `clampedAspectRatio` (min 0.5, max 2.0) and `isStandalone: true` inside `MediaGridCell` to allow a single image to expand naturally up to 2x its width/height (super tall or super wide) while preserving its native bounds.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+
 

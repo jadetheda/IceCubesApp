@@ -56,7 +56,17 @@ public struct StatusRowMediaPreviewView: View {
 
   public var body: some View {
     Group {
-      if attachments.count == 1 {
+      if userPreferences.statusMediaGridMode {
+        StatusRowMediaGridView(
+          attachments: attachments,
+          sensitive: sensitive,
+          imageMaxHeight: imageMaxHeight,
+          useRemoteMedia: effectiveUseRemoteMedia,
+          userPreferences: userPreferences,
+          onLoaded: { id in loadedAttachments.insert(id) },
+          tabAction: { index in tabAction(for: index) }
+        )
+      } else if attachments.count == 1 {
         FeaturedImagePreView(
           attachment: attachments[0],
           useRemoteMedia: effectiveUseRemoteMedia,
@@ -70,16 +80,6 @@ public struct StatusRowMediaPreviewView: View {
         .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
         .accessibilityAddTraits([.isButton, .isImage])
         .onTapGesture { tabAction(for: 0) }
-      } else if userPreferences.statusMediaGridMode {
-        StatusRowMediaGridView(
-          attachments: attachments,
-          sensitive: sensitive,
-          imageMaxHeight: imageMaxHeight,
-          useRemoteMedia: effectiveUseRemoteMedia,
-          userPreferences: userPreferences,
-          onLoaded: { id in loadedAttachments.insert(id) },
-          tabAction: { index in tabAction(for: index) }
-        )
       } else {
         ScrollView(.horizontal, showsIndicators: showsScrollIndicators) {
           HStack {
@@ -218,7 +218,7 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? (displayData.aspectRatio ?? 1.0) : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? (displayData.clampedAspectRatio ?? 1.0) : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
@@ -652,6 +652,8 @@ private struct StatusRowMediaGridView: View {
     let gridHeight = imageMaxHeight == 300 ? 260.0 : imageMaxHeight
     Group {
       switch attachments.count {
+      case 1:
+        makeCell(for: 0)
       case 2:
         HStack(spacing: 4) {
           makeCell(for: 0)
@@ -681,11 +683,16 @@ private struct StatusRowMediaGridView: View {
         .frame(height: gridHeight)
       default:
         VStack(spacing: 4) {
-          ForEach(0..<attachments.count, id: \.self) { index in
-            makeCell(for: index)
-              .frame(maxHeight: gridHeight * 0.75)
+          ForEach(0..<((attachments.count + 1) / 2), id: \.self) { row in
+            HStack(spacing: 4) {
+              makeCell(for: row * 2)
+              if row * 2 + 1 < attachments.count {
+                makeCell(for: row * 2 + 1)
+              }
+            }
           }
         }
+        .frame(height: gridHeight * CGFloat((attachments.count + 1) / 2) / 2.0)
       }
     }
     .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -703,6 +710,7 @@ private struct StatusRowMediaGridView: View {
       MediaGridCell(
         sensitive: sensitive,
         displayData: data,
+        isStandalone: attachments.count == 1,
         onLoaded: { onLoaded(attachment.id) }
       )
       .id(data.url)
@@ -721,6 +729,7 @@ private struct MediaGridCell: View {
   
   let sensitive: Bool
   let displayData: DisplayData
+  var isStandalone: Bool = false
   var onLoaded: () -> Void = {}
 
   var body: some View {
@@ -734,7 +743,11 @@ private struct MediaGridCell: View {
                 .resizable()
                 .onAppear { onLoaded() }
                 .aspectRatio(contentMode: .fill)
-                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                .frame(
+                  maxWidth: isStandalone ? .infinity : nil,
+                  maxHeight: isStandalone ? .infinity : nil
+                )
+                .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
             } else if state.isLoading {
               Rectangle()
                 .fill(Color.gray)
@@ -753,7 +766,12 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+      .aspectRatio(isStandalone ? (displayData.clampedAspectRatio ?? 1.0) : nil, contentMode: .fit)
+      .frame(
+        maxWidth: isStandalone ? .infinity : nil,
+        maxHeight: isStandalone ? .infinity : nil
+      )
+      .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
       .clipped()
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
