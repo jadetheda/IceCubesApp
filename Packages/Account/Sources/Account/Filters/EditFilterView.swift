@@ -32,7 +32,7 @@ struct EditFilterView: View {
     let expiresIn: String? =
       switch expirySelection {
       case .infinite:
-        ""  // need to send an empty value in order for the server to clear this field in the filter
+        filter == nil ? nil : ""  // need to send an empty value in order for the server to clear this field in the filter
       case .custom:
         String(Int(expiresAt?.timeIntervalSince(Date()) ?? 0) + 50)
       default:

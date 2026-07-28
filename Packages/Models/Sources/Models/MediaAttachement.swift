@@ -5,6 +5,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     public struct Meta: Codable, Equatable {
       public let width: Int?
       public let height: Int?
+      public let aspect: Double?
     }
 
     public let original: Meta?
@@ -79,8 +80,17 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
   /// The aspect ratio of the media
   public var aspectRatio: CGFloat? {
-    if let original = meta?.original, let width = original.width, let height = original.height, height > 0 {
-      return CGFloat(width) / CGFloat(height)
+    if let original = meta?.original {
+      if let aspect = original.aspect { return CGFloat(aspect) }
+      if let width = original.width, let height = original.height, height > 0 {
+        return CGFloat(width) / CGFloat(height)
+      }
+    }
+    if let small = meta?.small {
+      if let aspect = small.aspect { return CGFloat(aspect) }
+      if let width = small.width, let height = small.height, height > 0 {
+        return CGFloat(width) / CGFloat(height)
+      }
     }
     return nil
   }

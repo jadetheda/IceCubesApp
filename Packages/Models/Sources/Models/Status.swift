@@ -75,7 +75,7 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
   public let visibility: Visibility
   public let poll: Poll?
   public let spoilerText: HTMLString
-  public let filtered: [Filtered]?
+  public var filtered: [Filtered]?
   public let sensitive: Bool
   public let language: String?
   public let tags: [Tag]
@@ -262,7 +262,7 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
   public let visibility: Visibility
   public let poll: Poll?
   public let spoilerText: HTMLString
-  public let filtered: [Filtered]?
+  public var filtered: [Filtered]?
   public let sensitive: Bool
   public let language: String?
   public let tags: [Tag]

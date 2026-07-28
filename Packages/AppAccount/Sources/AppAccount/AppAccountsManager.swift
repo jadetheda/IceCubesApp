@@ -19,6 +19,7 @@ import SwiftUI
         
       if let isShrimp = currentAccount.isIceShrimp {
         UserPreferences.shared.useIceShrimpWorkarounds = isShrimp
+        currentClient.isIceShrimpWorkaroundsEnabled = isShrimp
       }
     }
   }

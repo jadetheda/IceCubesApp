@@ -56,12 +56,21 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     var oauthApp: InstanceApp?
     var oauthToken: OauthToken?
     var connections: Set<String> = []
+    var isIceShrimpWorkaroundsEnabled: Bool = false
+    var isFetchingFilters: Bool = false
+    var iceShrimpFiltersCache: [ServerFilter]? = nil
+    var iceShrimpFiltersLastFetched: Date? = nil
   }
 
   public var isAuth: Bool {
     critical.withLock { $0.oauthToken != nil }
   }
 
+  public var isIceShrimpWorkaroundsEnabled: Bool {
+    get { critical.withLock { $0.isIceShrimpWorkaroundsEnabled } }
+    set { critical.withLock { $0.isIceShrimpWorkaroundsEnabled = newValue } }
+  }
+  
   public var connections: Set<String> {
     critical.withLock { $0.connections }
   }
@@ -159,7 +168,15 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     }
     logResponseOnError(httpResponse: httpResponse, data: data)
     logger.log(level: .info, "\(request)")
-    return try (decoder.decode(Entity.self, from: data), linkHandler)
+    var entity = try decoder.decode(Entity.self, from: data)
+    if critical.withLock({ $0.isIceShrimpWorkaroundsEnabled }) {
+       if let statuses = entity as? [Status] {
+          entity = await applyIceShrimpFilters(statuses) as! Entity
+       } else if let status = entity as? Status {
+          entity = await applyIceShrimpFilters([status]).first! as! Entity
+       }
+    }
+    return (entity, linkHandler)
   }
 
   public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws
@@ -199,6 +216,66 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     return httpResponse as? HTTPURLResponse
   }
 
+
+  private func applyIceShrimpFilters(_ statuses: [Status]) async -> [Status] {
+    let isFetching = critical.withLock { $0.isFetchingFilters }
+    if isFetching { return statuses }
+    
+    let now = Date()
+    var cachedFilters = critical.withLock { $0.iceShrimpFiltersCache }
+    let lastFetched = critical.withLock { $0.iceShrimpFiltersLastFetched }
+    
+    if cachedFilters == nil || (lastFetched != nil && now.timeIntervalSince(lastFetched!) > 300) {
+      critical.withLock { $0.isFetchingFilters = true }
+      do {
+        let url = try makeURL(endpoint: ServerFilters.filters, forceVersion: .v2)
+        let request = makeURLRequest(url: url, endpoint: ServerFilters.filters, httpMethod: "GET")
+        let (data, _) = try await urlSession.data(for: request)
+        cachedFilters = try decoder.decode([ServerFilter].self, from: data)
+        critical.withLock { 
+           $0.iceShrimpFiltersCache = cachedFilters
+           $0.iceShrimpFiltersLastFetched = now
+        }
+      } catch {
+        // Ignore errors to not block timeline fetching
+      }
+      critical.withLock { $0.isFetchingFilters = false }
+    }
+    
+    guard let filters = cachedFilters, !filters.isEmpty else { return statuses }
+    
+    for status in statuses {
+      var matchedFilters: [Filtered] = status.filtered ?? []
+      let text = status.content.asRawText.lowercased()
+      let spoilerText = status.spoilerText.asRawText.lowercased()
+      let combined = text + " " + spoilerText
+      
+      for filter in filters {
+        if filter.isExpired() { continue }
+        
+        var matches: [String] = []
+        for keyword in filter.keywords {
+           if keyword.wholeWord {
+               let regex = try? NSRegularExpression(pattern: "\\b\\Q\(keyword.keyword.lowercased())\\E\\b", options: [.caseInsensitive])
+               if regex?.firstMatch(in: combined, range: NSRange(location: 0, length: combined.utf16.count)) != nil {
+                   matches.append(keyword.keyword)
+               }
+           } else if combined.contains(keyword.keyword.lowercased()) {
+               matches.append(keyword.keyword)
+           }
+        }
+        
+        if !matches.isEmpty {
+           matchedFilters.append(Filtered(filter: Filter(id: filter.id, title: filter.title, context: filter.context.map(\.rawValue), filterAction: Filter.Action(rawValue: filter.filterAction.rawValue)!), keywordMatches: matches))
+        }
+      }
+      if !matchedFilters.isEmpty {
+         status.filtered = matchedFilters
+      }
+    }
+    return statuses
+  }
+
   private func makeEntityRequest<Entity: Decodable>(
     endpoint: Endpoint,
     method: String,
@@ -210,7 +287,15 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     logger.log(level: .info, "\(request)")
     logResponseOnError(httpResponse: httpResponse, data: data)
     do {
-      return try decoder.decode(Entity.self, from: data)
+      var entity = try decoder.decode(Entity.self, from: data)
+      if critical.withLock({ $0.isIceShrimpWorkaroundsEnabled }) {
+         if let statuses = entity as? [Status] {
+            entity = await applyIceShrimpFilters(statuses) as! Entity
+         } else if let status = entity as? Status {
+            entity = await applyIceShrimpFilters([status]).first! as! Entity
+         }
+      }
+      return entity
     } catch {
       if var serverError = try? decoder.decode(ServerError.self, from: data) {
         if let httpResponse = httpResponse as? HTTPURLResponse {
