@@ -48,6 +48,7 @@ public struct MediaUIView: View, @unchecked Sendable {
           MediaToolBar(data: item)
         }
       }
+      .toolbarBackground(.hidden, for: .navigationBar)
       .onAppear {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
           scrolledItem = initialItem
@@ -244,6 +245,7 @@ private struct DisplayView: View {
     switch data.type {
     case .image:
       MediaUIAttachmentImageView(url: data.url)
+        .ignoresSafeArea()
     case .av:
       MediaUIAttachmentVideoView(viewModel: .init(url: data.url, forceAutoPlay: true))
         .ignoresSafeArea()

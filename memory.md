@@ -389,3 +389,10 @@
 - 2026-07-28T01:05:00Z: **Restored Individual Rounded Corners in Grid**
   - Added `.cornerRadius(10)` to `MediaGridCell` so that individual images displayed within the multi-image grid retain their own rounded corners, rather than relying solely on the outer bounding box of the grid layout.
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+- **Status Persistence Bug Fix**: 
+  - Addressed a bug where liked and boosted indicators did not persist between views or when scrolling.
+  - The root cause was in `StatusDataControllerProvider.swift`: every time a view re-rendered, it called `dataController(for: status)`. This function was incorrectly calling `updateFrom(status:)` with the UI's local, stale `Status` object, which systematically overwrote the shared controller's accurate optimistic interaction state.
+  - Fix: Removed the `updateFrom(status: status)` call from inside `dataController(for:)`. `StatusDataController` now correctly acts as the definitive source of truth and only updates when explicitly instructed via API responses in `updateDataControllers(for:)`.
+- **Media Viewer Improvements**: 
+  - Fixed an issue in `MediaUIView` where the navigation bar background caused a shadow over the image when viewing fullscreen, by adding `.toolbarBackground(.hidden, for: .navigationBar)`.
+  - Updated `MediaUIAttachmentImageView` to allow images to automatically take up maximum space by removing hardcoded horizontal and vertical paddings.

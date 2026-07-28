@@ -35,7 +35,6 @@ public final class StatusDataControllerProvider {
   {
     let key = CacheKey(statusId: status.id, client: client)
     if let controller = cache[key] {
-      controller.updateFrom(status: status)
       return controller
     }
     let controller = StatusDataController(status: status, client: client)
