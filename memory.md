@@ -362,4 +362,10 @@
   - Replaced the horizontal scrolling carousel for multi-image statuses in `StatusRowMediaPreviewView` with a responsive bento-box grid (`StatusRowMediaGridView`) supporting specialized 2-image, 3-image, 4-image, and multi-row layouts.
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
 
+- 2026-07-27T23:28:00Z: **Refined Single-Image and >4 Image Grid Layout Details**
+  - Extracted `aspectRatio` property into `DisplayData` from `MediaAttachment`.
+  - Updated `MediaPreview` for `isStandalone` attachments to use their native `aspectRatio` (up to a 2.5x `imageMaxHeight`), allowing single images to be super tall or super wide.
+  - Modified `StatusRowMediaGridView`'s default rendering block (for >4 images) to stack images vertically and span the full width, capping height at `gridHeight * 0.75` to achieve a "super wide" layout as requested.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+
 

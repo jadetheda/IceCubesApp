@@ -126,6 +126,7 @@ public struct StatusRowMediaPreviewView: View {
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
         displayData: data,
+        isStandalone: attachments.count == 1,
         onLoaded: { loadedAttachments.insert(attachement.id) }
       )
       .id(data.url)
@@ -173,6 +174,7 @@ private struct MediaPreview: View {
   let sensitive: Bool
   let imageMaxHeight: CGFloat
   let displayData: DisplayData
+  var isStandalone: Bool = false
   var onLoaded: () -> Void = {}
 
   var body: some View {
@@ -187,8 +189,12 @@ private struct MediaPreview: View {
                 .onAppear { onLoaded() }
                 .aspectRatio(contentMode: .fill)
                 .frame(
-                  width: displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5,
-                  height: imageMaxHeight
+                  maxWidth: isStandalone ? .infinity : nil,
+                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
+                )
+                .frame(
+                  width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
+                  height: isStandalone ? nil : imageMaxHeight
                 )
                 .overlay(
                   RoundedRectangle(cornerRadius: 10)
@@ -212,9 +218,14 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
+      .aspectRatio(isStandalone ? (displayData.aspectRatio ?? 1.0) : nil, contentMode: .fit)
       .frame(
-        width: displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5,
-        height: imageMaxHeight
+        maxWidth: isStandalone ? .infinity : nil,
+        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
+      )
+      .frame(
+        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
+        height: isStandalone ? nil : imageMaxHeight
       )
       .clipped()
       .cornerRadius(10)
@@ -380,6 +391,8 @@ private struct DisplayData: Identifiable, Hashable {
   let type: DisplayType
   let accessibilityText: String
   let isLandscape: Bool
+  let clampedAspectRatio: CGFloat?
+  let aspectRatio: CGFloat?
 
   init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
     let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
@@ -402,6 +415,8 @@ private struct DisplayData: Identifiable, Hashable {
     description = attachment.description
     accessibilityText = Self.getAccessibilityString(from: attachment)
     isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
+    clampedAspectRatio = attachment.clampedAspectRatio
+    aspectRatio = attachment.aspectRatio
   }
 
   private static func getAccessibilityString(from attachment: MediaAttachment) -> String {
@@ -666,16 +681,11 @@ private struct StatusRowMediaGridView: View {
         .frame(height: gridHeight)
       default:
         VStack(spacing: 4) {
-          ForEach(0..<((attachments.count + 1) / 2), id: \.self) { row in
-            HStack(spacing: 4) {
-              makeCell(for: row * 2)
-              if row * 2 + 1 < attachments.count {
-                makeCell(for: row * 2 + 1)
-              }
-            }
+          ForEach(0..<attachments.count, id: \.self) { index in
+            makeCell(for: index)
+              .frame(maxHeight: gridHeight * 0.75)
           }
         }
-        .frame(height: gridHeight * CGFloat((attachments.count + 1) / 2) / 2.0)
       }
     }
     .clipShape(RoundedRectangle(cornerRadius: 10))
