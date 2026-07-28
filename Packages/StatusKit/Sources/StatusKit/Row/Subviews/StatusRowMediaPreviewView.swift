@@ -187,7 +187,7 @@ private struct MediaPreview: View {
               image
                 .resizable()
                 .onAppear { onLoaded() }
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: (isStandalone && displayData.standaloneAspectRatio == nil) ? .fit : .fill)
                 .frame(
                   maxWidth: isStandalone ? .infinity : nil,
                   maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
@@ -218,7 +218,7 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? displayData.clampedAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? displayData.standaloneAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
@@ -392,6 +392,7 @@ private struct DisplayData: Identifiable, Hashable {
   let accessibilityText: String
   let isLandscape: Bool
   let clampedAspectRatio: CGFloat?
+  let standaloneAspectRatio: CGFloat?
   let aspectRatio: CGFloat?
 
   init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
@@ -416,6 +417,11 @@ private struct DisplayData: Identifiable, Hashable {
     accessibilityText = Self.getAccessibilityString(from: attachment)
     isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
     clampedAspectRatio = attachment.clampedAspectRatio
+    if let ratio = attachment.aspectRatio {
+      standaloneAspectRatio = min(max(ratio, 0.25), 4.0)
+    } else {
+      standaloneAspectRatio = nil
+    }
     aspectRatio = attachment.aspectRatio
   }
 
@@ -742,7 +748,7 @@ private struct MediaGridCell: View {
               image
                 .resizable()
                 .onAppear { onLoaded() }
-                .aspectRatio(contentMode: .fill)
+                .aspectRatio(contentMode: (isStandalone && displayData.standaloneAspectRatio == nil) ? .fit : .fill)
                 .frame(
                   maxWidth: isStandalone ? .infinity : nil,
                   maxHeight: isStandalone ? .infinity : nil
@@ -766,7 +772,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? displayData.clampedAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? displayData.standaloneAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil

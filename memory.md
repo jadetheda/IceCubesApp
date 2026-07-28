@@ -374,4 +374,9 @@
   - Applied `clampedAspectRatio` (min 0.5, max 2.0) and `isStandalone: true` inside `MediaGridCell` to allow a single image to expand naturally up to 2x its width/height (super tall or super wide) while preserving its native bounds.
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
 
+- 2026-07-27T23:54:00Z: **Fixed Square Cropping for Missing Metadata in Standalone Images**
+  - Removed the `?? 1.0` fallback on `displayData.clampedAspectRatio` for standalone images in `MediaGridCell` and `MediaPreview`.
+  - When image metadata (width/height) was missing from the server, `aspectRatio` evaluated to `nil`, which triggered the `1.0` fallback and incorrectly forced tall standalone images into a 1:1 square crop. Now, `nil` is passed to the aspect ratio modifier, allowing the image to adopt its natural aspect ratio when it loads.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+
 
