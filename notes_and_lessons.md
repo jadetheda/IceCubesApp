@@ -142,3 +142,10 @@ These occur because certain extraction/copy paths don't respect UNIX file system
 - **Action**: Always run the `/api/integrity/update` POST request immediately following a sync to keep AI Studio's integrity validation happy.
 
 
+## Recovering Missing Entry Points and Resolving Vite Binary Dependencies
+- **Observation**: When resetting or synchronizing workspaces, secondary dependencies or local applet entry points (like `/src/main.tsx`) can occasionally be deleted or left out of initial configurations.
+- **Consequence**: Vite compilation fails instantly when the entry point specified in `index.html` cannot be found, throwing `Failed to resolve /src/main.tsx`.
+- **Solution**: Re-run `install_applet_dependencies` to ensure standard binaries are locally present, write a clean `main.tsx` matching standard React 18 / Vite mounting schemas, and call `restart_dev_server` to safely boot port 3000.
+
+
+

@@ -70,6 +70,16 @@ public struct StatusRowMediaPreviewView: View {
         .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
         .accessibilityAddTraits([.isButton, .isImage])
         .onTapGesture { tabAction(for: 0) }
+      } else if userPreferences.statusMediaGridMode {
+        StatusRowMediaGridView(
+          attachments: attachments,
+          sensitive: sensitive,
+          imageMaxHeight: imageMaxHeight,
+          useRemoteMedia: effectiveUseRemoteMedia,
+          userPreferences: userPreferences,
+          onLoaded: { id in loadedAttachments.insert(id) },
+          tabAction: { index in tabAction(for: index) }
+        )
       } else {
         ScrollView(.horizontal, showsIndicators: showsScrollIndicators) {
           HStack {
@@ -609,6 +619,136 @@ private struct FeaturedImagePreView: View {
       }
 
       return CGSize(width: max(size.width, 200), height: min(size.height, 450))
+    }
+  }
+}
+
+@MainActor
+private struct StatusRowMediaGridView: View {
+  let attachments: [MediaAttachment]
+  let sensitive: Bool
+  let imageMaxHeight: CGFloat
+  let useRemoteMedia: Bool
+  let userPreferences: UserPreferences
+  let onLoaded: (String) -> Void
+  let tabAction: (Int) -> Void
+
+  var body: some View {
+    let gridHeight = imageMaxHeight == 300 ? 260.0 : imageMaxHeight
+    Group {
+      switch attachments.count {
+      case 2:
+        HStack(spacing: 4) {
+          makeCell(for: 0)
+          makeCell(for: 1)
+        }
+        .frame(height: gridHeight)
+      case 3:
+        HStack(spacing: 4) {
+          makeCell(for: 0)
+          VStack(spacing: 4) {
+            makeCell(for: 1)
+            makeCell(for: 2)
+          }
+        }
+        .frame(height: gridHeight)
+      case 4:
+        VStack(spacing: 4) {
+          HStack(spacing: 4) {
+            makeCell(for: 0)
+            makeCell(for: 1)
+          }
+          HStack(spacing: 4) {
+            makeCell(for: 2)
+            makeCell(for: 3)
+          }
+        }
+        .frame(height: gridHeight)
+      default:
+        VStack(spacing: 4) {
+          ForEach(0..<((attachments.count + 1) / 2), id: \.self) { row in
+            HStack(spacing: 4) {
+              makeCell(for: row * 2)
+              if row * 2 + 1 < attachments.count {
+                makeCell(for: row * 2 + 1)
+              }
+            }
+          }
+        }
+        .frame(height: gridHeight * CGFloat((attachments.count + 1) / 2) / 2.0)
+      }
+    }
+    .clipShape(RoundedRectangle(cornerRadius: 10))
+    .contentShape(RoundedRectangle(cornerRadius: 10))
+  }
+
+  @ViewBuilder
+  private func makeCell(for index: Int) -> some View {
+    let attachment = attachments[index]
+    let isIceShrimp = CurrentInstance.shared.isIceShrimp
+    let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
+    let noVideo = userPreferences.neverLoadVideo || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
+
+    if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
+      MediaGridCell(
+        sensitive: sensitive,
+        displayData: data,
+        onLoaded: { onLoaded(attachment.id) }
+      )
+      .id(data.url)
+      .onTapGesture {
+        tabAction(index)
+      }
+      #if os(visionOS)
+        .hoverEffect()
+      #endif
+    }
+  }
+}
+
+private struct MediaGridCell: View {
+  @Environment(QuickLook.self) private var quickLook
+  
+  let sensitive: Bool
+  let displayData: DisplayData
+  var onLoaded: () -> Void = {}
+
+  var body: some View {
+    if let namespace = quickLook.namespace {
+      Group {
+        switch displayData.type {
+        case .image:
+          LazyResizableImage(url: displayData.previewUrl) { state in
+            if let image = state.image {
+              image
+                .resizable()
+                .onAppear { onLoaded() }
+                .aspectRatio(contentMode: .fill)
+                .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+            } else if state.isLoading {
+              Rectangle()
+                .fill(Color.gray)
+            }
+          }
+          .overlay {
+            BlurOverLay(sensitive: sensitive, font: .scaledFootnote)
+          }
+          .overlay {
+            AltTextButton(text: displayData.description, font: .scaledFootnote)
+          }
+        case .av:
+          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl))
+            .onAppear { onLoaded() }
+            .accessibilityAddTraits(.startsMediaSession)
+        }
+      }
+      .matchedTransitionSource(id: displayData.id, in: namespace)
+      .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+      .clipped()
+      .contentShape(Rectangle())
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(Text(displayData.accessibilityText))
+      .accessibilityAddTraits(displayData.type == .image ? [.isImage, .isButton] : .isButton)
     }
   }
 }

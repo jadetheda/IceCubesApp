@@ -350,3 +350,16 @@
   - Successfully updated the local file system integrity tracking manifest via the `/api/integrity/update` POST endpoint to guarantee compatibility and eliminate false-positive warnings.
   - Verified compiler stability by performing a complete applet build check, confirming 100% build success without errors.
 
+- 2026-07-27T21:38:00Z: **Synchronized repository, recovered entry point, and verified workspace compilation**
+  - Executed `bash ./sync_repo.sh` to fully clean and re-clone a pristine copy of `ios-workspace` from GitHub.
+  - Re-installed applet packages to restore missing build tools (`vite` binary).
+  - Recovered `/src/main.tsx` with standard React 18 mounting logic to fix a missing entry point build failure.
+  - Successfully restarted the dev server and updated the SHA-256 workspace integrity manifest via local POST API request.
+
+- 2026-07-27T22:42:00Z: **Implemented default Multi-Image Grid Layout for status media attachments**
+  - Added `@AppStorage("status_media_grid_mode")` setting to `UserPreferences` (defaulting to `true`).
+  - Added "Multi-Image Grid Layout" toggle to `DisplaySettingsView` (under Display settings).
+  - Replaced the horizontal scrolling carousel for multi-image statuses in `StatusRowMediaPreviewView` with a responsive bento-box grid (`StatusRowMediaGridView`) supporting specialized 2-image, 3-image, 4-image, and multi-row layouts.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+
+
