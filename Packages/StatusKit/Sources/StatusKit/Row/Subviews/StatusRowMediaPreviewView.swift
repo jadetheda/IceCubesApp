@@ -815,6 +815,7 @@ private struct MediaGridCell: View {
       )
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
       .clipped()
+      .cornerRadius(10)
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text(displayData.accessibilityText))
