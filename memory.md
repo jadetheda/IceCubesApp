@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-07-28 UTC: Deeply analyzed the cause of the horizontal grid gap bug in the 4-image grid. According to a dumb Flash model's opinion, the root cause is the `.aspectRatio(currentAspectRatio, contentMode: .fit)` modifier applied to `MediaGridCell`. When `isStandalone` is `false`, `currentAspectRatio` is `nil`, which SwiftUI interprets as `.aspectRatio(contentMode: .fit)` with the child's intrinsic aspect ratio (1:1). This forces cells to form tight squares instead of expanding horizontally, creating massive gaps across compact layouts.
 - 2026-07-26 UTC: Reverted experimental `galleryUnboundedLargeImages` setting and removed aspect ratio clamping from `MediaAttachment.swift` because they did not fix the masonry layout gaps.
 - 2026-07-26 UTC: Documented that the gallery mode masonry layout gaps still remain unresolved in `notes_and_lessons.md` after deciding to table the issue for tonight.
 - 2026-07-26 UTC: Bug Fix: Fixed a missing closing bracket `}` in `SettingsTab.swift` caused by migrating the Trending Algorithm picker inside the IceShrimp workarounds toggle section. This prevents a critical compiler failure.
@@ -42,6 +43,7 @@
   - Modifed `TimelineDatasource.swift` to conditionally hide posts unless they (or their boosted source) contain `mediaAttachments`.
   - Added new `@AppStorage` configurations to safely toggle the feature in settings via the Timeline content filter menu.
 - 2026-06-30 07:38 UTC: Updated Web UI in `App.tsx` and `server.ts` for AI Studio preview:
+  - Removed "Download Push Bundle (Legacy)" link.
   - Added an endpoint `/api/git/action-status` to query the GitHub Actions API for the latest workflow status on the repository.
   - Added a subtle UI indicator for GitHub Action status which polls every 30 seconds.
 - 2026-06-30 07:38 UTC: Refined 'Hide Seen Posts' logic in `TimelineViewModel`:
@@ -62,9 +64,15 @@
 - **2026-06-28T06:16:00Z**: Created a `setup.sh` script to streamline `a-shell mini` configuration (identity setup, credentials caching, and repo cloning via PAT). Updated `README.md` with explicit setup instructions. Refactored `server.ts` and `App.tsx` to serve and expose the setup script directly in the web UI for easy curl execution on device.
 - **2026-06-28T06:20:00Z**: Fixed a Vite/Express dev server loading issue caused by missing `@types/archiver` default exports by adding `esModuleInterop: true` to `tsconfig.json` and suppressing the type error in `server.ts`. Also added the strict limitations of the AI Studio Agent Shell to `AGENTS.md` (no curl, interactive prompts lock, npx loophole) so future logic accounts for the sandbox appropriately.
 - **2026-06-28T06:25:00Z**: Appended critical iOS device-specific limitations to `AGENTS.md` regarding `a-Shell mini` (zero external dependencies, virtual mounting, header mangling, and CHD generation quirks) to establish strict boundaries for offline scripting on device.
-- **2026-06-28T06:39:00Z**: Removed irrelevant CHD generation quirks from `AGENTS.md`.
+- **2026-06-28T06:26:00Z**: Resolved a port conflict (EADDRINUSE: 3000) caused by a hanging `npx tsx server.ts` background process by explicitly killing the process using `npx kill-port 3000` and restarting the development server, restoring UI access.
+- **2026-06-28T06:39:00Z**: Removed irrelevant CHD generation quirks from `AGENTS.md` and hardcoded user specific credentials into `setup.sh` to remove manual a-Shell mini prompt interactions on every session.
+- **2026-06-28T06:42:00Z**: Updated the hardcoded credentials in `setup.sh` with the user's specific GitHub username (`jadetheda`), target repository (`IceCubesApp`), and git commit name (`anna`) to ensure the clone URL works automatically on device.
+- **2026-06-28T06:43:00Z**: Resolved a port conflict (EADDRINUSE: 3000) that occurred again by killing the hanging processes on ports 3000 and 24678 and restarting the dev server.
+- **2026-06-28T06:44:00Z**: Performed another port cleanup for ports 3000 and 24678 and restarted the dev server to restore stability.
 - **2026-06-28T06:48:00Z**: Darkened the web UI significantly as requested, shifting from `bg-gray-50`/`bg-white` to a deep `bg-neutral-950`/`bg-neutral-900` theme for better visual comfort.
-- **2026-06-28T06:55:00Z**: Built a comprehensive SHA-256 integrity verification system to combat AI Studio binary file corruptions. A new `integrity.ts` module generates and validates a `workspace_manifest.json` against all files in the `ios-workspace`. Binary file changes are actively flagged as corruptions. A new dashboard in the UI displays real-time workspace integrity and allows manual manifest updates.
+- **2026-06-28T06:48:00Z**: Engineered a new `/api/download-push-bundle` endpoint in `server.ts` that dynamically generates an `apply_and_push.sh` script and packages it alongside the `ios-workspace` folder into a single "Push Bundle" ZIP. This fully automates the a-Shell mini flow: the user can just unzip the bundle on their device, run the script, and the script will automatically clone the repository to a temporary directory, inject the modified files, commit them, push to GitHub, and clean itself up, removing the need for manual git operations entirely.
+- **2026-06-28T06:51:00Z**: Injected Git safeguards (`core.fileMode false` and `core.autocrlf input`) directly into the generated `apply_and_push.sh` script. Documented in `/notes_and_lessons.md` that mobile ZIP extraction via `a-Shell mini` inherently risks false positive git modifications (e.g., executing bits wiped during `cp -R`, and CRLF line ending conversions), which these configurations prevent.
+- **2026-06-28T06:55:00Z**: Built a comprehensive SHA-256 integrity verification system to combat AI Studio binary file corruptions. A new `integrity.ts` module generates and validates a `workspace_manifest.json` against all files in the `ios-workspace`. Binary file changes are actively flagged as corruptions, and the `download-push-bundle` API endpoint will strictly block downloading if corruptions are detected. A new dashboard in the UI displays real-time workspace integrity and allows manual manifest updates.
 - **2026-06-28T07:02:00Z**: Added new agent guidelines to `AGENTS.md` enforcing mandatory manifest updates (`/api/integrity/update`) whenever the agent edits files in `ios-workspace`. Renamed `aprendizagem.md` to `memory.md` across the workspace per user request. Cloned the user's `IceCubesApp` repository directly into `ios-workspace` to prepare for editing and updated the initial integrity manifest baseline.
 - **2026-06-28T07:05:00Z**: Removed all `.bak` files from the root directory and deleted the `.bak` rule from `AGENTS.md` per user request.
 - **2026-06-28T07:08:00Z**: Fixed `EADDRINUSE` port conflict and "The string did not match the expected pattern" hydration errors. Identified that the environment had orphaned the original `tsx server.ts` background process, causing Vite's SPA fallback to hijack the `/api/integrity/check` route and return HTML. Force-killed the zombie processes (PID 870, 881) and cleanly restarted the development server. Also resolved a trailing whitespace `className` syntax bug in `App.tsx` on the RefreshCw icon.
@@ -77,6 +85,9 @@
 - **2026-06-28T07:42:00Z**: Enhanced the dev environment UI by integrating a custom commit message input field directly into the push confirmation dialog. Added "Check Status" and "Pull Latest" tools to easily view modified files and sync with remote without needing to launch a separate terminal session, while ensuring the UI remains clean and minimal.
 - **2026-06-28T07:51:00Z**: Updated the `integrity.ts` manifest generation logic to strictly ignore the `.git` directory. The `.git` folder constantly updates metadata during standard pull/commit/push operations, which was causing the integrity checker to erroneously flag `COMMIT_EDITMSG` and `config` as uncommitted workspace modifications.
 - **2026-06-28T07:57:00Z**: Implemented a "Danger Zone" with a Hard Reset feature in the web UI. This connects to a new `/api/git/reset` backend endpoint that completely deletes the `ios-workspace` folder and reclones a fresh copy of the repository from GitHub. Added a strict safety mechanism requiring the user to manually type "WIPE WORKSPACE" before the destructive reset button is enabled, safeguarding against accidental wipes while maintaining a clean, high-contrast dark theme UI.
+- **2026-06-28T08:00:00Z**: Refined the UI styling of the legacy "Download Push Bundle" option. Converted it from a prominent block button to a subtle text link to save vertical space, prevent text wrapping, and correctly de-emphasize it compared to the primary native GitHub push actions.
+- **2026-06-28T08:03:00Z**: Adjusted the color of the "Download Push Bundle (Legacy)" link to avoid looking disabled, increasing contrast and adding an underline for clear clickability without taking up extra vertical space.
+- **2026-06-28T08:06:00Z**: Removed the obsolete "Direct Push" explanation text at the bottom of the UI to further reduce clutter and maintain a minimalist, highly functional design language.
 - **2026-06-28T08:08:00Z**: **CHECKPOINT REACHED**: Finalized the internal developer tooling web UI (Git management, workspace integrity). Transitioning to modifying the core `IceCubesApp` Swift/iOS codebase.
 - **2026-06-29T00:10:00Z**: Implemented "Hide Read Posts" (Apollo-style) feature in the iOS codebase.
   - Added `SeenPostsManager` to the `Env` package to track globally seen post IDs using a debounced `UserDefaults` save mechanism (capped at 5,000 IDs).
@@ -128,6 +139,7 @@
 
 
 \n- **2026-06-30T21:55:00Z**: Fixed `hideSeenPosts` UI freezing and pull-to-refresh logic, updated web codebase zip export.\n  - Removed unnecessary and slow `SeenPostsManager.shared.seenPosts` set copying across MainActor boundaries when filtering posts in `TimelineViewModel`. Now correctly defers to `TimelineContentFilter` to fetch the cache locally.\n  - Modified `fetchNewestStatuses` so that pulling-to-refresh while `hideReadPosts` is toggled explicitly clears all read posts from memory before fetching new ones, matching user expectations.\n  - Updated `server.ts` archiver configuration with `dot: true` so the zip correctly bundles dotfiles (like `.gitignore`).\n  - Pushed to GitHub and updated the integrity manifest.
+## 🪵 Activity Log
 
 *   **2026-07-01 (UTC)**
     *   **Fix**: Identified and resolved a server crash on AI Studio GitHub push caused by unescaped double quotes inside the commit message string, which shell commands interpreted as premature termination. Modified `server.ts` to utilize Node's `execFileSync` passing the commit message dynamically as an argument parameter instead of interpolating it into a raw string executed by the shell, bypassing quoting entirely.
@@ -174,6 +186,7 @@
 -e - 2026-07-02T10:15:00Z: GitHub Actions build (Exit Code 65) successfully passed after the `TimelineTab.swift` syntax errors were removed. The app is compiling cleanly and safely pushed to the remote.
 
 - 2026-07-02T10:40:00Z: Addressed gallery scrolling and seen-post detection issues by removing an outer nested `LazyVStack` wrapping the gallery columns. Removed "hide all text" filter. Added full `StatusRowContextMenu` implementation to `GalleryMediaCell` with matching dialogs and blocks to replicate timeline functionality. Wait-polled GitHub Actions build (Exit Code 65 check); build successful and pushed.
+## 🪵 Activity Log
 2026-07-03T07:56:27Z
 - Fixed gallery mode pagination bug where scrolling erased previous pages
 - Fixed remote instances tapping images immediately exiting in Gallery View
@@ -350,49 +363,29 @@
   - Successfully updated the local file system integrity tracking manifest via the `/api/integrity/update` POST endpoint to guarantee compatibility and eliminate false-positive warnings.
   - Verified compiler stability by performing a complete applet build check, confirming 100% build success without errors.
 
-- 2026-07-27T21:38:00Z: **Synchronized repository, recovered entry point, and verified workspace compilation**
-  - Executed `bash ./sync_repo.sh` to fully clean and re-clone a pristine copy of `ios-workspace` from GitHub.
-  - Re-installed applet packages to restore missing build tools (`vite` binary).
-  - Recovered `/src/main.tsx` with standard React 18 mounting logic to fix a missing entry point build failure.
-  - Successfully restarted the dev server and updated the SHA-256 workspace integrity manifest via local POST API request.
+- 2026-07-28T09:05:00Z: **Workspace Direct Sync & Integrity Alignment**
+  - Executed `sync_repo.sh` via `bash` to cleanly wipe and re-clone the latest main branch of `IceCubesApp` from GitHub.
+  - Successfully updated the local workspace file system integrity manifest hashes via the `/api/integrity/update` API endpoint.
+  - Restored workspace to pristine sync state, fully adhering to `Claude.md` and `AGENTS.md` guidelines.
 
-- 2026-07-27T22:42:00Z: **Implemented default Multi-Image Grid Layout for status media attachments**
-  - Added `@AppStorage("status_media_grid_mode")` setting to `UserPreferences` (defaulting to `true`).
-  - Added "Multi-Image Grid Layout" toggle to `DisplaySettingsView` (under Display settings).
-  - Replaced the horizontal scrolling carousel for multi-image statuses in `StatusRowMediaPreviewView` with a responsive bento-box grid (`StatusRowMediaGridView`) supporting specialized 2-image, 3-image, 4-image, and multi-row layouts.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+- 2026-07-28T09:12:00Z: **IceShrimp.NET Keyword Filtering Compatibility Evaluation**
+  - Evaluated the root cause of keyword filtering being completely non-functional for IceShrimp.NET accounts.
+  - Analyzed the differences between Mastodon's server-side filtering architecture and Misskey/Firefish/IceShrimp designs.
+  - Confirmed that IceCubes relies entirely on the server-side timeline responses having the `filtered` field populated to decide whether to hide or warn about a post.
+  - Identified that although IceShrimp.NET implements the REST endpoints for registering v2 filters (`/api/v2/filters`), it fails to perform keyword matching against these filters when returning statuses in Mastodon-compatible timeline responses. This leaves the `filtered` field on statuses empty, completely breaking filtering logic for native Mastodon client apps like IceCubes that do not include a local client-side regex engine.
 
-- 2026-07-27T23:28:00Z: **Refined Single-Image and >4 Image Grid Layout Details**
-  - Extracted `aspectRatio` property into `DisplayData` from `MediaAttachment`.
-  - Updated `MediaPreview` for `isStandalone` attachments to use their native `aspectRatio` (up to a 2.5x `imageMaxHeight`), allowing single images to be super tall or super wide.
-  - Modified `StatusRowMediaGridView`'s default rendering block (for >4 images) to stack images vertically and span the full width, capping height at `gridHeight * 0.75` to achieve a "super wide" layout as requested.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
-
-- 2026-07-27T23:37:00Z: **Reverted Vertical Stack for >4 Images and Fixed Single Image Routing**
-  - Reverted the `default:` case in `StatusRowMediaGridView` (which stacked 5+ images vertically) back to a standard 2-column wrapping grid, matching expected Bluesky UI conventions for dense media layouts.
-  - Corrected `StatusRowMediaPreviewView` routing so that `StatusRowMediaGridView` handles `attachments.count == 1` when grid mode is enabled, overriding the legacy `FeaturedImagePreView` which restricted height to 450.
-  - Applied `clampedAspectRatio` (min 0.5, max 2.0) and `isStandalone: true` inside `MediaGridCell` to allow a single image to expand naturally up to 2x its width/height (super tall or super wide) while preserving its native bounds.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
-
-- 2026-07-28T00:13:00Z: **Fixed Square Cropping and Expanded Standalone Image Bounds**
-  - Updated `DisplayData` to compute a `standaloneAspectRatio` clamped to `[0.25, 4.0]` (1:4 to 4:1) for standalone images, allowing them to be much taller or wider before being cropped.
-  - Replaced the inner image `.aspectRatio(contentMode: .fill)` with `.fit` when the image is standalone AND lacks metadata, ensuring images take their natural shape upon loading instead of defaulting to a square crop.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
+- 2026-07-28T09:23:00Z: **IceShrimp Workaround Planning**
+  - Fact-checked the IceShrimp.NET filtering limitation: confirmed it stems from the architectural mismatch between Misskey's native "Word Mute" system and the Mastodon API's complex V2 contextual filtering.
+  - Drafted a theoretical client-side workaround plan involving local filter caching, HTML-stripping, and injecting matched `Filtered` objects into a mutable `Status.filtered` property during timeline ingestion.
+- 2026-07-28T10:00:00Z: **Fixed Filter Creation on IceShrimp**
+  - Found that creating a new filter on IceShrimp was failing because the API rejected `expires_in: ""` (used to clear expiry).
+  - Modified `EditFilterView` to send `nil` instead of `""` when creating a *new* filter, since there's no existing expiry to clear.
 
 
-
-- 2026-07-28T00:44:00Z: **Fixed Corner Rounding and Letterboxing for Standalone Images without Metadata**
-  - Reverted the inner image `.aspectRatio` content mode back to `.fill` to prevent letterboxing, which was causing the container's corner rounding to appear broken on images that didn't fill the frame.
-  - Implemented dynamic aspect ratio resolution using an internal `@State` variable (`loadedAspectRatio`) inside `MediaGridCell` and `MediaPreview`. When an image without metadata loads, we now extract its intrinsic aspect ratio directly from `state.imageContainer?.image.size`, clamp it to `[0.25, 4.0]`, and apply it to the outer container. This allows the image to adopt its natural shape instantly without clipping issues or broken rounded corners.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
-
-- 2026-07-28T01:05:00Z: **Restored Individual Rounded Corners in Grid**
-  - Added `.cornerRadius(10)` to `MediaGridCell` so that individual images displayed within the multi-image grid retain their own rounded corners, rather than relying solely on the outer bounding box of the grid layout.
-  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
-- **Status Persistence Bug Fix**: 
-  - Addressed a bug where liked and boosted indicators did not persist between views or when scrolling.
-  - The root cause was in `StatusDataControllerProvider.swift`: every time a view re-rendered, it called `dataController(for: status)`. This function was incorrectly calling `updateFrom(status:)` with the UI's local, stale `Status` object, which systematically overwrote the shared controller's accurate optimistic interaction state.
-  - Fix: Removed the `updateFrom(status: status)` call from inside `dataController(for:)`. `StatusDataController` now correctly acts as the definitive source of truth and only updates when explicitly instructed via API responses in `updateDataControllers(for:)`.
-- **Media Viewer Improvements**: 
-  - Fixed an issue in `MediaUIView` where the navigation bar background caused a shadow over the image when viewing fullscreen, by adding `.toolbarBackground(.hidden, for: .navigationBar)`.
-  - Updated `MediaUIAttachmentImageView` to allow images to automatically take up maximum space by removing hardcoded horizontal and vertical paddings.
+- 2026-07-28T10:20:00Z: Implemented IceShrimp.NET local filtering workaround. Modified `Status.swift` to make `filtered` a variable. Patched `MastodonClient` to locally fetch and cache server filters if `isIceShrimpWorkaroundsEnabled` is true, and apply those filters on any `[Status]` or `Status` decoded from API responses. Updated `AppAccountsManager` to set this flag on `currentClient`.
+- 2026-07-28T10:40:00Z: **Fixed Gallery Mode Force Crop to Square**
+  - Identified that images in Gallery Mode were frequently being forced to crop to a 1:1 aspect ratio despite the "Crop to Square" setting being turned off.
+  - Determined the root cause: The `MediaAttachment` model was previously calculating its `aspectRatio` exclusively using `meta.original.width` and `meta.original.height`. However, Mastodon v4+ and other federated instances frequently omit `width`/`height` in `original` and instead supply a direct `aspect` scalar, or they omit `original` entirely and supply metadata inside `small`. 
+  - When `aspectRatio` was evaluated as `nil`, the `GalleryAspectRatioModifier` fell back to a default `1.0` (square) aspect ratio, permanently cropping all such media.
+  - **Resolution**: Updated `MediaAttachment` struct to read the native `aspect` scalar and fall back gracefully to `meta.small` if `meta.original` lacks dimensions.
+  - Committed and pushed changes to the repository successfully.
