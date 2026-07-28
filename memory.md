@@ -380,3 +380,8 @@
   - Updated workspace integrity tracking manifest via `/api/integrity/update`.
 
 
+
+- 2026-07-28T00:44:00Z: **Fixed Corner Rounding and Letterboxing for Standalone Images without Metadata**
+  - Reverted the inner image `.aspectRatio` content mode back to `.fill` to prevent letterboxing, which was causing the container's corner rounding to appear broken on images that didn't fill the frame.
+  - Implemented dynamic aspect ratio resolution using an internal `@State` variable (`loadedAspectRatio`) inside `MediaGridCell` and `MediaPreview`. When an image without metadata loads, we now extract its intrinsic aspect ratio directly from `state.imageContainer?.image.size`, clamp it to `[0.25, 4.0]`, and apply it to the outer container. This allows the image to adopt its natural shape instantly without clipping issues or broken rounded corners.
+  - Updated workspace integrity tracking manifest via `/api/integrity/update`.
