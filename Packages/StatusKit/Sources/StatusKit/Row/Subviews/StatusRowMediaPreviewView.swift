@@ -218,7 +218,7 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? (displayData.clampedAspectRatio ?? 1.0) : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? displayData.clampedAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
@@ -766,7 +766,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? (displayData.clampedAspectRatio ?? 1.0) : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? displayData.clampedAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil
