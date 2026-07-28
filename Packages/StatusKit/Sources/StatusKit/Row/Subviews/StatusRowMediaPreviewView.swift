@@ -177,6 +177,16 @@ private struct MediaPreview: View {
   var isStandalone: Bool = false
   var onLoaded: () -> Void = {}
 
+  @State private var loadedAspectRatio: CGFloat? = nil
+
+  private var currentAspectRatio: CGFloat? {
+    if isStandalone {
+      return displayData.standaloneAspectRatio ?? loadedAspectRatio
+    } else {
+      return nil
+    }
+  }
+
   var body: some View {
     if let namespace = quickLook.namespace {
       Group {
@@ -186,8 +196,16 @@ private struct MediaPreview: View {
             if let image = state.image {
               image
                 .resizable()
-                .onAppear { onLoaded() }
-                .aspectRatio(contentMode: (isStandalone && displayData.standaloneAspectRatio == nil) ? .fit : .fill)
+                .onAppear {
+                  onLoaded()
+                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                    let ratio = size.width / size.height
+                    DispatchQueue.main.async {
+                      loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                    }
+                  }
+                }
+                .aspectRatio(contentMode: .fill)
                 .frame(
                   maxWidth: isStandalone ? .infinity : nil,
                   maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
@@ -218,7 +236,7 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? displayData.standaloneAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(currentAspectRatio, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
@@ -738,6 +756,16 @@ private struct MediaGridCell: View {
   var isStandalone: Bool = false
   var onLoaded: () -> Void = {}
 
+  @State private var loadedAspectRatio: CGFloat? = nil
+
+  private var currentAspectRatio: CGFloat? {
+    if isStandalone {
+      return displayData.standaloneAspectRatio ?? loadedAspectRatio
+    } else {
+      return nil
+    }
+  }
+
   var body: some View {
     if let namespace = quickLook.namespace {
       Group {
@@ -747,8 +775,16 @@ private struct MediaGridCell: View {
             if let image = state.image {
               image
                 .resizable()
-                .onAppear { onLoaded() }
-                .aspectRatio(contentMode: (isStandalone && displayData.standaloneAspectRatio == nil) ? .fit : .fill)
+                .onAppear {
+                  onLoaded()
+                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                    let ratio = size.width / size.height
+                    DispatchQueue.main.async {
+                      loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                    }
+                  }
+                }
+                .aspectRatio(contentMode: .fill)
                 .frame(
                   maxWidth: isStandalone ? .infinity : nil,
                   maxHeight: isStandalone ? .infinity : nil
@@ -772,7 +808,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? displayData.standaloneAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(currentAspectRatio, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil
