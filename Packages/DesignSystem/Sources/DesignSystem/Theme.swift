@@ -332,7 +332,6 @@ public final class Theme {
   }
 
   private init() {
-    registerCustomFonts()
     isThemePreviouslySet = themeStorage.isThemePreviouslySet
     selectedScheme = themeStorage.selectedScheme
     tintColor = themeStorage.tintColor
@@ -354,8 +353,8 @@ public final class Theme {
     compactLayoutPadding = themeStorage.compactLayoutPadding
     avatarAnimated = themeStorage.avatarAnimated
     selectedSet = storedSet
-
     computeContrastingTintColor()
+    registerCustomFonts()
   }
 
   public static var allColorSet: [ColorSet] {
