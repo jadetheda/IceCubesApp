@@ -81,6 +81,9 @@ struct EditFilterView: View {
       if filter == nil {
         focusedField = .title
       }
+      if client.isIceShrimpWorkaroundsEnabled {
+        contexts = [.home]
+      }
     }
     .toolbar {
       ToolbarItem(placement: .navigationBarTrailing) {
@@ -210,7 +213,7 @@ struct EditFilterView: View {
   }
 
   private var contextsSection: some View {
-    Section("filter.edit.contexts") {
+    Section {
       ForEach(ServerFilter.Context.allCases, id: \.self) { context in
         Toggle(
           isOn: .init(
@@ -230,12 +233,18 @@ struct EditFilterView: View {
         ) {
           Label(context.name, systemImage: context.iconName)
         }
-        .disabled(isSavingFilter)
+        .disabled(isSavingFilter || (client.isIceShrimpWorkaroundsEnabled && context != .home))
       }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
+    } header: {
+      Text("filter.edit.contexts")
+    } footer: {
+      if client.isIceShrimpWorkaroundsEnabled {
+        Text("IceShrimp instances only support the Home filter context.")
+      }
     }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
   }
 
   private var filterActionView: some View {

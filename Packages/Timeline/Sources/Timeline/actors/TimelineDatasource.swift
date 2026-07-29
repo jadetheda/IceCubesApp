@@ -23,7 +23,7 @@ actor TimelineDatasource {
     items
   }
 
-  func getFiltered(seen: Set<String>? = nil) async -> [Status] {
+  func getFiltered(seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     let currentAccountId = await CurrentAccount.shared.account?.id
@@ -35,7 +35,7 @@ actor TimelineDatasource {
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -43,7 +43,7 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFilteredItems(seen: Set<String>? = nil) async -> [TimelineItem] {
+  func getFilteredItems(seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [TimelineItem] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     let currentAccountId = await CurrentAccount.shared.account?.id
@@ -58,7 +58,7 @@ actor TimelineDatasource {
         filtered.append(item)
       case .status(let status):
         let realId = status.reblog?.id ?? status.id
-        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId) {
+        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
           filtered.append(item)
           realIds.insert(realId)
         }
@@ -67,14 +67,14 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil) async -> [Status] {
+  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let currentAccountId = await CurrentAccount.shared.account?.id
     var filtered: [Status] = []
     var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen, currentAccountId: currentAccountId) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen, currentAccountId: currentAccountId, exempt: exempt) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -241,7 +241,7 @@ actor TimelineDatasource {
 
   // MARK: - Private Helpers
 
-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, currentAccountId: String? = nil) -> Bool {
+  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, currentAccountId: String? = nil, exempt: Set<String>? = nil) -> Bool {
     let isHidden = if let filterContext {
       status.isHidden(in: filterContext)
     } else {
@@ -272,7 +272,11 @@ actor TimelineDatasource {
       isSeen = true
     }
     if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
-      isSeen = true
+      if let exempt, exempt.contains(status.id) || (status.reblog.map { exempt.contains($0.id) } ?? false) {
+        // Exempt from being treated as seen dynamically in this session
+      } else {
+        isSeen = true
+      }
     }
     return !isHidden
       && (showReplies || status.inReplyToId == nil
