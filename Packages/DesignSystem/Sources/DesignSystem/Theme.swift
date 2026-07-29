@@ -1,5 +1,7 @@
 import Combine
 import SwiftUI
+import CoreText
+import CoreGraphics
 
 @MainActor
 @Observable
@@ -330,6 +332,7 @@ public final class Theme {
   }
 
   private init() {
+    registerCustomFonts()
     isThemePreviouslySet = themeStorage.isThemePreviouslySet
     selectedScheme = themeStorage.selectedScheme
     tintColor = themeStorage.tintColor
@@ -377,6 +380,122 @@ public final class Theme {
   public func applySet(set: ColorSetName) {
     selectedSet = set
     setColor(withName: set)
+  }
+
+  public func registerCustomFonts() {
+    let fileManager = FileManager.default
+    guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+      return
+    }
+    let customFontsDir = appSupportURL.appendingPathComponent("CustomFonts", isDirectory: true)
+    guard fileManager.fileExists(atPath: customFontsDir.path) else { return }
+    
+    do {
+      let fileURLs = try fileManager.contentsOfDirectory(at: customFontsDir, includingPropertiesForKeys: nil)
+      for fileURL in fileURLs {
+        if ["ttf", "otf"].contains(fileURL.pathExtension.lowercased()) {
+          var error: Unmanaged<CFError>?
+          CTFontManagerRegisterFontsForURL(fileURL as CFURL, .process, &error)
+        }
+      }
+    } catch {
+      print("Failed to register custom fonts: \(error)")
+    }
+  }
+
+  public func importFont(from url: URL) -> String? {
+    let fileManager = FileManager.default
+    guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+      return nil
+    }
+    let customFontsDir = appSupportURL.appendingPathComponent("CustomFonts", isDirectory: true)
+    
+    do {
+      if !fileManager.fileExists(atPath: customFontsDir.path) {
+        try fileManager.createDirectory(at: customFontsDir, withIntermediateDirectories: true, attributes: nil)
+      }
+      
+      guard let fontDataProvider = CGDataProvider(url: url as CFURL),
+            let cgFont = CGFont(fontDataProvider),
+            let postScriptName = cgFont.postScriptName as String? else {
+        return nil
+      }
+      
+      let destinationURL = customFontsDir.appendingPathComponent("\(postScriptName).\(url.pathExtension)")
+      
+      if fileManager.fileExists(atPath: destinationURL.path) {
+        try? fileManager.removeItem(at: destinationURL)
+      }
+      
+      try fileManager.copyItem(at: url, to: destinationURL)
+      
+      var error: Unmanaged<CFError>?
+      if CTFontManagerRegisterFontsForURL(destinationURL as CFURL, .process, &error) {
+        return postScriptName
+      } else {
+        // If error is "already registered" it's fine, otherwise we probably should still return it 
+        // since it was successfully copied, but logging is better.
+        if let err = error?.takeRetainedValue() {
+            print("Font registration warning/error: \(err)")
+        }
+        return postScriptName
+      }
+    } catch {
+      print("Failed to import font: \(error)")
+      return nil
+    }
+  }
+
+  public func getImportedFonts() -> [String] {
+    let fileManager = FileManager.default
+    guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+      return []
+    }
+    let customFontsDir = appSupportURL.appendingPathComponent("CustomFonts", isDirectory: true)
+    guard fileManager.fileExists(atPath: customFontsDir.path) else { return [] }
+    
+    do {
+      let fileURLs = try fileManager.contentsOfDirectory(at: customFontsDir, includingPropertiesForKeys: nil)
+      var fontNames: [String] = []
+      for fileURL in fileURLs {
+        if ["ttf", "otf"].contains(fileURL.pathExtension.lowercased()) {
+          if let fontDataProvider = CGDataProvider(url: fileURL as CFURL),
+             let cgFont = CGFont(fontDataProvider),
+             let postScriptName = cgFont.postScriptName as String? {
+            fontNames.append(postScriptName)
+          }
+        }
+      }
+      return fontNames.sorted()
+    } catch {
+      return []
+    }
+  }
+
+  public func deleteImportedFont(name: String) {
+    let fileManager = FileManager.default
+    guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+      return
+    }
+    let customFontsDir = appSupportURL.appendingPathComponent("CustomFonts", isDirectory: true)
+    guard fileManager.fileExists(atPath: customFontsDir.path) else { return }
+    
+    do {
+      let fileURLs = try fileManager.contentsOfDirectory(at: customFontsDir, includingPropertiesForKeys: nil)
+      for fileURL in fileURLs {
+        if ["ttf", "otf"].contains(fileURL.pathExtension.lowercased()) {
+          if let fontDataProvider = CGDataProvider(url: fileURL as CFURL),
+             let cgFont = CGFont(fontDataProvider),
+             let postScriptName = cgFont.postScriptName as String?,
+             postScriptName == name {
+            var error: Unmanaged<CFError>?
+            CTFontManagerUnregisterFontsForURL(fileURL as CFURL, .process, &error)
+            try fileManager.removeItem(at: fileURL)
+            break
+          }
+        }
+      }
+    } catch {}
   }
 
   public func setColor(withName name: ColorSetName) {
