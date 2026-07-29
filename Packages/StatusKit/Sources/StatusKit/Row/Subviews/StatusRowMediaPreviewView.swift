@@ -808,7 +808,9 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(currentAspectRatio, contentMode: .fit)
+      .if(currentAspectRatio != nil) { view in
+        view.aspectRatio(currentAspectRatio, contentMode: .fit)
+      }
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil
