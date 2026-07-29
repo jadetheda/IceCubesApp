@@ -26,7 +26,7 @@ extension IceCubesApp {
           toastCenter: toastCenter,
           namespace: namespace,
           isSupporter: isSupporter)
-        .sheet(item: $quickLook.selectedMediaAttachment) { selectedMediaAttachment in
+        .fullScreenCover(item: $quickLook.selectedMediaAttachment) { selectedMediaAttachment in
           if let namespace = quickLook.namespace {
             MediaUIView(
               selectedAttachment: selectedMediaAttachment,
@@ -34,8 +34,6 @@ extension IceCubesApp {
             )
             .navigationTransition(.zoom(sourceID: selectedMediaAttachment.id, in: namespace))
             .presentationBackground(theme.primaryBackgroundColor)
-            .presentationCornerRadius(16)
-            .presentationSizing(.page)
             .withEnvironments()
           } else {
             EmptyView()

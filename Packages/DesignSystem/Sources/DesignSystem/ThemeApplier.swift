@@ -66,6 +66,16 @@ struct ThemeApplier: ViewModifier {
             theme.applySet(set: newColorScheme == .dark ? sets.dark.name : sets.light.name)
           }
         }
+        .onChange(of: theme.followSystemColorScheme) { _, follow in
+          if follow,
+             let sets = availableColorsSets.first(where: { $0.light.name == theme.selectedSet || $0.dark.name == theme.selectedSet })
+          {
+             theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name)
+             setWindowUserInterfaceStyle(from: theme.selectedScheme)
+          } else {
+             setWindowUserInterfaceStyle(from: theme.selectedScheme)
+          }
+        }
       #endif
   }
 

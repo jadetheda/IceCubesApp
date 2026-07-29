@@ -208,9 +208,7 @@ public struct FontPicker: View {
         UTType(exportedAs: "public.truetype-ttf-font"),
         UTType(filenameExtension: "ttf") ?? .font,
         UTType(filenameExtension: "otf") ?? .font,
-        UTType("public.font") ?? .font,
-        .data,
-        .item
+        UTType("public.font") ?? .font
       ],
       allowsMultipleSelection: false
     ) { result in
