@@ -254,6 +254,9 @@ public struct TimelineView: View {
         await viewModel.hideReadPosts()
       }
     }
+    .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
+      refreshContentFilter()
+    }
     .onChange(of: scenePhase) { _, newValue in
       switch newValue {
       case .active:

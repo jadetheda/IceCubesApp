@@ -274,7 +274,6 @@ actor TimelineDatasource {
     if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
       isSeen = true
     }
-
     return !isHidden
       && (showReplies || status.inReplyToId == nil
         || status.inReplyToAccountId == status.account.id)
