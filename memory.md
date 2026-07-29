@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-07-28 UTC: Fixed the horizontal grid gap bug in the 4-image grid. Modified `MediaGridCell` in `StatusRowMediaPreviewView.swift` to conditionally apply the `.aspectRatio(currentAspectRatio, contentMode: .fit)` modifier using the custom `.if` modifier. It only applies if `currentAspectRatio` is not nil, which allows grid cells to expand correctly rather than forcing a 1:1 intrinsic square.
 - 2026-07-28 UTC: Deeply analyzed the cause of the horizontal grid gap bug in the 4-image grid. According to a dumb Flash model's opinion, the root cause is the `.aspectRatio(currentAspectRatio, contentMode: .fit)` modifier applied to `MediaGridCell`. When `isStandalone` is `false`, `currentAspectRatio` is `nil`, which SwiftUI interprets as `.aspectRatio(contentMode: .fit)` with the child's intrinsic aspect ratio (1:1). This forces cells to form tight squares instead of expanding horizontally, creating massive gaps across compact layouts.
 - 2026-07-26 UTC: Reverted experimental `galleryUnboundedLargeImages` setting and removed aspect ratio clamping from `MediaAttachment.swift` because they did not fix the masonry layout gaps.
 - 2026-07-26 UTC: Documented that the gallery mode masonry layout gaps still remain unresolved in `notes_and_lessons.md` after deciding to table the issue for tonight.
