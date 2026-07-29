@@ -30,5 +30,45 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>public.opentype-font</string>
+			<key>UTTypeDescription</key>
+			<string>OpenType Font</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.font</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>otf</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>public.truetype-ttf-font</string>
+			<key>UTTypeDescription</key>
+			<string>TrueType Font</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.font</string>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>ttf</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

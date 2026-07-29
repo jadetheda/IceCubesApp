@@ -322,6 +322,7 @@ public struct GalleryMediaCell: View {
   @State private var showSelectableText: Bool = false
   @State private var isBlockConfirmationPresented = false
   @State private var isShareAsImageSheetPresented = false
+  @State private var loadedAspectRatio: CGFloat? = nil
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
@@ -346,6 +347,14 @@ public struct GalleryMediaCell: View {
                 image
                   .resizable()
                   .scaledToFill()
+                  .onAppear {
+                    if mediaStatus.attachment.aspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                      let ratio = size.width / size.height
+                      DispatchQueue.main.async {
+                        loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                      }
+                    }
+                  }
               } else {
                 ZStack {
                   Color.secondary.opacity(0.1)
@@ -362,7 +371,7 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio ?? loadedAspectRatio))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
