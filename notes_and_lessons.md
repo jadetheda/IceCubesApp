@@ -243,3 +243,11 @@ Segmenting the masonry grid into chunks (`makeSegments` / `GallerySegment.grid`/
 - **Observation:** Under Swift 6, referencing main-actor isolated classes/singletons (like `CurrentAccount.shared` and its properties) synchronously from inside a nonisolated actor (such as `TimelineDatasource`) leads to severe compilation failures (Exit Code 65).
 - **Lesson:** Since actors execute in a nonisolated background context, synchronous access to `@MainActor` properties from within the actor is prohibited. To solve this cleanly, cache the required MainActor state (e.g. `currentAccountId`) directly on the actor instance using async setters, or pass the value explicitly as an argument from `@MainActor`-isolated callers (such as `TimelineViewModel`), which can safely access `@MainActor` singletons.
 
+### Explicit Uniform Type Identifiers for Custom Font Formats
+- **Observation**: Specifying generic categories (like `.font` or dynamic `.otf`/`.ttf` types resolved from extensions at runtime) in `allowedContentTypes` of a SwiftUI `.fileImporter` can fail to permit selection of `.otf` or `.ttf` files on several iOS versions, despite having valid `UTImportedTypeDeclarations` in `Info.plist`.
+- **Fix**: Declare explicit UTIs using `UTType(exportedAs: "public.opentype-font")` and `UTType(exportedAs: "public.truetype-ttf-font")` in the allowed content types array to guarantee iOS correctly associates the files and permits user selection.
+
+### Custom Navigation Bar Contrasting Shadows
+- **Observation**: iOS automatically generates high-contrast overlay shadows on the navigation bar if the scrolled container below lacks solid, high-contrast background boundaries.
+- **Fix**: Adding `.background(Color.black)` and explicitly setting the bar color scheme to dark (`.toolbarColorScheme(.dark, for: .navigationBar)`) on the root of the full-screen media viewer (`MediaUIView`) guarantees iOS renders the viewer with solid blacks and disables unwanted system shadow overlays.
+

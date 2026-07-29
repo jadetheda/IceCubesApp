@@ -24,6 +24,7 @@ public struct MediaUIView: View, @unchecked Sendable {
         }
         .scrollTargetLayout()
       }
+      .background(Color.black)
       .focusable()
       .focused($isFocused)
       .focusEffectDisabled()
@@ -49,6 +50,7 @@ public struct MediaUIView: View, @unchecked Sendable {
         }
       }
       .toolbarBackground(.hidden, for: .navigationBar)
+      .toolbarColorScheme(.dark, for: .navigationBar)
       .onAppear {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
           scrolledItem = initialItem

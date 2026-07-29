@@ -38,6 +38,20 @@ struct StatusRowContentView: View {
         }
       }
 
+      if !viewModel.finalStatus.mediaAttachments.isEmpty {
+        HStack {
+          StatusRowMediaPreviewView(
+            attachments: viewModel.finalStatus.mediaAttachments,
+            sensitive: viewModel.finalStatus.sensitive,
+            useRemoteMedia: viewModel.useRemoteMedia)
+          if theme.statusDisplayStyle == .compact {
+            Spacer()
+          }
+        }
+        .accessibilityHidden(isFocused == false)
+        .padding(.vertical, 4)
+      }
+
       if !reasons.contains(.placeholder),
         !isCompact,
         viewModel.isEmbedLoading || viewModel.embeddedStatus != nil
@@ -60,20 +74,6 @@ struct StatusRowContentView: View {
           .redacted(reason: .placeholder)
           .transition(.opacity)
         }
-      }
-
-      if !viewModel.finalStatus.mediaAttachments.isEmpty {
-        HStack {
-          StatusRowMediaPreviewView(
-            attachments: viewModel.finalStatus.mediaAttachments,
-            sensitive: viewModel.finalStatus.sensitive,
-            useRemoteMedia: viewModel.useRemoteMedia)
-          if theme.statusDisplayStyle == .compact {
-            Spacer()
-          }
-        }
-        .accessibilityHidden(isFocused == false)
-        .padding(.vertical, 4)
       }
 
       if let card = viewModel.finalStatus.card,
