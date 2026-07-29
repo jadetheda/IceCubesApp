@@ -316,7 +316,7 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
 }
 
 // Every property in Status is immutable.
-extension Status: Sendable {}
+extension Status: @unchecked Sendable {}
 
 // Every property in ReblogStatus is immutable.
-extension ReblogStatus: Sendable {}
+extension ReblogStatus: @unchecked Sendable {}
