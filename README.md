@@ -32,6 +32,8 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
 * **Server emote caching**
 * **Undo scroll-to-top** (tap the tab again to undo)
+* **Bluesky theme set**
+* **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
