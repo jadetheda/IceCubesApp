@@ -129,6 +129,9 @@ actor TimelineDatasource {
         if status.account.id == currentAccountId {
           return true
         }
+        if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
+          return true
+        }
       }
       return false
     }
@@ -266,6 +269,9 @@ actor TimelineDatasource {
       }
     }
     if status.account.id == currentAccountId {
+      isSeen = true
+    }
+    if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
       isSeen = true
     }
 

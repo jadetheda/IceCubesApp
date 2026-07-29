@@ -8,10 +8,12 @@ private let maxAllowedScale = 4.0
 @MainActor
 struct MediaUIZoomableContainer<Content: View>: View {
   let content: Content
+  let onSingleTap: (() -> Void)?
   @State private var currentScale: CGFloat = 1.0
   @State private var tapLocation: CGPoint = .zero
 
-  init(@ViewBuilder content: () -> Content) {
+  init(onSingleTap: (() -> Void)? = nil, @ViewBuilder content: () -> Content) {
+    self.onSingleTap = onSingleTap
     self.content = content()
   }
 
@@ -25,6 +27,9 @@ struct MediaUIZoomableContainer<Content: View>: View {
       content
     }
     .onTapGesture(count: 2, perform: doubleTapAction)
+    .onTapGesture {
+      onSingleTap?()
+    }
   }
 
   fileprivate struct ZoomableScrollView<ScollContent: View>: UIViewRepresentable {

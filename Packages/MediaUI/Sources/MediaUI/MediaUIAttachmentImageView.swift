@@ -4,11 +4,12 @@ import SwiftUI
 
 public struct MediaUIAttachmentImageView: View {
   public let url: URL
+  public var onSingleTap: (() -> Void)? = nil
 
   @GestureState private var zoom = 1.0
 
   public var body: some View {
-    MediaUIZoomableContainer {
+    MediaUIZoomableContainer(onSingleTap: onSingleTap) {
       LazyImage(url: url) { state in
         if let image = state.image {
           image

@@ -11,21 +11,31 @@ public struct MediaUIView: View, @unchecked Sendable {
   private let initialItem: DisplayData?
   @State private var scrolledItem: DisplayData?
   @FocusState private var isFocused: Bool
+  @State private var isOverlayPresented = true
 
   public var body: some View {
     NavigationStack {
       ScrollView(.horizontal, showsIndicators: false) {
         LazyHStack {
-          ForEach(data) {
-            DisplayView(data: $0)
-              .containerRelativeFrame([.horizontal, .vertical])
-              .id($0)
+          ForEach(data) { item in
+            DisplayView(data: item, onSingleTap: {
+              withAnimation(.easeInOut(duration: 0.25)) {
+                isOverlayPresented.toggle()
+              }
+            })
+            .containerRelativeFrame([.horizontal, .vertical])
+            .id(item)
           }
         }
         .scrollTargetLayout()
       }
       .background(Color.black)
       .ignoresSafeArea()
+      .onTapGesture {
+        withAnimation(.easeInOut(duration: 0.25)) {
+          isOverlayPresented.toggle()
+        }
+      }
       .focusable()
       .focused($isFocused)
       .focusEffectDisabled()
@@ -46,12 +56,14 @@ public struct MediaUIView: View, @unchecked Sendable {
       .scrollTargetBehavior(.viewAligned)
       .scrollPosition(id: $scrolledItem)
       .toolbar {
-        if let item = scrolledItem {
+        if isOverlayPresented, let item = scrolledItem {
           MediaToolBar(data: item)
         }
       }
+      .toolbar(isOverlayPresented ? .visible : .hidden, for: .navigationBar)
       .toolbarBackground(.hidden, for: .navigationBar)
       .toolbarColorScheme(.dark, for: .navigationBar)
+      .statusBarHidden(!isOverlayPresented)
       .onAppear {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
           scrolledItem = initialItem
@@ -243,15 +255,19 @@ private struct DisplayData: Identifiable, Hashable {
 
 private struct DisplayView: View {
   let data: DisplayData
+  let onSingleTap: () -> Void
 
   var body: some View {
     switch data.type {
     case .image:
-      MediaUIAttachmentImageView(url: data.url)
+      MediaUIAttachmentImageView(url: data.url, onSingleTap: onSingleTap)
         .ignoresSafeArea()
     case .av:
       MediaUIAttachmentVideoView(viewModel: .init(url: data.url, forceAutoPlay: true))
         .ignoresSafeArea()
+        .onTapGesture {
+          onSingleTap()
+        }
     }
   }
 }

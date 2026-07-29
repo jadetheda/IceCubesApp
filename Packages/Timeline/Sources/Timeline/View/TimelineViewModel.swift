@@ -500,6 +500,9 @@ extension TimelineViewModel: GapLoadingFetcher {
       if !isSeen, status.account.id == CurrentAccount.shared.account?.id {
         isSeen = true
       }
+      if !isSeen, status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
+        isSeen = true
+      }
       return !isSeen
     }.map(\.id)
 
