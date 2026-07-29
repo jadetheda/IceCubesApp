@@ -88055,13 +88055,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Media Only\" in filter menu"
+            "value": "Show \"Gallery Mode\" in filter menu"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Show \"Media Only\" in filter menu"
+            "value": "Show \"Gallery Mode\" in filter menu"
           }
         },
         "es": {
@@ -88174,13 +88174,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a toggle to the timeline's filter menu to hide text-only posts."
+            "value": "Adds a toggle to the timeline's filter menu to switch to Gallery Mode."
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adds a toggle to the timeline's filter menu to hide text-only posts."
+            "value": "Adds a toggle to the timeline's filter menu to switch to Gallery Mode."
           }
         },
         "es": {
