@@ -322,6 +322,7 @@ public struct GalleryMediaCell: View {
   @State private var showSelectableText: Bool = false
   @State private var isBlockConfirmationPresented = false
   @State private var isShareAsImageSheetPresented = false
+  @State private var loadedAspectRatio: CGFloat? = nil
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
@@ -362,7 +363,7 @@ public struct GalleryMediaCell: View {
             EmptyView()
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio, loadedAspectRatio: loadedAspectRatio))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))

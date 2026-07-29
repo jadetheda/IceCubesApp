@@ -174,6 +174,10 @@ struct DisplaySettingsView: View {
         }
       }
       .navigationDestination(isPresented: $isFontSelectorPresented, destination: { FontPicker() })
+      
+      NavigationLink(destination: FontPicker()) {
+        Text("settings.display.font.custom")
+      }
 
       VStack {
         Slider(value: $localValues.fontSizeScale, in: 0.5...1.5, step: 0.1)

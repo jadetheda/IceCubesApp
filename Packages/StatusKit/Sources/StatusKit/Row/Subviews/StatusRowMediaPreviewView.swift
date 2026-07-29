@@ -180,11 +180,7 @@ private struct MediaPreview: View {
   @State private var loadedAspectRatio: CGFloat? = nil
 
   private var currentAspectRatio: CGFloat? {
-    if isStandalone {
-      return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
-    } else {
-      return nil
-    }
+    return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
   }
 
   var body: some View {
@@ -198,7 +194,7 @@ private struct MediaPreview: View {
                 .resizable()
                 .onAppear {
                   onLoaded()
-                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                  if displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
                     let ratio = size.width / size.height
                     DispatchQueue.main.async {
                       loadedAspectRatio = min(max(ratio, 0.25), 4.0)
@@ -207,12 +203,8 @@ private struct MediaPreview: View {
                 }
                 .aspectRatio(contentMode: .fill)
                 .frame(
-                  maxWidth: isStandalone ? .infinity : nil,
-                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
-                )
-                .frame(
-                  width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
-                  height: isStandalone ? nil : imageMaxHeight
+                  maxWidth: isStandalone ? .infinity : .infinity,
+                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : .infinity
                 )
                 .overlay(
                   RoundedRectangle(cornerRadius: 10)
@@ -239,11 +231,7 @@ private struct MediaPreview: View {
       .aspectRatio(currentAspectRatio, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
-      )
-      .frame(
-        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
-        height: isStandalone ? nil : imageMaxHeight
+        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : imageMaxHeight
       )
       .clipped()
       .cornerRadius(10)
@@ -764,11 +752,7 @@ private struct MediaGridCell: View {
   @State private var loadedAspectRatio: CGFloat? = nil
 
   private var currentAspectRatio: CGFloat? {
-    if isStandalone {
-      return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
-    } else {
-      return nil
-    }
+    return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
   }
 
   var body: some View {
@@ -782,7 +766,7 @@ private struct MediaGridCell: View {
                 .resizable()
                 .onAppear {
                   onLoaded()
-                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                  if displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
                     let ratio = size.width / size.height
                     DispatchQueue.main.async {
                       loadedAspectRatio = min(max(ratio, 0.25), 4.0)

@@ -61,7 +61,7 @@ struct AboutView: View {
           Label("settings.support.terms-of-use", systemImage: "checkmark.shield")
         }
       } footer: {
-        Text("\(versionNumber)© 2024 Thomas Ricouard")
+        Text("\(versionNumber)© 2026 Thomas Ricouard")
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
