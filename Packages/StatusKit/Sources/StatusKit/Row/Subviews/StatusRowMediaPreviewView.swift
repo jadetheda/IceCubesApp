@@ -181,7 +181,7 @@ private struct MediaPreview: View {
 
   private var currentAspectRatio: CGFloat? {
     if isStandalone {
-      return displayData.standaloneAspectRatio ?? loadedAspectRatio
+      return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
     } else {
       return nil
     }
@@ -706,17 +706,22 @@ private struct StatusRowMediaGridView: View {
         }
         .frame(height: gridHeight)
       default:
-        VStack(spacing: 4) {
-          ForEach(0..<((attachments.count + 1) / 2), id: \.self) { row in
-            HStack(spacing: 4) {
-              makeCell(for: row * 2)
-              if row * 2 + 1 < attachments.count {
-                makeCell(for: row * 2 + 1)
+        HStack(alignment: .top, spacing: 4) {
+          VStack(spacing: 4) {
+            ForEach(0..<attachments.count, id: \.self) { index in
+              if index % 2 == 0 {
+                makeCell(for: index, isStandaloneOverride: true)
+              }
+            }
+          }
+          VStack(spacing: 4) {
+            ForEach(0..<attachments.count, id: \.self) { index in
+              if index % 2 == 1 {
+                makeCell(for: index, isStandaloneOverride: true)
               }
             }
           }
         }
-        .frame(height: gridHeight * CGFloat((attachments.count + 1) / 2) / 2.0)
       }
     }
     .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -724,7 +729,7 @@ private struct StatusRowMediaGridView: View {
   }
 
   @ViewBuilder
-  private func makeCell(for index: Int) -> some View {
+  private func makeCell(for index: Int, isStandaloneOverride: Bool = false) -> some View {
     let attachment = attachments[index]
     let isIceShrimp = CurrentInstance.shared.isIceShrimp
     let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
@@ -734,7 +739,7 @@ private struct StatusRowMediaGridView: View {
       MediaGridCell(
         sensitive: sensitive,
         displayData: data,
-        isStandalone: attachments.count == 1,
+        isStandalone: isStandaloneOverride || attachments.count == 1,
         onLoaded: { onLoaded(attachment.id) }
       )
       .id(data.url)
@@ -760,7 +765,7 @@ private struct MediaGridCell: View {
 
   private var currentAspectRatio: CGFloat? {
     if isStandalone {
-      return displayData.standaloneAspectRatio ?? loadedAspectRatio
+      return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
     } else {
       return nil
     }
