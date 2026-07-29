@@ -25,6 +25,7 @@ public struct MediaUIView: View, @unchecked Sendable {
         .scrollTargetLayout()
       }
       .background(Color.black)
+      .ignoresSafeArea()
       .focusable()
       .focused($isFocused)
       .focusEffectDisabled()
