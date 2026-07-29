@@ -202,7 +202,7 @@ public struct FontPicker: View {
     }
     .fileImporter(
       isPresented: $showFileImporter,
-      allowedContentTypes: [.font, .data],
+      allowedContentTypes: [.font, .item, .data],
       allowsMultipleSelection: false
     ) { result in
       switch result {

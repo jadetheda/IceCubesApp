@@ -41,6 +41,7 @@ import SwiftUI
     @AppStorage("gallery_optimize_item_layout") public var galleryOptimizeItemLayout: Bool = true
     @AppStorage("gallery_round_corners") public var galleryRoundCorners: Bool = true
     @AppStorage("status_media_grid_mode") public var statusMediaGridMode: Bool = true
+    @AppStorage("crop_status_media_on_timeline") public var cropStatusMediaOnTimeline: Bool = false
     @AppStorage("undo_scroll_to_top_enabled") public var undoScrollToTopEnabled: Bool = true
     @AppStorage("undo_scroll_to_top_timeout") public var undoScrollToTopTimeout: Double = 10.0
 
@@ -317,6 +318,11 @@ import SwiftUI
   public var galleryRoundCorners: Bool {
     didSet {
       storage.galleryRoundCorners = galleryRoundCorners
+    }
+  }
+  public var cropStatusMediaOnTimeline: Bool {
+    didSet {
+      storage.cropStatusMediaOnTimeline = cropStatusMediaOnTimeline
     }
   }
   public var statusMediaGridMode: Bool {
@@ -759,6 +765,7 @@ import SwiftUI
     galleryAddThinMargins = storage.galleryAddThinMargins
     galleryOptimizeItemLayout = storage.galleryOptimizeItemLayout
     galleryRoundCorners = storage.galleryRoundCorners
+    cropStatusMediaOnTimeline = storage.cropStatusMediaOnTimeline
     statusMediaGridMode = storage.statusMediaGridMode
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout

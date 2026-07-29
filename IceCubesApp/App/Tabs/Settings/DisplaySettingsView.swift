@@ -242,6 +242,7 @@ struct DisplaySettingsView: View {
         }
       }
       Toggle("Multi-Image Grid Layout", isOn: $userPreferences.statusMediaGridMode)
+      Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
       Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
       Toggle("settings.display.pending-at-bottom", isOn: $userPreferences.pendingShownAtBottom)
       Toggle("settings.display.pending-left", isOn: $userPreferences.pendingShownLeft)

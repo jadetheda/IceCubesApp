@@ -56,7 +56,33 @@ public struct StatusRowMediaPreviewView: View {
 
   public var body: some View {
     Group {
-      if userPreferences.statusMediaGridMode {
+      if attachments.count == 1 {
+        if userPreferences.cropStatusMediaOnTimeline {
+          FeaturedImagePreView(
+            attachment: attachments[0],
+            useRemoteMedia: effectiveUseRemoteMedia,
+            maxSize: imageMaxHeight == 300
+              ? nil
+              : CGSize(width: imageMaxHeight, height: imageMaxHeight),
+            sensitive: sensitive,
+            onLoaded: { loadedAttachments.insert(attachments[0].id) }
+          )
+          .accessibilityElement(children: .ignore)
+          .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
+          .accessibilityAddTraits([.isButton, .isImage])
+          .onTapGesture { tabAction(for: 0) }
+        } else {
+          StatusRowMediaGridView(
+            attachments: attachments,
+            sensitive: sensitive,
+            imageMaxHeight: imageMaxHeight,
+            useRemoteMedia: effectiveUseRemoteMedia,
+            userPreferences: userPreferences,
+            onLoaded: { id in loadedAttachments.insert(id) },
+            tabAction: { index in tabAction(for: index) }
+          )
+        }
+      } else if userPreferences.statusMediaGridMode {
         StatusRowMediaGridView(
           attachments: attachments,
           sensitive: sensitive,
@@ -66,20 +92,6 @@ public struct StatusRowMediaPreviewView: View {
           onLoaded: { id in loadedAttachments.insert(id) },
           tabAction: { index in tabAction(for: index) }
         )
-      } else if attachments.count == 1 {
-        FeaturedImagePreView(
-          attachment: attachments[0],
-          useRemoteMedia: effectiveUseRemoteMedia,
-          maxSize: imageMaxHeight == 300
-            ? nil
-            : CGSize(width: imageMaxHeight, height: imageMaxHeight),
-          sensitive: sensitive,
-          onLoaded: { loadedAttachments.insert(attachments[0].id) }
-        )
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
-        .accessibilityAddTraits([.isButton, .isImage])
-        .onTapGesture { tabAction(for: 0) }
       } else {
         ScrollView(.horizontal, showsIndicators: showsScrollIndicators) {
           HStack {
@@ -234,7 +246,7 @@ private struct MediaPreview: View {
         maxHeight: isStandalone ? (imageMaxHeight * 2.5) : imageMaxHeight
       )
       .clipped()
-      .cornerRadius(10)
+      .if(isStandalone) { $0.cornerRadius(10) }
       // #965: do not create overlapping tappable areas, when multiple images are shown
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
@@ -797,7 +809,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .if(currentAspectRatio != nil) { view in
+      .if(isStandalone && currentAspectRatio != nil) { view in
         view.aspectRatio(currentAspectRatio, contentMode: .fit)
       }
       .frame(
@@ -806,7 +818,7 @@ private struct MediaGridCell: View {
       )
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
       .clipped()
-      .cornerRadius(10)
+      .if(isStandalone) { $0.cornerRadius(10) }
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text(displayData.accessibilityText))

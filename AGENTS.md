@@ -82,6 +82,10 @@ When writing Python scripts, shell commands, or architectures intended to run of
 - **Root Cause**: When adding modifiers (like `.onChange`) that reference a `proxy` from a `ScrollViewReader { proxy in }`, placing the modifier outside the `ScrollViewReader` block causes a `cannot find 'proxy' in scope` compilation error.
 - **Solution**: Always ensure that any modifiers utilizing `proxy` are nested *inside* the `ScrollViewReader` closure.
 
+## 🐛 Exit Code 65 Logs (MainActor-isolated references from actors)
+- **Root Cause**: Synchronously referencing main actor-isolated structures or classes (like `CurrentAccount.shared` and its nested properties) from inside a nonisolated background actor (such as `TimelineDatasource`) causes actor isolation violations and compile-time failures.
+- **Solution**: Avoid referencing `@MainActor`-isolated singletons or properties synchronously inside nonisolated actors. Cache the required properties (e.g. `currentAccountId`) locally on the actor instance using async setters, or pass them explicitly from `@MainActor`-isolated contexts (such as `TimelineViewModel`) during method calls.
+
 # CLAUDE.md (Imported Guidelines)
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
