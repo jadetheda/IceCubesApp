@@ -25,6 +25,7 @@
 	<array>
 		<string>Atkinson-Hyperlegible-Regular-102.ttf</string>
 		<string>OpenDyslexic-Regular.otf</string>
+		<string>Inter-Regular.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

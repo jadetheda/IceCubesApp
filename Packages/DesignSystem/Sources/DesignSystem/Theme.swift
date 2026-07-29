@@ -54,6 +54,7 @@ public final class Theme {
     case openDyslexic
     case hyperLegible
     case SFRounded
+    case inter
     case custom
 
     public var title: LocalizedStringKey {
@@ -66,6 +67,8 @@ public final class Theme {
         "Hyper Legible"
       case .SFRounded:
         "SF Rounded"
+      case .inter:
+        "Inter (Bluesky)"
       case .custom:
         "settings.display.font.custom"
       }

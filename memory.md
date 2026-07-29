@@ -480,3 +480,7 @@
 - **2026-07-29T16:50:00Z**: Fixed Image Viewer Shadow issue properly.
   - **Issue**: The previous fix for the navigation bar shadow in the media viewer left a visible block of color across the top safe area on light themes because `Color.black` did not ignore the safe area, allowing the NavigationStack's presentation background to show through.
   - **Fix**: Added `.ignoresSafeArea()` to the `ScrollView` in `MediaUIView`. This forces the black background and the images to extend to the very top and bottom edges of the screen, perfectly sliding beneath the completely transparent navigation toolbar and eliminating any unwanted "shadow" or colored bars.
+- **2026-07-29T17:05:00Z**: Packaged Inter (Bluesky) Font.
+  - **Feature**: Packaged the Inter font (`Inter-Regular.ttf`) used by Bluesky and made it an integrated option in the app.
+  - **Implementation**: Embedded `Inter-Regular.ttf` in `IceCubesApp/Embeds/`, registered it under `UIAppFonts` in `IceCubesApp/Info.plist`, added `.inter` ("Inter (Bluesky)") to `Theme.FontState` in `Theme.swift`, and updated `DisplaySettingsView.swift` to select and apply Inter font across the app.
+
