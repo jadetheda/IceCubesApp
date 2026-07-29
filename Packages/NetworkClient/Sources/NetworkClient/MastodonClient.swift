@@ -231,9 +231,10 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
         let url = try makeURL(endpoint: ServerFilters.filters, forceVersion: .v2)
         let request = makeURLRequest(url: url, endpoint: ServerFilters.filters, httpMethod: "GET")
         let (data, _) = try await urlSession.data(for: request)
-        cachedFilters = try decoder.decode([ServerFilter].self, from: data)
+        let fetchedFilters = try decoder.decode([ServerFilter].self, from: data)
+        cachedFilters = fetchedFilters
         critical.withLock { 
-           $0.iceShrimpFiltersCache = cachedFilters
+           $0.iceShrimpFiltersCache = fetchedFilters
            $0.iceShrimpFiltersLastFetched = now
         }
       } catch {
