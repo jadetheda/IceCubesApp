@@ -373,6 +373,8 @@ public final class Theme {
       ConstellationDark(),
       ThreadsLight(),
       ThreadsDark(),
+      BlueskyLight(),
+      BlueskyDark(),
     ]
   }
 
