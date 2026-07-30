@@ -4,7 +4,7 @@
 
 ### Corrections
 
-- [ ] The open source software credits are formatted incorrectly now (check the old version)
+- [ ] The open source software credits are formatted incorrectly now (check the old version, the spacing is off)
 
 ### Gallery Mode & Media Layout Enhancements
 
@@ -13,11 +13,15 @@
 
 ### Bugs/Regressions
 
-- [ ] Undo Scroll to Top doesn't work for all tabs yet 
+- [ ] Undo Scroll to Top doesn't work for all tabs yet
+- [ ] Remote media doesn't load correctly in the media displays
+- [ ] Posts with more than 4 images display them stacked 2 by 2, which  is not the carousel we want
 
 ### Features
 
 - [ ] Maybe: long-press profile tab to open profile switcher
+- [ ] Make server emojis display correctly in headers
+- [ ] Make word filters work in more contexts for IceShrimp
 - [ ] Add status.server to instance info
 - [ ] toggle to set separate custom theme settings for light/dark
 - [ ] optional (off by default) button in timeline menu to hide the pinned items temporarily 
