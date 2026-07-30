@@ -35,6 +35,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Bluesky theme set**
 * **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
 * **Automatic dark mode switching**
+* **Tap to hide header overlay in image viewer**
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
