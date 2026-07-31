@@ -22,14 +22,7 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.showLanguageFilters) {
           Text("Show language filters in timeline options")
         }
-        if userPreferences.showLanguageFilters {
-          Toggle(isOn: $contentFilter.hideJapaneseTextPosts) {
-            Label("Hide Japanese text posts", systemImage: "character.book.closed")
-          }
-          Toggle(isOn: $contentFilter.hideChineseTextPosts) {
-            Label("Hide Chinese text posts", systemImage: "character.book.closed")
-          }
-        }
+        
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
@@ -49,7 +42,23 @@ struct ContentSettingsView: View {
             Text("settings.other.animate-emojis")
         }
 
+        Toggle(isOn: $userPreferences.remoteMediaAutoFallback) {
+          Label("settings.content.media.remote-fallback.auto", systemImage: "photo.badge.arrow.down")
+        }
+        if userPreferences.remoteMediaAutoFallback {
+          VStack(alignment: .leading) {
+            Text(String(format: NSLocalizedString("settings.content.media.remote-fallback.delay", comment: ""), String(format: "%.1f", userPreferences.remoteMediaAutoFallbackDelay)))
+            Slider(value: $userPreferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
+          }
+        }
+        Toggle(isOn: $userPreferences.remoteMediaFallbackOnFail) {
+          Label("settings.content.media.remote-fallback.on-fail", systemImage: "arrow.triangle.2.circlepath")
+        }
+        Toggle(isOn: $userPreferences.remoteMediaAlwaysForce) {
+          Label("settings.content.media.remote-fallback.force", systemImage: "photo.badge.exclamationmark")
+        }
       }
+
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
@@ -77,6 +86,43 @@ struct ContentSettingsView: View {
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
+
+      Section {
+        // Toggle to enable/disable all IceShrimp compatibility workarounds.
+        Toggle("settings.content.iceshrimp.workarounds", isOn: $userPreferences.useIceShrimpWorkarounds)
+        if userPreferences.useIceShrimpWorkarounds {
+          Toggle("settings.content.iceshrimp.never-load-video", isOn: $userPreferences.neverLoadVideo)
+          Toggle(isOn: $userPreferences.tagGroupsClientSideMergeEnabled) {
+            Label("settings.content.iceshrimp.alternative-tag-fetching", systemImage: "tag")
+          }
+          Picker("Algorithm", selection: $userPreferences.trendingAlgorithm) {
+            ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
+              Text(algorithm.description).tag(algorithm)
+            }
+          }
+          if userPreferences.trendingAlgorithm == .simpleScore {
+            Stepper("Posts to Search: \(userPreferences.trendingSimpleScoreSearchLimit)", value: $userPreferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
+          } else if userPreferences.trendingAlgorithm == .decayingScore {
+            VStack(alignment: .leading) {
+              Text("settings.content.iceshrimp.trending-algorithm")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+              Stepper(String(format: NSLocalizedString("settings.content.iceshrimp.trending-threshold", comment: ""), userPreferences.iceShrimpTrendingThreshold), value: $userPreferences.iceShrimpTrendingThreshold, in: 1...50)
+              Stepper(value: $userPreferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
+                Text(String(format: NSLocalizedString("settings.content.iceshrimp.trending-half-life", comment: ""), userPreferences.iceShrimpTrendingHalfLife))
+              }
+            }
+          }
+        }
+      } header: {
+        Text("settings.content.iceshrimp.header")
+      } footer: {
+        Text("settings.content.iceshrimp.footer")
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+
       .onChange(of: userPreferences.useInstanceContentSettings) { _, newVal in
         if newVal {
           userPreferences.appAutoExpandSpoilers = userPreferences.autoExpandSpoilers
@@ -169,6 +215,47 @@ struct ContentSettingsView: View {
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
+
+      Section {
+        Toggle(isOn: $userPreferences.hideSeenPostsEnabled) {
+          Label("settings.content.hide-seen.title", systemImage: "eye.slash")
+        }
+        if userPreferences.hideSeenPostsEnabled {
+          VStack(alignment: .leading) {
+            Text(String(format: NSLocalizedString("settings.content.hide-seen.threshold", comment: ""), String(format: "%.1f", userPreferences.hideSeenPostsThreshold)))
+            Slider(value: $userPreferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
+          }
+          Toggle(isOn: $userPreferences.hideSeenPostsLikedOnly) {
+            Text("settings.content.hide-seen.liked-only")
+          }
+          Toggle(isOn: $userPreferences.hideSeenPostsShowInHeader) {
+            Text("settings.content.hide-seen.show-header")
+          }
+          Toggle(isOn: $userPreferences.hideSeenPostsIncludeBoosts) {
+            Text("settings.content.hide-seen.include-boosts")
+          }
+          Toggle(isOn: $userPreferences.hideSeenPostsIsToggle) {
+            Text("settings.content.hide-seen.is-toggle")
+          }
+        }
+      } footer: {
+        Text("settings.content.hide-seen.footer")
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+      
+      Section {
+        Toggle(isOn: $userPreferences.showHidePostsWithoutMediaToggle) {
+          Label("settings.content.timeline.gallery-toggle", systemImage: "photo.on.rectangle.angled")
+        }
+      } footer: {
+        Text("settings.content.timeline.gallery-toggle-footer")
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+
       
       Section("Display Mode") {
         Toggle(isOn: Binding(

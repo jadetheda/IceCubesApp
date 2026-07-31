@@ -315,12 +315,8 @@ struct SettingsTabs: View {
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
   }
-
   private var experimentalSection: some View {
     Section {
-      NavigationLink(destination: ExperimentalSettingsView()) {
-        Label("settings.experimental.title", systemImage: "flask")
-      }
       Button("settings.export.title") {
         prepareExport()
       }
@@ -334,6 +330,7 @@ struct SettingsTabs: View {
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
   }
+
 
   private var appSection: some View {
     Section {
@@ -668,138 +665,5 @@ public struct IceCubesDocument: FileDocument, Sendable {
   }
 }
 
-public struct ExperimentalSettingsView: View {
-  @Environment(Theme.self) private var theme
-  @Environment(UserPreferences.self) private var preferences
 
-  public init() {}
-
-  public var body: some View {
-    @Bindable var preferences = preferences
-    Form {
-      Section("settings.experimental.gallery-mode") {
-        Stepper(String(format: NSLocalizedString("settings.experimental.gallery-columns", comment: ""), preferences.galleryColumns), value: $preferences.galleryColumns, in: 2...4)
-        Toggle(isOn: $preferences.galleryCropToSquare) {
-          Label("settings.experimental.gallery-crop-square", systemImage: "crop")
-        }
-        Toggle(isOn: $preferences.galleryOptimizeItemLayout) {
-          Label("settings.experimental.gallery-optimize-item-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
-        }
-        Toggle(isOn: $preferences.galleryRoundCorners) {
-          Label("Round corners", systemImage: "squareshape")
-        }
-        Toggle(isOn: $preferences.galleryAddThinMargins) {
-          Label("settings.experimental.gallery-add-thin-margins", systemImage: "arrow.left.and.right")
-        }
-      }
-      
-      Section("settings.experimental.undo-scroll-to-top") {
-        Toggle("settings.experimental.undo-scroll-to-top.enable", isOn: $preferences.undoScrollToTopEnabled)
-        if preferences.undoScrollToTopEnabled {
-          Stepper(String(format: NSLocalizedString("settings.experimental.undo-scroll-to-top.timeout", comment: ""), preferences.undoScrollToTopTimeout), value: $preferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
-        }
-      }
-
-      Section("settings.experimental.media") {
-        Toggle(isOn: $preferences.remoteMediaAutoFallback) {
-          Label("settings.experimental.remote-media-auto-fallback", systemImage: "photo.badge.arrow.down")
-        }
-        if preferences.remoteMediaAutoFallback {
-          VStack(alignment: .leading) {
-            Text(String(format: NSLocalizedString("settings.experimental.remote-media-fallback-delay", comment: ""), String(format: "%.1f", preferences.remoteMediaAutoFallbackDelay)))
-            Slider(value: $preferences.remoteMediaAutoFallbackDelay, in: 0.1...15.0, step: 0.1)
-          }
-        }
-        Toggle(isOn: $preferences.remoteMediaFallbackOnFail) {
-          Label("settings.experimental.remote-media-fallback-on-fail", systemImage: "arrow.triangle.2.circlepath")
-        }
-
-        Toggle(isOn: $preferences.remoteMediaAlwaysForce) {
-          Label("settings.experimental.remote-media-always-force", systemImage: "photo.badge.exclamationmark")
-        }
-      }
-      Section {
-        Toggle(isOn: $preferences.hideSeenPostsEnabled) {
-          Label("settings.experimental.hide-seen-posts", systemImage: "eye.slash")
-        }
-        if preferences.hideSeenPostsEnabled {
-          VStack(alignment: .leading) {
-            Text(String(format: NSLocalizedString("settings.experimental.hide-seen-posts-threshold", comment: ""), String(format: "%.1f", preferences.hideSeenPostsThreshold)))
-            Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
-          }
-          Toggle(isOn: $preferences.hideSeenPostsLikedOnly) {
-            Text("settings.experimental.hide-seen-posts-liked-only")
-          }
-          Toggle(isOn: $preferences.hideSeenPostsShowInHeader) {
-            Text("settings.experimental.hide-seen-posts-show-header")
-          }
-
-          Toggle(isOn: $preferences.hideSeenPostsIncludeBoosts) {
-            Text("settings.experimental.hide-seen-posts-include-boosts")
-          }
-          Toggle(isOn: $preferences.hideSeenPostsIsToggle) {
-            Text("settings.experimental.hide-seen-posts-is-toggle")
-          }
-        }
-      } footer: {
-        Text("settings.experimental.hide-seen-posts-footer")
-      }
-      .listRowBackground(theme.primaryBackgroundColor)
-      
-      Section {
-        Toggle(isOn: $preferences.showHidePostsWithoutMediaToggle) {
-          Label("settings.experimental.media-only-toggle", systemImage: "photo.on.rectangle.angled")
-        }
-      } footer: {
-        Text("settings.experimental.media-only-toggle-footer")
-      }
-      .listRowBackground(theme.primaryBackgroundColor)
-
-      Section {
-        // Toggle to enable/disable all IceShrimp compatibility workarounds.
-        // Binds directly to user preference and reveals advanced workarounds when enabled.
-        Toggle("settings.experimental.iceshrimp.workarounds", isOn: $preferences.useIceShrimpWorkarounds)
-        if preferences.useIceShrimpWorkarounds {
-          // Alternative video loading behavior to handle IceShrimp video format inconsistencies.
-          Toggle("settings.experimental.iceshrimp.never-load-video", isOn: $preferences.neverLoadVideo)
-          
-          
-          // Enables alternative client-side tag merging if the instance does not support standard tag fetching.
-          Toggle(isOn: $preferences.tagGroupsClientSideMergeEnabled) {
-            Label("settings.experimental.iceshrimp.alternative-tag-fetching", systemImage: "tag")
-          }
-
-          Picker("Algorithm", selection: $preferences.trendingAlgorithm) {
-            ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
-              Text(algorithm.description).tag(algorithm)
-            }
-          }
-          
-          if preferences.trendingAlgorithm == .simpleScore {
-            Stepper("Posts to Search: \(preferences.trendingSimpleScoreSearchLimit)", value: $preferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
-          } else if preferences.trendingAlgorithm == .decayingScore {
-            VStack(alignment: .leading) {
-              Text("settings.experimental.iceshrimp.trending-algorithm")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-              
-              Stepper(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-threshold", comment: ""), preferences.iceShrimpTrendingThreshold), value: $preferences.iceShrimpTrendingThreshold, in: 1...50)
-              
-              Stepper(value: $preferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
-                Text(String(format: NSLocalizedString("settings.experimental.iceshrimp.trending-half-life", comment: ""), preferences.iceShrimpTrendingHalfLife))
-              }
-            }
-          }
-        }
-      } header: {
-        Text("settings.experimental.iceshrimp.header")
-      } footer: {
-        Text("settings.experimental.iceshrimp.footer")
-      }
-      .listRowBackground(theme.primaryBackgroundColor)
-    }
-    .navigationTitle("settings.experimental.title")
-    .scrollContentBackground(.hidden)
-    .background(theme.secondaryBackgroundColor)
-  }
 }

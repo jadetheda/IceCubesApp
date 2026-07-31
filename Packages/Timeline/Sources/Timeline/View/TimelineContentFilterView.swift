@@ -33,11 +33,8 @@ public struct TimelineContentFilterView: View {
         }
         if UserPreferences.shared.showLanguageFilters {
           Section("Language Filters") {
-            Toggle(isOn: $contentFilter.hideJapaneseTextPosts) {
-              Label("Hide Japanese text posts", systemImage: "character.book.closed")
-            }
-            Toggle(isOn: $contentFilter.hideChineseTextPosts) {
-              Label("Hide Chinese text posts", systemImage: "character.book.closed")
+            NavigationLink(destination: TimelineLanguageFilterView()) {
+              Label("Filtered Languages", systemImage: "globe")
             }
           }
         }

@@ -145,6 +145,45 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     return segments
   }
 
+
+  private enum GallerySegment: Identifiable {
+    case grid(id: String, statuses: [Status])
+    case gap(TimelineGap)
+
+    var id: String {
+      switch self {
+      case .grid(let id, _):
+        return id
+      case .gap(let gap):
+        return gap.id
+      }
+    }
+  }
+
+  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
+    var segments: [GallerySegment] = []
+    var currentStatuses: [Status] = []
+    
+    for item in items {
+      switch item {
+      case .status(let status):
+        currentStatuses.append(status)
+      case .gap(let gap):
+        if !currentStatuses.isEmpty {
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+          currentStatuses = []
+        }
+        segments.append(.gap(gap))
+      }
+    }
+
+    if !currentStatuses.isEmpty {
+      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+    }
+
+    return segments
+  }
+
   @ViewBuilder
   private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
     if nextPageState == .hasNextPage {

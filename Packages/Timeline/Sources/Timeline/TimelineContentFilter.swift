@@ -14,8 +14,7 @@ import Env
     public let hidePostsFromBots: Bool
     public let isGalleryMode: Bool
     public let hideReadPosts: Bool
-    public let hideJapaneseTextPosts: Bool
-    public let hideChineseTextPosts: Bool
+    public let hiddenLanguages: [String]
     public let hideSeenPostsEnabled: Bool
     public let hideSeenPostsIncludeBoosts: Bool
 
@@ -29,8 +28,7 @@ import Env
       hidePostsFromBots: Bool = false,
       isGalleryMode: Bool = false,
       hideReadPosts: Bool = false,
-      hideJapaneseTextPosts: Bool = false,
-      hideChineseTextPosts: Bool = false,
+      hiddenLanguages: [String] = [],
       hideSeenPostsEnabled: Bool = false,
       hideSeenPostsIncludeBoosts: Bool = false
     ) {
@@ -43,8 +41,7 @@ import Env
       self.hidePostsFromBots = hidePostsFromBots
       self.isGalleryMode = isGalleryMode
       self.hideReadPosts = hideReadPosts
-      self.hideJapaneseTextPosts = hideJapaneseTextPosts
-      self.hideChineseTextPosts = hideChineseTextPosts
+      self.hiddenLanguages = hiddenLanguages
       self.hideSeenPostsEnabled = hideSeenPostsEnabled
       self.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
     }
@@ -60,8 +57,7 @@ import Env
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
     @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
-    @AppStorage("timeline_hide_japanese_text") var hideJapaneseTextPosts: Bool = false
-    @AppStorage("timeline_hide_chinese_text") var hideChineseTextPosts: Bool = false
+    @AppStorage("timeline_hidden_languages") var hiddenLanguages: [String] = []
   }
 
   public static let shared = TimelineContentFilter()
@@ -205,31 +201,16 @@ import Env
 
   
   @ObservationIgnored
-  private var _hideJapaneseTextPosts: Bool = false
-  public var hideJapaneseTextPosts: Bool {
+  private var _hiddenLanguages: [String] = []
+  public var hiddenLanguages: [String] {
     get {
-      access(keyPath: \.hideJapaneseTextPosts)
-      return _hideJapaneseTextPosts
+      access(keyPath: \.hiddenLanguages)
+      return _hiddenLanguages
     }
     set {
-      withMutation(keyPath: \.hideJapaneseTextPosts) {
-        _hideJapaneseTextPosts = newValue
-        storage.hideJapaneseTextPosts = newValue
-      }
-    }
-  }
-
-  @ObservationIgnored
-  private var _hideChineseTextPosts: Bool = false
-  public var hideChineseTextPosts: Bool {
-    get {
-      access(keyPath: \.hideChineseTextPosts)
-      return _hideChineseTextPosts
-    }
-    set {
-      withMutation(keyPath: \.hideChineseTextPosts) {
-        _hideChineseTextPosts = newValue
-        storage.hideChineseTextPosts = newValue
+      withMutation(keyPath: \.hiddenLanguages) {
+        _hiddenLanguages = newValue
+        storage.hiddenLanguages = newValue
       }
     }
   }
@@ -244,8 +225,7 @@ import Env
     _hidePostsFromBots = storage.hidePostsFromBots
     _isGalleryMode = storage.isGalleryMode
     _hideReadPosts = storage.hideReadPosts
-    _hideJapaneseTextPosts = storage.hideJapaneseTextPosts
-    _hideChineseTextPosts = storage.hideChineseTextPosts
+    _hiddenLanguages = storage.hiddenLanguages
   }
 
   public func snapshot() -> Snapshot {
@@ -259,8 +239,7 @@ import Env
       hidePostsFromBots: hidePostsFromBots,
       isGalleryMode: isGalleryMode,
       hideReadPosts: hideReadPosts,
-      hideJapaneseTextPosts: hideJapaneseTextPosts,
-      hideChineseTextPosts: hideChineseTextPosts,
+      hiddenLanguages: hiddenLanguages,
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,
       hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts
     )

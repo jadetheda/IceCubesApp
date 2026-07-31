@@ -273,6 +273,31 @@ struct DisplaySettingsView: View {
       Toggle("settings.display.show-account-popover", isOn: $userPreferences.showAccountPopover)
       Toggle("Compact Layout", isOn: $theme.compactLayoutPadding)
     }
+    
+
+      Section("settings.display.gallery.title") {
+        Stepper(String(format: NSLocalizedString("settings.display.gallery.columns", comment: ""), userPreferences.galleryColumns), value: $userPreferences.galleryColumns, in: 2...4)
+        Toggle(isOn: $userPreferences.galleryCropToSquare) {
+          Label("settings.display.gallery.crop-square", systemImage: "crop")
+        }
+        Toggle(isOn: $userPreferences.galleryOptimizeItemLayout) {
+          Label("settings.display.gallery.optimize-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
+        }
+        Toggle(isOn: $userPreferences.galleryRoundCorners) {
+          Label("Round corners", systemImage: "squareshape")
+        }
+        Toggle(isOn: $userPreferences.galleryAddThinMargins) {
+          Label("settings.display.gallery.add-margins", systemImage: "arrow.left.and.right")
+        }
+      }
+      
+      Section("settings.display.undo-scroll.title") {
+        Toggle("settings.display.undo-scroll.enable", isOn: $userPreferences.undoScrollToTopEnabled)
+        if userPreferences.undoScrollToTopEnabled {
+          Stepper(String(format: NSLocalizedString("settings.display.undo-scroll.timeout", comment: ""), userPreferences.undoScrollToTopTimeout), value: $userPreferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
+        }
+      }
+
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
