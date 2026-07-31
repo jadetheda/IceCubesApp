@@ -278,7 +278,22 @@ actor TimelineDatasource {
         isSeen = true
       }
     }
+    
+    var hideDueToLanguage = false
+    if filter.hideJapaneseTextPosts || filter.hideChineseTextPosts {
+      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      if isTextOnly {
+        let text = status.reblog?.content.asRawText ?? status.content.asRawText
+        if filter.hideJapaneseTextPosts && text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+          hideDueToLanguage = true
+        } else if filter.hideChineseTextPosts && text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+          hideDueToLanguage = true
+        }
+      }
+    }
+    
     return !isHidden
+      && !hideDueToLanguage
       && (showReplies || status.inReplyToId == nil
         || status.inReplyToAccountId == status.account.id)
       && (showBoosts || status.reblog == nil)
