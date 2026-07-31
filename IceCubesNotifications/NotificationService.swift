@@ -129,7 +129,7 @@ actor NotificationServiceContentProvider {
                   bestAttemptContent.body = notification.body.escape()
                 } else {
                   let newBody =
-                  "\(await NSLocalizedString(type.notificationKey(), bundle: .main, comment: ""))\(notification.body.escape())"
+                  "\(NSLocalizedString(type.notificationKey(), bundle: .main, comment: ""))\(notification.body.escape())"
                   bestAttemptContent.body = newBody
                 }
                 return bestAttemptContent
