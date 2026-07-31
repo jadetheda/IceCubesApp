@@ -4,7 +4,7 @@
 
 ### Corrections
 
-- [ ] The open source software credits are formatted incorrectly now (check the old version, the spacing is off)
+- [ ] The open source software credits are formatted incorrectly now (check the old version, it's weird now)
 
 ### Gallery Mode & Media Layout Enhancements
 
@@ -20,7 +20,6 @@
 ### Features
 
 - [ ] Maybe: long-press profile tab to open profile switcher
-- [ ] Make server emojis display correctly in headers
 - [ ] Make word filters work in more contexts for IceShrimp
 - [ ] Add status.server to instance info
 - [ ] toggle to set separate custom theme settings for light/dark
@@ -28,7 +27,7 @@
 
 ### App Configuration & Maintenance
 
-- [ ] Figure out where *the second home* of the various **Experimental Settings** should be once they're finished
+- [ ] ~~Figure out where *the second home* of the various **Experimental Settings** should be once they're finished~~ Needs review; not entirely happy with the sorting right now
 
 ### Stretch goals
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.
@@ -84,10 +83,15 @@
 - [x] Add dropdown to change the IceShrimp trending algorithm between the Mastodon algorithm and a simple Sort by Highest for the past day (like Reddit)
 - [x] Make Match System in themes also switch between the light and dark variant of themes depending on which your device is selected
 - [x] easy probably: Animated emojis
+- [x] Make server emojis display correctly in headers
 
 ## App Configuration & Maintenance
 
 - [x] Put Cached Server Emojis count below the Cached Posts counter in Settings > Account. Also include below the Clear Cache button a toggle to turn off the cache emotes feature. 
+
+## Stretch goals
+
+- [x] Let me hide text posts from languages I don't understand
 
 ---
 
