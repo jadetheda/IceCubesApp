@@ -18,9 +18,12 @@ struct ContentSettingsView: View {
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
-      Section("Timeline Filters") {
-        Toggle(isOn: $userPreferences.showLanguageFilters) {
-          Text("Show language filters in timeline options")
+      Section("Language Filters") {
+        Toggle(isOn: $contentFilter.hideJapaneseTextPosts) {
+          Label("Hide Japanese text posts", systemImage: "character.book.closed")
+        }
+        Toggle(isOn: $contentFilter.hideChineseTextPosts) {
+          Label("Hide Chinese text posts", systemImage: "character.book.closed")
         }
       }
       #if !os(visionOS)

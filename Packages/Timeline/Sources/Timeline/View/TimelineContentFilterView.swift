@@ -31,14 +31,12 @@ public struct TimelineContentFilterView: View {
             Label("timeline.filter.show-quote", systemImage: "quote.bubble")
           }
         }
-        if UserPreferences.shared.showLanguageFilters {
-          Section("Language Filters") {
-            Toggle(isOn: $contentFilter.hideJapaneseTextPosts) {
-              Label("Hide Japanese text posts", systemImage: "character.book.closed")
-            }
-            Toggle(isOn: $contentFilter.hideChineseTextPosts) {
-              Label("Hide Chinese text posts", systemImage: "character.book.closed")
-            }
+        Section("Language Filters") {
+          Toggle(isOn: $contentFilter.hideJapaneseTextPosts) {
+            Label("Hide Japanese text posts", systemImage: "character.book.closed")
+          }
+          Toggle(isOn: $contentFilter.hideChineseTextPosts) {
+            Label("Hide Chinese text posts", systemImage: "character.book.closed")
           }
         }
         

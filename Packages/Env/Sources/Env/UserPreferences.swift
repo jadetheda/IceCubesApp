@@ -14,7 +14,7 @@ import SwiftUI
 
     @AppStorage("recently_used_languages") public var recentlyUsedLanguages: [String] = []
     @AppStorage("social_keyboard_composer") public var isSocialKeyboardEnabled: Bool = false
-    @AppStorage("show_language_filters") public var showLanguageFilters: Bool = false
+    @AppStorage("show_language_filters") public var showLanguageFilters: Bool = true
 
     @AppStorage("use_instance_content_settings") public var useInstanceContentSettings: Bool = true
     @AppStorage("app_auto_expand_spoilers") public var appAutoExpandSpoilers = false
@@ -213,7 +213,7 @@ import SwiftUI
   }
 
   @ObservationIgnored
-  private var _showLanguageFilters: Bool = false
+  private var _showLanguageFilters: Bool = true
   
   public var isSocialKeyboardEnabled: Bool {
     didSet {
@@ -764,6 +764,7 @@ import SwiftUI
     showTranslateButton = storage.showTranslateButton
     recentlyUsedLanguages = storage.recentlyUsedLanguages
     isSocialKeyboardEnabled = storage.isSocialKeyboardEnabled
+    _showLanguageFilters = storage.showLanguageFilters
     useInstanceContentSettings = storage.useInstanceContentSettings
     appAutoExpandSpoilers = storage.appAutoExpandSpoilers
     appAutoExpandMedia = storage.appAutoExpandMedia
