@@ -6,7 +6,9 @@
 
 - [ ] The open source software credits are formatted incorrectly now (check the old version, it's weird now)
 
-### Gallery Mode & Media Layout Enhancements
+### Gallery Mode ## Gallery Mode & Media Layout Enhancements Media Layout Enhancements
+
+- [x] Fixed an issue where Gallery Mode would dynamically hide read posts on scroll when "Hide Seen Posts" was enabled. Gallery Mode now only hides read posts when manually refreshing.
 
 - [ ] Check if the pagination logic still hardcodes the number 6 — when surely this number should be dynamic based on how many columns you have enabled? Basically even how much fits on screen at one time, so like maybe on iPad or something it would be different
 - [ ] We're still seeing massive gaps in the Fullscreen Gallery section of profiles' Media tabs (maybe elsewhere, idk)
@@ -64,7 +66,9 @@
 - [x] Boosts aren't being correctly detected as the same post as the original it seems (at least on Local, and at least when they're my own boosts)
 - [x] ACTUALLY, if they're my own boost, they should just always be hidden as Seen
 
-## Gallery Mode & Media Layout Enhancements
+## Gallery Mode ## Gallery Mode & Media Layout Enhancements Media Layout Enhancements
+
+- [x] Fixed an issue where Gallery Mode would dynamically hide read posts on scroll when "Hide Seen Posts" was enabled. Gallery Mode now only hides read posts when manually refreshing.
 
 - [x] **Broken feature:** In the **Media** tab on a user's page, replace **Media Grid** with **Gallery Mode**. It should still be called **Media Grid**, but opening it should launch the Gallery Mode masonry layout we've built. We tried to do this already, but it apparently didn't work.
 - [x] The maximum gallery mode image height is way too small. **Hydra IS THE GALLERY MODE GOLD STANDARD and we should use their code as a guide for our implementation!** At the very least, set it as was higher.
