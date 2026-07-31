@@ -82,34 +82,23 @@ struct AboutView: View {
       #endif
 
       Section {
-        // We use a single multiline Text block to render the open-source attributions.
-        // SwiftUI automatically parses markdown links within triple-quoted strings, 
-        // allowing us to build an elegant, interactive list without heavy View overhead.
-        // The list is kept single-spaced to maintain a compact, highly readable presentation.
-        Text(
-          """
-          • [Nuke](https://github.com/kean/Nuke)
-          • [EmojiText](https://github.com/divadretlaw/EmojiText)
-          • [SwiftUI-Introspect](https://github.com/siteline/SwiftUI-Introspect)
-          • [SFSafeSymbols](https://github.com/SFSafeSymbols/SFSafeSymbols)
-          • [Bodega](https://github.com/mergesort/Bodega)
-          • [KeychainSwift](https://github.com/evgenyneu/keychain-swift)
-          • [HTML2Markdown](https://gitlab.com/mflint/HTML2Markdown)
-          • [SwiftSoup](https://github.com/scinfu/SwiftSoup.git)
-          • [LRUCache](https://github.com/nicklockwood/LRUCache)
-          • [ButtonKit](https://github.com/Dean151/ButtonKit)
-          • [WrappingHStack](https://github.com/dkk/WrappingHStack)
-          • [Gifu](https://github.com/kaishin/Gifu)
-          • [Atkinson Hyperlegible](https://github.com/googlefonts/atkinson-hyperlegible)
-          • [OpenDyslexic](http://opendyslexic.org)
-          • [RevenueCat](https://github.com/RevenueCat/purchases-ios)
-          • [TelemetryDeck](https://github.com/TelemetryDeck/SwiftSDK)
-          • [WishKit](https://github.com/wishkit/wishkit-ios)
-          """
-        )
-        .multilineTextAlignment(.leading)
-        .font(.scaledSubheadline)
-        .foregroundStyle(.secondary)
+        Link("Nuke", destination: URL(string: "https://github.com/kean/Nuke")!)
+        Link("EmojiText", destination: URL(string: "https://github.com/divadretlaw/EmojiText")!)
+        Link("SwiftUI-Introspect", destination: URL(string: "https://github.com/siteline/SwiftUI-Introspect")!)
+        Link("SFSafeSymbols", destination: URL(string: "https://github.com/SFSafeSymbols/SFSafeSymbols")!)
+        Link("Bodega", destination: URL(string: "https://github.com/mergesort/Bodega")!)
+        Link("KeychainSwift", destination: URL(string: "https://github.com/evgenyneu/keychain-swift")!)
+        Link("HTML2Markdown", destination: URL(string: "https://gitlab.com/mflint/HTML2Markdown")!)
+        Link("SwiftSoup", destination: URL(string: "https://github.com/scinfu/SwiftSoup.git")!)
+        Link("LRUCache", destination: URL(string: "https://github.com/nicklockwood/LRUCache")!)
+        Link("ButtonKit", destination: URL(string: "https://github.com/Dean151/ButtonKit")!)
+        Link("WrappingHStack", destination: URL(string: "https://github.com/dkk/WrappingHStack")!)
+        Link("Gifu", destination: URL(string: "https://github.com/kaishin/Gifu")!)
+        Link("Atkinson Hyperlegible", destination: URL(string: "https://github.com/googlefonts/atkinson-hyperlegible")!)
+        Link("OpenDyslexic", destination: URL(string: "http://opendyslexic.org")!)
+        Link("RevenueCat", destination: URL(string: "https://github.com/RevenueCat/purchases-ios")!)
+        Link("TelemetryDeck", destination: URL(string: "https://github.com/TelemetryDeck/SwiftSDK")!)
+        Link("WishKit", destination: URL(string: "https://github.com/wishkit/wishkit-ios")!)
       } header: {
         Text("settings.about.built-with")
           .textCase(nil)
