@@ -13,7 +13,7 @@ public struct TimelineLanguageFilterView: View {
 
   public var body: some View {
     Form {
-      Section {
+      Section(footer: Text("Enabling a language will hide text-only posts in that language from your timeline. Posts with media attachments are not filtered.")) {
         ForEach(languageSearchResult(query: languageSearch)) { language in
           Toggle(isOn: Binding(
             get: { contentFilter.hiddenLanguages.contains(language.isoCode) },
@@ -41,7 +41,7 @@ public struct TimelineLanguageFilterView: View {
       }
     }
     .searchable(text: $languageSearch, placement: .navigationBarDrawer)
-    .navigationTitle("status.editor.language-select.navigation-title")
+    .navigationTitle("Filtered Languages")
     .navigationBarTitleDisplayMode(.inline)
     .scrollContentBackground(.hidden)
     .toolbar {

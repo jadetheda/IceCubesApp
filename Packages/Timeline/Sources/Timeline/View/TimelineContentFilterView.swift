@@ -32,9 +32,9 @@ public struct TimelineContentFilterView: View {
           }
         }
         if UserPreferences.shared.showLanguageFilters {
-          Section("Language Filters") {
+          Section("Language Text Post Filters") {
             NavigationLink(destination: TimelineLanguageFilterView()) {
-              Label("Filtered Languages", systemImage: "globe")
+              Label("Filtered Languages (Text Posts)", systemImage: "globe")
             }
           }
         }
