@@ -56,10 +56,31 @@ public struct TimelineLanguageFilterView: View {
   }
 
   private func languageSearchResult(query: String) -> [Language] {
+    let curatedLanguageCodes = [
+      "ar", // Arabic
+      "zh", // Chinese
+      "en", // English
+      "fr", // French
+      "de", // German
+      "hi", // Hindi
+      "id", // Indonesian
+      "it", // Italian
+      "ja", // Japanese
+      "ko", // Korean
+      "pt", // Portuguese
+      "ru", // Russian
+      "es", // Spanish
+      "th", // Thai
+      "tr", // Turkish
+      "uk", // Ukrainian
+      "vi", // Vietnamese
+    ]
+    let filteredLanguages = Language.allAvailableLanguages.filter { curatedLanguageCodes.contains($0.isoCode) }
+    
     if query.isEmpty {
-      return Language.allAvailableLanguages
+      return filteredLanguages
     }
-    return Language.allAvailableLanguages.filter { language in
+    return filteredLanguages.filter { language in
       language.nativeName?.lowercased().hasPrefix(query.lowercased()) == true
         || language.localizedName?.lowercased().hasPrefix(query.lowercased()) == true
         || language.isoCode.lowercased().hasPrefix(query.lowercased()) == true

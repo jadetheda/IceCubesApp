@@ -286,6 +286,18 @@ actor TimelineDatasource {
       }
     }
     
+    if !hideDueToLanguage && (filter.hiddenLanguages.contains("ja") || filter.hiddenLanguages.contains("zh")) {
+      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      if isTextOnly {
+        let text = status.reblog?.content.asRawText ?? status.content.asRawText
+        if filter.hiddenLanguages.contains("ja") && text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+          hideDueToLanguage = true
+        } else if filter.hiddenLanguages.contains("zh") && text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+          hideDueToLanguage = true
+        }
+      }
+    }
+    
     return !isHidden
       && !hideDueToLanguage
       && (showReplies || status.inReplyToId == nil
