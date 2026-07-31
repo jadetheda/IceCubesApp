@@ -112,7 +112,7 @@ struct AccountSettingsView: View {
       ToolbarItem(placement: .principal) {
         HStack {
           AvatarView(account.avatar, config: .embed)
-          Text(account.safeDisplayName)
+          EmojiTextApp(.init(stringValue: account.safeDisplayName), emojis: account.emojis)
             .font(.headline)
         }
       }
