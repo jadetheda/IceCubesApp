@@ -664,6 +664,3 @@ public struct IceCubesDocument: FileDocument, Sendable {
     return .init(regularFileWithContents: data)
   }
 }
-
-
-}
