@@ -1,4 +1,5 @@
 import DesignSystem
+import EmojiText
 import Env
 import MediaUI
 import Models
@@ -109,8 +110,13 @@ public struct AccountDetailMediaGridView: View {
       }
       .padding(.top, .layoutPadding)
     }
-    .navigationTitle(account.displayName ?? "")
     .navigationBarTitleDisplayMode(.inline)
+    .toolbar {
+      ToolbarItem(placement: .principal) {
+        EmojiTextApp(.init(stringValue: account.safeDisplayName), emojis: account.emojis)
+          .font(.headline)
+      }
+    }
     .onAppear {
       if fetcher.client == nil {
         fetcher.client = client
