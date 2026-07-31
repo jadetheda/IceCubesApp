@@ -14,6 +14,7 @@ import SwiftUI
 
     @AppStorage("recently_used_languages") public var recentlyUsedLanguages: [String] = []
     @AppStorage("social_keyboard_composer") public var isSocialKeyboardEnabled: Bool = false
+    @AppStorage("show_language_filters") public var showLanguageFilters: Bool = false
 
     @AppStorage("use_instance_content_settings") public var useInstanceContentSettings: Bool = true
     @AppStorage("app_auto_expand_spoilers") public var appAutoExpandSpoilers = false
@@ -198,6 +199,22 @@ import SwiftUI
     }
   }
 
+  public var showLanguageFilters: Bool {
+    get {
+      access(keyPath: \.showLanguageFilters)
+      return _showLanguageFilters
+    }
+    set {
+      withMutation(keyPath: \.showLanguageFilters) {
+        _showLanguageFilters = newValue
+        storage.showLanguageFilters = newValue
+      }
+    }
+  }
+
+  @ObservationIgnored
+  private var _showLanguageFilters: Bool = false
+  
   public var isSocialKeyboardEnabled: Bool {
     didSet {
       storage.isSocialKeyboardEnabled = isSocialKeyboardEnabled

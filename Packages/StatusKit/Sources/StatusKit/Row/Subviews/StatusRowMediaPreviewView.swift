@@ -82,7 +82,7 @@ public struct StatusRowMediaPreviewView: View {
             tabAction: { index in tabAction(for: index) }
           )
         }
-      } else if userPreferences.statusMediaGridMode {
+      } else if userPreferences.statusMediaGridMode && attachments.count <= 4 {
         StatusRowMediaGridView(
           attachments: attachments,
           sensitive: sensitive,
@@ -420,7 +420,7 @@ private struct DisplayData: Identifiable, Hashable {
     
     id = attachment.id
     fallbackUrl = fallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url
-    let pUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
+    let pUrl = (useRemoteMedia && type == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     previewUrl = pUrl
     
     if neverLoadVideo && (type == .video || type == .gifv) {

@@ -38,6 +38,11 @@ public struct Instance: Codable, Sendable, Hashable {
 
     public let statuses: Statuses
     public let polls: Polls
+    public struct URLs: Codable, Sendable {
+      public let streaming: URL?
+      public let status: URL?
+    }
+    public let urls: URLs?
   }
 
   public struct Rule: Codable, Identifiable, Sendable {

@@ -18,6 +18,15 @@ struct ContentSettingsView: View {
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
+      Section("Timeline Filters") {
+        Toggle(isOn: $userPreferences.showLanguageFilters) {
+          Text("Show language filters in timeline options")
+        }
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+      
       Section("settings.content.media") {
         Toggle(isOn: $userPreferences.autoPlayVideo) {
           Text("settings.other.autoplay-video")
