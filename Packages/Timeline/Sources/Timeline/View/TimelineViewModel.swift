@@ -501,7 +501,21 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     await cache()
     let prefs = UserPreferences.shared
+
+    let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let renderedStatusIds = Set(items.compactMap { item -> String? in
+      if case .status(let status) = item { return status.id }
+      return nil
+    })
+    let isGalleryMode = TimelineContentFilter.shared.isGalleryMode
+
     let newStatusesIDs = newStatuses.filter { status in
+      guard renderedStatusIds.contains(status.id) else { return false }
+      if isGalleryMode {
+        if status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true) {
+          return false
+        }
+      }
       guard prefs.hideSeenPostsEnabled else { return true }
       var isSeen = SeenPostsManager.shared.isSeen(id: status.id)
       if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
@@ -517,8 +531,6 @@ extension TimelineViewModel: GapLoadingFetcher {
     }.map(\.id)
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
-
-    let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
 
     if let topStatus = topStatus,
       visibleStatuses.contains(where: { $0.id == topStatus.id }),
@@ -933,7 +945,69 @@ extension TimelineViewModel {
     }
     
     if !isSeen {
-      pendingStatusesObserver.pendingStatuses.insert(event.status.id, at: 0)
+      let snapshot = await TimelineContentFilter.shared.snapshot()
+      let currentAccountId = await CurrentAccount.shared.account?.id
+      
+      let isHidden = if let filterContext {
+        event.status.isHidden(in: filterContext)
+      } else {
+        event.status.isHidden
+      }
+      
+      let showReplies = snapshot.showReplies
+      let showBoosts = snapshot.showBoosts
+      let showThreads = snapshot.showThreads
+      let showQuotePosts = snapshot.showQuotePosts
+      
+      let hasQuote = event.status.quote?.quotedStatusId != nil
+        || event.status.quote?.quotedStatus != nil
+        || event.status.reblog?.quote?.quotedStatusId != nil
+        || event.status.reblog?.quote?.quotedStatus != nil
+        
+      let hasLegacyQuoteLink = !event.status.content.statusesURLs.isEmpty
+        || !(event.status.reblog?.content.statusesURLs.isEmpty ?? true)
+        
+      let isBotAuthored = event.status.reblog?.account.bot ?? event.status.account.bot
+      
+      var hideDueToLanguage = false
+      if !snapshot.hiddenLanguages.isEmpty, let lang = event.status.language ?? event.status.reblog?.language {
+        if snapshot.hiddenLanguages.contains(lang) {
+          hideDueToLanguage = true
+        }
+      }
+      
+      if !hideDueToLanguage && (snapshot.hiddenLanguages.contains("ja") || snapshot.hiddenLanguages.contains("zh")) {
+        let isTextOnly = event.status.mediaAttachments.isEmpty && (event.status.reblog?.mediaAttachments.isEmpty ?? true)
+        if isTextOnly {
+          let text = event.status.reblog?.content.asRawText ?? event.status.content.asRawText
+          if snapshot.hiddenLanguages.contains("ja") && text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+            hideDueToLanguage = true
+          } else if snapshot.hiddenLanguages.contains("zh") && text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+            hideDueToLanguage = true
+          }
+        }
+      }
+      
+      let willShow = !isHidden
+        && !hideDueToLanguage
+        && (showReplies || event.status.inReplyToId == nil || event.status.inReplyToAccountId == event.status.account.id)
+        && (showBoosts || event.status.reblog == nil)
+        && (showThreads || event.status.inReplyToAccountId != event.status.account.id)
+        && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
+        && (!snapshot.hidePostsWithMedia || (event.status.mediaAttachments.isEmpty && event.status.reblog?.mediaAttachments.isEmpty ?? true))
+        && (!snapshot.hidePostsWithoutMedia || (!event.status.mediaAttachments.isEmpty || event.status.reblog?.mediaAttachments.isEmpty == false))
+        && !(snapshot.hidePostsFromBots && isBotAuthored)
+        
+      var willShowInGallery = true
+      if snapshot.isGalleryMode {
+         if event.status.mediaAttachments.isEmpty && (event.status.reblog?.mediaAttachments.isEmpty ?? true) {
+            willShowInGallery = false
+         }
+      }
+        
+      if willShow && willShowInGallery {
+        pendingStatusesObserver.pendingStatuses.insert(event.status.id, at: 0)
+      }
     }
     await datasource.insert(event.status, at: 0)
     await cache()
