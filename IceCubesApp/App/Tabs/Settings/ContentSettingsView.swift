@@ -91,6 +91,7 @@ struct ContentSettingsView: View {
         // Toggle to enable/disable all IceShrimp compatibility workarounds.
         Toggle("settings.content.iceshrimp.workarounds", isOn: $userPreferences.useIceShrimpWorkarounds)
         if userPreferences.useIceShrimpWorkarounds {
+          Toggle("Hide Boosts button on profiles", isOn: $userPreferences.iceShrimpHideBoostsButton)
           Toggle("settings.content.iceshrimp.never-load-video", isOn: $userPreferences.neverLoadVideo)
           Toggle(isOn: $userPreferences.tagGroupsClientSideMergeEnabled) {
             Label("settings.content.iceshrimp.alternative-tag-fetching", systemImage: "tag")

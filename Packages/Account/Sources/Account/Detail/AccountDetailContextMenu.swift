@@ -138,33 +138,35 @@ public struct AccountDetailContextMenu: View {
                 Label("account.action.notify-enable", systemImage: "bell")
               }
             }
-            if relationshipValue.showingReblogs {
-              Button {
-                Task {
-                  do {
-                    relationship = try await client.post(
-                      endpoint: Accounts.follow(
-                        id: account.id,
-                        notify: relationshipValue.notifying,
-                        reblogs: false))
-                  } catch {}
+            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
+              if relationshipValue.showingReblogs {
+                Button {
+                  Task {
+                    do {
+                      relationship = try await client.post(
+                        endpoint: Accounts.follow(
+                          id: account.id,
+                          notify: relationshipValue.notifying,
+                          reblogs: false))
+                    } catch {}
+                  }
+                } label: {
+                  Label("account.action.reboosts-hide", image: "Rocket.Fill")
                 }
-              } label: {
-                Label("account.action.reboosts-hide", image: "Rocket.Fill")
-              }
-            } else {
-              Button {
-                Task {
-                  do {
-                    relationship = try await client.post(
-                      endpoint: Accounts.follow(
-                        id: account.id,
-                        notify: relationshipValue.notifying,
-                        reblogs: true))
-                  } catch {}
+              } else {
+                Button {
+                  Task {
+                    do {
+                      relationship = try await client.post(
+                        endpoint: Accounts.follow(
+                          id: account.id,
+                          notify: relationshipValue.notifying,
+                          reblogs: true))
+                    } catch {}
+                  }
+                } label: {
+                  Label("account.action.reboosts-show", systemImage: "arrow.2.squarepath")
                 }
-              } label: {
-                Label("account.action.reboosts-show", systemImage: "arrow.2.squarepath")
               }
             }
           }

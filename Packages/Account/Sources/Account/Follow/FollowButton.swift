@@ -94,6 +94,7 @@ import SwiftUI
 
 public struct FollowButton: View {
   @Environment(MastodonClient.self) private var client
+  @Environment(UserPreferences.self) private var preferences
   @State private var viewModel: FollowButtonViewModel
 
   public init(viewModel: FollowButtonViewModel) {
@@ -141,18 +142,20 @@ public struct FollowButton: View {
                   ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off"
               )
               .glassEffect(.regular.interactive())
-              AsyncButton {
-                try await viewModel.toggleReboosts()
-              } label: {
-                Image(systemName: "arrow.2.squarepath")
-                  .opacity(viewModel.relationship.showingReblogs ? 1 : 0.5)
+              if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
+                AsyncButton {
+                  try await viewModel.toggleReboosts()
+                } label: {
+                  Image(systemName: "arrow.2.squarepath")
+                    .opacity(viewModel.relationship.showingReblogs ? 1 : 0.5)
+                }
+                .accessibilityLabel("accessibility.tabs.profile.user-reblogs.label")
+                .accessibilityValue(
+                  viewModel.relationship.showingReblogs
+                    ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off"
+                )
+                .glassEffect(.regular.interactive())
               }
-              .accessibilityLabel("accessibility.tabs.profile.user-reblogs.label")
-              .accessibilityValue(
-                viewModel.relationship.showingReblogs
-                  ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off"
-              )
-              .glassEffect(.regular.interactive())
             }
             .asyncButtonStyle(.none)
             .disabledWhenLoading()
@@ -196,16 +199,18 @@ public struct FollowButton: View {
             .accessibilityValue(
               viewModel.relationship.notifying
                 ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
-            AsyncButton {
-              try await viewModel.toggleReboosts()
-            } label: {
-              Image(systemName: "arrow.2.squarepath")
-                .opacity(viewModel.relationship.showingReblogs ? 1 : 0.5)
+            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
+              AsyncButton {
+                try await viewModel.toggleReboosts()
+              } label: {
+                Image(systemName: "arrow.2.squarepath")
+                  .opacity(viewModel.relationship.showingReblogs ? 1 : 0.5)
+              }
+              .accessibilityLabel("accessibility.tabs.profile.user-reblogs.label")
+              .accessibilityValue(
+                viewModel.relationship.showingReblogs
+                  ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
             }
-            .accessibilityLabel("accessibility.tabs.profile.user-reblogs.label")
-            .accessibilityValue(
-              viewModel.relationship.showingReblogs
-                ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
           }
           .asyncButtonStyle(.none)
           .disabledWhenLoading()
