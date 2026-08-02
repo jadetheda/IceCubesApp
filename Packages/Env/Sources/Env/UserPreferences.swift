@@ -108,6 +108,7 @@ import SwiftUI
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
     @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
     @AppStorage("iceshrimp_hide_boosts_button") public var iceShrimpHideBoostsButton: Bool = true
+    @AppStorage("iceshrimp_hide_incompatible_buttons") public var iceShrimpHideIncompatibleButtons: Bool = true
     @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
     
     @AppStorage("trending_algorithm") public var trendingAlgorithm: TrendingAlgorithm = .mastodon
@@ -543,6 +544,11 @@ import SwiftUI
       storage.iceShrimpHideBoostsButton = iceShrimpHideBoostsButton
     }
   }
+  public var iceShrimpHideIncompatibleButtons: Bool {
+    didSet {
+      storage.iceShrimpHideIncompatibleButtons = iceShrimpHideIncompatibleButtons
+    }
+  }
   public var neverLoadVideo: Bool {
     didSet {
       storage.neverLoadVideo = neverLoadVideo
@@ -832,6 +838,7 @@ import SwiftUI
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
     useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     iceShrimpHideBoostsButton = storage.iceShrimpHideBoostsButton
+    iceShrimpHideIncompatibleButtons = storage.iceShrimpHideIncompatibleButtons
     neverLoadVideo = storage.neverLoadVideo
     
     trendingAlgorithm = storage.trendingAlgorithm
