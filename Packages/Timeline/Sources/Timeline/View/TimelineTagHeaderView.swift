@@ -5,6 +5,7 @@ import SwiftUI
 
 struct TimelineTagHeaderView: View {
   @Environment(CurrentAccount.self) private var account
+  @Environment(UserPreferences.self) private var preferences
 
   @Binding var tag: Tag?
 
@@ -26,21 +27,24 @@ struct TimelineTagHeaderView: View {
           }
           .accessibilityElement(children: .combine)
           Spacer()
-          Button {
-            Task {
-              isLoading = true
-              if tag.following {
-                self.tag = await account.unfollowTag(id: tag.name)
-              } else {
-                self.tag = await account.followTag(id: tag.name)
+          
+          if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+            Button {
+              Task {
+                isLoading = true
+                if tag.following {
+                  self.tag = await account.unfollowTag(id: tag.name)
+                } else {
+                  self.tag = await account.followTag(id: tag.name)
+                }
+                isLoading = false
               }
-              isLoading = false
+            } label: {
+              Text(tag.following ? "account.follow.following" : "account.follow.follow")
             }
-          } label: {
-            Text(tag.following ? "account.follow.following" : "account.follow.follow")
+            .disabled(isLoading)
+            .buttonStyle(.bordered)
           }
-          .disabled(isLoading)
-          .buttonStyle(.bordered)
         }
       }
     }
