@@ -109,35 +109,38 @@ public struct AccountDetailContextMenu: View {
           if let relationshipValue = relationship,
             relationshipValue.following
           {
-            if relationshipValue.notifying {
-              Button {
-                Task {
-                  do {
-                    relationship = try await client.post(
-                      endpoint: Accounts.follow(
-                        id: account.id,
-                        notify: false,
-                        reblogs: relationshipValue.showingReblogs))
-                  } catch {}
+            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+              if relationshipValue.notifying {
+                Button {
+                  Task {
+                    do {
+                      relationship = try await client.post(
+                        endpoint: Accounts.follow(
+                          id: account.id,
+                          notify: false,
+                          reblogs: relationshipValue.showingReblogs))
+                    } catch {}
+                  }
+                } label: {
+                  Label("account.action.notify-disable", systemImage: "bell.fill")
                 }
-              } label: {
-                Label("account.action.notify-disable", systemImage: "bell.fill")
-              }
-            } else {
-              Button {
-                Task {
-                  do {
-                    relationship = try await client.post(
-                      endpoint: Accounts.follow(
-                        id: account.id,
-                        notify: true,
-                        reblogs: relationshipValue.showingReblogs))
-                  } catch {}
+              } else {
+                Button {
+                  Task {
+                    do {
+                      relationship = try await client.post(
+                        endpoint: Accounts.follow(
+                          id: account.id,
+                          notify: true,
+                          reblogs: relationshipValue.showingReblogs))
+                    } catch {}
+                  }
+                } label: {
+                  Label("account.action.notify-enable", systemImage: "bell")
                 }
-              } label: {
-                Label("account.action.notify-enable", systemImage: "bell")
               }
             }
+
             if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
               if relationshipValue.showingReblogs {
                 Button {
