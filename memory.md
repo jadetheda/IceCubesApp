@@ -484,3 +484,4 @@
   - **Feature**: Packaged the Inter font (`Inter-Regular.ttf`) used by Bluesky and made it an integrated option in the app.
   - **Implementation**: Embedded `Inter-Regular.ttf` in `IceCubesApp/Embeds/`, registered it under `UIAppFonts` in `IceCubesApp/Info.plist`, added `.inter` ("Inter (Bluesky)") to `Theme.FontState` in `Theme.swift`, and updated `DisplaySettingsView.swift` to select and apply Inter font across the app.
 
+## 2026-08-02T08:34:00Z - Recovered changes to hide incompatible notify bell on IceShrimp servers
