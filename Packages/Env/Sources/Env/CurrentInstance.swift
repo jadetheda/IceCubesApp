@@ -39,7 +39,10 @@ import Observation
   }
 
   public var isNotificationsFilterSupported: Bool {
-    version >= 4.3
+    if UserPreferences.shared.useIceShrimpWorkarounds && UserPreferences.shared.iceShrimpHideIncompatibleButtons {
+      return false
+    }
+    return version >= 4.3
   }
 
   public var isLinkTimelineSupported: Bool {
@@ -47,7 +50,10 @@ import Observation
   }
 
   public var isGroupedNotificationsSupported: Bool {
-    version >= 4.3
+    if UserPreferences.shared.useIceShrimpWorkarounds && UserPreferences.shared.iceShrimpHideIncompatibleButtons {
+      return false
+    }
+    return version >= 4.3
   }
 
   public var isQuoteSupported: Bool {
