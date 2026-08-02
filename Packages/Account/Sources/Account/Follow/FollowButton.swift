@@ -131,17 +131,19 @@ public struct FollowButton: View {
             viewModel.shouldDisplayNotify
           {
             HStack {
-              AsyncButton {
-                try await viewModel.toggleNotify()
-              } label: {
-                Image(systemName: viewModel.relationship.notifying ? "bell.fill" : "bell")
+              if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+                AsyncButton {
+                  try await viewModel.toggleNotify()
+                } label: {
+                  Image(systemName: viewModel.relationship.notifying ? "bell.fill" : "bell")
+                }
+                .accessibilityLabel("accessibility.tabs.profile.user-notifications.label")
+                .accessibilityValue(
+                  viewModel.relationship.notifying
+                    ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off"
+                )
+                .glassEffect(.regular.interactive())
               }
-              .accessibilityLabel("accessibility.tabs.profile.user-notifications.label")
-              .accessibilityValue(
-                viewModel.relationship.notifying
-                  ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off"
-              )
-              .glassEffect(.regular.interactive())
               if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
                 AsyncButton {
                   try await viewModel.toggleReboosts()
@@ -190,15 +192,17 @@ public struct FollowButton: View {
           viewModel.shouldDisplayNotify
         {
           HStack {
-            AsyncButton {
-              try await viewModel.toggleNotify()
-            } label: {
-              Image(systemName: viewModel.relationship.notifying ? "bell.fill" : "bell")
+            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+              AsyncButton {
+                try await viewModel.toggleNotify()
+              } label: {
+                Image(systemName: viewModel.relationship.notifying ? "bell.fill" : "bell")
+              }
+              .accessibilityLabel("accessibility.tabs.profile.user-notifications.label")
+              .accessibilityValue(
+                viewModel.relationship.notifying
+                  ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
             }
-            .accessibilityLabel("accessibility.tabs.profile.user-notifications.label")
-            .accessibilityValue(
-              viewModel.relationship.notifying
-                ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
             if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
               AsyncButton {
                 try await viewModel.toggleReboosts()
