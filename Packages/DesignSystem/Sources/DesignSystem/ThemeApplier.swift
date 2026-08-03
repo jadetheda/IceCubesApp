@@ -12,7 +12,7 @@ extension View {
 
 @MainActor
 struct ThemeApplier: ViewModifier {
-  @Environment(\EnvironmentValues.colorScheme) var colorScheme
+  @Environment(\.colorScheme) var colorScheme
 
   var theme: Theme
 

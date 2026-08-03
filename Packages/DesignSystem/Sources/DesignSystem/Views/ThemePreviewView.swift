@@ -26,6 +26,7 @@ public struct ThemePreviewView: View {
 
 struct ThemeBoxView: View {
   @Environment(Theme.self) private var theme
+  @Environment(\.colorScheme) private var colorScheme
   private let gutterSpace = 8.0
   @State private var isSelected = false
 
@@ -85,11 +86,17 @@ struct ThemeBoxView: View {
       isSelected = newValue.rawValue == color.name.rawValue
     }
     .onTapGesture {
-      let currentScheme = theme.selectedScheme
-      if color.scheme != currentScheme {
-        theme.followSystemColorScheme = false
+      if theme.followSystemColorScheme,
+         let sets = availableColorsSets.first(where: { $0.light.name == color.name || $0.dark.name == color.name })
+      {
+        theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name)
+      } else {
+        let currentScheme = theme.selectedScheme
+        if color.scheme != currentScheme {
+          theme.followSystemColorScheme = false
+        }
+        theme.applySet(set: color.name)
       }
-      theme.applySet(set: color.name)
     }
   }
 }
