@@ -544,13 +544,14 @@ private struct FeaturedImagePreView: View {
 
   var body: some View {
     let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
-    let fallbackUrl: URL?
-    if userPreferences.remoteMediaFallbackOnFail {
-      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
-      fallbackUrl = candidateFallback == resolvedUrl ? nil : candidateFallback
-    } else {
-      fallbackUrl = nil
-    }
+    let fallbackUrl: URL? = {
+      if userPreferences.remoteMediaFallbackOnFail {
+        let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
+        return candidateFallback == resolvedUrl ? nil : candidateFallback
+      } else {
+        return nil
+      }
+    }()
     if let url = resolvedUrl, let namespace = quickLook.namespace {
       _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {

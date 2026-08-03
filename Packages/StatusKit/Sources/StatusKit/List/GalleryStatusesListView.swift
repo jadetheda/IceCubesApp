@@ -291,13 +291,14 @@ public struct GalleryMediaCell: View {
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce
     let resolvedUrl = effectiveUseRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
-    let fallbackUrl: URL?
-    if fallback {
-      let candidateFallback = effectiveUseRemoteMedia ? mediaStatus.attachment.url : mediaStatus.attachment.remoteUrl
-      fallbackUrl = candidateFallback == resolvedUrl ? nil : candidateFallback
-    } else {
-      fallbackUrl = nil
-    }
+    let fallbackUrl: URL? = {
+      if fallback {
+        let candidateFallback = effectiveUseRemoteMedia ? mediaStatus.attachment.url : mediaStatus.attachment.remoteUrl
+        return candidateFallback == resolvedUrl ? nil : candidateFallback
+      } else {
+        return nil
+      }
+    }()
     if let url = resolvedUrl {
       Button {
         if let viewModel {
