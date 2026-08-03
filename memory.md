@@ -485,3 +485,9 @@
   - **Implementation**: Embedded `Inter-Regular.ttf` in `IceCubesApp/Embeds/`, registered it under `UIAppFonts` in `IceCubesApp/Info.plist`, added `.inter` ("Inter (Bluesky)") to `Theme.FontState` in `Theme.swift`, and updated `DisplaySettingsView.swift` to select and apply Inter font across the app.
 
 ## 2026-08-02T08:34:00Z - Recovered changes to hide incompatible notify bell on IceShrimp servers
+
+## 2026-08-03 (UTC)
+- **Match System Theme Switching**:
+  - Implemented smart theme family variant switching in `ThemePreviewView.swift`. When "Match System" (`followSystemColorScheme`) is active, tapping any light or dark box in a theme family will no longer disable the system match toggle. Instead, the app dynamically applies the correct light/dark variant of that family corresponding to the user's current system appearance, keeping system-matching active.
+  - Standardized the `colorScheme` environment declaration in `ThemeApplier.swift` to use the standard `\.colorScheme` keypath rather than `\EnvironmentValues.colorScheme` for cleaner and more robust SwiftUI state propagation.
+
