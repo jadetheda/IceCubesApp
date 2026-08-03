@@ -948,7 +948,7 @@ extension TimelineViewModel {
       let snapshot = await TimelineContentFilter.shared.snapshot()
       let currentAccountId = await CurrentAccount.shared.account?.id
       
-      let isHidden = if let filterContext {
+      let isHidden = if let filterContext = timeline.filterContext {
         event.status.isHidden(in: filterContext)
       } else {
         event.status.isHidden

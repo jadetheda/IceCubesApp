@@ -203,6 +203,21 @@ import Env
     }
   }
 
+  @ObservationIgnored
+  private var _hideOwnPosts: Bool = false
+  public var hideOwnPosts: Bool {
+    get {
+      access(keyPath: \.hideOwnPosts)
+      return _hideOwnPosts
+    }
+    set {
+      withMutation(keyPath: \.hideOwnPosts) {
+        _hideOwnPosts = newValue
+        storage.hideOwnPosts = newValue
+      }
+    }
+  }
+
   
   @ObservationIgnored
   private var _hiddenLanguages: [String] = []
