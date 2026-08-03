@@ -65,11 +65,11 @@ public struct TimelineContentFilterView: View {
         Section {
           if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {
             Toggle(isOn: $contentFilter.hideReadPosts) {
-              Label("Hide read posts", systemImage: "eye.slash")
+              Label("timeline.filter.hide-seen-posts", systemImage: "eye.slash")
             }
           }
           Toggle(isOn: $contentFilter.hideOwnPosts) {
-            Label("Hide my own posts", systemImage: "person.crop.circle.badge.minus")
+            Label("timeline.filter.hide-posts-by-self", systemImage: "person.crop.circle.badge.minus")
           }
         }
 

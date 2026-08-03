@@ -127,7 +127,7 @@ public struct TimelineView: View {
           Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
         }
         .tint(theme.labelColor)
-        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "Show read posts" : "Hide read posts")
+        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
       }
     }
     TimelineToolbarTagGroupButton(timeline: $timeline)
