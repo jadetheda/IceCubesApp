@@ -61,7 +61,7 @@ public struct MediaUIView: View, @unchecked Sendable {
         }
       }
       .toolbar(isOverlayPresented ? .visible : .hidden, for: .navigationBar)
-      .toolbarBackground(.hidden, for: .navigationBar)
+      .toolbarBackground(Color.black, for: .navigationBar)
       .toolbarColorScheme(.dark, for: .navigationBar)
       .statusBarHidden(!isOverlayPresented)
       .onAppear {
@@ -71,6 +71,7 @@ public struct MediaUIView: View, @unchecked Sendable {
         }
       }
     }
+    .background(Color.black)
   }
 
   public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment]) {

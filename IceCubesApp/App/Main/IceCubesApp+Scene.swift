@@ -33,7 +33,7 @@ extension IceCubesApp {
               attachments: quickLook.mediaAttachments
             )
             .navigationTransition(.zoom(sourceID: selectedMediaAttachment.id, in: namespace))
-            .presentationBackground(theme.primaryBackgroundColor)
+            .presentationBackground(.black)
             .withEnvironments()
           } else {
             EmptyView()
