@@ -13,6 +13,7 @@ class AccountTabFetcher: StatusesFetcher {
   let isCurrentUser: Bool
   
   var statusesState: StatusesState = .loading
+  var visibleStatusesCount: [String: Int] = [:]
   var statuses: [Status] = []
   
   init(accountId: String, client: MastodonClient, isCurrentUser: Bool) {
@@ -29,9 +30,19 @@ class AccountTabFetcher: StatusesFetcher {
     fatalError("Subclasses must implement fetchNextPage")
   }
   
-  func statusDidAppear(status: Status) {}
+  func statusDidAppear(status: Status) {
+    visibleStatusesCount[status.id, default: 0] += 1
+  }
   
-  func statusDidDisappear(status: Status) {}
+  func statusDidDisappear(status: Status) {
+    if let count = visibleStatusesCount[status.id] {
+      if count == 1 {
+        visibleStatusesCount.removeValue(forKey: status.id)
+      } else {
+        visibleStatusesCount[status.id] = count - 1
+      }
+    }
+  }
   
   func updateStatusesState(with statuses: [Status], hasMore: Bool) {
     self.statuses = statuses

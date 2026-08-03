@@ -37,6 +37,13 @@ public struct AccountDetailView: View {
 
   @State private var displayTitle: Bool = false
   
+
+  @Environment(UserPreferences.self) private var userPreferences
+  @State private var scrollToTopVisible = false
+  @State private var previousScrollPosition: String?
+  @State private var undoTask: Task<Void, Never>?
+  @State private var scrollToIdAnimated: String?
+
   @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
   @Environment(\.currentTabId) private var currentTabId
 
@@ -53,12 +60,41 @@ public struct AccountDetailView: View {
       initialValue: .display(account: account, featuredTags: [], relationships: [], fields: []))
   }
 
+
+  private func handleScrollToTopTrigger() -> String? {
+    guard userPreferences.undoScrollToTopEnabled else { return nil }
+    if let previous = previousScrollPosition, scrollToTopVisible {
+      previousScrollPosition = nil
+      undoTask?.cancel()
+      undoTask = nil
+      return previous
+    } else {
+      var topVisibleId: String? = nil
+      if let fetcher = tabManager?.currentTabFetcher as? AccountTabFetcher {
+        if case .display(let statuses, _) = fetcher.statusesState {
+          topVisibleId = statuses.map { $0.id }.first { fetcher.visibleStatusesCount[$0] != nil }
+        }
+      }
+      
+      if let first = topVisibleId {
+        previousScrollPosition = first
+        undoTask?.cancel()
+        undoTask = Task {
+          try? await Task.sleep(for: .seconds(userPreferences.undoScrollToTopTimeout))
+          guard !Task.isCancelled else { return }
+          previousScrollPosition = nil
+        }
+      }
+      return nil
+    }
+  }
+
   public var body: some View {
     ScrollViewReader { proxy in
       List {
         ScrollToView()
-          .onAppear { displayTitle = false }
-          .onDisappear { displayTitle = true }
+          .onAppear { displayTitle = false; scrollToTopVisible = true }
+          .onDisappear { displayTitle = true; scrollToTopVisible = false }
         makeHeaderView(proxy: proxy)
           .applyAccountDetailsRowStyle(theme: theme)
           .padding(.bottom, -20)
@@ -94,10 +130,24 @@ public struct AccountDetailView: View {
         .scrollContentBackground(.hidden)
         .background(theme.primaryBackgroundColor)
       #endif
+      .onChange(of: scrollToIdAnimated) { _, newValue in
+        if let newValue {
+          withAnimation {
+            proxy.scrollTo(newValue, anchor: .top)
+            scrollToIdAnimated = nil
+          }
+        }
+      }
       .onChange(of: selectedTabScrollToTop) { _, newValue in
         if let currentTabId, newValue == currentTabId, routerPath.path.isEmpty {
-          withAnimation {
-            proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+          if let previous = handleScrollToTopTrigger() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+              scrollToIdAnimated = previous
+            }
+          } else {
+            withAnimation {
+              proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
+            }
           }
         }
       }

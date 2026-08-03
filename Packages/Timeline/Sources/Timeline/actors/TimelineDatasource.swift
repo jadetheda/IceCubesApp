@@ -309,5 +309,6 @@ actor TimelineDatasource {
       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
       && (!filter.hideReadPosts || !isSeen || filter.isGalleryMode)
+      && (!filter.hideOwnPosts || status.account.id != currentAccountId)
   }
 }

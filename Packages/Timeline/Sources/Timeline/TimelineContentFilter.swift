@@ -14,6 +14,7 @@ import Env
     public let hidePostsFromBots: Bool
     public let isGalleryMode: Bool
     public let hideReadPosts: Bool
+    public let hideOwnPosts: Bool
     public let hiddenLanguages: [String]
     public let hideSeenPostsEnabled: Bool
     public let hideSeenPostsIncludeBoosts: Bool
@@ -28,6 +29,7 @@ import Env
       hidePostsFromBots: Bool = false,
       isGalleryMode: Bool = false,
       hideReadPosts: Bool = false,
+      hideOwnPosts: Bool = false,
       hiddenLanguages: [String] = [],
       hideSeenPostsEnabled: Bool = false,
       hideSeenPostsIncludeBoosts: Bool = false
@@ -41,6 +43,7 @@ import Env
       self.hidePostsFromBots = hidePostsFromBots
       self.isGalleryMode = isGalleryMode
       self.hideReadPosts = hideReadPosts
+      self.hideOwnPosts = hideOwnPosts
       self.hiddenLanguages = hiddenLanguages
       self.hideSeenPostsEnabled = hideSeenPostsEnabled
       self.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
@@ -57,6 +60,7 @@ import Env
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
     @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
+    @AppStorage("timeline_hide_own_posts") var hideOwnPosts: Bool = false
     @AppStorage("timeline_hidden_languages") var hiddenLanguages: [String] = []
   }
 
@@ -225,6 +229,7 @@ import Env
     _hidePostsFromBots = storage.hidePostsFromBots
     _isGalleryMode = storage.isGalleryMode
     _hideReadPosts = storage.hideReadPosts
+    _hideOwnPosts = storage.hideOwnPosts
     _hiddenLanguages = storage.hiddenLanguages
   }
 
@@ -239,6 +244,7 @@ import Env
       hidePostsFromBots: hidePostsFromBots,
       isGalleryMode: isGalleryMode,
       hideReadPosts: hideReadPosts,
+      hideOwnPosts: hideOwnPosts,
       hiddenLanguages: hiddenLanguages,
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,
       hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts

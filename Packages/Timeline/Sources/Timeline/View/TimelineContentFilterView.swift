@@ -68,6 +68,9 @@ public struct TimelineContentFilterView: View {
               Label("Hide read posts", systemImage: "eye.slash")
             }
           }
+          Toggle(isOn: $contentFilter.hideOwnPosts) {
+            Label("Hide my own posts", systemImage: "person.crop.circle.badge.minus")
+          }
         }
 
         Section {
