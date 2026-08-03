@@ -241,7 +241,13 @@ private struct DisplayData: Identifiable, Hashable {
     guard let type = attachment.supportedType else { return nil }
 
     id = attachment.id
-    fallbackUrl = Env.UserPreferences.shared.remoteMediaFallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url
+    let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce
+    if Env.UserPreferences.shared.remoteMediaFallbackOnFail {
+      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
+      fallbackUrl = candidateFallback == url ? nil : candidateFallback
+    } else {
+      fallbackUrl = nil
+    }
     
     if noVideo && (type == .video || type == .gifv) {
       self.type = .image

@@ -419,7 +419,12 @@ private struct DisplayData: Identifiable, Hashable {
     guard let type = attachment.supportedType else { return nil }
     
     id = attachment.id
-    fallbackUrl = fallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url
+    if fallbackOnFail {
+      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
+      fallbackUrl = candidateFallback == url ? nil : candidateFallback
+    } else {
+      fallbackUrl = nil
+    }
     let pUrl = (useRemoteMedia && type == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     previewUrl = pUrl
     
@@ -539,6 +544,13 @@ private struct FeaturedImagePreView: View {
 
   var body: some View {
     let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
+    let fallbackUrl: URL?
+    if userPreferences.remoteMediaFallbackOnFail {
+      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
+      fallbackUrl = candidateFallback == resolvedUrl ? nil : candidateFallback
+    } else {
+      fallbackUrl = nil
+    }
     if let url = resolvedUrl, let namespace = quickLook.namespace {
       _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
@@ -557,7 +569,7 @@ private struct FeaturedImagePreView: View {
                   }
                 }
               case .gifv, .video, .audio:
-                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: userPreferences.remoteMediaFallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url))
+                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
                   .onAppear { onLoaded() }
               default:
                 EmptyView()
