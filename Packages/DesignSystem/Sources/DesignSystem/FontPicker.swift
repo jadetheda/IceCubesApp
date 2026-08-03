@@ -203,13 +203,11 @@ public struct FontPicker: View {
     .fileImporter(
       isPresented: $showFileImporter,
       allowedContentTypes: [
-        .font,
+        UTType(filenameExtension: "otf"),
+        UTType(filenameExtension: "ttf"),
         UTType(exportedAs: "public.opentype-font"),
-        UTType(exportedAs: "public.truetype-ttf-font"),
-        UTType(filenameExtension: "ttf") ?? .font,
-        UTType(filenameExtension: "otf") ?? .font,
-        UTType("public.font") ?? .font
-      ],
+        UTType(exportedAs: "public.truetype-ttf-font")
+      ].compactMap { $0 },
       allowsMultipleSelection: false
     ) { result in
       switch result {
