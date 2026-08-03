@@ -230,6 +230,7 @@ private struct DisplayData: Identifiable, Hashable {
   let url: URL
   let description: String?
   let type: DisplayType
+  let fallbackUrl: URL?
 
   init?(from attachment: MediaAttachment) {
     let isIceShrimp = Env.CurrentInstance.shared.isIceShrimp
@@ -240,6 +241,7 @@ private struct DisplayData: Identifiable, Hashable {
     guard let type = attachment.supportedType else { return nil }
 
     id = attachment.id
+    fallbackUrl = Env.UserPreferences.shared.remoteMediaFallbackOnFail ? (attachment.remoteUrl ?? attachment.url) : attachment.url
     
     if noVideo && (type == .video || type == .gifv) {
       self.type = .image
@@ -263,7 +265,7 @@ private struct DisplayView: View {
       MediaUIAttachmentImageView(url: data.url, onSingleTap: onSingleTap)
         .ignoresSafeArea()
     case .av:
-      MediaUIAttachmentVideoView(viewModel: .init(url: data.url, forceAutoPlay: true))
+      MediaUIAttachmentVideoView(viewModel: .init(url: data.url, fallbackUrl: data.fallbackUrl, forceAutoPlay: true))
         .ignoresSafeArea()
         .onTapGesture {
           onSingleTap()
