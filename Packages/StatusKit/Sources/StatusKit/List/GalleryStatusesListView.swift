@@ -69,14 +69,85 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private struct GalleryNode: Identifiable, Equatable {
     let id: String
     let mediaStatus: MediaStatus?
-    var gap: TimelineGap? = nil
     let anchorIds: [String]
-    
-    var isGap: Bool { gap != nil }
     
     static func == (lhs: GalleryNode, rhs: GalleryNode) -> Bool {
       lhs.id == rhs.id
     }
+  }
+
+  private struct GalleryChunk: Identifiable {
+    var id: String {
+      if let gap = gap { return gap.id }
+      return items.first?.id ?? UUID().uuidString
+    }
+    var items: [TimelineItem] = []
+    var gap: TimelineGap? = nil
+    var isGap: Bool { gap != nil }
+  }
+
+  private func chunkItems(_ items: [TimelineItem]) -> [GalleryChunk] {
+    var chunks: [GalleryChunk] = []
+    var currentChunk = GalleryChunk()
+    
+    for item in items {
+      switch item {
+      case .gap(let gap):
+        if !currentChunk.items.isEmpty {
+          chunks.append(currentChunk)
+          currentChunk = GalleryChunk()
+        }
+        chunks.append(GalleryChunk(gap: gap))
+      case .status:
+        currentChunk.items.append(item)
+      }
+    }
+    
+    if !currentChunk.items.isEmpty {
+      chunks.append(currentChunk)
+    }
+    
+    return chunks
+  }
+
+
+
+  private enum GallerySegment: Identifiable {
+    case grid(id: String, statuses: [Status])
+    case gap(TimelineGap)
+
+    var id: String {
+      switch self {
+      case .grid(let id, _):
+        return id
+      case .gap(let gap):
+        return gap.id
+      }
+    }
+  }
+
+  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
+    var segments: [GallerySegment] = []
+    var currentStatuses: [Status] = []
+    
+    for item in items {
+      switch item {
+      case .status(let status):
+        currentStatuses.append(status)
+      case .gap(let gap):
+        if !currentStatuses.isEmpty {
+          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+          currentStatuses = []
+        }
+        segments.append(.gap(gap))
+      }
+    }
+
+    if !currentStatuses.isEmpty {
+      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
+    }
+
+    return segments
   }
 
   @ViewBuilder
@@ -92,55 +163,28 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
-    let galleryNodes = computeGalleryNodes(for: items)
-    let columns = UserPreferences.shared.galleryColumns
-    let columnItems = computeColumnItems(from: galleryNodes, columns: columns)
-    let mediaCount = galleryNodes.filter { $0.mediaStatus != nil }.count
-
-    HStack(alignment: .top, spacing: 4) {
-      ForEach(0..<columns, id: \.self) { colIndex in
-        LazyVStack(spacing: 0) {
-          ForEach(columnItems[colIndex]) { node in
-            if node.isGap, let gap = node.gap {
-              if let gapLoader = fetcher as? GapLoadingFetcher {
-                TimelineGapView(gap: gap) {
-                  await gapLoader.loadGap(gap: gap)
-                }
-                .padding(.horizontal, .layoutPadding)
-                .padding(.vertical, 8)
-              }
-            } else {
-              VStack(spacing: 0) {
-                ForEach(node.anchorIds, id: \.self) { anchorId in
-                  Color.clear
-                    .frame(height: 0)
-                    .id(anchorId)
-                }
-                if let mediaStatus = node.mediaStatus {
-                  GalleryMediaCell(
-                    mediaStatus: mediaStatus,
-                    routerPath: routerPath,
-                    client: client,
-                    isRemote: isRemote,
-                    filterContext: filterContext
-                  )
-                  .id(mediaStatus.id)
-                  .padding(.bottom, 4)
-                  .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
-                  .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
-                }
-              }
+    let chunks = chunkItems(items)
+    
+    VStack(spacing: 0) {
+      ForEach(chunks) { chunk in
+        if chunk.isGap, let gap = chunk.gap {
+          if let gapLoader = fetcher as? GapLoadingFetcher {
+            TimelineGapView(gap: gap) {
+              await gapLoader.loadGap(gap: gap)
             }
+            .padding(.horizontal, .layoutPadding)
+            .padding(.vertical, 8)
           }
+        } else {
+          makeGridChunk(for: chunk.items)
         }
-        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       }
     }
-    .clipped()
-    .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
     .listRowBackground(theme.primaryBackgroundColor)
     .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     .task(id: items.count) {
+      let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
+      let columns = UserPreferences.shared.galleryColumns
       let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
       let targetMediaCount = columns * itemsPerColumn
       
@@ -172,14 +216,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
             if index == 0 { currentAnchors = [] }
           }
         }
-      case .gap(let gap):
-        galleryNodes.append(GalleryNode(
-          id: gap.id,
-          mediaStatus: nil,
-          gap: gap,
-          anchorIds: currentAnchors
-        ))
-        currentAnchors = []
+      case .gap:
+        break
       }
     }
 
@@ -200,11 +238,9 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
     var currentIndex = 0
     for node in galleryNodes {
-      if node.isGap {
-        items[0].append(node)
-      } else if let mediaStatus = node.mediaStatus {
-        let targetColIndex: Int
+      let targetColIndex: Int
 
+      if let mediaStatus = node.mediaStatus {
         if UserPreferences.shared.galleryOptimizeItemLayout {
           var shortestColIndex = 0
           var shortestHeight = columnHeights[0]
@@ -235,6 +271,45 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
 
     return items
+  }
+
+  @ViewBuilder
+  private func makeGridChunk(for items: [TimelineItem]) -> some View {
+    let galleryNodes = computeGalleryNodes(for: items)
+    let columns = UserPreferences.shared.galleryColumns
+    let columnItems = computeColumnItems(from: galleryNodes, columns: columns)
+
+    HStack(alignment: .top, spacing: 4) {
+      ForEach(0..<columns, id: \.self) { colIndex in
+        LazyVStack(spacing: 0) {
+          ForEach(columnItems[colIndex]) { node in
+            VStack(spacing: 0) {
+              ForEach(node.anchorIds, id: \.self) { anchorId in
+                Color.clear
+                  .frame(height: 0)
+                  .id(anchorId)
+              }
+              if let mediaStatus = node.mediaStatus {
+                GalleryMediaCell(
+                  mediaStatus: mediaStatus,
+                  routerPath: routerPath,
+                  client: client,
+                  isRemote: isRemote,
+                  filterContext: filterContext
+                )
+                .id(mediaStatus.id)
+                .padding(.bottom, 4)
+                .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+                .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+              }
+            }
+          }
+        }
+        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+      }
+    }
+    .clipped()
+    .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
   }
 }
 
