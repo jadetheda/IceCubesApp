@@ -20,6 +20,7 @@ public struct StatusRowView: View {
   @Environment(RouterPath.self) private var routerPath: RouterPath
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
   @Environment(MastodonClient.self) private var client
   @Environment(ToastCenter.self) private var toastCenter
 
@@ -104,7 +105,7 @@ public struct StatusRowView: View {
                   }
                 }
               if !reasons.contains(.placeholder),
-                viewModel.showActions, isFocused || theme.statusActionsDisplay != .none,
+                viewModel.showActions, isFocused || (theme.statusActionsDisplay != .none && !userPreferences.hideInteractionButtons),
                 !isInCaptureMode
               {
                 StatusRowActionsView(

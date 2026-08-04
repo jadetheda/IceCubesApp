@@ -35,6 +35,7 @@ import SwiftUI
     @AppStorage("user_deepl_api_free") public var userDeeplAPIFree = true
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
 
+    @AppStorage("hide_interaction_buttons") public var hideInteractionButtons = false
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
     @AppStorage("gallery_columns") public var galleryColumns: Int = 2
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
@@ -349,6 +350,12 @@ import SwiftUI
       storage.statusMediaGridMode = statusMediaGridMode
     }
   }
+  public var hideInteractionButtons: Bool {
+    didSet {
+      storage.hideInteractionButtons = hideInteractionButtons
+    }
+  }
+
   public var inAppBrowserReaderView: Bool {
     didSet {
       storage.inAppBrowserReaderView = inAppBrowserReaderView
@@ -799,6 +806,7 @@ import SwiftUI
     statusMediaGridMode = storage.statusMediaGridMode
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout
+    hideInteractionButtons = storage.hideInteractionButtons
     inAppBrowserReaderView = storage.inAppBrowserReaderView
     hapticTabSelectionEnabled = storage.hapticTabSelectionEnabled
     hapticTimelineEnabled = storage.hapticTimelineEnabled
