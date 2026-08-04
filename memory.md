@@ -502,5 +502,7 @@
   - Responded to explicit user request to start fresh by completely removing the `.git` directory to purge any corrupted loose git structures.
   - Initialized a clean, brand new Git database, connected the secure remote via `GITHUB_PAT`, fetched and hard-reset the workspace to match the remote `origin/main` branch exactly.
   - Verified compilation builds and restarted the dev server to keep the companion server live and responsive.
+- **Fixed Theme Match Bug**:
+  - Reverted the "smart theme family variant switching" in `ThemePreviewView.swift` because it actively broke the expected manual override behavior. If the user explicitly selects a dark variant while in light mode, it now correctly disables the `followSystemColorScheme` toggle and applies the chosen variant.
 
 
