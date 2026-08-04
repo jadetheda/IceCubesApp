@@ -11,6 +11,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
 
+  @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
   @State private var fetcher: Fetcher
   private let isRemote: Bool
   private let client: MastodonClient
@@ -27,13 +29,14 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     switch fetcher.statusesState {
     case .loading:
       let columns = UserPreferences.shared.galleryColumns
+      let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
       // Provide stable fake heights so the placeholders don't jitter on re-evaluation
       let isSquare = UserPreferences.shared.galleryCropToSquare
       let placeholderRatios: [CGFloat] = isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
       HStack(alignment: .top, spacing: 4) {
         ForEach(0..<columns, id: \.self) { colIndex in
           LazyVStack(spacing: 0) {
-            ForEach(0..<6, id: \.self) { rowIndex in
+            ForEach(0..<itemsPerColumn, id: \.self) { rowIndex in
               RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0)
                 .fill(theme.secondaryBackgroundColor)
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
@@ -178,7 +181,11 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
     .task(id: items.count) {
       let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
-      if mediaCount < 6 && nextPageState == .hasNextPage {
+      let columns = UserPreferences.shared.galleryColumns
+      let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
+      let targetMediaCount = columns * itemsPerColumn
+      
+      if mediaCount < targetMediaCount && nextPageState == .hasNextPage {
         try? await fetcher.fetchNextPage()
       }
     }

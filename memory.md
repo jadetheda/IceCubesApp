@@ -504,5 +504,8 @@
   - Verified compilation builds and restarted the dev server to keep the companion server live and responsive.
 - **Fixed Theme Match Bug**:
   - Reverted the "smart theme family variant switching" in `ThemePreviewView.swift` because it actively broke the expected manual override behavior. If the user explicitly selects a dark variant while in light mode, it now correctly disables the `followSystemColorScheme` toggle and applies the chosen variant.
+- **Fixed Gallery Pagination Logic**:
+  - Made the Gallery Mode pagination logic dynamic based on the user's `galleryColumns` preference and `horizontalSizeClass`.
+  - Replaced the hardcoded limit of `6` with a more scalable formula (`columns * itemsPerColumn`) to ensure pagination continues correctly across different screen sizes and grid layouts without stalling.
 
 
