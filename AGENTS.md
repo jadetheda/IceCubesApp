@@ -25,9 +25,42 @@
 - **Agent Action:** When discussing version control or repository backups, warn the user about this behavior. Always ensure the `.gitignore` is fully robust and suggest using terminal-based Git pushes or ZIP exports instead of the default AI Studio GitHub integration to preserve structural integrity.
 
 
-## 🚨 Binary File Corruption (The "Sleep/Wake" Mangling Rule)
-- **The Issue**: When you leave AI Studio for a few hours, the container scales to zero. Upon waking up, AI Studio's internal file restoration system restores the workspace. Because it is optimized for text/web apps, it **mangles all binary files** (like .pngs, .xcassets) by trying to parse them as UTF-8.
-- **The Fix**: This is why `png_guardian.cjs` and `sync_repo.sh` exist. If the user mentions corrupted images or returning from a break, you MUST assume the native binary files are corrupted. Either run the PNG guardian to restore them from base64, or use `sync_repo.sh` to do a clean pull from GitHub. Do NOT trust the file system's binaries after a container restart.
+## 🚨 Binary File Corruption & Dev Server Failures (The "Sleep/Wake" Mangling Rule)
+- **The Issue**: When AI Studio is idle, the container scales to zero. Upon waking up, AI Studio's file restoration system restores the workspace. Because it parses/restores everything as UTF-8 text, it **mangles all binary files** (e.g., images inside `.xcassets`, `.png`, `.heic`, audio files like `.wav`/`.caf`, font files like `.ttf`/`.otf`), corrupts `.git/index` and loose Git objects, and sometimes deletes or fails to restore `/package.json` correctly. This prevents the dev server from starting and breaks Git commands.
+- **Symptom Check**:
+  - The preview frame shows "Please wait while your application starts..." indefinitely.
+  - Commands like `git status` or `git log` fail with errors like `fatal: unknown index entry format`, `fatal: bad object HEAD`, or pack inflation errors.
+  - Running a compile/build step fails because `/package.json` is missing or invalid.
+- **The Recovery Protocol (Execute immediately when these symptoms appear)**:
+  1. **Restore Git Integrity**:
+     - Delete the corrupt `.git` directory (`delete_dir` on `/.git`).
+     - Run: `git init && git remote add origin https://github.com/jadetheda/IceCubesApp.git && git fetch origin main`
+     - Run: `git checkout -b main && git reset --mixed origin/main` to sync with the remote repository.
+     - Run: `git restore .` to retrieve missing files.
+  2. **Heal Binary Assets**:
+     - Run: `bash heal_pngs.sh` to download the remote asset bundle and overwrite all mangled binaries (xcassets, fonts, audios) with correct binary headers.
+  3. **Restore package.json & Dev Server**:
+     - Create/ensure `/package.json` exists with the following content to run the companion server:
+       ```json
+       {
+         "name": "icecubes-companion-server",
+         "version": "1.0.0",
+         "description": "Companion server for IceCubes iOS workspace in AI Studio",
+         "main": "scripts/companion_server.js",
+         "type": "commonjs",
+         "scripts": {
+           "start": "node scripts/companion_server.js",
+           "dev": "node scripts/companion_server.js",
+           "build": "echo 'No build step required for companion server'"
+         },
+         "dependencies": {}
+       }
+       ```
+     - Compile/build the applet to verify and then run `restart_dev_server`.
+  4. **Post-Recovery Integrity Sync**:
+     - Always notify the workspace integrity API after restoring or changing tracking:
+       `npx -y node -e 'fetch("http://127.0.0.1:3000/api/integrity/update", {method: "POST"})'`
+     - Verify status using `git status`. Do not push corrupt/temporary binaries to GitHub. Use SSH/manual token config if pushing commits.
 
 ## ⚖️ Attribution & External Code Tracking
 - **The Issue:** As projects grow and external snippets/libraries are integrated, the origin of the code gets lost, making licensing and debugging a nightmare.
