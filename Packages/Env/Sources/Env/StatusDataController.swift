@@ -72,9 +72,21 @@ public final class StatusDataControllerProvider {
     self.status = status
     self.client = client
 
-    isReblogged = status.reblogged == true
-    isBookmarked = status.bookmarked == true
-    isFavorited = status.favourited == true
+    if let reblogged = status.reblogged {
+      isReblogged = reblogged
+    } else {
+      isReblogged = false
+    }
+    if let bookmarked = status.bookmarked {
+      isBookmarked = bookmarked
+    } else {
+      isBookmarked = false
+    }
+    if let favourited = status.favourited {
+      isFavorited = favourited
+    } else {
+      isFavorited = false
+    }
 
     reblogsCount = status.reblogsCount
     repliesCount = status.repliesCount
@@ -84,9 +96,15 @@ public final class StatusDataControllerProvider {
   }
 
   public func updateFrom(status: AnyStatus) {
-    isReblogged = status.reblogged == true
-    isBookmarked = status.bookmarked == true
-    isFavorited = status.favourited == true
+    if let reblogged = status.reblogged {
+      isReblogged = reblogged
+    }
+    if let bookmarked = status.bookmarked {
+      isBookmarked = bookmarked
+    }
+    if let favourited = status.favourited {
+      isFavorited = favourited
+    }
 
     reblogsCount = status.reblogsCount
     repliesCount = status.repliesCount
@@ -123,8 +141,9 @@ public final class StatusDataControllerProvider {
     }
     do {
       let status: Status = try await client.post(endpoint: endpoint)
-      updateFrom(status: status.reblog ?? status)
-      NotificationCenter.default.post(name: .statusUpdated, object: status.reblog ?? status)
+      let realStatus = status.reblogAsAsStatus ?? status
+      updateFrom(status: realStatus)
+      NotificationCenter.default.post(name: .statusUpdated, object: realStatus)
     } catch {
       isReblogged.toggle()
       reblogsCount += isReblogged ? -1 : 1

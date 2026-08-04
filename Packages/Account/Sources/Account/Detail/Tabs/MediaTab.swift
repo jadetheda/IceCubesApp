@@ -113,7 +113,8 @@ private struct MediaTabView: View {
       AnyStatusesListView(
         fetcher: fetcher,
         client: client,
-        routerPath: routerPath
+        routerPath: routerPath,
+        isRemote: account?.url?.host?.lowercased() != client.server.lowercased()
       )
     }
   }

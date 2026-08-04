@@ -21,8 +21,9 @@ struct StatusesTab {
   func makeView(
     fetcher: any StatusesFetcher, client: MastodonClient, routerPath: RouterPath, account: Account?
   ) -> some View {
-    StatusesTabView(
-      fetcher: fetcher as! StatusesTabFetcher, client: client, routerPath: routerPath)
+    let isRemote = account?.url?.host?.lowercased() != client.server.lowercased()
+    return StatusesTabView(
+      fetcher: fetcher as! StatusesTabFetcher, client: client, routerPath: routerPath, isRemote: isRemote)
   }
 }
 
@@ -107,6 +108,7 @@ private struct StatusesTabView: View {
   let fetcher: StatusesTabFetcher
   let client: MastodonClient
   let routerPath: RouterPath
+  let isRemote: Bool
 
   @Environment(Theme.self) private var theme
 
@@ -119,7 +121,8 @@ private struct StatusesTabView: View {
       AnyStatusesListView(
         fetcher: fetcher,
         client: client,
-        routerPath: routerPath
+        routerPath: routerPath,
+        isRemote: isRemote
       )
     }
   }
@@ -189,7 +192,7 @@ private struct StatusesTabView: View {
                 mediaStatus: mediaStatus,
                 routerPath: routerPath,
                 client: client,
-                isRemote: false,
+                isRemote: isRemote,
                 filterContext: .account
               )
               .id(mediaStatus.status.id)

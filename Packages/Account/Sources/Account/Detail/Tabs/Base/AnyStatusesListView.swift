@@ -10,17 +10,20 @@ struct AnyStatusesListView: View {
   let fetcher: any StatusesFetcher
   let client: MastodonClient
   let routerPath: RouterPath
+  let isRemote: Bool
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
   // toggles like hideReadPosts from affecting the profile media view.
   init(
     fetcher: any StatusesFetcher,
     client: MastodonClient,
-    routerPath: RouterPath
+    routerPath: RouterPath,
+    isRemote: Bool = false
   ) {
     self.fetcher = fetcher
     self.client = client
     self.routerPath = routerPath
+    self.isRemote = isRemote
   }
   
   @Environment(Theme.self) private var theme
@@ -115,7 +118,7 @@ struct AnyStatusesListView: View {
       fetcher: f,
       client: client,
       routerPath: routerPath,
-      isRemote: false,
+      isRemote: isRemote,
       filterContext: .account
     )
   }

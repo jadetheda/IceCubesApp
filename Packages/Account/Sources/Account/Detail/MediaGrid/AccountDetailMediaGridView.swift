@@ -90,6 +90,11 @@ public struct AccountDetailMediaGridView: View {
   let account: Account
   @State private var fetcher: AccountMediaFetcher
   
+  private var isRemote: Bool {
+    guard let host = account.url?.host else { return false }
+    return host.lowercased() != client.server.lowercased()
+  }
+  
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
     self.account = account
     let initialStatuses = initialMediaStatuses.map { $0.status }
@@ -105,7 +110,7 @@ public struct AccountDetailMediaGridView: View {
           fetcher: fetcher,
           client: client,
           routerPath: routerPath,
-          isRemote: false
+          isRemote: isRemote
         )
       }
       .padding(.top, .layoutPadding)

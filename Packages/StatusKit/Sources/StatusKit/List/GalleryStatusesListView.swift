@@ -48,6 +48,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .redacted(reason: .placeholder)
       .allowsHitTesting(false)
+      .listRowBackground(theme.primaryBackgroundColor)
     case .error:
       ErrorView(
         title: "status.error.title",
@@ -179,6 +180,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         }
       }
     }
+    .listRowBackground(theme.primaryBackgroundColor)
+    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     .task(id: items.count) {
       let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
       let columns = UserPreferences.shared.galleryColumns
