@@ -95,7 +95,7 @@ struct TimelineListView: View {
       .listStyle(.plain)
       #if !os(visionOS)
         .scrollContentBackground(.hidden)
-        .background(theme.primaryBackgroundColor)
+        .background(theme.primaryBackgroundColor.ignoresSafeArea())
       #endif
       .onChange(of: viewModel.scrollToId) { _, newValue in
         if let newValue {

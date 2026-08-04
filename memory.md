@@ -509,3 +509,5 @@
   - Replaced the hardcoded limit of `6` with a more scalable formula (`columns * itemsPerColumn`) to ensure pagination continues correctly across different screen sizes and grid layouts without stalling.
 
 
+- **2026-08-04T07:07:00Z**: Fixed bug where posts did not show as interacted with after leaving the view. Corrected `StatusDataController` to post `status.reblogAsAsStatus ?? status` instead of the raw `ReblogStatus` (which was failing the `as? Status` cast in `TimelineViewModel`). Also modified `updateFrom` to ignore `nil` values in interaction states to prevent stale unauthenticated/cached API responses from overwriting local true states back to false.
+- **2026-08-04T07:28:00Z**: Fixed Gallery Mode background color mismatch. Added `.ignoresSafeArea()` to `.background(theme.primaryBackgroundColor)` modifiers in `TimelineListView.swift`, `AccountStatusesListView.swift`, and `AccountDetailMediaGridView.swift`. This prevents the top and bottom safe areas from rendering the default window color (black/white) when `ScrollView` is used in Gallery Mode, ensuring the theme's background color extends to the screen edges just as it does in `List` mode.

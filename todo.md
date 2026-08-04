@@ -12,7 +12,7 @@
 
 ### Bugs/Regressions
 
-- [ ] The background of the Gallery Mode doesn't match the background of the theme
+- [x] The background of the Gallery Mode doesn't match the background of the theme
 - [x] Gallery Mode in the Media tab in Profile doesn't support remote media fallback -- nor does the version inside its Fullscreen Gallery view (aka what used to be called Media Grid)
 - [ ] We appear to have somehow broken the fix implemented earlier to address posts not showing as interacted with after leaving the view.
 - [ ] The counter is showing posts I can't see? Maybe scrolling up is still broke

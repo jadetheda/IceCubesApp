@@ -133,7 +133,7 @@ public struct AccountDetailMediaGridView: View {
       }
     }
     #if !os(visionOS)
-      .background(theme.primaryBackgroundColor)
+      .background(theme.primaryBackgroundColor.ignoresSafeArea())
     #endif
     .refreshable {
       await fetcher.fetchNewestStatuses(pullToRefresh: true)

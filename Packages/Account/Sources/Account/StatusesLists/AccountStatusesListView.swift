@@ -61,7 +61,7 @@ public struct AccountStatusesListView: View {
     }
     #if !os(visionOS)
       .scrollContentBackground(.hidden)
-      .background(theme.primaryBackgroundColor)
+      .background(theme.primaryBackgroundColor.ignoresSafeArea())
     #endif
     .navigationTitle(mode.title)
     .navigationBarTitleDisplayMode(.inline)
