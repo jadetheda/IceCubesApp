@@ -498,4 +498,9 @@
   - Re-initialized git to clear corrupt objects, fetched the remote, and restored tracking via `git restore .`.
   - Executed `heal_pngs.sh` via bash to restore all 111 mangled asset files from the remote archive.
   - Successfully posted to `/api/integrity/update` on the running port 3000 server to sync the manifest and verify the system is ready.
+- **Repository Full Clean Re-clone**:
+  - Responded to explicit user request to start fresh by completely removing the `.git` directory to purge any corrupted loose git structures.
+  - Initialized a clean, brand new Git database, connected the secure remote via `GITHUB_PAT`, fetched and hard-reset the workspace to match the remote `origin/main` branch exactly.
+  - Verified compilation builds and restarted the dev server to keep the companion server live and responsive.
+
 
