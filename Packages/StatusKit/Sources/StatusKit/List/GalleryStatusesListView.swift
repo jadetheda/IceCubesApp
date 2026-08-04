@@ -305,7 +305,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
             }
           }
         }
-        .frame(minWidth: 0, maxWidth: .infinity)
+        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       }
     }
     .clipped()
