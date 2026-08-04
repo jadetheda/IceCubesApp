@@ -491,3 +491,11 @@
   - Implemented smart theme family variant switching in `ThemePreviewView.swift`. When "Match System" (`followSystemColorScheme`) is active, tapping any light or dark box in a theme family will no longer disable the system match toggle. Instead, the app dynamically applies the correct light/dark variant of that family corresponding to the user's current system appearance, keeping system-matching active.
   - Standardized the `colorScheme` environment declaration in `ThemeApplier.swift` to use the standard `\.colorScheme` keypath rather than `\EnvironmentValues.colorScheme` for cleaner and more robust SwiftUI state propagation.
 
+## 2026-08-04 (UTC)
+- **Restored Dev Server and Repository State**:
+  - Fixed dev server launch crash. The container scale-down had corrupted the binary `.git/index` and loose objects (mangled as UTF-8) and left the workspace without a `package.json` manifest. This caused `npm` compilation to fail.
+  - Recreated a simple `/package.json` mapping `start`, `dev`, and `build` commands directly to `node scripts/companion_server.js`.
+  - Re-initialized git to clear corrupt objects, fetched the remote, and restored tracking via `git restore .`.
+  - Executed `heal_pngs.sh` via bash to restore all 111 mangled asset files from the remote archive.
+  - Successfully posted to `/api/integrity/update` on the running port 3000 server to sync the manifest and verify the system is ready.
+

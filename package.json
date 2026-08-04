@@ -1,0 +1,13 @@
+{
+  "name": "icecubes-companion-server",
+  "version": "1.0.0",
+  "description": "Companion server for IceCubes iOS workspace in AI Studio",
+  "main": "scripts/companion_server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node scripts/companion_server.js",
+    "dev": "node scripts/companion_server.js",
+    "build": "echo 'No build step required for companion server'"
+  },
+  "dependencies": {}
+}
