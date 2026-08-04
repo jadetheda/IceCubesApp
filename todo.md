@@ -30,6 +30,11 @@
 - [ ] toggle to set separate custom theme settings for light/dark
 - [ ] easy probably: Animated emojis
 - [ ] optional (off by default) button in timeline menu to hide the pinned items temporarily 
+- [ ] Support for the themes to modify the interaction colors too
+- [ ] Option to change fav to like
+- [ ] Boost carousal
+- [ ] Hide pinned items
+- [ ] Hide the symbol icon on pinned things in Timeline
 
 ### App Configuration & Maintenance
 
