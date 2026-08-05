@@ -49,7 +49,7 @@ public struct TimelineView: View {
   @State private var wasBackgrounded = false
 
   private var toolbarBackgroundVisibility: SwiftUI.Visibility {
-    if canFilterTimeline, !pinnedFilters.isEmpty {
+    if canFilterTimeline, !pinnedFilters.isEmpty, !preferences.timelinePinnedHidden {
       return .hidden
     }
     return .visible
@@ -71,7 +71,7 @@ public struct TimelineView: View {
     if #available(iOS 26.0, *) {
       timelineView
         .safeAreaBar(edge: .top) {
-          if canFilterTimeline, !pinnedFilters.isEmpty {
+          if canFilterTimeline, !pinnedFilters.isEmpty, !preferences.timelinePinnedHidden {
             TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
               .padding(.horizontal, .layoutPadding)
           }
@@ -81,7 +81,7 @@ public struct TimelineView: View {
       timelineView
         .toolbarBackground(toolbarBackgroundVisibility, for: .navigationBar)
         .safeAreaInset(edge: .top, spacing: 0) {
-          if canFilterTimeline, !pinnedFilters.isEmpty {
+          if canFilterTimeline, !pinnedFilters.isEmpty, !preferences.timelinePinnedHidden {
             VStack(spacing: 0) {
               TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
                 .padding(.vertical, 8)

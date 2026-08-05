@@ -107,6 +107,9 @@ import SwiftUI
     @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
     @AppStorage("remote_media_fallback_on_fail") public var remoteMediaFallbackOnFail: Bool = true
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
+    @AppStorage("show_timeline_hide_pinned_toggle") public var showTimelineHidePinnedToggle: Bool = false
+    @AppStorage("timeline_pinned_hidden") public var timelinePinnedHidden: Bool = false
+    @AppStorage("hide_pinned_items_symbol") public var hidePinnedItemsSymbol: Bool = false
     @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
     @AppStorage("iceshrimp_hide_boosts_button") public var iceShrimpHideBoostsButton: Bool = true
     @AppStorage("iceshrimp_hide_incompatible_buttons") public var iceShrimpHideIncompatibleButtons: Bool = true
@@ -591,6 +594,24 @@ import SwiftUI
     }
   }
 
+  public var showTimelineHidePinnedToggle: Bool {
+    didSet {
+      storage.showTimelineHidePinnedToggle = showTimelineHidePinnedToggle
+    }
+  }
+
+  public var timelinePinnedHidden: Bool {
+    didSet {
+      storage.timelinePinnedHidden = timelinePinnedHidden
+    }
+  }
+
+  public var hidePinnedItemsSymbol: Bool {
+    didSet {
+      storage.hidePinnedItemsSymbol = hidePinnedItemsSymbol
+    }
+  }
+
   public var tagGroupsClientSideMergeEnabled: Bool {
     didSet {
       storage.tagGroupsClientSideMergeEnabled = tagGroupsClientSideMergeEnabled
@@ -857,6 +878,9 @@ import SwiftUI
     iceShrimpTrendingHalfLife = storage.iceShrimpTrendingHalfLife
 
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
+    showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
+    timelinePinnedHidden = storage.timelinePinnedHidden
+    hidePinnedItemsSymbol = storage.hidePinnedItemsSymbol
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
