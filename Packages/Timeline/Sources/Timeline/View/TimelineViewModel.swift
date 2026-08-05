@@ -10,7 +10,6 @@ import Nuke
 @Observable class TimelineViewModel {
   var scrollToId: String?
   var lastTopVisibleStatusId: String?
-  var lastTopVisibleMediaStatusId: String?
   @ObservationIgnored private var cacheUpdateTask: Task<Void, Never>?
   var statusesState: StatusesState = .loading
   var timeline: TimelineFilter = .home {
@@ -172,16 +171,6 @@ import Nuke
   private func updateLastTopVisibleStatusId() {
       if let id = getTopVisibleStatusId() {
           lastTopVisibleStatusId = id
-          
-          if case .displayWithGaps(let items, _) = statusesState {
-              if let mediaId = items.compactMap({ $0.status }).first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.mediaAttachments.first?.id {
-                  lastTopVisibleMediaStatusId = mediaId
-              }
-          } else if case .display(let statuses, _) = statusesState {
-              if let mediaId = statuses.first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.mediaAttachments.first?.id {
-                  lastTopVisibleMediaStatusId = mediaId
-              }
-          }
       }
   }
 

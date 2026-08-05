@@ -99,15 +99,14 @@ struct TimelineListView: View {
       #endif
       .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {
-            let targetId = newValue ? viewModel.lastTopVisibleMediaStatusId : viewModel.lastTopVisibleStatusId
-            if let targetId = targetId ?? viewModel.lastTopVisibleStatusId {
-                Task {
-                    try? await Task.sleep(nanoseconds: 150_000_000)
-                    await MainActor.run {
-                        proxy.scrollTo(targetId, anchor: .top)
-                    }
-                }
+          if let targetId = viewModel.getTopVisibleStatusId() {
+            Task {
+              try? await Task.sleep(nanoseconds: 300_000_000)
+              await MainActor.run {
+                proxy.scrollTo(targetId, anchor: .top)
+              }
             }
+          }
         }
       }
       .onChange(of: viewModel.scrollToId) { _, newValue in
