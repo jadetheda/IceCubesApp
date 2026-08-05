@@ -215,8 +215,12 @@ private struct MediaPreview: View {
                 }
                 .aspectRatio(contentMode: .fill)
                 .frame(
-                  maxWidth: isStandalone ? .infinity : .infinity,
-                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : .infinity
+                  maxWidth: isStandalone ? .infinity : nil,
+                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
+                )
+                .frame(
+                  width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
+                  height: isStandalone ? nil : imageMaxHeight
                 )
                 .overlay(
                   RoundedRectangle(cornerRadius: 10)
