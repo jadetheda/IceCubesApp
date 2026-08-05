@@ -200,6 +200,7 @@ struct ContentSettingsView: View {
       #endif
 
       Section("timeline.content-filter.title") {
+        Toggle("Show 'Hide Pinned' in Timeline Menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
         Toggle(isOn: $contentFilter.showBoosts) {
           Label("timeline.filter.show-boosts", systemImage: "arrow.2.squarepath")
         }

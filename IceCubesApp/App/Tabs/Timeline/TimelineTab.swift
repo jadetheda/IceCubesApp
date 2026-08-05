@@ -121,14 +121,6 @@ struct TimelineTab: View {
   @ViewBuilder
   private var timelineFilterButton: some View {
     headerGroup
-    if preferences.showTimelineHidePinnedToggle {
-      Button {
-        preferences.timelinePinnedHidden.toggle()
-      } label: {
-        Label(preferences.timelinePinnedHidden ? "Show Pinned" : "Hide Pinned", systemImage: preferences.timelinePinnedHidden ? "pin.slash" : "pin")
-      }
-      Divider()
-    }
     if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
       Button {
         if preferences.hideSeenPostsIsToggle {
@@ -163,6 +155,15 @@ struct TimelineTab: View {
     tagGroupsFiltersButtons
     Divider()
     contentFilterButton
+    
+    if preferences.showTimelineHidePinnedToggle {
+      Divider()
+      Button {
+        preferences.timelinePinnedHidden.toggle()
+      } label: {
+        Label(preferences.timelinePinnedHidden ? "Show Pinned" : "Hide Pinned", systemImage: preferences.timelinePinnedHidden ? "pin.slash" : "pin")
+      }
+    }
   }
 
   private var addAccountButton: some View {
