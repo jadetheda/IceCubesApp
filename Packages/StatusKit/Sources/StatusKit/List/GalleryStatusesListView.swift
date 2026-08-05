@@ -208,10 +208,12 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           currentAnchors.append(status.id)
         } else {
           for (index, mediaStatus) in mediaStatuses.enumerated() {
+            var anchors = index == 0 ? currentAnchors : []
+            if index == 0 { anchors.append(status.id) }
             galleryNodes.append(GalleryNode(
               id: mediaStatus.id,
               mediaStatus: mediaStatus,
-              anchorIds: index == 0 ? currentAnchors : []
+              anchorIds: anchors
             ))
             if index == 0 { currentAnchors = [] }
           }

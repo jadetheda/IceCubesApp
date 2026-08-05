@@ -173,13 +173,12 @@ import Nuke
       if let id = getTopVisibleStatusId() {
           lastTopVisibleStatusId = id
           
-          // Also find the first visible media status
           if case .displayWithGaps(let items, _) = statusesState {
-              if let mediaId = items.compactMap({ $0.status }).first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.id {
+              if let mediaId = items.compactMap({ $0.status }).first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.mediaAttachments.first?.id {
                   lastTopVisibleMediaStatusId = mediaId
               }
           } else if case .display(let statuses, _) = statusesState {
-              if let mediaId = statuses.first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.id {
+              if let mediaId = statuses.first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.mediaAttachments.first?.id {
                   lastTopVisibleMediaStatusId = mediaId
               }
           }

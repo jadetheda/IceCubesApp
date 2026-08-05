@@ -101,8 +101,11 @@ struct TimelineListView: View {
         if oldValue != newValue {
             let targetId = newValue ? viewModel.lastTopVisibleMediaStatusId : viewModel.lastTopVisibleStatusId
             if let targetId = targetId ?? viewModel.lastTopVisibleStatusId {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    scrollToIdAnimated = targetId
+                Task {
+                    try? await Task.sleep(nanoseconds: 150_000_000)
+                    await MainActor.run {
+                        proxy.scrollTo(targetId, anchor: .top)
+                    }
                 }
             }
         }

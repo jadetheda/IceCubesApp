@@ -254,7 +254,7 @@ private struct MediaPreview: View {
         height: isStandalone ? nil : imageMaxHeight
       )
       .clipped()
-      .if(isStandalone) { $0.cornerRadius(10) }
+      .cornerRadius(10)
       // #965: do not create overlapping tappable areas, when multiple images are shown
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
@@ -839,7 +839,7 @@ private struct MediaGridCell: View {
       )
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
       .clipped()
-      .if(isStandalone) { $0.cornerRadius(10) }
+      .cornerRadius(10)
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text(displayData.accessibilityText))
