@@ -8,10 +8,11 @@ const PORT = 3000;
 // Helper to get git info
 function getGitInfo() {
   try {
-    const hash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
-    const author = execSync('git log -1 --pretty=format:"%an"', { encoding: 'utf8' }).trim();
-    const relativeTime = execSync('git log -1 --pretty=format:"%ar"', { encoding: 'utf8' }).trim();
-    const subject = execSync('git log -1 --pretty=format:"%s"', { encoding: 'utf8' }).trim();
+    const gitDir = fs.existsSync('ios-workspace') ? 'ios-workspace' : '.';
+    const hash = execSync('git rev-parse HEAD', { encoding: 'utf8', cwd: gitDir }).trim();
+    const author = execSync('git log -1 --pretty=format:"%an"', { encoding: 'utf8', cwd: gitDir }).trim();
+    const relativeTime = execSync('git log -1 --pretty=format:"%ar"', { encoding: 'utf8', cwd: gitDir }).trim();
+    const subject = execSync('git log -1 --pretty=format:"%s"', { encoding: 'utf8', cwd: gitDir }).trim();
     return { hash, author, relativeTime, subject };
   } catch (e) {
     return { hash: 'Unknown', author: 'Unknown', relativeTime: 'Unknown', subject: 'Error reading git history' };
@@ -21,8 +22,12 @@ function getGitInfo() {
 // Helper to get last few entries of activity log from memory.md
 function getActivityLog() {
   try {
-    if (!fs.existsSync('memory.md')) return [];
-    const content = fs.readFileSync('memory.md', 'utf8');
+    let memoryPath = 'memory.md';
+    if (!fs.existsSync(memoryPath) && fs.existsSync('ios-workspace/' + memoryPath)) {
+      memoryPath = 'ios-workspace/' + memoryPath;
+    }
+    if (!fs.existsSync(memoryPath)) return [];
+    const content = fs.readFileSync(memoryPath, 'utf8');
     const lines = content.split('\n');
     const logSectionStart = lines.findIndex(l => l.includes('## 🪵 Activity Log') || l.includes('## Activity Log'));
     
@@ -61,7 +66,10 @@ function getActivityLog() {
 // Helper to get alternate icons list
 function getAlternateIcons() {
   try {
-    const dir = 'IceCubesApp/Assets.xcassets';
+    let dir = 'IceCubesApp/Assets.xcassets';
+    if (!fs.existsSync(dir) && fs.existsSync('ios-workspace/' + dir)) {
+      dir = 'ios-workspace/' + dir;
+    }
     if (!fs.existsSync(dir)) return [];
     const files = fs.readdirSync(dir);
     
@@ -88,7 +96,11 @@ function getAlternateIcons() {
 // Find a PNG inside an appiconset folder
 function findPngInFolder(folderName) {
   try {
-    const folderPath = path.join('IceCubesApp/Assets.xcassets', folderName);
+    let baseDir = 'IceCubesApp/Assets.xcassets';
+    if (!fs.existsSync(baseDir) && fs.existsSync('ios-workspace/' + baseDir)) {
+      baseDir = 'ios-workspace/' + baseDir;
+    }
+    const folderPath = path.join(baseDir, folderName);
     if (!fs.existsSync(folderPath)) return null;
     
     const files = fs.readdirSync(folderPath);
