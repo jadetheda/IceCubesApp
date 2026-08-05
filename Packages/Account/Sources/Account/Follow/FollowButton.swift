@@ -132,7 +132,7 @@ public struct FollowButton: View {
             viewModel.shouldDisplayNotify
           {
             HStack {
-              if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+              if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowIncompatibleButtons {
                 AsyncButton {
                   try await viewModel.toggleNotify()
                 } label: {
@@ -145,7 +145,7 @@ public struct FollowButton: View {
                 )
                 .glassEffect(.regular.interactive())
               }
-              if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
+              if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowBoostsButton {
                 AsyncButton {
                   try await viewModel.toggleReboosts()
                 } label: {
@@ -193,7 +193,7 @@ public struct FollowButton: View {
           viewModel.shouldDisplayNotify
         {
           HStack {
-            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+            if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowIncompatibleButtons {
               AsyncButton {
                 try await viewModel.toggleNotify()
               } label: {
@@ -204,7 +204,7 @@ public struct FollowButton: View {
                 viewModel.relationship.notifying
                   ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
             }
-            if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideBoostsButton {
+            if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowBoostsButton {
               AsyncButton {
                 try await viewModel.toggleReboosts()
               } label: {

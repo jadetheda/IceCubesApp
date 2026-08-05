@@ -35,7 +35,7 @@ import SwiftUI
     @AppStorage("user_deepl_api_free") public var userDeeplAPIFree = true
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
 
-    @AppStorage("hide_interaction_buttons") public var hideInteractionButtons = false
+    @AppStorage("show_interaction_buttons") public var showInteractionButtons = true
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
     @AppStorage("gallery_columns") public var galleryColumns: Int = 2
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
@@ -109,10 +109,10 @@ import SwiftUI
     @AppStorage("remote_media_always_force") public var remoteMediaAlwaysForce: Bool = false
     @AppStorage("show_timeline_hide_pinned_toggle") public var showTimelineHidePinnedToggle: Bool = false
     @AppStorage("timeline_pinned_hidden") public var timelinePinnedHidden: Bool = false
-    @AppStorage("hide_pinned_items_symbol") public var hidePinnedItemsSymbol: Bool = false
+    @AppStorage("show_pinned_items_symbol") public var showPinnedItemsSymbol: Bool = true
     @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
-    @AppStorage("iceshrimp_hide_boosts_button") public var iceShrimpHideBoostsButton: Bool = true
-    @AppStorage("iceshrimp_hide_incompatible_buttons") public var iceShrimpHideIncompatibleButtons: Bool = true
+    @AppStorage("iceshrimp_show_boosts_button") public var iceShrimpShowBoostsButton: Bool = false
+    @AppStorage("iceshrimp_show_incompatible_buttons") public var iceShrimpShowIncompatibleButtons: Bool = false
     @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
     
     @AppStorage("trending_algorithm") public var trendingAlgorithm: TrendingAlgorithm = .mastodon
@@ -353,9 +353,9 @@ import SwiftUI
       storage.statusMediaGridMode = statusMediaGridMode
     }
   }
-  public var hideInteractionButtons: Bool {
+  public var showInteractionButtons: Bool {
     didSet {
-      storage.hideInteractionButtons = hideInteractionButtons
+      storage.showInteractionButtons = showInteractionButtons
     }
   }
 
@@ -549,14 +549,14 @@ import SwiftUI
       storage.useIceShrimpWorkarounds = useIceShrimpWorkarounds
     }
   }
-  public var iceShrimpHideBoostsButton: Bool {
+  public var iceShrimpShowBoostsButton: Bool {
     didSet {
-      storage.iceShrimpHideBoostsButton = iceShrimpHideBoostsButton
+      storage.iceShrimpShowBoostsButton = iceShrimpShowBoostsButton
     }
   }
-  public var iceShrimpHideIncompatibleButtons: Bool {
+  public var iceShrimpShowIncompatibleButtons: Bool {
     didSet {
-      storage.iceShrimpHideIncompatibleButtons = iceShrimpHideIncompatibleButtons
+      storage.iceShrimpShowIncompatibleButtons = iceShrimpShowIncompatibleButtons
     }
   }
   public var neverLoadVideo: Bool {
@@ -606,9 +606,9 @@ import SwiftUI
     }
   }
 
-  public var hidePinnedItemsSymbol: Bool {
+  public var showPinnedItemsSymbol: Bool {
     didSet {
-      storage.hidePinnedItemsSymbol = hidePinnedItemsSymbol
+      storage.showPinnedItemsSymbol = showPinnedItemsSymbol
     }
   }
 
@@ -827,7 +827,7 @@ import SwiftUI
     statusMediaGridMode = storage.statusMediaGridMode
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout
-    hideInteractionButtons = storage.hideInteractionButtons
+    showInteractionButtons = storage.showInteractionButtons
     inAppBrowserReaderView = storage.inAppBrowserReaderView
     hapticTabSelectionEnabled = storage.hapticTabSelectionEnabled
     hapticTimelineEnabled = storage.hapticTimelineEnabled
@@ -866,8 +866,8 @@ import SwiftUI
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
     useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
-    iceShrimpHideBoostsButton = storage.iceShrimpHideBoostsButton
-    iceShrimpHideIncompatibleButtons = storage.iceShrimpHideIncompatibleButtons
+    iceShrimpShowBoostsButton = storage.iceShrimpShowBoostsButton
+    iceShrimpShowIncompatibleButtons = storage.iceShrimpShowIncompatibleButtons
     neverLoadVideo = storage.neverLoadVideo
     
     trendingAlgorithm = storage.trendingAlgorithm
@@ -880,7 +880,7 @@ import SwiftUI
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
     timelinePinnedHidden = storage.timelinePinnedHidden
-    hidePinnedItemsSymbol = storage.hidePinnedItemsSymbol
+    showPinnedItemsSymbol = storage.showPinnedItemsSymbol
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }

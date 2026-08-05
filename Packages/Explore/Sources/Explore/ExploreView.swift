@@ -67,7 +67,7 @@ public struct ExploreView: View {
       List {
         scrollToTopView
         if !isLoaded {
-          if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+          if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowIncompatibleButtons {
             QuickAccessView(
               trendingLinks: trendingLinks,
               suggestedAccounts: suggestedAccounts,
@@ -115,7 +115,7 @@ public struct ExploreView: View {
           #endif
           .listRowSeparator(.hidden)
         } else {
-          if !preferences.useIceShrimpWorkarounds || !preferences.iceShrimpHideIncompatibleButtons {
+          if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowIncompatibleButtons {
             QuickAccessView(
               trendingLinks: trendingLinks,
               suggestedAccounts: suggestedAccounts,

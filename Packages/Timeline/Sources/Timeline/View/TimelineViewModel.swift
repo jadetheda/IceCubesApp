@@ -157,7 +157,18 @@ import Nuke
     }
   }
 
+
+  func getTopVisibleStatusId() -> String? {
+      if case .displayWithGaps(let items, _) = statusesState {
+          return items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
+      } else if case .display(let statuses, _) = statusesState {
+          return statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
+      }
+      return visibleStatuses.first?.id
+  }
+
   var serverName: String {
+
     client?.server ?? "Error"
   }
 

@@ -97,6 +97,13 @@ struct TimelineListView: View {
         .scrollContentBackground(.hidden)
         .background(theme.primaryBackgroundColor.ignoresSafeArea())
       #endif
+      .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
+        if oldValue != newValue, let topId = viewModel.getTopVisibleStatusId() {
+           DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+              scrollToIdAnimated = topId
+           }
+        }
+      }
       .onChange(of: viewModel.scrollToId) { _, newValue in
         if let newValue {
           proxy.scrollTo(newValue, anchor: .top)
@@ -106,11 +113,7 @@ struct TimelineListView: View {
       .onChange(of: scrollToIdAnimated) { _, newValue in
         if let newValue {
           withAnimation {
-            if TimelineContentFilter.shared.isGalleryMode {
-              proxy.scrollTo(ScrollToView.Constants.scrollToTop, anchor: .top)
-            } else {
-              proxy.scrollTo(newValue, anchor: .top)
-            }
+            proxy.scrollTo(newValue, anchor: .top)
             scrollToIdAnimated = nil
           }
         }

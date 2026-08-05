@@ -39,7 +39,7 @@ import Observation
   }
 
   public var isNotificationsFilterSupported: Bool {
-    if UserPreferences.shared.useIceShrimpWorkarounds && UserPreferences.shared.iceShrimpHideIncompatibleButtons {
+    if UserPreferences.shared.useIceShrimpWorkarounds && !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
       return false
     }
     return version >= 4.3
@@ -50,7 +50,7 @@ import Observation
   }
 
   public var isGroupedNotificationsSupported: Bool {
-    if UserPreferences.shared.useIceShrimpWorkarounds && UserPreferences.shared.iceShrimpHideIncompatibleButtons {
+    if UserPreferences.shared.useIceShrimpWorkarounds && !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
       return false
     }
     return version >= 4.3

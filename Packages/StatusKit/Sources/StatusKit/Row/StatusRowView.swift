@@ -105,7 +105,7 @@ public struct StatusRowView: View {
                   }
                 }
               if !reasons.contains(.placeholder),
-                viewModel.showActions, isFocused || (theme.statusActionsDisplay != .none && !userPreferences.hideInteractionButtons),
+                viewModel.showActions, isFocused || (theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons),
                 !isInCaptureMode
               {
                 StatusRowActionsView(

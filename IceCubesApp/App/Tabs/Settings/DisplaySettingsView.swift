@@ -225,9 +225,9 @@ struct DisplaySettingsView: View {
       }
       Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
       Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
-      Toggle("Hide interaction buttons on Timeline", isOn: $userPreferences.hideInteractionButtons)
+      Toggle("Show interaction buttons on Timeline", isOn: $userPreferences.showInteractionButtons)
       Toggle("Show 'Hide Pinned' in Timeline Menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
-      Toggle("Hide Pinned Items Symbol", isOn: $userPreferences.hidePinnedItemsSymbol)
+      Toggle("Show Pinned Items Symbol", isOn: $userPreferences.showPinnedItemsSymbol)
       Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
         ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
           Text(buttonStyle.description).tag(buttonStyle)

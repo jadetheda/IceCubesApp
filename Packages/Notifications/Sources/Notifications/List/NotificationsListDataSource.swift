@@ -107,7 +107,7 @@ public final class NotificationsListDataSource {
   }
 
   public func fetchPolicy(client: MastodonClient) async -> Models.NotificationsPolicy? {
-    if UserPreferences.shared.useIceShrimpWorkarounds && UserPreferences.shared.iceShrimpHideIncompatibleButtons {
+    if UserPreferences.shared.useIceShrimpWorkarounds && !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
       return nil
     }
     return try? await client.get(endpoint: Notifications.policy, forceVersion: .v2)

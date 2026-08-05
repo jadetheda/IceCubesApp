@@ -79,7 +79,7 @@ public struct TimelineQuickAccessPills: View {
     Button {
       timeline = filter
     } label: {
-      let icon = preferences.hidePinnedItemsSymbol ? "" : filter.iconName()
+      let icon = preferences.showPinnedItemsSymbol ? filter.iconName() : ""
       switch filter {
       case .hashtag:
         if icon.isEmpty {
