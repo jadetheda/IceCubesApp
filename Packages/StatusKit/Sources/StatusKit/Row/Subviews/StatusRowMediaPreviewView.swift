@@ -240,10 +240,14 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(currentAspectRatio, contentMode: .fit)
+      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : imageMaxHeight
+        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
+      )
+      .frame(
+        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
+        height: isStandalone ? nil : imageMaxHeight
       )
       .clipped()
       .if(isStandalone) { $0.cornerRadius(10) }
