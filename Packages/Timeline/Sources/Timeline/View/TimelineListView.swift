@@ -98,10 +98,13 @@ struct TimelineListView: View {
         .background(theme.primaryBackgroundColor.ignoresSafeArea())
       #endif
       .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
-        if oldValue != newValue, let topId = viewModel.getTopVisibleStatusId() {
-           DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-              scrollToIdAnimated = topId
-           }
+        if oldValue != newValue {
+            let targetId = newValue ? viewModel.lastTopVisibleMediaStatusId : viewModel.lastTopVisibleStatusId
+            if let targetId = targetId ?? viewModel.lastTopVisibleStatusId {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    scrollToIdAnimated = targetId
+                }
+            }
         }
       }
       .onChange(of: viewModel.scrollToId) { _, newValue in

@@ -9,6 +9,8 @@ import Nuke
 @MainActor
 @Observable class TimelineViewModel {
   var scrollToId: String?
+  var lastTopVisibleStatusId: String?
+  var lastTopVisibleMediaStatusId: String?
   @ObservationIgnored private var cacheUpdateTask: Task<Void, Never>?
   var statusesState: StatusesState = .loading
   var timeline: TimelineFilter = .home {
@@ -165,6 +167,23 @@ import Nuke
           return statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
       }
       return visibleStatuses.first?.id
+  }
+  
+  private func updateLastTopVisibleStatusId() {
+      if let id = getTopVisibleStatusId() {
+          lastTopVisibleStatusId = id
+          
+          // Also find the first visible media status
+          if case .displayWithGaps(let items, _) = statusesState {
+              if let mediaId = items.compactMap({ $0.status }).first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.id {
+                  lastTopVisibleMediaStatusId = mediaId
+              }
+          } else if case .display(let statuses, _) = statusesState {
+              if let mediaId = statuses.first(where: { visibleStatusesCount[$0.id] != nil && !$0.mediaAttachments.isEmpty })?.id {
+                  lastTopVisibleMediaStatusId = mediaId
+              }
+          }
+      }
   }
 
   var serverName: String {
@@ -590,6 +609,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     if !visibleStatuses.contains(where: { $0.id == status.id }) {
       visibleStatuses.insert(status, at: 0)
     }
+    updateLastTopVisibleStatusId()
 
     if let client, timeline.supportNewestPagination {
       cacheUpdateTask?.cancel()
@@ -655,6 +675,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     } else {
       visibleStatuses.removeAll(where: { $0.id == status.id })
     }
+    updateLastTopVisibleStatusId()
   }
 
   @MainActor
