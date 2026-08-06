@@ -629,8 +629,30 @@ import SwiftUI
   }
 
   public var showPinnedItemsSymbol: Bool {
-    didSet {
-      storage.hidePinnedItemsSymbol = !showPinnedItemsSymbol
+    get {
+      access(keyPath: \.showPinnedItemsSymbol)
+      return !storage.hidePinnedItemsSymbol
+    }
+    set {
+      withMutation(keyPath: \.showPinnedItemsSymbol) {
+        withMutation(keyPath: \.hidePinnedItemsSymbol) {
+          storage.hidePinnedItemsSymbol = !newValue
+        }
+      }
+    }
+  }
+
+  public var hidePinnedItemsSymbol: Bool {
+    get {
+      access(keyPath: \.hidePinnedItemsSymbol)
+      return storage.hidePinnedItemsSymbol
+    }
+    set {
+      withMutation(keyPath: \.hidePinnedItemsSymbol) {
+        withMutation(keyPath: \.showPinnedItemsSymbol) {
+          storage.hidePinnedItemsSymbol = newValue
+        }
+      }
     }
   }
 
@@ -902,7 +924,6 @@ import SwiftUI
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
     timelinePinnedHidden = storage.timelinePinnedHidden
-    showPinnedItemsSymbol = !storage.hidePinnedItemsSymbol
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
