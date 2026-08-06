@@ -45,7 +45,7 @@ struct StatusRowActionsView: View {
   enum Action {
     case respond, boost, quote, favorite, bookmark, share, menu
 
-    func image(dataController: StatusDataController, privateBoost: Bool = false) -> Image {
+    func image(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme) -> Image {
       switch self {
       case .respond:
         return Image(systemName: "arrowshape.turn.up.left")
@@ -59,6 +59,9 @@ struct StatusRowActionsView: View {
         }
         return Image(systemName: "arrow.2.squarepath")
       case .favorite:
+        if theme.actionIsLike {
+          return Image(systemName: dataController.isFavorited ? "heart.fill" : "heart")
+        }
         return Image(systemName: dataController.isFavorited ? "star.fill" : "star")
       case .bookmark:
         return Image(systemName: dataController.isBookmarked ? "bookmark.fill" : "bookmark")
@@ -71,7 +74,7 @@ struct StatusRowActionsView: View {
       }
     }
 
-    func accessibilityLabel(dataController: StatusDataController, privateBoost: Bool = false)
+    func accessibilityLabel(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme)
       -> LocalizedStringKey
     {
       switch self {
@@ -85,6 +88,9 @@ struct StatusRowActionsView: View {
           ? "status.action.boost-to-followers"
           : "status.action.boost"
       case .favorite:
+        if theme.actionIsLike {
+          return dataController.isFavorited ? "Unlike" : "Like"
+        }
         return dataController.isFavorited
           ? "status.action.unfavorite"
           : "status.action.favorite"
@@ -122,11 +128,11 @@ struct StatusRowActionsView: View {
       case .respond, .share, .menu, .quote:
         nil
       case .favorite:
-        .yellow
+        theme.actionFavoriteColor
       case .bookmark:
-        .pink
+        theme.actionBookmarkColor
       case .boost:
-        theme.tintColor
+        theme.actionBoostColor
       }
     }
 

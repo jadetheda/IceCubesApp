@@ -15,6 +15,9 @@ import SwiftUI
   var labelColor = Theme.shared.labelColor
   var lineSpacing = Theme.shared.lineSpacing
   var fontSizeScale = Theme.shared.fontSizeScale
+  var actionFavoriteColor = Theme.shared.actionFavoriteColor
+  var actionBoostColor = Theme.shared.actionBoostColor
+  var actionBookmarkColor = Theme.shared.actionBookmarkColor
 }
 
 @MainActor
@@ -78,6 +81,18 @@ struct DisplaySettingsView: View {
         do { try await Task.sleep(for: .microseconds(500)) } catch {}
         theme.fontSizeScale = localValues.fontSizeScale
       }
+      .task(id: localValues.actionFavoriteColor) {
+        do { try await Task.sleep(for: .microseconds(500)) } catch {}
+        theme.actionFavoriteColor = localValues.actionFavoriteColor
+      }
+      .task(id: localValues.actionBoostColor) {
+        do { try await Task.sleep(for: .microseconds(500)) } catch {}
+        theme.actionBoostColor = localValues.actionBoostColor
+      }
+      .task(id: localValues.actionBookmarkColor) {
+        do { try await Task.sleep(for: .microseconds(500)) } catch {}
+        theme.actionBookmarkColor = localValues.actionBookmarkColor
+      }
       #if !os(visionOS)
         examplePost
       #endif
@@ -109,6 +124,7 @@ struct DisplaySettingsView: View {
     @Bindable var theme = theme
     Section {
       Toggle("settings.display.theme.systemColor", isOn: $theme.followSystemColorScheme)
+      Toggle("Like instead of Favorite", isOn: $theme.actionIsLike)
       themeSelectorButton
       Group {
         ColorPicker("settings.display.theme.tint", selection: $localValues.tintColor)
@@ -118,6 +134,9 @@ struct DisplaySettingsView: View {
           "settings.display.theme.secondary-background",
           selection: $localValues.secondaryBackgroundColor)
         ColorPicker("settings.display.theme.text-color", selection: $localValues.labelColor)
+        ColorPicker("Favorite / Like Color", selection: $localValues.actionFavoriteColor)
+        ColorPicker("Boost Color", selection: $localValues.actionBoostColor)
+        ColorPicker("Bookmark Color", selection: $localValues.actionBookmarkColor)
       }
       .disabled(theme.followSystemColorScheme)
       .opacity(theme.followSystemColorScheme ? 0.5 : 1.0)
@@ -126,6 +145,9 @@ struct DisplaySettingsView: View {
         localValues.primaryBackgroundColor = theme.primaryBackgroundColor
         localValues.secondaryBackgroundColor = theme.secondaryBackgroundColor
         localValues.labelColor = theme.labelColor
+        localValues.actionFavoriteColor = theme.actionFavoriteColor
+        localValues.actionBoostColor = theme.actionBoostColor
+        localValues.actionBookmarkColor = theme.actionBookmarkColor
       }
     } header: {
       Text("settings.display.section.theme")
@@ -225,9 +247,9 @@ struct DisplaySettingsView: View {
       }
       Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
       Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
-      Toggle("Show interaction buttons on Timeline", isOn: $userPreferences.showInteractionButtons)
+      Toggle("Hide interaction buttons on Timeline", isOn: $userPreferences.hideInteractionButtons)
       Toggle("Show 'Hide Pinned' in Timeline Menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
-      Toggle("Show Pinned Items Symbol", isOn: $userPreferences.showPinnedItemsSymbol)
+      Toggle("Hide Pinned Items Symbol", isOn: $userPreferences.hidePinnedItemsSymbol)
       Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
         ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
           Text(buttonStyle.description).tag(buttonStyle)

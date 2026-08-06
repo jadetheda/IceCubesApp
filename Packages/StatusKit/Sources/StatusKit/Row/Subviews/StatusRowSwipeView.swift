@@ -39,14 +39,14 @@ struct StatusRowSwipeView: View {
         .tint(
           preferences.swipeActionsStatusTrailingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true))
+            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
     }
     if preferences.swipeActionsStatusTrailingLeft != StatusAction.none, !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusTrailingLeft)
         .tint(
           preferences.swipeActionsStatusTrailingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false))
+            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
     }
   }
 
@@ -57,14 +57,14 @@ struct StatusRowSwipeView: View {
         .tint(
           preferences.swipeActionsStatusLeadingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true))
+            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
     }
     if preferences.swipeActionsStatusLeadingRight != StatusAction.none, !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusLeadingRight)
         .tint(
           preferences.swipeActionsStatusLeadingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false))
+            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
     }
   }
 
@@ -138,7 +138,7 @@ struct StatusRowSwipeView: View {
       }
     } label: {
       makeSwipeLabel(
-        action: action, style: preferences.swipeActionsIconStyle, privateBoost: privateBoost)
+        action: action, style: preferences.swipeActionsIconStyle, privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
     }
   }
 
@@ -153,12 +153,12 @@ struct StatusRowSwipeView: View {
           isReblogged: statusDataController.isReblogged,
           isFavorited: statusDataController.isFavorited,
           isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost),
+          privateBoost: privateBoost, isLikeAction: theme.actionIsLike),
         imageNamed: action.iconName(
           isReblogged: statusDataController.isReblogged,
           isFavorited: statusDataController.isFavorited,
           isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost)
+          privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
       )
       .labelStyle(.iconOnly)
       .environment(\.symbolVariants, .none)
@@ -168,12 +168,12 @@ struct StatusRowSwipeView: View {
           isReblogged: statusDataController.isReblogged,
           isFavorited: statusDataController.isFavorited,
           isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost),
+          privateBoost: privateBoost, isLikeAction: theme.actionIsLike),
         imageNamed: action.iconName(
           isReblogged: statusDataController.isReblogged,
           isFavorited: statusDataController.isFavorited,
           isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost)
+          privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
       )
       .labelStyle(.titleAndIcon)
       .environment(\.symbolVariants, .none)

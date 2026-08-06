@@ -9,7 +9,7 @@ public enum StatusAction: String, CaseIterable, Identifiable {
 
   public func displayName(
     isReblogged: Bool = false, isFavorited: Bool = false, isBookmarked: Bool = false,
-    privateBoost: Bool = false
+    privateBoost: Bool = false, isLikeAction: Bool = false
   ) -> LocalizedStringKey {
     switch self {
     case .none:
@@ -25,6 +25,9 @@ public enum StatusAction: String, CaseIterable, Identifiable {
 
       return isReblogged ? "status.action.unboost" : "settings.swipeactions.status.action.boost"
     case .favorite:
+      if isLikeAction {
+        return isFavorited ? "Unlike" : "Like"
+      }
       return isFavorited
         ? "status.action.unfavorite" : "settings.swipeactions.status.action.favorite"
     case .bookmark:
@@ -35,7 +38,7 @@ public enum StatusAction: String, CaseIterable, Identifiable {
 
   public func iconName(
     isReblogged: Bool = false, isFavorited: Bool = false, isBookmarked: Bool = false,
-    privateBoost: Bool = false
+    privateBoost: Bool = false, isLikeAction: Bool = false
   ) -> String {
     switch self {
     case .none:
@@ -51,13 +54,16 @@ public enum StatusAction: String, CaseIterable, Identifiable {
 
       return isReblogged ? "Rocket.Fill" : "Rocket"
     case .favorite:
+      if isLikeAction {
+        return isFavorited ? "heart.fill" : "heart"
+      }
       return isFavorited ? "star.fill" : "star"
     case .bookmark:
       return isBookmarked ? "bookmark.fill" : "bookmark"
     }
   }
 
-  public func color(themeTintColor: Color, useThemeColor: Bool, outside: Bool) -> Color {
+  public func color(themeTintColor: Color, useThemeColor: Bool, outside: Bool, actionFavoriteColor: Color = .yellow, actionBoostColor: Color = .green, actionBookmarkColor: Color = .pink) -> Color {
     if useThemeColor {
       return outside ? themeTintColor : .gray
     }
@@ -70,11 +76,11 @@ public enum StatusAction: String, CaseIterable, Identifiable {
     case .quote:
       return outside ? .gray : Color(white: 0.45)
     case .boost:
-      return themeTintColor
+      return actionBoostColor
     case .favorite:
-      return .yellow
+      return actionFavoriteColor
     case .bookmark:
-      return .pink
+      return actionBookmarkColor
     }
   }
 }

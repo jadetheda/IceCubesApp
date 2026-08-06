@@ -18,6 +18,7 @@ public final class Theme {
       case contentGradient
       case compactLayoutPadding
       case avatarAnimated
+      case actionFavoriteColor, actionBoostColor, actionBookmarkColor, actionIsLike
     }
 
     @AppStorage("is_previously_set") public var isThemePreviouslySet: Bool = false
@@ -28,6 +29,10 @@ public final class Theme {
     @AppStorage(ThemeKey.secondaryBackground.rawValue) public var secondaryBackgroundColor: Color =
       .gray
     @AppStorage(ThemeKey.label.rawValue) public var labelColor: Color = .black
+    @AppStorage(ThemeKey.actionFavoriteColor.rawValue) public var actionFavoriteColor: Color = .yellow
+    @AppStorage(ThemeKey.actionBoostColor.rawValue) public var actionBoostColor: Color = .green
+    @AppStorage(ThemeKey.actionBookmarkColor.rawValue) public var actionBookmarkColor: Color = .pink
+    @AppStorage(ThemeKey.actionIsLike.rawValue) public var actionIsLike: Bool = false
     @AppStorage(ThemeKey.avatarPosition2.rawValue) var avatarPosition: AvatarPosition = .leading
     @AppStorage(ThemeKey.avatarShape2.rawValue) var avatarShape: AvatarShape = .circle
     @AppStorage(ThemeKey.selectedSet.rawValue) var storedSet: ColorSetName = .iceCubeDark
@@ -342,6 +347,10 @@ public final class Theme {
     secondaryBackgroundColor = themeStorage.secondaryBackgroundColor
     labelColor = themeStorage.labelColor
     contrastingTintColor = .red  // real work done in computeContrastingTintColor()
+    actionFavoriteColor = themeStorage.actionFavoriteColor
+    actionBoostColor = themeStorage.actionBoostColor
+    actionBookmarkColor = themeStorage.actionBookmarkColor
+    actionIsLike = themeStorage.actionIsLike
     avatarPosition = themeStorage.avatarPosition
     avatarShape = themeStorage.avatarShape
     storedSet = themeStorage.storedSet
@@ -509,6 +518,10 @@ public final class Theme {
     primaryBackgroundColor = colorSet.primaryBackgroundColor
     secondaryBackgroundColor = colorSet.secondaryBackgroundColor
     labelColor = colorSet.labelColor
+    actionFavoriteColor = colorSet.favoriteColor
+    actionBoostColor = colorSet.boostColor
+    actionBookmarkColor = colorSet.bookmarkColor
+    actionIsLike = colorSet.isLikeAction
     storedSet = name
   }
 }
