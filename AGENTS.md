@@ -276,3 +276,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 - **MAXIMIZING QUOTA & REQUEST EFFICIENCY**: We must actively preserve our minuscule token quota by optimizing our execution flows. Minimize the number of AI requests made during tasks by planning carefully, performing comprehensive and consolidated edits, and avoiding unnecessary tool calls or conversational round-trips.
 
 
+
+## 🐛 Exit Code 65 Logs (UserPreferences Missing Expose - hideInteractionButtons)
+- **Root Cause**: The property `hideInteractionButtons` was declared in `UserPreferences.Storage` but not exposed on the main `UserPreferences` object. This caused an error when `DisplaySettingsView.swift` tried to bind a toggle to it via `$userPreferences.hideInteractionButtons`.
+- **Solution**: Added the missing `hideInteractionButtons` computed property directly to the `UserPreferences` class with a getter/setter pointing to the nested `storage`, and synced its initial value in `init()`. Also ensured that modifying it keeps `showInteractionButtons` correctly in sync without causing an infinite `didSet` loop.

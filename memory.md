@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-08-06 08:30 UTC: Fixed Swift compilation crash (Exit Code 65) related to `Bindable<UserPreferences>` lookup of `hideInteractionButtons`. Converted `showInteractionButtons` and `hideInteractionButtons` into computed properties backed by `storage.hideInteractionButtons` to work around SwiftUI's Observation macro limitations with stored properties with `didSet` observers and no initial values. Updated `UserPreferences` initialization to reflect these changes.
 - 2026-06-30 07:55 UTC: Verified Nuke compilation configurations for `TimelineViewModel.swift` and `Timeline` Package dependencies.
 - 2026-06-30 07:55 UTC: Implemented full settings export/import capabilities via `.json` payloads:
   - Backups save to standard iOS local file dialog via `fileExporter` and read using `fileImporter`.
@@ -546,3 +547,5 @@
     - Updated call-sites in `StatusActionButton` and `StatusRowActionsView` to explicitly pass `theme: theme`.
     - Documented root cause and resolution in `AGENTS.md`.
 
+
+  - **2026-08-06T08:05:00Z - Exit Code 65 Compilation Fix**: Fixed missing property error for `UserPreferences.hideInteractionButtons`. The property was stored in the nested `Storage` class but not exposed on the main `UserPreferences` object. Added public getter/setter bound to `storage.hideInteractionButtons`.

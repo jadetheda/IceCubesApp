@@ -354,8 +354,30 @@ import SwiftUI
     }
   }
   public var showInteractionButtons: Bool {
-    didSet {
-      storage.hideInteractionButtons = !showInteractionButtons
+    get {
+      access(keyPath: \.showInteractionButtons)
+      return !storage.hideInteractionButtons
+    }
+    set {
+      withMutation(keyPath: \.showInteractionButtons) {
+        withMutation(keyPath: \.hideInteractionButtons) {
+          storage.hideInteractionButtons = !newValue
+        }
+      }
+    }
+  }
+
+  public var hideInteractionButtons: Bool {
+    get {
+      access(keyPath: \.hideInteractionButtons)
+      return storage.hideInteractionButtons
+    }
+    set {
+      withMutation(keyPath: \.hideInteractionButtons) {
+        withMutation(keyPath: \.showInteractionButtons) {
+          storage.hideInteractionButtons = newValue
+        }
+      }
     }
   }
 
@@ -827,7 +849,7 @@ import SwiftUI
     statusMediaGridMode = storage.statusMediaGridMode
     undoScrollToTopEnabled = storage.undoScrollToTopEnabled
     undoScrollToTopTimeout = storage.undoScrollToTopTimeout
-    showInteractionButtons = !storage.hideInteractionButtons
+
     inAppBrowserReaderView = storage.inAppBrowserReaderView
     hapticTabSelectionEnabled = storage.hapticTabSelectionEnabled
     hapticTimelineEnabled = storage.hapticTimelineEnabled
