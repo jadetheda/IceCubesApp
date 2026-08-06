@@ -175,10 +175,10 @@ public struct NemesisDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .pink
+  public var likeColor: Color = .init(hex: 0xF91880)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
-  public var isLikeAction: Bool = false
+  public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
   }
@@ -193,10 +193,10 @@ public struct NemesisLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .pink
+  public var likeColor: Color = .init(hex: 0xF91880)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
-  public var isLikeAction: Bool = false
+  public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
   }
@@ -283,10 +283,10 @@ public struct ThreadsDark: ColorSet {
   public var labelColor: Color = .init(hex: 0xE2E4E2)
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .pink
+  public var likeColor: Color = .init(hex: 0xFF0034)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
-  public var isLikeAction: Bool = false
+  public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
   }
@@ -301,10 +301,10 @@ public struct ThreadsLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .pink
+  public var likeColor: Color = .init(hex: 0xFF0034)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
-  public var isLikeAction: Bool = false
+  public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
   }

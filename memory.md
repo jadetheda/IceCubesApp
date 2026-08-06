@@ -534,3 +534,6 @@
     - Fixed the Bluesky theme's `likeColor` which was rendering black due to an integer division error `Color(red: 236/255, ...)` mapping to `0`. Converted it to use `Color(hex: 0xEC4899)`.
     - Removed an invalid parameter `isLikeAction` that was erroneously being passed to the private `makeSwipeLabel` helper inside `StatusRowSwipeView`.
     - Added explicit `return` statements to `tintColor(theme:)`'s switch expression in `StatusRowActionsView` to ensure maximum Swift compatibility.
+  - **Theme Config Update (Nemesis/Threads):** Updated Nemesis (Dark/Light) and Threads (Dark/Light) themes to default to "Like" instead of "Favorite".
+    - Nemesis themes' `likeColor` set to `#F91880`.
+    - Threads themes' `likeColor` set to `#FF0034`.
