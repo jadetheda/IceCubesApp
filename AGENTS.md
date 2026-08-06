@@ -119,6 +119,10 @@ When writing Python scripts, shell commands, or architectures intended to run of
 - **Root Cause**: Synchronously referencing main actor-isolated structures or classes (like `CurrentAccount.shared` and its nested properties) from inside a nonisolated background actor (such as `TimelineDatasource`) causes actor isolation violations and compile-time failures.
 - **Solution**: Avoid referencing `@MainActor`-isolated singletons or properties synchronously inside nonisolated actors. Cache the required properties (e.g. `currentAccountId`) locally on the actor instance using async setters, or pass them explicitly from `@MainActor`-isolated contexts (such as `TimelineViewModel`) during method calls.
 
+## 🐛 Exit Code 65 Logs (Missing theme parameter in Action.image and Action.accessibilityLabel)
+- **Root Cause**: `Action.image` and `Action.accessibilityLabel` in `StatusRowActionsView.swift` were updated to require a non-optional `theme: Theme` parameter, but callers in `StatusActionButton.swift` and `StatusRowActionsView.swift` were not passing `theme`.
+- **Solution**: Set `theme: Theme? = nil` as a default parameter in `Action.image` and `Action.accessibilityLabel`, and explicitly pass `theme: theme` at call-sites in `StatusActionButton.swift` and `StatusRowActionsView.swift`.
+
 # CLAUDE.md (Imported Guidelines)
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

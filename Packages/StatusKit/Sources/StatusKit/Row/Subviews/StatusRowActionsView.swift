@@ -45,7 +45,7 @@ struct StatusRowActionsView: View {
   enum Action {
     case respond, boost, quote, favorite, bookmark, share, menu
 
-    func image(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme) -> Image {
+    func image(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme? = nil) -> Image {
       switch self {
       case .respond:
         return Image(systemName: "arrowshape.turn.up.left")
@@ -59,7 +59,7 @@ struct StatusRowActionsView: View {
         }
         return Image(systemName: "arrow.2.squarepath")
       case .favorite:
-        if theme.actionIsLike {
+        if theme?.actionIsLike ?? false {
           return Image(systemName: dataController.isFavorited ? "heart.fill" : "heart")
         }
         return Image(systemName: dataController.isFavorited ? "star.fill" : "star")
@@ -74,7 +74,7 @@ struct StatusRowActionsView: View {
       }
     }
 
-    func accessibilityLabel(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme)
+    func accessibilityLabel(dataController: StatusDataController, privateBoost: Bool = false, theme: Theme? = nil)
       -> LocalizedStringKey
     {
       switch self {
@@ -88,7 +88,7 @@ struct StatusRowActionsView: View {
           ? "status.action.boost-to-followers"
           : "status.action.boost"
       case .favorite:
-        if theme.actionIsLike {
+        if theme?.actionIsLike ?? false {
           return dataController.isFavorited ? "Unlike" : "Like"
         }
         return dataController.isFavorited
@@ -262,7 +262,7 @@ struct StatusRowActionsView: View {
 
   private func shareButtonLabel(for action: Action) -> some View {
     action
-      .image(dataController: statusDataController)
+      .image(dataController: statusDataController, theme: theme)
       .foregroundColor(Color(UIColor.secondaryLabel))
       .padding(.vertical, 6)
       .padding(.horizontal, 8)

@@ -9,13 +9,28 @@ const PORT = 3000;
 function getGitInfo() {
   try {
     const gitDir = fs.existsSync('ios-workspace') ? 'ios-workspace' : '.';
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: gitDir }).trim();
     const hash = execSync('git rev-parse HEAD', { encoding: 'utf8', cwd: gitDir }).trim();
+    const shortHash = hash.substring(0, 7);
     const author = execSync('git log -1 --pretty=format:"%an"', { encoding: 'utf8', cwd: gitDir }).trim();
     const relativeTime = execSync('git log -1 --pretty=format:"%ar"', { encoding: 'utf8', cwd: gitDir }).trim();
     const subject = execSync('git log -1 --pretty=format:"%s"', { encoding: 'utf8', cwd: gitDir }).trim();
-    return { hash, author, relativeTime, subject };
+    
+    // Recent commits
+    const recentRaw = execSync('git log -5 --pretty=format:"%h|%s|%an|%ar"', { encoding: 'utf8', cwd: gitDir }).trim();
+    const recentCommits = recentRaw ? recentRaw.split('\n').map(line => {
+      const parts = line.split('|');
+      return { hash: parts[0] || '', subject: parts[1] || '', author: parts[2] || '', relativeTime: parts[3] || '' };
+    }) : [];
+
+    // Working tree status
+    const statusRaw = execSync('git status --porcelain', { encoding: 'utf8', cwd: gitDir }).trim();
+    const isClean = statusRaw.length === 0;
+    const modifiedCount = isClean ? 0 : statusRaw.split('\n').length;
+
+    return { branch, hash, shortHash, author, relativeTime, subject, recentCommits, isClean, modifiedCount };
   } catch (e) {
-    return { hash: 'Unknown', author: 'Unknown', relativeTime: 'Unknown', subject: 'Error reading git history' };
+    return { branch: 'main', hash: 'Unknown', shortHash: 'Unknown', author: 'Unknown', relativeTime: 'Unknown', subject: 'Error reading git history', recentCommits: [], isClean: true, modifiedCount: 0 };
   }
 }
 
@@ -155,153 +170,101 @@ const server = http.createServer((req, res) => {
   // 4. GET /
   if (pathname === '/' || pathname === '/index.html') {
     const git = getGitInfo();
-    const activity = getActivityLog();
-    const icons = getAlternateIcons();
 
-    const activityHtml = activity.map(act => `
-      <div class="border-b border-stone-100 pb-4 mb-4 last:border-b-0 last:pb-0">
-        <div class="flex items-center justify-between mb-1">
-          <h4 class="font-semibold text-stone-800 text-sm md:text-base">${act.title}</h4>
-          <span class="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded">${act.date.split('T')[0] || act.date}</span>
+    const recentCommitsHtml = (git.recentCommits || []).map(c => `
+      <div class="flex items-center justify-between py-2 border-b border-zinc-800/40 last:border-0 gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="text-emerald-400 font-medium shrink-0 font-mono text-[11px]">${c.hash}</span>
+          <span class="text-zinc-300 truncate text-xs">${c.subject}</span>
         </div>
-        ${act.details.length > 0 ? `
-          <ul class="list-disc pl-4 mt-2 space-y-1 text-xs md:text-sm text-stone-600">
-            ${act.details.map(det => `<li>${det}</li>`).join('')}
-          </ul>
-        ` : ''}
+        <span class="text-zinc-500 text-[11px] shrink-0 font-mono">${c.relativeTime}</span>
       </div>
-    `).join('') || '<p class="text-stone-400 text-sm">No recent activity log found in memory.md</p>';
-
-    const iconsHtml = icons.slice(0, 15).map(icon => `
-      <div class="flex flex-col items-center p-3 bg-stone-50 rounded-lg border border-stone-200/50 hover:shadow-sm transition-all duration-200">
-        <img src="/api/icon/${icon.id}" alt="${icon.name}" class="w-12 h-12 rounded-xl shadow-inner mb-2 object-cover bg-stone-200" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22 viewBox=%220 0 48 48%22><rect width=%2248%22 height=%2248%22 fill=%22%23e2e2e2%22/><text x=%2250%%22 y=%2250%%22 font-size=%2210%22 font-family=%22sans-serif%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22>${icon.id}</text></svg>'"/>
-        <span class="text-[10px] font-medium text-stone-500">${icon.name}</span>
-      </div>
-    `).join('');
+    `).join('') || '<div class="text-zinc-500 text-xs">No commit history available</div>';
 
     const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ice Cubes - Developer Dashboard</title>
+  <title>Repository State | Ice Cubes</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #faf9f6;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #08090c;
+      color: #e4e4e7;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
     }
   </style>
 </head>
-<body class="text-stone-800 min-h-screen">
-  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
-    <!-- Header -->
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-stone-200/60 pb-6 mb-8 gap-4">
-      <div>
-        <div class="flex items-center gap-3">
-          <span class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
-          <span class="text-xs font-bold text-emerald-600 tracking-wider uppercase bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">System Ready</span>
+<body class="min-h-screen bg-[#08090c] text-zinc-200 antialiased selection:bg-zinc-800 selection:text-zinc-100 flex flex-col justify-center items-center px-4 py-8 md:py-12">
+  <div class="w-full max-w-2xl space-y-5">
+    <!-- Header bar -->
+    <div class="flex items-center justify-between px-1">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+        <span class="text-xs font-semibold text-zinc-400 tracking-wide uppercase">Repository State</span>
+      </div>
+      <a href="https://github.com/jadetheda/icecubesapp" target="_blank" class="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-mono">
+        GitHub <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+      </a>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-zinc-900/90 rounded-2xl border border-zinc-800/80 p-6 md:p-8 shadow-2xl space-y-6">
+      <!-- Active Branch & Status -->
+      <div class="flex items-center justify-between border-b border-zinc-800/80 pb-5">
+        <div>
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider mb-1">Active Branch</div>
+          <div class="text-base md:text-lg font-bold text-zinc-100 font-mono flex items-center gap-2">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            ${git.branch}
+          </div>
         </div>
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight text-stone-900 mt-2">Ice Cubes iOS App</h1>
-        <p class="text-stone-500 text-sm md:text-base mt-1">Multiplatform Mastodon client built entirely in native SwiftUI.</p>
-      </div>
-      <div class="flex gap-3">
-        <a href="https://github.com/jadetheda/icecubesapp" target="_blank" class="px-4 py-2 bg-white hover:bg-stone-50 text-stone-700 font-semibold text-sm rounded-lg border border-stone-200 hover:border-stone-300 transition shadow-sm">View on GitHub</a>
-      </div>
-    </header>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Main Columns -->
-      <div class="lg:col-span-2 space-y-8">
-        <!-- Pipeline Information -->
-        <section class="bg-white p-6 rounded-xl border border-stone-200/80 shadow-sm">
-          <h2 class="text-lg md:text-xl font-bold text-stone-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-            iOS Development & Build Pipeline
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div class="p-4 bg-stone-50 rounded-lg border border-stone-200/50">
-              <h3 class="font-bold text-stone-800 text-sm uppercase tracking-wider mb-2">1. Modify Source Code</h3>
-              <p class="text-stone-600 text-xs md:text-sm leading-relaxed">
-                Use the AI Studio Coding Assistant to implement features, perform refactoring, or apply Bug Fixes inside the native packages of the repository.
-              </p>
-            </div>
-            <div class="p-4 bg-stone-50 rounded-lg border border-stone-200/50">
-              <h3 class="font-bold text-stone-800 text-sm uppercase tracking-wider mb-2">2. Commit & Push</h3>
-              <p class="text-stone-600 text-xs md:text-sm leading-relaxed">
-                Instruct the agent to push directly to your remote repository. The agent utilizes a private security token so no manual terminal steps are required.
-              </p>
-            </div>
-            <div class="p-4 bg-stone-50 rounded-lg border border-stone-200/50">
-              <h3 class="font-bold text-stone-800 text-sm uppercase tracking-wider mb-2">3. Codemagic Compilation</h3>
-              <p class="text-stone-600 text-xs md:text-sm leading-relaxed">
-                Trigger an on-demand iOS compile build inside the Codemagic dashboard. This securely packages the Swift source into an unsigned <code>.ipa</code> package.
-              </p>
-            </div>
-            <div class="p-4 bg-stone-50 rounded-lg border border-stone-200/50">
-              <h3 class="font-bold text-stone-800 text-sm uppercase tracking-wider mb-2">4. Sideload via LiveContainer</h3>
-              <p class="text-stone-600 text-xs md:text-sm leading-relaxed">
-                Download the unsigned <code>.ipa</code> from Codemagic and launch/run it instantly on your iOS device via <strong>LiveContainer</strong> — no Mac required!
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <!-- Dynamic Activity Log -->
-        <section class="bg-white p-6 rounded-xl border border-stone-200/80 shadow-sm">
-          <h2 class="text-lg md:text-xl font-bold text-stone-900 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Recent Activity Log
-          </h2>
-          <div class="mt-4">
-            ${activityHtml}
-          </div>
-        </section>
+        <div class="text-right">
+          <span class="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full border ${git.isClean ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/50' : 'bg-amber-950/50 text-amber-400 border-amber-800/50'}">
+            <span class="w-1.5 h-1.5 rounded-full ${git.isClean ? 'bg-emerald-400' : 'bg-amber-400'}"></span>
+            ${git.isClean ? 'Working Tree Clean' : `${git.modifiedCount} Uncommitted Files`}
+          </span>
+        </div>
       </div>
 
-      <!-- Sidebar -->
-      <div class="space-y-8">
-        <!-- Git Status Card -->
-        <section class="bg-stone-900 text-stone-100 p-6 rounded-xl shadow-md border border-stone-800">
-          <h3 class="text-xs font-bold text-stone-400 tracking-widest uppercase mb-4">ACTIVE REPOSITORY STATE</h3>
-          <div class="space-y-4">
-            <div>
-              <span class="text-xs text-stone-400 block font-semibold mb-0.5">HEAD COMMIT</span>
-              <code class="text-stone-200 text-xs bg-stone-800 px-2 py-1 rounded select-all font-mono break-all inline-block max-w-full">${git.hash}</code>
-            </div>
-            <div>
-              <span class="text-xs text-stone-400 block font-semibold mb-0.5">COMMIT MESSAGE</span>
-              <span class="text-sm text-white font-medium block leading-relaxed">${git.subject}</span>
-            </div>
-            <div class="grid grid-cols-2 gap-4 border-t border-stone-800 pt-4 mt-2">
-              <div>
-                <span class="text-xs text-stone-400 block font-semibold">AUTHOR</span>
-                <span class="text-xs font-medium text-stone-200">${git.author}</span>
-              </div>
-              <div>
-                <span class="text-xs text-stone-400 block font-semibold">TIMESTAMP</span>
-                <span class="text-xs font-medium text-stone-200">${git.relativeTime}</span>
-              </div>
-            </div>
-          </div>
-        </section>
+      <!-- Current Commit Summary -->
+      <div class="space-y-3">
+        <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider">HEAD Commit</div>
+        <h2 class="text-sm md:text-base font-semibold text-zinc-100 leading-snug">${git.subject}</h2>
 
-        <!-- Icons Gallery -->
-        <section class="bg-white p-6 rounded-xl border border-stone-200/80 shadow-sm">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-bold text-stone-900 flex items-center gap-2">
-              <svg class="w-5 h-5 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-              Alternate Icons
-            </h3>
-            <span class="text-xs text-stone-500 font-medium bg-stone-100 px-2 py-1 rounded-full">${icons.length} Loaded</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800/60 font-mono text-xs">
+          <div class="min-w-0">
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Hash</div>
+            <div class="text-zinc-200 select-all font-medium truncate">${git.hash}</div>
           </div>
-          <p class="text-xs text-stone-500 mb-4 leading-relaxed">Ice Cubes supports extensive client-side theme customizability. Here are a few of the 66 alternate app icons included:</p>
-          <div class="grid grid-cols-3 gap-3">
-            ${iconsHtml}
+          <div>
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Author</div>
+            <div class="text-zinc-300 font-medium truncate">${git.author}</div>
           </div>
-        </section>
+          <div>
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Timestamp</div>
+            <div class="text-zinc-300 font-medium truncate">${git.relativeTime}</div>
+          </div>
+        </div>
       </div>
+
+      <!-- Recent Commit Log -->
+      <div class="pt-1">
+        <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider mb-2.5">Recent Commits</div>
+        <div class="bg-zinc-950/40 rounded-xl border border-zinc-800/50 p-3 font-mono text-xs space-y-0.5">
+          ${recentCommitsHtml}
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-[11px] text-zinc-600 font-mono">
+      Ice Cubes iOS Companion Server &bull; Port 3000
     </div>
   </div>
 </body>

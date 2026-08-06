@@ -537,3 +537,12 @@
   - **Theme Config Update (Nemesis/Threads):** Updated Nemesis (Dark/Light) and Threads (Dark/Light) themes to default to "Like" instead of "Favorite".
     - Nemesis themes' `likeColor` set to `#F91880`.
     - Threads themes' `likeColor` set to `#FF0034`.
+  - **2026-08-06T07:33:00Z - Updated AI Studio Web Companion UI**:
+    - Redesigned the developer dashboard served on port 3000 (`scripts/companion_server.js`) into a focused, ultra-minimalist dark Repository State card.
+    - Stripped away unneeded sections and centered active branch, working tree cleanliness, current HEAD commit details, and a 5-commit history log.
+  - **2026-08-06T07:42:00Z - Exit Code 65 Compilation Fix**:
+    - Resolved missing argument compilation errors for `Action.image` and `Action.accessibilityLabel` in `StatusActionButton.swift` and `StatusRowActionsView.swift`.
+    - Added `theme: Theme? = nil` as default parameter in `Action.image` and `Action.accessibilityLabel` methods.
+    - Updated call-sites in `StatusActionButton` and `StatusRowActionsView` to explicitly pass `theme: theme`.
+    - Documented root cause and resolution in `AGENTS.md`.
+

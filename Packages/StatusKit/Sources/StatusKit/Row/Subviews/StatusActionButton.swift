@@ -41,7 +41,8 @@ struct StatusActionButton: View {
       .accessibilityLabel(
         configuration.display.accessibilityLabel(
           dataController: statusDataController,
-          privateBoost: privateBoost))
+          privateBoost: privateBoost,
+          theme: theme))
   }
 
   @ViewBuilder
@@ -96,7 +97,7 @@ struct StatusActionButton: View {
   @ViewBuilder
   private func actionImage(for action: StatusRowActionsView.Action) -> some View {
     action
-      .image(dataController: statusDataController, privateBoost: privateBoost)
+      .image(dataController: statusDataController, privateBoost: privateBoost, theme: theme)
       #if targetEnvironment(macCatalyst)
         .font(.scaledBody)
       #else
