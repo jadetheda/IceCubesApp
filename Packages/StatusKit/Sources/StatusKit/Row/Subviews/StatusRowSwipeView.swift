@@ -138,7 +138,7 @@ struct StatusRowSwipeView: View {
       }
     } label: {
       makeSwipeLabel(
-        action: action, style: preferences.swipeActionsIconStyle, privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
+        action: action, style: preferences.swipeActionsIconStyle, privateBoost: privateBoost)
     }
   }
 

@@ -529,3 +529,8 @@
     - The "Favorite / Like Color" setting is now split into two separate "Favorite Color" (star) and "Like Color" (heart) pickers.
     - Updated `StatusAction` and `StatusRow` actions to return the distinct like color when the action is mapped to like.
     - Configured the Bluesky dark and light themes to correctly use `Color(red: 236/255, green: 72/255, blue: 153/255)` for `likeColor` as requested.
+  - **Bug Fix:** Fixed multiple bugs introduced in the Like/Favorite color separation feature.
+    - Resolved missing member compilation error (Exit Code 65) by declaring `actionFavoriteColor`, `actionLikeColor`, `actionBoostColor`, `actionBookmarkColor`, and `actionIsLike` with `didSet` wrappers directly on the `@Observable Theme` class, forwarding to `ThemeStorage`.
+    - Fixed the Bluesky theme's `likeColor` which was rendering black due to an integer division error `Color(red: 236/255, ...)` mapping to `0`. Converted it to use `Color(hex: 0xEC4899)`.
+    - Removed an invalid parameter `isLikeAction` that was erroneously being passed to the private `makeSwipeLabel` helper inside `StatusRowSwipeView`.
+    - Added explicit `return` statements to `tintColor(theme:)`'s switch expression in `StatusRowActionsView` to ensure maximum Swift compatibility.

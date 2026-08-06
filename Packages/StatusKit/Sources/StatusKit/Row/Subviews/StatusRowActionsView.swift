@@ -126,13 +126,13 @@ struct StatusRowActionsView: View {
     func tintColor(theme: Theme) -> Color? {
       switch self {
       case .respond, .share, .menu, .quote:
-        nil
+        return nil
       case .favorite:
-        theme.actionIsLike ? theme.actionLikeColor : theme.actionFavoriteColor
+        return theme.actionIsLike ? theme.actionLikeColor : theme.actionFavoriteColor
       case .bookmark:
-        theme.actionBookmarkColor
+        return theme.actionBookmarkColor
       case .boost:
-        theme.actionBoostColor
+        return theme.actionBoostColor
       }
     }
 

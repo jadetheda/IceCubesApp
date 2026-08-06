@@ -211,6 +211,33 @@ public final class Theme {
     }
   }
 
+
+  public var actionFavoriteColor: Color {
+    didSet {
+      themeStorage.actionFavoriteColor = actionFavoriteColor
+    }
+  }
+  public var actionLikeColor: Color {
+    didSet {
+      themeStorage.actionLikeColor = actionLikeColor
+    }
+  }
+  public var actionBoostColor: Color {
+    didSet {
+      themeStorage.actionBoostColor = actionBoostColor
+    }
+  }
+  public var actionBookmarkColor: Color {
+    didSet {
+      themeStorage.actionBookmarkColor = actionBookmarkColor
+    }
+  }
+  public var actionIsLike: Bool {
+    didSet {
+      themeStorage.actionIsLike = actionIsLike
+    }
+  }
+
   public var labelColor: Color {
     didSet {
       themeStorage.labelColor = labelColor

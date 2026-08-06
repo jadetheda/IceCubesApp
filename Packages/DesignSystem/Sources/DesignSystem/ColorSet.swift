@@ -319,7 +319,7 @@ public struct BlueskyDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .init(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
+  public var likeColor: Color = .init(hex: 0xEC4899)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -337,7 +337,7 @@ public struct BlueskyLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
-  public var likeColor: Color = .init(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
+  public var likeColor: Color = .init(hex: 0xEC4899)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
