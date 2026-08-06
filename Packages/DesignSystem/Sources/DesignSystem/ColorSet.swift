@@ -20,6 +20,7 @@ public protocol ColorSet: Sendable {
   var secondaryBackgroundColor: Color { get set }
   var labelColor: Color { get set }
   var favoriteColor: Color { get set }
+  var likeColor: Color { get set }
   var boostColor: Color { get set }
   var bookmarkColor: Color { get set }
   var isLikeAction: Bool { get set }
@@ -66,6 +67,7 @@ public struct IceCubeDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -83,6 +85,7 @@ public struct IceCubeLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -100,6 +103,7 @@ public struct IceCubeNeonDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -117,6 +121,7 @@ public struct IceCubeNeonLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -134,6 +139,7 @@ public struct DesertDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -151,6 +157,7 @@ public struct DesertLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -168,6 +175,7 @@ public struct NemesisDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -185,6 +193,7 @@ public struct NemesisLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -202,6 +211,7 @@ public struct MediumDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -219,6 +229,7 @@ public struct MediumLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -236,6 +247,7 @@ public struct ConstellationDark: ColorSet {
   public var labelColor: Color = .init(hex: 0xE2E4E2)
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -253,6 +265,7 @@ public struct ConstellationLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -270,6 +283,7 @@ public struct ThreadsDark: ColorSet {
   public var labelColor: Color = .init(hex: 0xE2E4E2)
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -287,6 +301,7 @@ public struct ThreadsLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .pink
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -304,6 +319,7 @@ public struct BlueskyDark: ColorSet {
   public var labelColor: Color = .white
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .init(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false
@@ -321,6 +337,7 @@ public struct BlueskyLight: ColorSet {
   public var labelColor: Color = .black
 
   public var favoriteColor: Color = .yellow
+  public var likeColor: Color = .init(red: 236 / 255, green: 72 / 255, blue: 153 / 255)
   public var boostColor: Color = .clear
   public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = false

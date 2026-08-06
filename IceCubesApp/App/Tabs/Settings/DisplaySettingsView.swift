@@ -16,6 +16,7 @@ import SwiftUI
   var lineSpacing = Theme.shared.lineSpacing
   var fontSizeScale = Theme.shared.fontSizeScale
   var actionFavoriteColor = Theme.shared.actionFavoriteColor
+  var actionLikeColor = Theme.shared.actionLikeColor
   var actionBoostColor = Theme.shared.actionBoostColor
   var actionBookmarkColor = Theme.shared.actionBookmarkColor
 }
@@ -81,6 +82,10 @@ struct DisplaySettingsView: View {
         do { try await Task.sleep(for: .microseconds(500)) } catch {}
         theme.fontSizeScale = localValues.fontSizeScale
       }
+      .task(id: localValues.actionLikeColor) {
+        do { try await Task.sleep(for: .microseconds(500)) } catch {}
+        theme.actionLikeColor = localValues.actionLikeColor
+      }
       .task(id: localValues.actionFavoriteColor) {
         do { try await Task.sleep(for: .microseconds(500)) } catch {}
         theme.actionFavoriteColor = localValues.actionFavoriteColor
@@ -134,7 +139,8 @@ struct DisplaySettingsView: View {
           "settings.display.theme.secondary-background",
           selection: $localValues.secondaryBackgroundColor)
         ColorPicker("settings.display.theme.text-color", selection: $localValues.labelColor)
-        ColorPicker("Favorite / Like Color", selection: $localValues.actionFavoriteColor)
+        ColorPicker("Favorite Color", selection: $localValues.actionFavoriteColor)
+        ColorPicker("Like Color", selection: $localValues.actionLikeColor)
         ColorPicker("Boost Color", selection: $localValues.actionBoostColor)
         ColorPicker("Bookmark Color", selection: $localValues.actionBookmarkColor)
       }
@@ -146,6 +152,7 @@ struct DisplaySettingsView: View {
         localValues.secondaryBackgroundColor = theme.secondaryBackgroundColor
         localValues.labelColor = theme.labelColor
         localValues.actionFavoriteColor = theme.actionFavoriteColor
+        localValues.actionLikeColor = theme.actionLikeColor
         localValues.actionBoostColor = theme.actionBoostColor
         localValues.actionBookmarkColor = theme.actionBookmarkColor
       }

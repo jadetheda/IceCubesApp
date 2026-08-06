@@ -18,7 +18,7 @@ public final class Theme {
       case contentGradient
       case compactLayoutPadding
       case avatarAnimated
-      case actionFavoriteColor, actionBoostColor, actionBookmarkColor, actionIsLike
+      case actionFavoriteColor, actionLikeColor, actionBoostColor, actionBookmarkColor, actionIsLike
     }
 
     @AppStorage("is_previously_set") public var isThemePreviouslySet: Bool = false
@@ -30,6 +30,7 @@ public final class Theme {
       .gray
     @AppStorage(ThemeKey.label.rawValue) public var labelColor: Color = .black
     @AppStorage(ThemeKey.actionFavoriteColor.rawValue) public var actionFavoriteColor: Color = .yellow
+    @AppStorage(ThemeKey.actionLikeColor.rawValue) public var actionLikeColor: Color = .pink
     @AppStorage(ThemeKey.actionBoostColor.rawValue) public var actionBoostColor: Color = .green
     @AppStorage(ThemeKey.actionBookmarkColor.rawValue) public var actionBookmarkColor: Color = .pink
     @AppStorage(ThemeKey.actionIsLike.rawValue) public var actionIsLike: Bool = false
@@ -348,6 +349,7 @@ public final class Theme {
     labelColor = themeStorage.labelColor
     contrastingTintColor = .red  // real work done in computeContrastingTintColor()
     actionFavoriteColor = themeStorage.actionFavoriteColor
+    actionLikeColor = themeStorage.actionLikeColor
     actionBoostColor = themeStorage.actionBoostColor
     actionBookmarkColor = themeStorage.actionBookmarkColor
     actionIsLike = themeStorage.actionIsLike
@@ -519,6 +521,7 @@ public final class Theme {
     secondaryBackgroundColor = colorSet.secondaryBackgroundColor
     labelColor = colorSet.labelColor
     actionFavoriteColor = colorSet.favoriteColor
+    actionLikeColor = colorSet.likeColor
     actionBoostColor = colorSet.boostColor
     actionBookmarkColor = colorSet.bookmarkColor
     actionIsLike = colorSet.isLikeAction

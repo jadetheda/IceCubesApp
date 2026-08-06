@@ -39,14 +39,14 @@ struct StatusRowSwipeView: View {
         .tint(
           preferences.swipeActionsStatusTrailingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
+            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
     }
     if preferences.swipeActionsStatusTrailingLeft != StatusAction.none, !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusTrailingLeft)
         .tint(
           preferences.swipeActionsStatusTrailingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
+            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
     }
   }
 
@@ -57,14 +57,14 @@ struct StatusRowSwipeView: View {
         .tint(
           preferences.swipeActionsStatusLeadingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
+            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
     }
     if preferences.swipeActionsStatusLeadingRight != StatusAction.none, !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusLeadingRight)
         .tint(
           preferences.swipeActionsStatusLeadingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor))
+            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
     }
   }
 

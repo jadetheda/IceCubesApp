@@ -63,7 +63,7 @@ public enum StatusAction: String, CaseIterable, Identifiable {
     }
   }
 
-  public func color(themeTintColor: Color, useThemeColor: Bool, outside: Bool, actionFavoriteColor: Color = .yellow, actionBoostColor: Color = .green, actionBookmarkColor: Color = .pink) -> Color {
+  public func color(themeTintColor: Color, useThemeColor: Bool, outside: Bool, actionFavoriteColor: Color = .yellow, actionLikeColor: Color = .pink, actionBoostColor: Color = .green, actionBookmarkColor: Color = .pink, isLikeAction: Bool = false) -> Color {
     if useThemeColor {
       return outside ? themeTintColor : .gray
     }
@@ -78,6 +78,9 @@ public enum StatusAction: String, CaseIterable, Identifiable {
     case .boost:
       return actionBoostColor
     case .favorite:
+      if isLikeAction {
+        return actionLikeColor
+      }
       return actionFavoriteColor
     case .bookmark:
       return actionBookmarkColor

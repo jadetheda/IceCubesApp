@@ -524,3 +524,8 @@
   - **Feature (Like vs Favorite):** Added support for "Like" (Heart icon) versus "Favorite" (Star icon).
     - Themes can now specify `isLikeAction` to default to Like and the Heart symbol instead of Favorite/Star.
     - Users can toggle between "Like instead of Favorite" in Display Settings, and their custom "Favorite / Like Color" choice applies to both.
+  - **Feature Update (Like Color):** Separated "Like Color" from "Favorite Color".
+    - `ColorSet` and `Theme` now contain a discrete `likeColor` (`actionLikeColor`).
+    - The "Favorite / Like Color" setting is now split into two separate "Favorite Color" (star) and "Like Color" (heart) pickers.
+    - Updated `StatusAction` and `StatusRow` actions to return the distinct like color when the action is mapped to like.
+    - Configured the Bluesky dark and light themes to correctly use `Color(red: 236/255, green: 72/255, blue: 153/255)` for `likeColor` as requested.

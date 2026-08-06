@@ -128,7 +128,7 @@ struct StatusRowActionsView: View {
       case .respond, .share, .menu, .quote:
         nil
       case .favorite:
-        theme.actionFavoriteColor
+        theme.actionIsLike ? theme.actionLikeColor : theme.actionFavoriteColor
       case .bookmark:
         theme.actionBookmarkColor
       case .boost:
