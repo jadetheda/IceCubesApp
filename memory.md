@@ -550,3 +550,7 @@
 
 
   - **2026-08-06T08:05:00Z - Exit Code 65 Compilation Fix**: Fixed missing property error for `UserPreferences.hideInteractionButtons`. The property was stored in the nested `Storage` class but not exposed on the main `UserPreferences` object. Added public getter/setter bound to `storage.hideInteractionButtons`.
+
+- **2026-08-06T22:20:00Z**: Fixed IceShrimp remote media blank rendering bugs by detecting video extensions in URLs (even if marked as images) and skipping  forces when thumbnails are unavailable, properly passing them to AVPlayer instead of the Nuke Image engine.
+
+- **2026-08-06T22:20:00Z**: Fixed IceShrimp remote media blank rendering bugs by detecting video extensions in URLs (even if marked as images) and skipping neverLoadVideo forces when thumbnails are unavailable, properly passing them to AVPlayer instead of the Nuke Image engine.
