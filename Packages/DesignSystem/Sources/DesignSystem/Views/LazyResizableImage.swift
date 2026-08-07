@@ -12,13 +12,17 @@ import SwiftUI
 /// A LazyImage (Nuke) with a geometry reader under the hood in order to use a Resize Processor to optimize performances on lists.
 /// This views also allows smooth resizing of the images by debouncing the update of the ImageProcessor.
 public struct LazyResizableImage<Content: View>: View {
-  public init(url: URL?, @ViewBuilder content: @escaping (LazyImageState) -> Content)
+  public init(url: URL?, fallbackUrl: URL? = nil, @ViewBuilder content: @escaping (LazyImageState) -> Content)
   {
-    imageURL = url
+    primaryURL = url
+    self.fallbackURL = fallbackUrl
     self.content = content
   }
 
-  let imageURL: URL?
+  let primaryURL: URL?
+  let fallbackURL: URL?
+  @State private var currentURL: URL?
+  @State private var hasFailed = false
   @State private var resizeProcessor: ImageProcessors.Resize?
   @State private var debouncedTask: Task<Void, Never>?
 
@@ -27,13 +31,23 @@ public struct LazyResizableImage<Content: View>: View {
 
   public var body: some View {
     GeometryReader { proxy in
-      LazyImage(url: imageURL) { state in
-        content(state)
+      LazyImage(url: currentURL ?? primaryURL) { state in
+        if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed, let fallback = fallbackURL {
+          DispatchQueue.main.async {
+            self.currentURL = fallback
+            self.hasFailed = true
+          }
+        }
+        return content(state)
       }
       .processors([resizeProcessor == nil ? .resize(size: proxy.size) : resizeProcessor!])
       .onChange(of: proxy.size, initial: true) { oldValue, newValue in
         guard oldValue != newValue else { return }
         updateResizing(with: newValue)
+      }
+      .onChange(of: primaryURL) { _, newValue in
+        currentURL = newValue
+        hasFailed = false
       }
     }
   }

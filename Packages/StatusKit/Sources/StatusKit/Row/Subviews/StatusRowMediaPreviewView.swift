@@ -200,7 +200,7 @@ private struct MediaPreview: View {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.fallbackUrl) { state in
             if let image = state.image {
               image
                 .resizable()
@@ -566,7 +566,7 @@ private struct FeaturedImagePreView: View {
             .overlay {
               switch attachment.supportedType {
               case .image:
-                LazyResizableImage(url: resolvedUrl) { state in
+                LazyResizableImage(url: resolvedUrl, fallbackUrl: fallbackUrl) { state in
                   if let image = state.image {
                     image
                       .resizable()
@@ -791,7 +791,7 @@ private struct MediaGridCell: View {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.fallbackUrl) { state in
             if let image = state.image {
               image
                 .resizable()
