@@ -177,7 +177,7 @@ public struct NemesisDark: ColorSet {
   public var favoriteColor: Color = .yellow
   public var likeColor: Color = .init(hex: 0xF91880)
   public var boostColor: Color = .clear
-  public var bookmarkColor: Color = .init(hex: 0x3297DA)
+  public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
@@ -195,7 +195,7 @@ public struct NemesisLight: ColorSet {
   public var favoriteColor: Color = .yellow
   public var likeColor: Color = .init(hex: 0xF91880)
   public var boostColor: Color = .clear
-  public var bookmarkColor: Color = .init(hex: 0x3297DA)
+  public var bookmarkColor: Color = .pink
   public var isLikeAction: Bool = true
   public init() {
     self.boostColor = self.tintColor
