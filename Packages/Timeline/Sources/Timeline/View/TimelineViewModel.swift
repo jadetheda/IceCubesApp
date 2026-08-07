@@ -132,20 +132,16 @@ import Nuke
 
   func handleScrollToTopTrigger() -> String? {
     guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
-    if let previous = previousScrollPosition, scrollToTopVisible {
+    let isAtTop = scrollToTopVisible || (getTopVisibleStatusId() == visibleStatuses.first?.id)
+    if let previous = previousScrollPosition, isAtTop {
       previousScrollPosition = nil
       undoTimer?.invalidate()
       undoTimer = nil
       return previous
     } else {
-      var topVisibleId: String? = nil
-      if case .displayWithGaps(let items, _) = statusesState {
-          topVisibleId = items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
-      } else if case .display(let statuses, _) = statusesState {
-          topVisibleId = statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
-      }
+      let first = TimelineContentFilter.shared.isGalleryMode ? getTopVisibleMediaStatusId() : getTopVisibleStatusId()
       
-      if let first = topVisibleId ?? visibleStatuses.first?.id {
+      if let first = first {
         previousScrollPosition = first
         undoTimer?.invalidate()
         undoTimer = Timer.scheduledTimer(withTimeInterval: UserPreferences.shared.undoScrollToTopTimeout, repeats: false) { [weak self] _ in
@@ -166,6 +162,24 @@ import Nuke
           return statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
       }
       return visibleStatuses.first?.id
+  }
+
+  func getTopVisibleMediaStatusId() -> String? {
+      if case .displayWithGaps(let items, _) = statusesState {
+          let topStatusId = items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
+          if let topStatusId = topStatusId, let status = items.compactMap({ $0.status }).first(where: { $0.id == topStatusId }) {
+              let attachments = status.reblog?.mediaAttachments ?? status.mediaAttachments
+              return attachments.first?.id
+          }
+      } else if case .display(let statuses, _) = statusesState {
+          let topStatusId = statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
+          if let topStatusId = topStatusId, let status = statuses.first(where: { $0.id == topStatusId }) {
+              let attachments = status.reblog?.mediaAttachments ?? status.mediaAttachments
+              return attachments.first?.id
+          }
+      }
+      let attachments = visibleStatuses.first?.reblog?.mediaAttachments ?? visibleStatuses.first?.mediaAttachments
+      return attachments?.first?.id
   }
   
   private func updateLastTopVisibleStatusId() {

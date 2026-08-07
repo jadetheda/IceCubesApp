@@ -10,7 +10,11 @@ public class StatusBarWindow: UIWindow {
 
     public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         // Ensure we are tapping within the status bar region (top 50 points)
-        if point.y >= 0 && point.y <= 50 {
+        let statusBarHeight = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.windows.first?.safeAreaInsets.top ?? 50
+            
+        if point.y >= 0 && point.y <= statusBarHeight {
             let now = Date().timeIntervalSince1970
             // Debounce to prevent multiple hits from the same touch cycle (UIKit calls hitTest multiple times per touch)
             if now - lastTapTime > 0.5 {

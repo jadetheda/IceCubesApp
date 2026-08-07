@@ -99,7 +99,8 @@ struct TimelineListView: View {
       #endif
       .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {
-          if let targetId = viewModel.getTopVisibleStatusId() {
+          let targetId = newValue ? viewModel.getTopVisibleMediaStatusId() : viewModel.getTopVisibleStatusId()
+          if let targetId = targetId {
             Task {
               try? await Task.sleep(nanoseconds: 300_000_000)
               await MainActor.run {
