@@ -285,9 +285,6 @@ struct ContentSettingsView: View {
         Toggle(isOn: $contentFilter.hidePostsFromBots) {
           Label("timeline.filter.hide-posts-from-bots", systemImage: "poweroutlet.type.b")
         }
-        Toggle(isOn: $contentFilter.hidePostsFromBots) {
-          Label("timeline.filter.hide-posts-from-bots", systemImage: "poweroutlet.type.b")
-        }
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
