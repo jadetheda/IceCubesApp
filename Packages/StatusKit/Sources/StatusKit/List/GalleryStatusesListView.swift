@@ -359,7 +359,7 @@ public struct GalleryMediaCell: View {
       var type = mediaStatus.attachment.supportedType
       if type == .image {
         let allExts = [url.pathExtension, mediaStatus.attachment.url?.pathExtension, mediaStatus.attachment.remoteUrl?.pathExtension, mediaStatus.attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-        let videoExts = ["mp4", "m4v", "mov", "webm", "gif"]
+        let videoExts = ["mp4", "m4v", "mov", "webm"]
         if allExts.contains(where: { videoExts.contains($0) }) || mediaStatus.attachment.meta?.original?.duration != nil || mediaStatus.attachment.meta?.original?.frameRate != nil {
           type = .video
         }
