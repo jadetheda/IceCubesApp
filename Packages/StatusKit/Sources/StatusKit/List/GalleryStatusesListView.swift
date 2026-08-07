@@ -335,12 +335,15 @@ public struct GalleryMediaCell: View {
   @State private var showSelectableText: Bool = false
   @State private var isBlockConfirmationPresented = false
   @State private var isShareAsImageSheetPresented = false
+  @State private var autoFallbackTriggered = false
+  @State private var imageLoaded = false
+  @State private var loadTask: Task<Void, Never>? = nil
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
     let isIceShrimp = mediaStatus.status.account.url?.absoluteString.lowercased().contains("iceshrimp") == true
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
-    let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce
+    let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
     let resolvedUrl = effectiveUseRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
     let fallbackUrl: URL? = {
       if fallback {
@@ -363,6 +366,9 @@ public struct GalleryMediaCell: View {
           case .image:
             LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
               if let image = state.image {
+                let _ = DispatchQueue.main.async {
+                    if !imageLoaded { imageLoaded = true }
+                }
                 if mediaStatus.attachment.aspectRatio == nil && !isSquare {
                   image
                     .resizable()
@@ -424,6 +430,24 @@ public struct GalleryMediaCell: View {
             filterContext: filterContext
           )
         }
+        if UserPreferences.shared.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
+            loadTask = Task {
+                try? await Task.sleep(nanoseconds: UInt64(UserPreferences.shared.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
+                if !Task.isCancelled {
+                    if !imageLoaded {
+                        autoFallbackTriggered = true
+                    }
+                }
+            }
+        }
+      }
+      .onDisappear {
+          loadTask?.cancel()
+      }
+      .onChange(of: imageLoaded) { _, newValue in
+          if newValue {
+              loadTask?.cancel()
+          }
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
