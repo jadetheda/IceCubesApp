@@ -280,3 +280,11 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (UserPreferences Missing Expose - hideInteractionButtons)
 - **Root Cause**: The property `hideInteractionButtons` was declared in `UserPreferences.Storage` but not exposed on the main `UserPreferences` object. This caused an error when `DisplaySettingsView.swift` tried to bind a toggle to it via `$userPreferences.hideInteractionButtons`.
 - **Solution**: Added the missing `hideInteractionButtons` computed property directly to the `UserPreferences` class with a getter/setter pointing to the nested `storage`, and synced its initial value in `init()`. Also ensured that modifying it keeps `showInteractionButtons` correctly in sync without causing an infinite `didSet` loop.
+
+## 🐛 Exit Code 65 Logs (View Builder Void return)
+- **Root Cause**: Attempting to mutate a variable directly inside a ViewBuilder block (e.g. inside `if let` before a `Button`) outside of a statement block causes the compiler to complain that `()` cannot conform to `View`.
+- **Solution**: Move the mutation logic into a separate variable initialization before the ViewBuilder block or wrap it in a self-executing closure.
+
+## 🐛 Exit Code 65 Logs (MainActor isolated property access in Sendable closure)
+- **Root Cause**: Accessing a MainActor isolated property (like `hasFalledBack` in an `@Observable` class) inside a Sendable closure (like `AVPlayerItem.observe`) without jumping to the MainActor causes a compiler error/warning.
+- **Solution**: Ensure that any state mutations or reads of `@MainActor` isolated properties inside background closures are wrapped in `Task { @MainActor [weak self] in ... }`.

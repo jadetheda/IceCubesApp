@@ -87,20 +87,21 @@ import SwiftUI
   private func setupObserver(for item: AVPlayerItem?) {
     observer = item?.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
       if item.status == .failed {
-        if let fallbackUrl = self?.fallbackUrl, self?.hasFalledBack == false {
-          Task { @MainActor in
-            self?.hasFalledBack = true
-            let wasPlaying = self?.isPlaying ?? false
+        Task { @MainActor [weak self] in
+          guard let self = self else { return }
+          if let fallbackUrl = self.fallbackUrl, self.hasFalledBack == false {
+            self.hasFalledBack = true
+            let wasPlaying = self.isPlaying
             let newItem = AVPlayerItem(url: fallbackUrl)
-            self?.player?.replaceCurrentItem(with: newItem)
-            self?.setupObserver(for: newItem)
+            self.player?.replaceCurrentItem(with: newItem)
+            self.setupObserver(for: newItem)
             if wasPlaying {
-              self?.player?.play()
+              self.player?.play()
             }
           }
         }
       } else if item.status == .readyToPlay {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
           self?.onReady?()
         }
       }

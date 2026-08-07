@@ -353,15 +353,20 @@ public struct GalleryMediaCell: View {
         return nil
       }
     }()
-    if let url = resolvedUrl {
-      var resolvedType = mediaStatus.attachment.supportedType
-      if resolvedType == .image {
+    
+    let resolvedType: MediaAttachment.SupportedType? = {
+      guard let url = resolvedUrl else { return mediaStatus.attachment.supportedType }
+      var type = mediaStatus.attachment.supportedType
+      if type == .image {
         let ext = url.pathExtension.lowercased()
         if ext == "mp4" || ext == "m4v" || ext == "mov" || ext == "webm" {
-          resolvedType = .video
+          type = .video
         }
       }
-      
+      return type
+    }()
+
+    if let url = resolvedUrl {
       Button {
         if let viewModel {
           viewModel.navigateToDetail()
