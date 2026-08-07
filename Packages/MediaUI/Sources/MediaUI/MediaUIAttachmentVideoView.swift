@@ -13,8 +13,11 @@ import SwiftUI
   let fallbackUrl: URL?
   let forceAutoPlay: Bool
   var isPlaying: Bool = false
+  public var onReady: (() -> Void)?
+  private var hasFalledBack = false
 
-  public init(url: URL, fallbackUrl: URL? = nil, forceAutoPlay: Bool = false) {
+  public init(url: URL, fallbackUrl: URL? = nil, forceAutoPlay: Bool = false, onReady: (() -> Void)? = nil) {
+    self.onReady = onReady
     self.url = url
     self.fallbackUrl = fallbackUrl
     self.forceAutoPlay = forceAutoPlay
@@ -34,19 +37,7 @@ import SwiftUI
       isPlaying = false
     }
     
-    if let fallbackUrl = fallbackUrl {
-      observer = player?.currentItem?.observe(\.status, options: [.new]) { [weak self] item, _ in
-        if item.status == .failed {
-          Task { @MainActor in
-            let wasPlaying = self?.isPlaying ?? false
-            self?.player?.replaceCurrentItem(with: AVPlayerItem(url: fallbackUrl))
-            if wasPlaying {
-              self?.player?.play()
-            }
-          }
-        }
-      }
-    }
+    setupObserver(for: player?.currentItem)
 
     guard let player else { return }
     NotificationCenter.default.addObserver(
@@ -91,6 +82,29 @@ import SwiftUI
     #if !os(visionOS)
       player?.preventsDisplaySleepDuringVideoPlayback = preventSleep
     #endif
+  }
+
+  private func setupObserver(for item: AVPlayerItem?) {
+    observer = item?.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
+      if item.status == .failed {
+        if let fallbackUrl = self?.fallbackUrl, self?.hasFalledBack == false {
+          Task { @MainActor in
+            self?.hasFalledBack = true
+            let wasPlaying = self?.isPlaying ?? false
+            let newItem = AVPlayerItem(url: fallbackUrl)
+            self?.player?.replaceCurrentItem(with: newItem)
+            self?.setupObserver(for: newItem)
+            if wasPlaying {
+              self?.player?.play()
+            }
+          }
+        }
+      } else if item.status == .readyToPlay {
+        Task { @MainActor in
+          self?.onReady?()
+        }
+      }
+    }
   }
 
   deinit {

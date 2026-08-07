@@ -238,8 +238,7 @@ private struct MediaPreview: View {
             AltTextButton(text: displayData.description, font: .scaledFootnote)
           }
         case .av:
-          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl))
-            .onAppear { onLoaded() }
+          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl, onReady: { onLoaded() }))
             .accessibilityAddTraits(.startsMediaSession)
         }
       }
@@ -578,8 +577,7 @@ private struct FeaturedImagePreView: View {
                   }
                 }
               case .gifv, .video, .audio:
-                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
-                  .onAppear { onLoaded() }
+                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl, onReady: { onLoaded() }))
               default:
                 EmptyView()
               }
@@ -824,8 +822,7 @@ private struct MediaGridCell: View {
             AltTextButton(text: displayData.description, font: .scaledFootnote)
           }
         case .av:
-          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl))
-            .onAppear { onLoaded() }
+          MediaUIAttachmentVideoView(viewModel: .init(url: displayData.url, fallbackUrl: displayData.fallbackUrl, onReady: { onLoaded() }))
             .accessibilityAddTraits(.startsMediaSession)
         }
       }
