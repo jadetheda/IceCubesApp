@@ -216,22 +216,22 @@ private struct MediaPreview: View {
                 .aspectRatio(contentMode: .fill)
                 .frame(
                   maxWidth: isStandalone ? .infinity : nil,
-                  maxHeight: isStandalone ? (imageMaxHeight * 2.0) : nil
+                  maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
                 )
                 .frame(
                   width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
                   height: isStandalone ? nil : imageMaxHeight
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .overlay(
-                  RoundedRectangle(cornerRadius: 10)
-                    .stroke(.gray.opacity(0.35), lineWidth: 1)
                 )
             } else if state.isLoading {
               RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray)
             }
           }
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+          .overlay(
+            RoundedRectangle(cornerRadius: 10)
+              .stroke(.gray.opacity(0.35), lineWidth: 1)
+          )
           .overlay {
             BlurOverLay(sensitive: sensitive, font: .scaledFootnote)
           }
@@ -815,6 +815,11 @@ private struct MediaGridCell: View {
                 .fill(Color.gray)
             }
           }
+          .clipShape(RoundedRectangle(cornerRadius: 10))
+          .overlay(
+            RoundedRectangle(cornerRadius: 10)
+              .stroke(.gray.opacity(0.35), lineWidth: 1)
+          )
           .overlay {
             BlurOverLay(sensitive: sensitive, font: .scaledFootnote)
           }
