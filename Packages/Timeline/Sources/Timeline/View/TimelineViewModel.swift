@@ -560,7 +560,12 @@ extension TimelineViewModel: GapLoadingFetcher {
         isSeen = true
       }
       return !isSeen
-    }.map(\.id)
+    }.map { status in
+      if let reblog = status.reblog {
+        pendingStatusesObserver.reblogIds[status.id] = reblog.id
+      }
+      return status.id
+    }
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
 
@@ -1040,6 +1045,9 @@ extension TimelineViewModel {
       }
         
       if willShow && willShowInGallery {
+        if let reblog = event.status.reblog {
+          pendingStatusesObserver.reblogIds[event.status.id] = reblog.id
+        }
         pendingStatusesObserver.pendingStatuses.insert(event.status.id, at: 0)
       }
     }

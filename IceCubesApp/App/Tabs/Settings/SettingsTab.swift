@@ -317,6 +317,9 @@ struct SettingsTabs: View {
   }
   private var experimentalSection: some View {
     Section {
+      NavigationLink(destination: HideSeenPostsSettingsView()) {
+        Label("settings.experimental.hide-seen-posts", systemImage: "eye.slash")
+      }
       Button("settings.export.title") {
         prepareExport()
       }

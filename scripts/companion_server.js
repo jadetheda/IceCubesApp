@@ -128,6 +128,20 @@ function findPngInFolder(folderName) {
   }
 }
 
+function getGithubActionStatus() {
+  try {
+    const output = execSync('curl -s https://api.github.com/repos/jadetheda/icecubesapp/actions/runs?per_page=1', { encoding: 'utf8' });
+    const data = JSON.parse(output);
+    if (data && data.workflow_runs && data.workflow_runs.length > 0) {
+      const run = data.workflow_runs[0];
+      return { status: run.status, conclusion: run.conclusion, url: run.html_url };
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
@@ -170,6 +184,25 @@ const server = http.createServer((req, res) => {
   // 4. GET /
   if (pathname === '/' || pathname === '/index.html') {
     const git = getGitInfo();
+    const action = getGithubActionStatus();
+
+    let actionHtml = '';
+    if (action) {
+      const isCompleted = action.status === 'completed';
+      const isSuccess = action.conclusion === 'success';
+      const isFailure = action.conclusion === 'failure';
+      let statusColor = 'bg-zinc-500';
+      if (!isCompleted) statusColor = 'bg-blue-500 animate-pulse';
+      else if (isSuccess) statusColor = 'bg-emerald-500';
+      else if (isFailure) statusColor = 'bg-red-500';
+      
+      actionHtml = `
+        <a href="${action.url}" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+          <span class="w-2 h-2 rounded-full ${statusColor}"></span>
+          <span class="text-zinc-300">CI: ${isCompleted ? action.conclusion : action.status}</span>
+        </a>
+      `;
+    }
 
     const recentCommitsHtml = (git.recentCommits || []).map(c => `
       <div class="flex items-center justify-between py-2 border-b border-zinc-800/40 last:border-0 gap-3">
@@ -208,9 +241,12 @@ const server = http.createServer((req, res) => {
         <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
         <span class="text-xs font-semibold text-zinc-400 tracking-wide uppercase">Repository State</span>
       </div>
-      <a href="https://github.com/jadetheda/icecubesapp" target="_blank" class="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-mono">
-        GitHub <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-      </a>
+      <div class="flex items-center gap-3">
+        ${actionHtml}
+        <a href="https://github.com/jadetheda/icecubesapp" target="_blank" class="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-mono">
+          GitHub <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+      </div>
     </div>
 
     <!-- Main Card -->

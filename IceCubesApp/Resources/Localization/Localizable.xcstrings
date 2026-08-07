@@ -90623,6 +90623,83 @@
           }
         }
       }
+    },
+    "settings.hide-seen.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Seen Posts"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.threshold": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detection Threshold (Seconds)"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.liked-only": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only Detect Liked Posts"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.require-media": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Require Media to Load"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.include-boosts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Boosts of Seen Posts"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.show-header-button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Button in Header"
+          }
+        }
+      }
+    },
+    "settings.hide-seen.enabled": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable Hide Seen Posts"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -13,16 +13,23 @@ import SwiftUI
 
   var isLoadingNewStatuses: Bool = false
 
+  var reblogIds: [String: String] = [:]
+
   var pendingStatuses: [String] = [] {
     didSet {
-      withAnimation(.default) {
-        pendingStatusesCount = pendingStatuses.filter { !SeenPostsManager.shared.isSeen(id: $0) }.count
+      if pendingStatuses.isEmpty {
+        reblogIds.removeAll()
       }
+      updateCount()
     }
   }
 
   func removeStatus(status: Status) {
     if !disableUpdate, let index = pendingStatuses.firstIndex(of: status.id) {
+      let removed = pendingStatuses[index...(pendingStatuses.count - 1)]
+      for id in removed {
+        reblogIds.removeValue(forKey: id)
+      }
       pendingStatuses.removeSubrange(index...(pendingStatuses.count - 1))
       HapticManager.shared.fireHaptic(.timeline)
     }
@@ -30,7 +37,16 @@ import SwiftUI
 
   func updateCount() {
     withAnimation(.default) {
-      pendingStatusesCount = pendingStatuses.filter { !SeenPostsManager.shared.isSeen(id: $0) }.count
+      let includeBoosts = UserPreferences.shared.hideSeenPostsIncludeBoosts
+      pendingStatusesCount = pendingStatuses.filter { id in
+        if SeenPostsManager.shared.isSeen(id: id) {
+          return false
+        }
+        if includeBoosts, let reblogId = reblogIds[id], SeenPostsManager.shared.isSeen(id: reblogId) {
+          return false
+        }
+        return true
+      }.count
     }
   }
 

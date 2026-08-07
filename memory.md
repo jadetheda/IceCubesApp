@@ -555,3 +555,8 @@
 - **2026-08-06T22:20:00Z**: Fixed IceShrimp remote media blank rendering bugs by detecting video extensions in URLs (even if marked as images) and skipping  forces when thumbnails are unavailable, properly passing them to AVPlayer instead of the Nuke Image engine.
 
 - **2026-08-06T22:20:00Z**: Fixed IceShrimp remote media blank rendering bugs by detecting video extensions in URLs (even if marked as images) and skipping neverLoadVideo forces when thumbnails are unavailable, properly passing them to AVPlayer instead of the Nuke Image engine.
+
+- **[2026-08-07T08:08:00Z]**: 
+  - **CI Indicator**: Modified `scripts/companion_server.js` to parse GitHub Actions API and dynamically display the status of the latest run on the companion server webpage.
+  - **Hide Seen Posts Fix**: Updated `TimelineUnreadStatusesObserver.swift` and `TimelineViewModel.swift` to ensure the "pending statuses/unread posts" counter actively filters out statuses that have been marked as seen (including boosts of seen statuses, respecting user preferences).
+  - **Search for "download local push package"**: Investigated user request to hide "download local push package button". Searched whole workspace and localization files; no such button was found.
