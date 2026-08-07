@@ -438,8 +438,8 @@ private struct DisplayData: Identifiable, Hashable {
     var resolvedType = type
     if resolvedType == .image {
       let allExts = [url.pathExtension, attachment.url?.pathExtension, attachment.remoteUrl?.pathExtension, attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-      let videoExts = ["mp4", "m4v", "mov", "webm"]
-      if allExts.contains(where: { videoExts.contains($0) }) {
+      let videoExts = ["mp4", "m4v", "mov", "webm", "gif"]
+      if allExts.contains(where: { videoExts.contains($0) }) || attachment.meta?.original?.duration != nil || attachment.meta?.original?.frameRate != nil {
         resolvedType = .video
       }
     }

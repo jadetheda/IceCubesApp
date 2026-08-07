@@ -6,6 +6,8 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       public let width: Int?
       public let height: Int?
       public let aspect: Double?
+      public let duration: Double?
+      public let frameRate: String?
     }
 
     public let original: Meta?
