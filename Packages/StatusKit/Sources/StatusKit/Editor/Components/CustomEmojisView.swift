@@ -9,14 +9,14 @@ extension StatusEditor {
   @MainActor
   struct CustomEmojisView: View {
     // Isolated pipeline just for custom emojis
-    private var emojiPipeline: ImagePipeline {
+    @State private var emojiPipeline: ImagePipeline = {
       var config = ImagePipeline.Configuration.withDataCache
       if !UserPreferences.shared.cacheServerEmotes {
         config.dataCache = nil
         config.imageCache = nil
       }
       return ImagePipeline(configuration: config)
-    }
+    }()
     @Environment(\.dismiss) private var dismiss
 
     @Environment(Theme.self) private var theme
