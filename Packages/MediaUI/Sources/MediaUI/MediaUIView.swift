@@ -251,11 +251,19 @@ private struct DisplayData: Identifiable, Hashable {
       fallbackUrl = nil
     }
     
-    if noVideo && (type == .video || type == .gifv) {
+    var resolvedType = type
+    if resolvedType == .image {
+      let ext = url.pathExtension.lowercased()
+      if ext == "mp4" || ext == "m4v" || ext == "mov" || ext == "webm" {
+        resolvedType = .video
+      }
+    }
+    
+    if noVideo && (resolvedType == .video || resolvedType == .gifv) && attachment.previewUrl != nil {
       self.type = .image
       self.url = pUrl ?? url
     } else {
-      self.type = DisplayType(from: type)
+      self.type = DisplayType(from: resolvedType)
       self.url = url
     }
     

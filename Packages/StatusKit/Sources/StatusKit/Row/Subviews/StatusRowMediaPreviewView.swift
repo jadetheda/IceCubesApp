@@ -435,11 +435,19 @@ private struct DisplayData: Identifiable, Hashable {
     let pUrl = (useRemoteMedia && type == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
     previewUrl = pUrl
     
-    if neverLoadVideo && (type == .video || type == .gifv) {
+    var resolvedType = type
+    if resolvedType == .image {
+      let ext = url.pathExtension.lowercased()
+      if ext == "mp4" || ext == "m4v" || ext == "mov" || ext == "webm" {
+        resolvedType = .video
+      }
+    }
+    
+    if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && attachment.previewUrl != nil {
       self.type = .image
       self.url = pUrl
     } else {
-      self.type = DisplayType(from: type)
+      self.type = DisplayType(from: resolvedType)
       self.url = url
     }
     

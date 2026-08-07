@@ -354,6 +354,14 @@ public struct GalleryMediaCell: View {
       }
     }()
     if let url = resolvedUrl {
+      var resolvedType = mediaStatus.attachment.supportedType
+      if resolvedType == .image {
+        let ext = url.pathExtension.lowercased()
+        if ext == "mp4" || ext == "m4v" || ext == "mov" || ext == "webm" {
+          resolvedType = .video
+        }
+      }
+      
       Button {
         if let viewModel {
           viewModel.navigateToDetail()
@@ -362,9 +370,9 @@ public struct GalleryMediaCell: View {
         }
       } label: {
         Group {
-          switch mediaStatus.attachment.supportedType {
+          switch resolvedType {
           case .image:
-            LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
+            LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
               if let image = state.image {
                 let _ = DispatchQueue.main.async {
                     if !imageLoaded { imageLoaded = true }
