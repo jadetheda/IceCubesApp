@@ -253,10 +253,9 @@ private struct DisplayData: Identifiable, Hashable {
     
     var resolvedType = type
     if resolvedType == .image {
-      let ext = url.pathExtension.lowercased()
-      let fallbackExt = fallbackUrl?.pathExtension.lowercased() ?? ""
+      let allExts = [url.pathExtension, attachment.url?.pathExtension, attachment.remoteUrl?.pathExtension, attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
       let videoExts = ["mp4", "m4v", "mov", "webm"]
-      if videoExts.contains(ext) || videoExts.contains(fallbackExt) {
+      if allExts.contains(where: { videoExts.contains($0) }) {
         resolvedType = .video
       }
     }

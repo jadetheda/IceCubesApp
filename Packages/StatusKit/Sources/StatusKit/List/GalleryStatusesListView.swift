@@ -358,10 +358,9 @@ public struct GalleryMediaCell: View {
       guard let url = resolvedUrl else { return mediaStatus.attachment.supportedType }
       var type = mediaStatus.attachment.supportedType
       if type == .image {
-        let ext = url.pathExtension.lowercased()
-        let fallbackExt = fallbackUrl?.pathExtension.lowercased() ?? ""
+        let allExts = [url.pathExtension, mediaStatus.attachment.url?.pathExtension, mediaStatus.attachment.remoteUrl?.pathExtension, mediaStatus.attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
         let videoExts = ["mp4", "m4v", "mov", "webm"]
-        if videoExts.contains(ext) || videoExts.contains(fallbackExt) {
+        if allExts.contains(where: { videoExts.contains($0) }) {
           type = .video
         }
       }
