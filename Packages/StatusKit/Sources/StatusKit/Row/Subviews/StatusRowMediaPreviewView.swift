@@ -222,6 +222,7 @@ private struct MediaPreview: View {
                   width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
                   height: isStandalone ? nil : imageMaxHeight
                 )
+                .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                   RoundedRectangle(cornerRadius: 10)
                     .stroke(.gray.opacity(0.35), lineWidth: 1)
@@ -252,8 +253,7 @@ private struct MediaPreview: View {
         width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
         height: isStandalone ? nil : imageMaxHeight
       )
-      .clipped()
-      .cornerRadius(10)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
       // #965: do not create overlapping tappable areas, when multiple images are shown
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
@@ -582,6 +582,7 @@ private struct FeaturedImagePreView: View {
                 EmptyView()
               }
             }
+            .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
               RoundedRectangle(cornerRadius: 10)
                 .stroke(.gray.opacity(0.35), lineWidth: 1)
@@ -601,8 +602,7 @@ private struct FeaturedImagePreView: View {
           font: theme.statusDisplayStyle == .compact ? .footnote : .body
         )
       }
-      .clipped()
-      .cornerRadius(10)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
     }
   }
 
@@ -835,8 +835,7 @@ private struct MediaGridCell: View {
         maxHeight: isStandalone ? .infinity : nil
       )
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
-      .clipped()
-      .cornerRadius(10)
+      .clipShape(RoundedRectangle(cornerRadius: 10))
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text(displayData.accessibilityText))
