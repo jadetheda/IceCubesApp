@@ -687,6 +687,7 @@ const server = http.createServer((req, res) => {
     };
 
     let isFetchingBuilds = false;
+    let isBuildActive = false;
     let pollInterval = null;
 
     function resetPolling(ms) {
@@ -762,9 +763,14 @@ const server = http.createServer((req, res) => {
     async function triggerBuild() {
       const btn = document.getElementById('triggerBtn');
       if (!btn) return;
+      if (isBuildActive) {
+        alert('A build is already actively running on Codemagic.');
+        return;
+      }
       
       const originalHtml = btn.innerHTML;
       btn.disabled = true;
+      btn.dataset.triggering = "true";
       btn.innerHTML = \`
         <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -786,16 +792,20 @@ const server = http.createServer((req, res) => {
             Triggered!
           \`;
           btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-800');
+          isBuildActive = true;
+          delete btn.dataset.triggering;
           setTimeout(() => {
-            location.reload();
+            loadBuildHistory();
           }, 2000);
         } else {
+          delete btn.dataset.triggering;
           btn.innerHTML = originalHtml;
           btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-600').replace('cursor-not-allowed', '');
           btn.disabled = false;
           alert('Failed to trigger build: ' + resData.error);
         }
       } catch (err) {
+        delete btn.dataset.triggering;
         btn.innerHTML = originalHtml;
         btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-600').replace('cursor-not-allowed', '');
         btn.disabled = false;
@@ -833,7 +843,30 @@ const server = http.createServer((req, res) => {
 
         // Check if any build is currently active (non-terminal status)
         const activeBuild = builds.find(b => !['failed', 'finished', 'canceled', 'timeout', 'skipped'].includes(b.status));
+        isBuildActive = !!activeBuild;
         const banner = document.getElementById('activeBuildBanner');
+        const triggerBtn = document.getElementById('triggerBtn');
+        
+        if (triggerBtn && !triggerBtn.dataset.triggering) {
+          if (activeBuild) {
+            triggerBtn.disabled = true;
+            triggerBtn.className = "flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/50 shadow-none transition-all";
+            triggerBtn.innerHTML = \`
+              <svg class="animate-spin h-3.5 w-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Build #\${activeBuild.index} Running
+            \`;
+          } else {
+            triggerBtn.disabled = false;
+            triggerBtn.className = "flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition-all shadow-md shadow-emerald-900/20";
+            triggerBtn.innerHTML = \`
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              Trigger Build
+            \`;
+          }
+        }
         
         if (activeBuild && banner) {
           const rawMsg = activeBuild.commit?.commitMessage || activeBuild.commit?.message || 'No commit message';
