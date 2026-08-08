@@ -131,18 +131,23 @@ function findPngInFolder(folderName) {
 const CONFIG_PATH = path.join(__dirname, '../.codemagic.json');
 
 function getCodemagicConfig() {
-  try {
-    if (fs.existsSync(CONFIG_PATH)) {
-      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    }
-  } catch (e) {
-    console.error('Error reading .codemagic.json:', e);
-  }
-  return {
+  let config = {
     appId: '',
     workflowId: 'ios-unsigned-build',
     token: ''
   };
+  try {
+    if (fs.existsSync(CONFIG_PATH)) {
+      config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Error reading .codemagic.json:', e);
+  }
+  // Fallback to CM_API env var if token is missing
+  if (!config.token && process.env.CM_API) {
+    config.token = process.env.CM_API;
+  }
+  return config;
 }
 
 function saveCodemagicConfig(config) {
@@ -293,6 +298,123 @@ const server = http.createServer((req, res) => {
     }).catch(err => {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: err.message }));
+    });
+    return;
+  }
+
+  // 6a. GET /api/codemagic/builds
+  if (pathname === '/api/codemagic/builds' && req.method === 'GET') {
+    const config = getCodemagicConfig();
+    const token = config.token;
+    if (!token) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Codemagic API token not configured' }));
+      return;
+    }
+    
+    fetch('https://api.codemagic.io/builds', {
+      headers: { 'x-auth-token': token }
+    })
+    .then(r => r.json())
+    .then(data => {
+      let builds = data.builds || [];
+      if (config.appId) {
+        builds = builds.filter(b => b.appId === config.appId);
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ builds }));
+    })
+    .catch(err => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
+    });
+    return;
+  }
+
+  // 6b. GET /api/codemagic/builds/:buildId/logs
+  const buildLogsMatch = pathname.match(/^\/api\/codemagic\/builds\/([a-f0-9]{24})\/logs$/);
+  if (buildLogsMatch && req.method === 'GET') {
+    const buildId = buildLogsMatch[1];
+    const config = getCodemagicConfig();
+    const token = config.token;
+    if (!token) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Codemagic API token not configured' }));
+      return;
+    }
+    
+    fetch(`https://api.codemagic.io/builds/${buildId}`, {
+      headers: { 'x-auth-token': token }
+    })
+    .then(r => r.json())
+    .then(async data => {
+      if (!data || !data.build) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Build not found on Codemagic' }));
+        return;
+      }
+      
+      const build = data.build;
+      const failedSteps = [];
+      
+      if (Array.isArray(build.buildActions)) {
+        for (const action of build.buildActions) {
+          if (action.status === 'failed') {
+            const stepName = action.name || 'Unknown Step';
+            const logUrls = [];
+            
+            if (action.logUrl) {
+              logUrls.push(action.logUrl);
+            }
+            if (Array.isArray(action.subactions)) {
+              for (const sub of action.subactions) {
+                if (sub.logUrl) {
+                  logUrls.push(sub.logUrl);
+                }
+              }
+            }
+            
+            let logContent = '';
+            for (const logUrl of logUrls) {
+              try {
+                const logRes = await fetch(logUrl, {
+                  headers: { 'x-auth-token': token }
+                });
+                if (logRes.ok) {
+                  const logText = await logRes.text();
+                  logContent += (logContent ? '\n\n' : '') + logText;
+                }
+              } catch (logErr) {
+                console.error(`Error fetching log from ${logUrl}:`, logErr);
+              }
+            }
+            
+            const cleanLog = logContent
+              .replace(/<span[^>]*>/g, '')
+              .replace(/<\/span>/g, '')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&');
+              
+            failedSteps.push({
+              name: stepName,
+              log: cleanLog || 'No log content available.'
+            });
+          }
+        }
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        buildId,
+        status: build.status,
+        index: build.index,
+        failedSteps
+      }));
+    })
+    .catch(err => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message }));
     });
     return;
   }
@@ -464,6 +586,27 @@ const server = http.createServer((req, res) => {
         </div>
       </div>
 
+      <!-- Codemagic Build History -->
+      ${config.appId ? `
+      <div id="buildHistorySection" class="border-t border-zinc-800/80 pt-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider">Recent Builds</div>
+          <button onclick="loadBuildHistory()" class="text-[10px] text-zinc-400 hover:text-white font-mono flex items-center gap-1 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"></path></svg>
+            Refresh
+          </button>
+        </div>
+        
+        <div id="buildsContainer" class="space-y-2.5">
+          <!-- Loading skeleton -->
+          <div class="animate-pulse space-y-2">
+            <div class="h-12 bg-zinc-950/40 rounded-xl border border-zinc-800/40"></div>
+            <div class="h-12 bg-zinc-950/40 rounded-xl border border-zinc-800/40"></div>
+          </div>
+        </div>
+      </div>
+      ` : ''}
+
       <!-- Recent Commit Log -->
       <div class="pt-1">
         <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider mb-2.5">Recent Commits</div>
@@ -519,6 +662,28 @@ const server = http.createServer((req, res) => {
     </div>
   </div>
 
+  <!-- Logs Modal -->
+  <div id="logsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-3xl rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 id="logsModalTitle" class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+          Build Failed Step Logs
+        </h3>
+        <button onclick="closeLogsModal()" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <div id="logsModalBody" class="space-y-4 overflow-y-auto pt-4 flex-1 pr-1 text-xs">
+        <!-- Logs dynamically rendered here -->
+      </div>
+      
+      <div class="flex items-center justify-end pt-3 border-t border-zinc-800 mt-3">
+        <button onclick="closeLogsModal()" class="px-4 py-2 border border-zinc-800 hover:bg-zinc-800 rounded-lg text-xs font-semibold text-zinc-300 transition-colors">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function toggleConfigModal() {
       const modal = document.getElementById('configModal');
@@ -560,13 +725,13 @@ const server = http.createServer((req, res) => {
       
       const originalHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = \`
+      btn.innerHTML = `
         <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         Triggering...
-      \`;
+      `;
       btn.className = btn.className.replace('bg-emerald-600', 'bg-zinc-700 cursor-not-allowed');
       
       try {
@@ -576,10 +741,10 @@ const server = http.createServer((req, res) => {
         
         const resData = await response.json();
         if (resData.success) {
-          btn.innerHTML = \`
+          btn.innerHTML = `
             <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             Triggered!
-          \`;
+          `;
           btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-800');
           setTimeout(() => {
             location.reload();
@@ -597,6 +762,200 @@ const server = http.createServer((req, res) => {
         alert('Network error triggering build: ' + err.message);
       }
     }
+
+    async function loadBuildHistory() {
+      const section = document.getElementById('buildHistorySection');
+      if (!section) return;
+      
+      const container = document.getElementById('buildsContainer');
+      if (!container) return;
+      
+      try {
+        const response = await fetch('/api/codemagic/builds');
+        if (!response.ok) {
+          const errData = await response.json();
+          container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Failed to load build history: ${errData.error || response.statusText}</div>`;
+          return;
+        }
+        
+        const data = await response.json();
+        const builds = data.builds || [];
+        
+        if (builds.length === 0) {
+          container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-4 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">No builds found for this application ID.</div>`;
+          return;
+        }
+        
+        container.innerHTML = builds.slice(0, 8).map(b => {
+          const isFailed = b.status === 'failed';
+          const isSuccess = b.status === 'finished';
+          const isBuilding = ['initializing', 'queued', 'building', 'fetching', 'preparing', 'testing'].includes(b.status);
+          
+          let statusBadgeClass = 'bg-zinc-950/50 text-zinc-500 border-zinc-800/40';
+          let statusDotClass = 'bg-zinc-500';
+          let statusLabel = b.status;
+          
+          if (isSuccess) {
+            statusBadgeClass = 'bg-emerald-950/40 text-emerald-400 border-emerald-900/30';
+            statusDotClass = 'bg-emerald-500';
+            statusLabel = 'success';
+          } else if (isFailed) {
+            statusBadgeClass = 'bg-red-950/40 text-red-400 border-red-900/30';
+            statusDotClass = 'bg-red-500';
+            statusLabel = 'failed';
+          } else if (isBuilding) {
+            statusBadgeClass = 'bg-blue-950/40 text-blue-400 border-blue-900/30 animate-pulse';
+            statusDotClass = 'bg-blue-400';
+            statusLabel = b.status || 'building';
+          }
+          
+          const finishedDate = b.finishedAt ? new Date(b.finishedAt) : null;
+          const startedDate = b.startedAt ? new Date(b.startedAt) : null;
+          let timeLabel = '';
+          if (finishedDate && startedDate) {
+            const diffMs = finishedDate - startedDate;
+            const diffMin = Math.floor(diffMs / 60000);
+            const diffSec = Math.floor((diffMs % 60000) / 1000);
+            timeLabel = `${diffMin}m ${diffSec}s`;
+          } else if (startedDate) {
+            const diffMs = Date.now() - startedDate;
+            const diffMin = Math.floor(diffMs / 60000);
+            timeLabel = `Running for ${diffMin}m`;
+          }
+          
+          const commitMsg = b.commit?.message ? b.commit.message.split('\n')[0] : 'No commit message';
+          const shortHash = b.commit?.hash ? b.commit.hash.substring(0, 7) : 'Unknown';
+          const author = b.commit?.authorName || 'Unknown';
+          
+          const actionBtnHtml = isFailed ? `
+            <button onclick="viewLogs('${b._id}')" class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded bg-red-950/50 hover:bg-red-900/50 text-red-300 border border-red-900/30 active:scale-95 transition-all">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+              View Logs
+            </button>
+          ` : '';
+          
+          return `
+            <div class="bg-zinc-950/20 rounded-xl border border-zinc-800/40 p-3 flex items-center justify-between gap-4">
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-zinc-400 font-bold font-mono text-xs">#${b.index}</span>
+                  <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border ${statusBadgeClass}">
+                    <span class="w-1 h-1 rounded-full ${statusDotClass}"></span>
+                    ${statusLabel}
+                  </span>
+                  <span class="text-[10px] text-zinc-500 font-mono">${b.branch || 'main'}</span>
+                  ${timeLabel ? `<span class="text-[10px] text-zinc-500 font-mono">(${timeLabel})</span>` : ''}
+                </div>
+                <div class="text-xs text-zinc-300 truncate font-mono">
+                  <span class="text-blue-400 font-medium">${shortHash}</span> - ${commitMsg}
+                </div>
+                <div class="text-[10px] text-zinc-500">
+                  By ${author} &bull; ${new Date(b.startedAt || b.createdAt).toLocaleString()}
+                </div>
+              </div>
+              <div class="shrink-0">
+                ${actionBtnHtml}
+              </div>
+            </div>
+          `;
+        }).join('');
+        
+      } catch (err) {
+        container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Network error loading builds: ${err.message}</div>`;
+      }
+    }
+    
+    async function viewLogs(buildId) {
+      const modal = document.getElementById('logsModal');
+      const title = document.getElementById('logsModalTitle');
+      const body = document.getElementById('logsModalBody');
+      
+      if (!modal || !title || !body) return;
+      
+      title.innerText = 'Fetching Build Logs...';
+      body.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-12 space-y-3">
+          <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span class="text-xs font-mono text-zinc-400">Downloading raw log output from Codemagic API...</span>
+        </div>
+      `;
+      modal.classList.remove('hidden');
+      
+      try {
+        const response = await fetch(\`/api/codemagic/builds/\${buildId}/logs\`);
+        if (!response.ok) {
+          const errData = await response.json();
+          title.innerText = 'Log Download Failed';
+          body.innerHTML = \`<div class="p-4 bg-red-950/30 border border-red-900/40 rounded-xl text-red-400 font-mono text-xs">Error: \${errData.error || response.statusText}</div>\`;
+          return;
+        }
+        
+        const data = await response.json();
+        title.innerText = \`Build #\${data.index} - Failed Step Logs\`;
+        
+        if (!data.failedSteps || data.failedSteps.length === 0) {
+          body.innerHTML = \`<div class="p-4 bg-zinc-950/40 border border-zinc-800/40 rounded-xl text-zinc-400 font-mono text-xs text-center">No failed build steps were found for this build. This could mean the build failed before starting any specific script step.</div>\`;
+          return;
+        }
+        
+        body.innerHTML = data.failedSteps.map((step, idx) => {
+          const escStepName = step.name.replace(/\"/g, '&quot;');
+          const escLog = step.log
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+            
+          return \`
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-red-400 font-mono">Step: \${step.name}</span>
+                <button onclick="copyToClipboard(this, \\\`\${idx}\\\`)" class="flex items-center gap-1 px-2 py-1 text-[10px] font-mono rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                  Copy Log
+                </button>
+              </div>
+              <div class="relative bg-black rounded-xl border border-zinc-800/80 p-4 font-mono text-[11px] leading-relaxed overflow-x-auto overflow-y-auto max-h-[350px] text-zinc-300 whitespace-pre-wrap select-text scrollbar-thin">
+                <code id="logCode_\${idx}">\${escLog}</code>
+              </div>
+            </div>
+          \`;
+        }).join('<div class="border-t border-zinc-800/60 my-4"></div>');
+        
+      } catch (err) {
+        title.innerText = 'Network Error';
+        body.innerHTML = \`<div class="p-4 bg-red-950/30 border border-red-900/40 rounded-xl text-red-400 font-mono text-xs">Network error fetching logs: \${err.message}</div>\`;
+      }
+    }
+    
+    function closeLogsModal() {
+      const modal = document.getElementById('logsModal');
+      if (modal) modal.classList.add('hidden');
+    }
+    
+    function copyToClipboard(btn, index) {
+      const code = document.getElementById('logCode_' + index);
+      if (!code) return;
+      
+      const text = code.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = \`
+          <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          Copied!
+        \`;
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+        }, 1500);
+      });
+    }
+    
+    // Auto load on init
+    document.addEventListener('DOMContentLoaded', () => {
+      loadBuildHistory();
+    });
   </script>
 </body>
 </html>`;

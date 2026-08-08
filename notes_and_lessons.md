@@ -10,3 +10,5 @@
 
 - **Codemagic Integration & Status Badges**: For full-stack companion dashboards running in container environments, Codemagic build badges can be cleanly embedded using `https://api.codemagic.io/apps/<app-id>/<workflow-id>/status_badge.svg`. To prevent browser cache-staling on reload, append a dynamic query parameter such as `?cachebuster=<timestamp>`. Build triggering is supported by sending a `POST` request to `https://api.codemagic.io/builds` with the `x-auth-token` header and a JSON payload specifying `appId`, `workflowId`, and `branch`.
 
+- **Codemagic Build Log Extraction**: To retrieve step logs for failed builds, query `GET /api/v3/builds/{build_id}` to obtain detailed action/step metrics. The `buildActions` array maps each step. When a step's `status` matches `failed`, its log contents can be fetched from `action.logUrl` (and also recursively nested `action.subactions[*].logUrl`) by passing the API token as `x-auth-token` on a simple fetch request, returning plain-text logs. HTML tags (like `<span>` or entities like `&lt;`) should be parsed out for a clean, monospaced view inside container logs.
+

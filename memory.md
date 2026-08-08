@@ -576,4 +576,9 @@
   - **[2026-08-08T04:55:00Z]**:
     - **Replaced GitHub Actions with Codemagic on Web Companion**: Refactored `scripts/companion_server.js` to transition the CI build status badge and trigger features from GitHub Actions to Codemagic. Implemented standard Codemagic badge rendering, a settings modal to configure the App ID, Workflow ID, and API token, and a POST API route to trigger custom builds.
     - **Healed package.json**: Created the workspace root `package.json` to define standard start/dev scripts for the companion server, resolving dev server restart errors.
+  - **[2026-08-08T05:10:00Z]**:
+    - **Automated Pulling of Failed Codemagic Build Logs**: Implemented automated build log retrieval for failed Codemagic builds on the port 3000 companion developer dashboard.
+    - **Added API Endpoints**: Created `/api/codemagic/builds` to list application-filtered builds, and `/api/codemagic/builds/:buildId/logs` to retrieve and merge raw log content from all failed actions/steps.
+    - **Designed Clean Logs UI**: Added a gorgeous scrollable "View Logs" modal with step-by-step logs, responsive styling, interactive copy-to-clipboard actions, and HTML-cleansed styling.
+    - **Ensured CM_API fallback**: Configured endpoints to gracefully fall back to the environment `CM_API` secret variable, streamlining local and remote deployments.
 
