@@ -570,3 +570,6 @@
   - **[2026-08-07T10:43:00Z]**:
     - **Reverted GIF from `videoExts`**: Routing `.gif` files to `AVPlayer` broke real GIF rendering because `AVPlayer` refuses to play files designated as images. GIFs now properly route back to the Nuke image pipeline.
     - **Native AVPlayer Extensionless MP4 Support**: Solved the "gray screen" issue for IceShrimp MP4s by configuring `AVPlayerItem` with an `AVURLAsset` using `AVURLAssetOutOfBandMIMETypeKey = video/mp4` whenever the remote URL lacks an extension (or has a fake `.gif` extension). This forces `AVPlayer` to bypass extension-checking and decode the raw stream natively, ending the fallback chain loops.
+  - **[2026-08-08T04:30:00Z]**:
+    - **Re-applied Dev Server Fix**: The sandboxing scaling-to-zero issue resurfaced, breaking the file system again. Re-initialized `package.json` and restarted the dev server.
+    - **Settings Synchronization fix**: Found that when git index was corrupted during the scale-to-zero, the repository rolled back, mistakenly restoring the legacy `experimentalSection` and deleting the `debuggingSection` from `SettingsTab.swift`. The rollback also stripped out `ErrorService.swift`. I ran a script to remove the legacy section again, cleanly migrate the import/export buttons to the `generalSection`, and re-implemented `ErrorService` into `UserPreferences` and `AppView`.
