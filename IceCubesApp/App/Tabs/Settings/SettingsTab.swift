@@ -22,6 +22,7 @@ struct SettingsTabs: View {
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(AppAccountsManager.self) private var appAccountsManager
   @Environment(Theme.self) private var theme
+  @Environment(ToastCenter.self) private var toastCenter
   @Environment(\.modelContext) private var context
 
   @State private var routerPath = RouterPath()
@@ -42,7 +43,7 @@ struct SettingsTabs: View {
       Form {
         appSection
         accountsSection
-        experimentalSection
+        debuggingSection
         generalSection
         socialKeyboardSection
         streamHomeTimelineSection
@@ -233,6 +234,13 @@ struct SettingsTabs: View {
         }
         .tint(theme.labelColor)
       #endif
+      
+      Button("settings.export.title") {
+        prepareExport()
+      }
+      Button("settings.import.title") {
+        isImportingSettings = true
+      }
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -315,24 +323,31 @@ struct SettingsTabs: View {
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
   }
-  private var experimentalSection: some View {
-    Section {
-      NavigationLink(destination: HideSeenPostsSettingsView()) {
-        Label("settings.experimental.hide-seen-posts", systemImage: "eye.slash")
-      }
-      Button("settings.export.title") {
-        prepareExport()
-      }
-      Button("settings.import.title") {
-        isImportingSettings = true
+  
+  private var debuggingSection: some View {
+    @Bindable var userPreferences = preferences
+    return Section {
+      Toggle("Show Error Popups", isOn: $userPreferences.showErrorPopups)
+      Toggle("Log Errors to File", isOn: $userPreferences.logErrors)
+      if userPreferences.logErrors {
+        Button("View Error Logs") {
+          let logs = ErrorService.shared.readLogs() ?? "No logs found."
+          ErrorService.shared.handle(title: "Error Logs", message: logs, showPopup: true, log: false)
+        }
+        Button("Clear Error Logs") {
+          ErrorService.shared.clearLogs()
+          toastCenter.show(toast: .init(title: "Logs Cleared", iconName: "trash"))
+        }
       }
     } header: {
-      Text("settings.experimental.header")
+      Text("Debugging")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
   }
+
+
 
 
   private var appSection: some View {

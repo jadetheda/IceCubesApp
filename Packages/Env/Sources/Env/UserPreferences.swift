@@ -36,6 +36,8 @@ import SwiftUI
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
 
     @AppStorage("hide_interaction_buttons") public var hideInteractionButtons = false
+    @AppStorage("show_error_popups") public var showErrorPopups = false
+    @AppStorage("log_errors") public var logErrors = false
     @AppStorage("inAppBrowserReaderView") public var inAppBrowserReaderView = false
     @AppStorage("gallery_columns") public var galleryColumns: Int = 2
     @AppStorage("gallery_crop_to_square") public var galleryCropToSquare: Bool = false
@@ -367,6 +369,7 @@ import SwiftUI
     }
   }
 
+  
   public var hideInteractionButtons: Bool {
     get {
       access(keyPath: \.hideInteractionButtons)
@@ -374,10 +377,41 @@ import SwiftUI
     }
     set {
       withMutation(keyPath: \.hideInteractionButtons) {
-        withMutation(keyPath: \.showInteractionButtons) {
+        if storage.hideInteractionButtons != newValue {
           storage.hideInteractionButtons = newValue
         }
       }
+    }
+  }
+
+  public var showErrorPopups: Bool {
+    get {
+      access(keyPath: \.showErrorPopups)
+      return storage.showErrorPopups
+    }
+    set {
+      withMutation(keyPath: \.showErrorPopups) {
+        if storage.showErrorPopups != newValue {
+          storage.showErrorPopups = newValue
+        }
+      }
+    }
+  }
+  
+  public var logErrors: Bool {
+    get {
+      access(keyPath: \.logErrors)
+      return storage.logErrors
+    }
+    set {
+      withMutation(keyPath: \.logErrors) {
+        if storage.logErrors != newValue {
+          storage.logErrors = newValue
+        }
+      }
+    }
+  }
+
     }
   }
 

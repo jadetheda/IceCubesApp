@@ -36,6 +36,9 @@ struct IceCubesApp: App {
   @State var appRouterPath = RouterPath()
 
   @State var isSupporter: Bool = false
+
+  @State var errorService = ErrorService.shared
+
   
   @Namespace var namespace
 

@@ -131,6 +131,12 @@ struct AppView: View {
       routerPath: appRouterPath
     )
     .environment(\.selectedTabScrollToTop, selectedTabScrollToTop)
+
+    .alert(ErrorService.shared.currentErrorTitle, isPresented: Bindable(ErrorService.shared).isErrorDisplayed) {
+      Button("alert.button.ok", action: {})
+    } message: {
+      Text(ErrorService.shared.currentErrorMessage)
+    }
     .onAppear {
       StatusBarTapTracker.shared.setup()
     }
