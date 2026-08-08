@@ -515,6 +515,9 @@ const server = http.createServer((req, res) => {
       </div>
     </div>
 
+    <!-- Active Build Banner -->
+    <div id="activeBuildBanner" class="hidden"></div>
+
     <!-- Main Card -->
     <div class="bg-zinc-900/90 rounded-2xl border border-zinc-800/80 p-6 md:p-8 shadow-2xl space-y-6">
       <!-- Active Branch & Status -->
@@ -685,6 +688,19 @@ const server = http.createServer((req, res) => {
   </div>
 
   <script>
+    const CONFIG = {
+      appId: '${config.appId || ""}',
+      workflowId: '${config.workflowId || ""}'
+    };
+
+    let isFetchingBuilds = false;
+    let pollInterval = null;
+
+    function resetPolling(ms) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(loadBuildHistory, ms);
+    }
+
     function formatRelativeTime(dateInput) {
       if (!dateInput) return '';
       const date = new Date(dateInput);
@@ -795,23 +811,89 @@ const server = http.createServer((req, res) => {
     }
 
     async function loadBuildHistory() {
+      if (isFetchingBuilds) return;
+      isFetchingBuilds = true;
+
       const section = document.getElementById('buildHistorySection');
-      if (!section) return;
+      if (!section) {
+        isFetchingBuilds = false;
+        return;
+      }
       
       const container = document.getElementById('buildsContainer');
-      if (!container) return;
+      if (!container) {
+        isFetchingBuilds = false;
+        return;
+      }
       
       try {
         const response = await fetch('/api/codemagic/builds');
         if (!response.ok) {
           const errData = await response.json();
           container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Failed to load build history: \${errData.error || response.statusText}</div>\`;
+          isFetchingBuilds = false;
           return;
         }
         
         const data = await response.json();
         const builds = data.builds || [];
+
+        // Check if any build is currently active (non-terminal status)
+        const activeBuild = builds.find(b => !['failed', 'finished', 'canceled', 'timeout', 'skipped'].includes(b.status));
+        const banner = document.getElementById('activeBuildBanner');
         
+        if (activeBuild && banner) {
+          const rawMsg = activeBuild.commit?.commitMessage || activeBuild.commit?.message || 'No commit message';
+          const commitMsg = rawMsg.split('\\\\n')[0];
+          const branch = activeBuild.branch || 'main';
+          const index = activeBuild.index;
+          
+          let statusLabel = activeBuild.status || 'building';
+          if (statusLabel === 'fetching') statusLabel = 'Fetching Code';
+          else if (statusLabel === 'preparing') statusLabel = 'Preparing VM';
+          else if (statusLabel === 'building') statusLabel = 'Compiling App';
+          else if (statusLabel === 'testing') statusLabel = 'Testing';
+          else if (statusLabel === 'queued') statusLabel = 'In Queue';
+          else if (statusLabel === 'initializing') statusLabel = 'Initializing';
+          
+          banner.innerHTML = \`
+            <div class="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl shadow-blue-950/10 mb-5 animate-pulse">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="relative flex h-3.5 w-3.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500"></span>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-blue-200">Build #\${index} is active</span>
+                    <span class="text-[9px] font-mono font-bold bg-blue-900/50 text-blue-300 px-1.5 py-0.5 rounded border border-blue-800/30">\${statusLabel.toUpperCase()}</span>
+                  </div>
+                  <div class="text-[10px] text-zinc-400 font-mono truncate mt-1">
+                    Branch: <span class="text-blue-300 font-semibold">\${branch}</span> &bull; 
+                    Commit: <span class="text-zinc-300">\${commitMsg}</span>
+                  </div>
+                </div>
+              </div>
+              <a href="https://codemagic.io/app/\${CONFIG.appId}/\${CONFIG.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-95">
+                Track Live
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+              </a>
+            </div>
+          \`;
+          banner.classList.remove('hidden');
+          
+          // Fast polling when build is active
+          resetPolling(5000);
+        } else if (banner) {
+          banner.innerHTML = '';
+          banner.classList.add('hidden');
+          
+          // Slow polling when idle
+          resetPolling(20000);
+        }
+        
+        isFetchingBuilds = false;
+
         if (builds.length === 0) {
           container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-4 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">No builds found for this application ID.</div>\`;
           return;
@@ -895,6 +977,7 @@ const server = http.createServer((req, res) => {
         
       } catch (err) {
         container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Network error loading builds: \${err.message}</div>\`;
+        isFetchingBuilds = false;
       }
     }
     
@@ -988,6 +1071,8 @@ const server = http.createServer((req, res) => {
     // Auto load on init
     document.addEventListener('DOMContentLoaded', () => {
       loadBuildHistory();
+      // Start fallback polling of 20 seconds
+      resetPolling(20000);
     });
   </script>
 </body>
