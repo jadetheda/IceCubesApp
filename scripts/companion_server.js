@@ -128,18 +128,83 @@ function findPngInFolder(folderName) {
   }
 }
 
-function getGithubActionStatus() {
+const CONFIG_PATH = path.join(__dirname, '../.codemagic.json');
+
+function getCodemagicConfig() {
   try {
-    const output = execSync('curl -s https://api.github.com/repos/jadetheda/icecubesapp/actions/runs?per_page=1', { encoding: 'utf8' });
-    const data = JSON.parse(output);
-    if (data && data.workflow_runs && data.workflow_runs.length > 0) {
-      const run = data.workflow_runs[0];
-      return { status: run.status, conclusion: run.conclusion, url: run.html_url };
+    if (fs.existsSync(CONFIG_PATH)) {
+      return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
     }
-    return null;
   } catch (e) {
-    return null;
+    console.error('Error reading .codemagic.json:', e);
   }
+  return {
+    appId: '',
+    workflowId: 'ios-unsigned-build',
+    token: ''
+  };
+}
+
+function saveCodemagicConfig(config) {
+  try {
+    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Error writing .codemagic.json:', e);
+    return false;
+  }
+}
+
+async function triggerCodemagicBuild() {
+  const config = getCodemagicConfig();
+  if (!config.appId || !config.token) {
+    return { success: false, error: 'App ID or API Token is not configured' };
+  }
+  
+  const git = getGitInfo();
+  const branch = git.branch || 'main';
+  
+  try {
+    const response = await fetch('https://api.codemagic.io/builds', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-auth-token': config.token
+      },
+      body: JSON.stringify({
+        appId: config.appId,
+        workflowId: config.workflowId,
+        branch: branch
+      })
+    });
+    
+    if (!response.ok) {
+      const errText = await response.text();
+      return { success: false, error: `Codemagic API error: ${response.status} - ${errText}` };
+    }
+    
+    const data = await response.json();
+    return { success: true, data };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function parseJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', err => reject(err));
+  });
 }
 
 const server = http.createServer((req, res) => {
@@ -181,26 +246,105 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 4. GET /
+  // 4. GET /api/codemagic/config
+  if (pathname === '/api/codemagic/config' && req.method === 'GET') {
+    const config = getCodemagicConfig();
+    const sanitizedConfig = {
+      appId: config.appId,
+      workflowId: config.workflowId,
+      hasToken: !!config.token
+    };
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(sanitizedConfig));
+    return;
+  }
+
+  // 5. POST /api/codemagic/config
+  if (pathname === '/api/codemagic/config' && req.method === 'POST') {
+    parseJsonBody(req).then(body => {
+      const config = getCodemagicConfig();
+      if (body.appId !== undefined) config.appId = body.appId;
+      if (body.workflowId !== undefined) config.workflowId = body.workflowId;
+      if (body.token !== undefined) {
+        if (body.token !== '********') {
+          config.token = body.token;
+        }
+      }
+      
+      if (saveCodemagicConfig(config)) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'success' }));
+      } else {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', message: 'Failed to write config' }));
+      }
+    }).catch(err => {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'error', message: err.message }));
+    });
+    return;
+  }
+
+  // 6. POST /api/codemagic/trigger
+  if (pathname === '/api/codemagic/trigger' && req.method === 'POST') {
+    triggerCodemagicBuild().then(result => {
+      res.writeHead(result.success ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    }).catch(err => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: err.message }));
+    });
+    return;
+  }
+
+  // 7. GET /
   if (pathname === '/' || pathname === '/index.html') {
     const git = getGitInfo();
-    const action = getGithubActionStatus();
+    const config = getCodemagicConfig();
 
-    let actionHtml = '';
-    if (action) {
-      const isCompleted = action.status === 'completed';
-      const isSuccess = action.conclusion === 'success';
-      const isFailure = action.conclusion === 'failure';
-      let statusColor = 'bg-zinc-500';
-      if (!isCompleted) statusColor = 'bg-blue-500 animate-pulse';
-      else if (isSuccess) statusColor = 'bg-emerald-500';
-      else if (isFailure) statusColor = 'bg-red-500';
-      
-      actionHtml = `
-        <a href="${action.url}" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
-          <span class="w-2 h-2 rounded-full ${statusColor}"></span>
-          <span class="text-zinc-300">CI: ${isCompleted ? action.conclusion : action.status}</span>
+    let badgeHtml = '';
+    let triggerButtonHtml = '';
+    let headerIndicatorHtml = '';
+
+    if (config.appId) {
+      const cacheBuster = Date.now();
+      badgeHtml = `
+        <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center">
+          <img src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic build status" class="h-5" />
         </a>
+      `;
+      
+      triggerButtonHtml = config.token ? `
+        <button onclick="triggerBuild()" id="triggerBtn" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition-all shadow-md shadow-emerald-900/20">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Trigger Build
+        </button>
+      ` : `
+        <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:scale-95 text-zinc-200 hover:text-white transition-all">
+          View Builds
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+      `;
+
+      headerIndicatorHtml = `
+        <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+          <img src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic" class="h-3.5" />
+        </a>
+      `;
+    } else {
+      badgeHtml = `
+        <span class="text-xs font-mono text-zinc-500 bg-zinc-950/40 px-2.5 py-1 rounded-lg border border-zinc-800/40">Not Configured</span>
+      `;
+      triggerButtonHtml = `
+        <button onclick="toggleConfigModal()" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all">
+          Configure
+        </button>
+      `;
+      headerIndicatorHtml = `
+        <button onclick="toggleConfigModal()" class="flex items-center gap-1.5 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 text-zinc-400 transition-colors">
+          <span class="w-2 h-2 rounded-full bg-zinc-600 animate-pulse"></span>
+          <span>CI Setup</span>
+        </button>
       `;
     }
 
@@ -242,7 +386,7 @@ const server = http.createServer((req, res) => {
         <span class="text-xs font-semibold text-zinc-400 tracking-wide uppercase">Repository State</span>
       </div>
       <div class="flex items-center gap-3">
-        ${actionHtml}
+        ${headerIndicatorHtml}
         <a href="https://github.com/jadetheda/icecubesapp" target="_blank" class="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-mono">
           GitHub <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
         </a>
@@ -289,6 +433,37 @@ const server = http.createServer((req, res) => {
         </div>
       </div>
 
+      <!-- Continuous Integration (Codemagic) -->
+      <div class="border-t border-zinc-800/80 pt-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider">Continuous Integration</div>
+          <button onclick="toggleConfigModal()" class="text-xs text-zinc-400 hover:text-white font-mono flex items-center gap-1 transition-colors">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Settings
+          </button>
+        </div>
+        
+        <div class="bg-zinc-950/40 rounded-xl border border-zinc-800/50 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-950/40 text-blue-400 rounded-lg border border-blue-900/40">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-zinc-300">Build Workflow: <span class="font-mono text-blue-400">${config.workflowId || 'ios-unsigned-build'}</span></div>
+              <div class="text-[11px] text-zinc-500 mt-0.5">Automated building & packaging on Codemagic</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <!-- Badge -->
+            ${badgeHtml}
+            
+            <!-- Action Button -->
+            ${triggerButtonHtml}
+          </div>
+        </div>
+      </div>
+
       <!-- Recent Commit Log -->
       <div class="pt-1">
         <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider mb-2.5">Recent Commits</div>
@@ -303,6 +478,126 @@ const server = http.createServer((req, res) => {
       Ice Cubes iOS Companion Server &bull; Port 3000
     </div>
   </div>
+
+  <!-- Config Modal -->
+  <div id="configModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+        <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Codemagic Settings
+        </h3>
+        <button onclick="toggleConfigModal()" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      
+      <form id="configForm" onsubmit="saveConfig(event)" class="space-y-4 text-xs">
+        <div class="space-y-1">
+          <label class="block font-semibold text-zinc-400">Application ID</label>
+          <input type="text" id="appIdInput" value="${config.appId || ''}" placeholder="e.g. 64b3ef... (from your Codemagic app URL)" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 focus:outline-none focus:border-blue-500 font-mono" required />
+          <span class="text-[10px] text-zinc-500 block">Find this in your browser URL on Codemagic: codemagic.io/app/&lt;app-id&gt;</span>
+        </div>
+        
+        <div class="space-y-1">
+          <label class="block font-semibold text-zinc-400">Workflow ID</label>
+          <input type="text" id="workflowIdInput" value="${config.workflowId || 'ios-unsigned-build'}" placeholder="e.g. ios-unsigned-build" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 focus:outline-none focus:border-blue-500 font-mono" required />
+          <span class="text-[10px] text-zinc-500 block">The workflow key defined in your codemagic.yaml</span>
+        </div>
+        
+        <div class="space-y-1">
+          <label class="block font-semibold text-zinc-400">Personal Access Token (Optional)</label>
+          <input type="password" id="tokenInput" value="${config.token ? '********' : ''}" placeholder="${config.token ? 'Keep existing secret token' : 'e.g. cm_pat_...'}" class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-100 focus:outline-none focus:border-blue-500 font-mono" />
+          <span class="text-[10px] text-zinc-500 block">Needed only to trigger builds. Get it in User Settings &gt; Integrations &gt; Codemagic API.</span>
+        </div>
+        
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button type="button" onclick="toggleConfigModal()" class="px-4 py-2 border border-zinc-800 hover:bg-zinc-800 rounded-lg font-medium text-zinc-300 transition-colors">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition-all">Save Config</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function toggleConfigModal() {
+      const modal = document.getElementById('configModal');
+      modal.classList.toggle('hidden');
+    }
+    
+    async function saveConfig(event) {
+      event.preventDefault();
+      const appId = document.getElementById('appIdInput').value.trim();
+      const workflowId = document.getElementById('workflowIdInput').value.trim();
+      const rawToken = document.getElementById('tokenInput').value.trim();
+      
+      const payload = { appId, workflowId };
+      if (rawToken !== '********') {
+        payload.token = rawToken;
+      }
+      
+      try {
+        const response = await fetch('/api/codemagic/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        
+        const resData = await response.json();
+        if (resData.status === 'success') {
+          location.reload();
+        } else {
+          alert('Error saving config: ' + resData.message);
+        }
+      } catch (err) {
+        alert('Network error saving config: ' + err.message);
+      }
+    }
+    
+    async function triggerBuild() {
+      const btn = document.getElementById('triggerBtn');
+      if (!btn) return;
+      
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = \`
+        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Triggering...
+      \`;
+      btn.className = btn.className.replace('bg-emerald-600', 'bg-zinc-700 cursor-not-allowed');
+      
+      try {
+        const response = await fetch('/api/codemagic/trigger', {
+          method: 'POST'
+        });
+        
+        const resData = await response.json();
+        if (resData.success) {
+          btn.innerHTML = \`
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            Triggered!
+          \`;
+          btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-800');
+          setTimeout(() => {
+            location.reload();
+          }, 2000);
+        } else {
+          btn.innerHTML = originalHtml;
+          btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-600').replace('cursor-not-allowed', '');
+          btn.disabled = false;
+          alert('Failed to trigger build: ' + resData.error);
+        }
+      } catch (err) {
+        btn.innerHTML = originalHtml;
+        btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-600').replace('cursor-not-allowed', '');
+        btn.disabled = false;
+        alert('Network error triggering build: ' + err.message);
+      }
+    }
+  </script>
 </body>
 </html>`;
 

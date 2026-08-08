@@ -110,5 +110,6 @@ png_backup.json
 png_backup.json.gz
 .env
 .env.example
+.codemagic.json
 
 server.js

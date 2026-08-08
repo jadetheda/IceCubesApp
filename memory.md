@@ -573,3 +573,7 @@
   - **[2026-08-08T04:30:00Z]**:
     - **Re-applied Dev Server Fix**: The sandboxing scaling-to-zero issue resurfaced, breaking the file system again. Re-initialized `package.json` and restarted the dev server.
     - **Settings Synchronization fix**: Found that when git index was corrupted during the scale-to-zero, the repository rolled back, mistakenly restoring the legacy `experimentalSection` and deleting the `debuggingSection` from `SettingsTab.swift`. The rollback also stripped out `ErrorService.swift`. I ran a script to remove the legacy section again, cleanly migrate the import/export buttons to the `generalSection`, and re-implemented `ErrorService` into `UserPreferences` and `AppView`.
+  - **[2026-08-08T04:55:00Z]**:
+    - **Replaced GitHub Actions with Codemagic on Web Companion**: Refactored `scripts/companion_server.js` to transition the CI build status badge and trigger features from GitHub Actions to Codemagic. Implemented standard Codemagic badge rendering, a settings modal to configure the App ID, Workflow ID, and API token, and a POST API route to trigger custom builds.
+    - **Healed package.json**: Created the workspace root `package.json` to define standard start/dev scripts for the companion server, resolving dev server restart errors.
+
