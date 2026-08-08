@@ -559,37 +559,31 @@ private struct FeaturedImagePreView: View {
   }
 
   var body: some View {
-    let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
-    let fallbackUrl: URL? = {
-      if userPreferences.remoteMediaFallbackOnFail {
-        let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
-        return candidateFallback == resolvedUrl ? nil : candidateFallback
-      } else {
-        return nil
-      }
-    }()
+    let isIceShrimp = CurrentInstance.shared.isIceShrimp
+    let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
+    let noVideo = userPreferences.neverLoadVideo
+    let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo)
+
     return Group {
-      if let url = resolvedUrl, let namespace = quickLook.namespace {
+      if let data = displayData, let namespace = quickLook.namespace {
         _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
           RoundedRectangle(cornerRadius: 10).fill(Color.gray)
             .overlay {
-              switch attachment.supportedType {
+              switch data.type {
               case .image:
-                LazyResizableImage(url: resolvedUrl, fallbackUrl: fallbackUrl) { state in
+                LazyResizableImage(url: data.previewUrl, fallbackUrl: data.fallbackUrl) { state in
                   if let image = state.image {
                     image
                       .resizable()
                       .onAppear { onLoaded() }
                       .scaledToFill()
-                  } else {
+                  } else if state.isLoading {
                     RoundedRectangle(cornerRadius: 10).fill(Color.gray)
                   }
                 }
-              case .gifv, .video, .audio:
-                MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl, onReady: { onLoaded() }))
-              default:
-                EmptyView()
+              case .av:
+                MediaUIAttachmentVideoView(viewModel: .init(url: data.url, fallbackUrl: data.fallbackUrl, onReady: { onLoaded() }))
               }
             }
             .clipShape(RoundedRectangle(cornerRadius: 10))
