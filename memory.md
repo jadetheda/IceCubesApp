@@ -600,6 +600,8 @@
     - **Corrected Codemagic Commit Message Extraction**: Corrected the JSON path lookup from `b.commit?.message` to the actual Codemagic payload field `b.commit?.commitMessage` (while keeping `b.commit?.message` as a safe fallback), enabling build lists on the developer dashboard to correctly pull and display Git commit messages.
   - **[2026-08-08T13:00:00Z]**:
     - **Fixed Exit Code 65 (Class Closure Mismatch in UserPreferences)**: Analyzed Codemagic error logs (`error: static functions may only be declared on a type` and `error: Initializers may only be declared within a type`) that were failing the iOS build. Traced the issue back to a rogue commit that had accidentally injected two stray closing braces (`}`) right before `inAppBrowserReaderView` on lines 415/416 of `Packages/Env/Sources/Env/UserPreferences.swift`, prematurely terminating the `UserPreferences` class and causing subsequent static function definitions to fail. Removed the stray braces, restoring compilation integrity.
+  - **[2026-08-08T13:10:00Z]**:
+    - **Fixed Exit Code 65 (MainActor Isolation in ErrorService)**: Analyzed Codemagic error logs and found two errors related to Swift 6 concurrency checking in `ErrorService.swift`. The compiler flagged `UserPreferences.shared` as a main actor-isolated default value in a nonisolated context inside the `handle` function. Furthermore, `public static let shared = ErrorService()` was flagged as not concurrency-safe. Resolved this by annotating the entire `@Observable class ErrorService` with `@MainActor` and removing the redundant `Task { @MainActor in }` inside the `handle` method.
 
 
 

@@ -289,3 +289,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (MainActor isolated property access in Sendable closure)
 - **Root Cause**: Accessing a MainActor isolated property (like `hasFalledBack` in an `@Observable` class) inside a Sendable closure (like `AVPlayerItem.observe`) without jumping to the MainActor causes a compiler error/warning.
 - **Solution**: Ensure that any state mutations or reads of `@MainActor` isolated properties inside background closures are wrapped in `Task { @MainActor [weak self] in ... }`.
+
+## 🐛 Exit Code 65 Logs (Main Actor Isolation Mismatch on Default Parameters)
+- **Root Cause**: Using a MainActor-isolated singleton (like `UserPreferences.shared.showErrorPopups`) as a default parameter for a function inside a non-isolated class (like `ErrorService`) will result in `main actor-isolated default value in a nonisolated context`.
+- **Solution**: Annotate the entire class with `@MainActor` if it manages UI state and relies on other MainActor-isolated dependencies for its default parameters.
