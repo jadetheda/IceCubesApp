@@ -334,7 +334,7 @@ struct SettingsTabs: View {
           Text("Export Error Logs")
         }
         Button("View Error Logs") {
-          let logs = ErrorService.shared.readLogs() ?? "No logs found."
+          let logs = ErrorService.shared.readLogs() ?? "No logs have been recorded yet."
           let displayLogs = logs.count > 1000 ? String(logs.suffix(1000)) : logs
           ErrorService.shared.handle(title: "Error Logs", message: displayLogs, showPopup: true, log: false)
         }
