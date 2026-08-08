@@ -336,7 +336,7 @@ struct SettingsTabs: View {
         }
         Button("Clear Error Logs") {
           ErrorService.shared.clearLogs()
-          toastCenter.show(toast: .init(title: "Logs Cleared", iconName: "trash"))
+          toastCenter.show(.init(title: "Logs Cleared", systemImage: "trash"))
         }
       }
     } header: {
