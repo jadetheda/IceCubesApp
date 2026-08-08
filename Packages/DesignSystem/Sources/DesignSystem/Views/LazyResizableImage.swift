@@ -5,6 +5,7 @@
 //  Created by Hugo Saynac on 28/10/2023.
 //
 
+import Env
 import Nuke
 import NukeUI
 import SwiftUI
@@ -32,10 +33,26 @@ public struct LazyResizableImage<Content: View>: View {
   public var body: some View {
     GeometryReader { proxy in
       LazyImage(url: currentURL ?? primaryURL) { state in
-        if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed, let fallback = fallbackURL {
-          DispatchQueue.main.async {
-            self.currentURL = fallback
-            self.hasFailed = true
+        if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed {
+          if let fallback = fallbackURL {
+            DispatchQueue.main.async {
+              self.currentURL = fallback
+              self.hasFailed = true
+            }
+          } else if let error = state.error {
+            DispatchQueue.main.async {
+              self.hasFailed = true
+              ErrorService.shared.handle(
+                title: "Image Load Error", 
+                message: "Failed to load \(currentURL?.absoluteString ?? primaryURL?.absoluteString ?? "unknown"). Error: \(error.localizedDescription)", 
+                showPopup: false, 
+                log: true
+              )
+            }
+          } else {
+            DispatchQueue.main.async {
+              self.hasFailed = true
+            }
           }
         }
         return Group {

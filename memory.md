@@ -587,3 +587,6 @@
 
 
 
+  - **[2026-08-08T15:45:00Z]**:
+    - **Fixed IceShrimp/Misskey Video Loading Infinitely (NeverLoadVideo Bug)**: Identified a major regression in `DisplayData.init` (inside `StatusRowMediaPreviewView.swift`) where videos and animated GIFs from remote instances like IceShrimp (which masquerade as `type: "image"` with extensionless URLs) would fail to load. The issue occurred because when the user enabled `neverLoadVideo`, the fallback `pUrl` (preview URL) was erroneously populated with the original high-res `.mp4` video URL instead of the PNG thumbnail. This forced the Nuke image pipeline to endlessly download 50MB video files (displaying a gray placeholder infinitely) before finally failing with an exclamation mark. The fix shifts the `pUrl` calculation to evaluate *after* the `resolvedType` is correctly evaluated as `.video`, ensuring it properly picks up `attachment.previewUrl` instead of the original video file.
+    - **Fixed ErrorService Missing Logs**: Fixed the `ErrorService` which was failing to catch Nuke Image loading errors and AVPlayer loading errors. Added `ErrorService.shared.handle` to the error catch blocks inside `LazyResizableImage.swift` and `MediaUIAttachmentVideoView.swift` to ensure future remote media failures are properly logged to the local file system.

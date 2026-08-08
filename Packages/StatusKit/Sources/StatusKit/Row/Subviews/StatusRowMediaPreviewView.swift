@@ -432,9 +432,6 @@ private struct DisplayData: Identifiable, Hashable {
     } else {
       fallbackUrl = nil
     }
-    let pUrl = (useRemoteMedia && type == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
-    previewUrl = pUrl
-    
     var resolvedType = type
     if resolvedType == .image {
       let allExts = [url.pathExtension, attachment.url?.pathExtension, attachment.remoteUrl?.pathExtension, attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
@@ -443,6 +440,9 @@ private struct DisplayData: Identifiable, Hashable {
         resolvedType = .video
       }
     }
+
+    let pUrl = (useRemoteMedia && resolvedType == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
+    previewUrl = pUrl
     
     if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && attachment.previewUrl != nil {
       self.type = .image

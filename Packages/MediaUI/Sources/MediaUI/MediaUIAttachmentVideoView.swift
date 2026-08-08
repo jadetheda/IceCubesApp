@@ -111,6 +111,13 @@ import SwiftUI
             if wasPlaying {
               self.player?.play()
             }
+          } else {
+            ErrorService.shared.handle(
+              title: "Video Load Error", 
+              message: "Failed to load video: \(item.error?.localizedDescription ?? "Unknown error"). URL: \(self.url.absoluteString)", 
+              showPopup: false, 
+              log: true
+            )
           }
         }
       } else if item.status == .readyToPlay {
