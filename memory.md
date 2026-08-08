@@ -592,6 +592,10 @@
   - **[2026-08-08T05:43:00Z]**:
     - **Rebuilt Missing package.json**: Regenerated the root `package.json` after deletion to prevent "bun install failed" and "SyntaxError: Unexpected EOF" dev server errors.
     - **Recompiled Applet and Restored Companion Server**: Re-compiled the workspace applet successfully, restarted the development server, and synchronized integrity states via `/api/integrity/update`.
+  - **[2026-08-08T05:47:00Z]**:
+    - **Fixed Browser JS Syntax Error in Companion Dashboard**: Resolved a critical syntax error in the browser-side script on the companion dashboard (`/`). The `split('\n')` statement inside the `html` server template was unescaping to a literal newline inside a single-quoted JS string, breaking all page scripts (preventing the "Trigger Build" button, modal controls, and logs from running). Resolved this by using four backslashes (`split('\\\\n')`) so that it compiles perfectly in the browser as `split('\n')`.
+    - **Prevented package.json Self-Destruction**: Removed `package.json` from `.gitignore` and verified its git tracking. This ensures AI Studio's git-backed container restoration system properly restores and persists `/package.json` when the container scales down or wakes from idle.
+
 
 
 

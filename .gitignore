@@ -99,7 +99,6 @@ png_backup.json
 node_modules/
 dist/
 src/
-package.json
 bun.lock
 tsconfig.json
 vite.config.ts

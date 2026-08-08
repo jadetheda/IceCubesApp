@@ -823,7 +823,7 @@ const server = http.createServer((req, res) => {
             timeLabel = \`Running for \${diffMin}m\`;
           }
           
-          const commitMsg = b.commit?.message ? b.commit.message.split('\n')[0] : 'No commit message';
+          const commitMsg = b.commit?.message ? b.commit.message.split('\\\\n')[0] : 'No commit message';
           const shortHash = b.commit?.hash ? b.commit.hash.substring(0, 7) : 'Unknown';
           const author = b.commit?.authorName || 'Unknown';
           
