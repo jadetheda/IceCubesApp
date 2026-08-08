@@ -11,7 +11,7 @@ public class ErrorService {
     public var currentErrorTitle: String = "Error"
     public var currentErrorMessage: String = ""
 
-    private var logFileURL: URL {
+    public var logFileURL: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("IceCubes_Errors.log")
     }

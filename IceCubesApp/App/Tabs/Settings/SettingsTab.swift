@@ -330,9 +330,13 @@ struct SettingsTabs: View {
       Toggle("Show Error Popups", isOn: $userPreferences.showErrorPopups)
       Toggle("Log Errors to File", isOn: $userPreferences.logErrors)
       if userPreferences.logErrors {
+        ShareLink(item: ErrorService.shared.logFileURL) {
+          Text("Export Error Logs")
+        }
         Button("View Error Logs") {
           let logs = ErrorService.shared.readLogs() ?? "No logs found."
-          ErrorService.shared.handle(title: "Error Logs", message: logs, showPopup: true, log: false)
+          let displayLogs = logs.count > 1000 ? String(logs.suffix(1000)) : logs
+          ErrorService.shared.handle(title: "Error Logs", message: displayLogs, showPopup: true, log: false)
         }
         Button("Clear Error Logs") {
           ErrorService.shared.clearLogs()

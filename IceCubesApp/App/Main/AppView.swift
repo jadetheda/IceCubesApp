@@ -28,6 +28,7 @@ struct AppView: View {
   @Binding var appRouterPath: RouterPath
 
   @State var iosTabs = iOSTabs.shared
+  @State private var errorService = ErrorService.shared
   @State var selectedTabScrollToTop: Int = -1
   @State var timeline: TimelineFilter = .home
 
@@ -132,11 +133,13 @@ struct AppView: View {
     )
     .environment(\.selectedTabScrollToTop, selectedTabScrollToTop)
 
-    .alert(ErrorService.shared.currentErrorTitle, isPresented: Bindable(ErrorService.shared).isErrorDisplayed) {
+    .alert(errorService.currentErrorTitle, isPresented: Bindable(errorService).isErrorDisplayed) {
       Button("alert.button.ok", action: {})
     } message: {
-      Text(ErrorService.shared.currentErrorMessage)
+      Text(errorService.currentErrorMessage)
     }
+    .onChange(of: errorService.isErrorDisplayed) { _, _ in }
+
     .onAppear {
       StatusBarTapTracker.shared.setup()
     }
