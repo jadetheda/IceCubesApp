@@ -595,6 +595,10 @@
   - **[2026-08-08T05:47:00Z]**:
     - **Fixed Browser JS Syntax Error in Companion Dashboard**: Resolved a critical syntax error in the browser-side script on the companion dashboard (`/`). The `split('\n')` statement inside the `html` server template was unescaping to a literal newline inside a single-quoted JS string, breaking all page scripts (preventing the "Trigger Build" button, modal controls, and logs from running). Resolved this by using four backslashes (`split('\\\\n')`) so that it compiles perfectly in the browser as `split('\n')`.
     - **Prevented package.json Self-Destruction**: Removed `package.json` from `.gitignore` and verified its git tracking. This ensures AI Studio's git-backed container restoration system properly restores and persists `/package.json` when the container scales down or wakes from idle.
+  - **[2026-08-08T05:54:00Z]**:
+    - **Added Relative Times to Past Builds**: Implemented a robust client-side `formatRelativeTime()` helper in the companion dashboard to automatically translate timestamps (e.g. `2026-08-08T12:44:10...`) into human-friendly relative strings like "(2 minutes ago)", "(yesterday)", etc., with exact hover tooltips.
+    - **Corrected Codemagic Commit Message Extraction**: Corrected the JSON path lookup from `b.commit?.message` to the actual Codemagic payload field `b.commit?.commitMessage` (while keeping `b.commit?.message` as a safe fallback), enabling build lists on the developer dashboard to correctly pull and display Git commit messages.
+
 
 
 

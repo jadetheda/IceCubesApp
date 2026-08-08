@@ -685,6 +685,37 @@ const server = http.createServer((req, res) => {
   </div>
 
   <script>
+    function formatRelativeTime(dateInput) {
+      if (!dateInput) return '';
+      const date = new Date(dateInput);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSecs = Math.floor(diffMs / 1000);
+      const diffMins = Math.floor(diffSecs / 60);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffSecs < 10) {
+        return 'just now';
+      } else if (diffSecs < 60) {
+        return diffSecs + ' seconds ago';
+      } else if (diffMins === 1) {
+        return '1 minute ago';
+      } else if (diffMins < 60) {
+        return diffMins + ' minutes ago';
+      } else if (diffHours === 1) {
+        return '1 hour ago';
+      } else if (diffHours < 24) {
+        return diffHours + ' hours ago';
+      } else if (diffDays === 1) {
+        return 'yesterday';
+      } else if (diffDays < 7) {
+        return diffDays + ' days ago';
+      } else {
+        return date.toLocaleDateString();
+      }
+    }
+
     function toggleConfigModal() {
       const modal = document.getElementById('configModal');
       modal.classList.toggle('hidden');
@@ -823,9 +854,11 @@ const server = http.createServer((req, res) => {
             timeLabel = \`Running for \${diffMin}m\`;
           }
           
-          const commitMsg = b.commit?.message ? b.commit.message.split('\\\\n')[0] : 'No commit message';
+          const rawMsg = b.commit?.commitMessage || b.commit?.message || 'No commit message';
+          const commitMsg = rawMsg.split('\\\\n')[0];
           const shortHash = b.commit?.hash ? b.commit.hash.substring(0, 7) : 'Unknown';
           const author = b.commit?.authorName || 'Unknown';
+          const relativeTime = formatRelativeTime(b.startedAt || b.createdAt);
           
           const actionBtnHtml = isFailed ? \`
             <button onclick="viewLogs('\${b._id}')" class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded bg-red-950/50 hover:bg-red-900/50 text-red-300 border border-red-900/30 active:scale-95 transition-all">
@@ -838,7 +871,7 @@ const server = http.createServer((req, res) => {
             <div class="bg-zinc-950/20 rounded-xl border border-zinc-800/40 p-3 flex items-center justify-between gap-4">
               <div class="min-w-0 flex-1 space-y-1">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-zinc-400 font-bold font-mono text-xs">#\${b.index}</span>
+                  <span class="text-zinc-400 font-bold font-mono text-xs font-semibold">#\${b.index}</span>
                   <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border \${statusBadgeClass}">
                     <span class="w-1 h-1 rounded-full \${statusDotClass}"></span>
                     \${statusLabel}
@@ -850,7 +883,7 @@ const server = http.createServer((req, res) => {
                   <span class="text-blue-400 font-medium">\${shortHash}</span> - \${commitMsg}
                 </div>
                 <div class="text-[10px] text-zinc-500">
-                  By \${author} &bull; \${new Date(b.startedAt || b.createdAt).toLocaleString()}
+                  <span title="\${new Date(b.startedAt || b.createdAt).toLocaleString()}">By \${author} &bull; \${relativeTime}</span>
                 </div>
               </div>
               <div class="shrink-0">
