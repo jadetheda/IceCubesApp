@@ -1,5 +1,6 @@
 ## 📝 Activity & Learning Logging Guideline
 - You MUST append every single modification, optimization, bug fix, and structural change you perform to `/memory.md` under the "## 🪵 Activity Log" section.
+- **CRITICAL RESTRICTION**: Do NOT write in `/memory.md` about changes that do not concern the IceCubesApp native codebase (e.g., do not log changes made to the Web UI, `scripts/companion_server.js`, or the local AI Studio environment/dashboard). `/memory.md` is strictly for tracking the Swift/iOS app's evolution.
 - Keep the log readable, chronological, and technically precise, containing:
   - Timestamp (UTC)
   - Change description (e.g., optimizations, UX tweaks, fixing connection/polling freezes)

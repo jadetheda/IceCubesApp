@@ -412,9 +412,6 @@ import SwiftUI
     }
   }
 
-    }
-  }
-
   public var inAppBrowserReaderView: Bool {
     didSet {
       storage.inAppBrowserReaderView = inAppBrowserReaderView

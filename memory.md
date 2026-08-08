@@ -598,6 +598,8 @@
   - **[2026-08-08T05:54:00Z]**:
     - **Added Relative Times to Past Builds**: Implemented a robust client-side `formatRelativeTime()` helper in the companion dashboard to automatically translate timestamps (e.g. `2026-08-08T12:44:10...`) into human-friendly relative strings like "(2 minutes ago)", "(yesterday)", etc., with exact hover tooltips.
     - **Corrected Codemagic Commit Message Extraction**: Corrected the JSON path lookup from `b.commit?.message` to the actual Codemagic payload field `b.commit?.commitMessage` (while keeping `b.commit?.message` as a safe fallback), enabling build lists on the developer dashboard to correctly pull and display Git commit messages.
+  - **[2026-08-08T13:00:00Z]**:
+    - **Fixed Exit Code 65 (Class Closure Mismatch in UserPreferences)**: Analyzed Codemagic error logs (`error: static functions may only be declared on a type` and `error: Initializers may only be declared within a type`) that were failing the iOS build. Traced the issue back to a rogue commit that had accidentally injected two stray closing braces (`}`) right before `inAppBrowserReaderView` on lines 415/416 of `Packages/Env/Sources/Env/UserPreferences.swift`, prematurely terminating the `UserPreferences` class and causing subsequent static function definitions to fail. Removed the stray braces, restoring compilation integrity.
 
 
 
