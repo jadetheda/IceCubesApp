@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Observation
 
+@MainActor
 @Observable
 public class ErrorService {
     public static let shared = ErrorService()
@@ -38,11 +39,9 @@ public class ErrorService {
         }
         
         if showPopup {
-            Task { @MainActor in
-                self.currentErrorTitle = title
-                self.currentErrorMessage = message
-                self.isErrorDisplayed = true
-            }
+            self.currentErrorTitle = title
+            self.currentErrorMessage = message
+            self.isErrorDisplayed = true
         }
     }
     
