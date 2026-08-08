@@ -685,6 +685,7 @@ const server = http.createServer((req, res) => {
       appId: '${config.appId || ""}',
       workflowId: '${config.workflowId || ""}'
     };
+    const CURRENT_COMMIT_HASH = '${git.hash}';
 
     let isFetchingBuilds = false;
     let isBuildActive = false;
@@ -847,6 +848,12 @@ const server = http.createServer((req, res) => {
         const banner = document.getElementById('activeBuildBanner');
         const triggerBtn = document.getElementById('triggerBtn');
         
+        // Check if there is an existing finished/failed/canceled build for the current HEAD commit
+        const existingBuildForCurrentCommit = builds.find(b => {
+          const bHash = b.commit?.hash;
+          return bHash && CURRENT_COMMIT_HASH && (bHash === CURRENT_COMMIT_HASH || bHash.startsWith(CURRENT_COMMIT_HASH) || CURRENT_COMMIT_HASH.startsWith(bHash));
+        });
+
         if (triggerBtn && !triggerBtn.dataset.triggering) {
           if (activeBuild) {
             triggerBtn.disabled = true;
@@ -858,6 +865,27 @@ const server = http.createServer((req, res) => {
               </svg>
               Build #\${activeBuild.index} Running
             \`;
+          } else if (existingBuildForCurrentCommit) {
+            const status = existingBuildForCurrentCommit.status;
+            triggerBtn.disabled = true;
+            triggerBtn.className = "flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-zinc-800/40 text-zinc-500 cursor-not-allowed border border-zinc-700/30 shadow-none transition-all";
+            
+            if (status === 'finished') {
+              triggerBtn.innerHTML = \`
+                <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Commit Built (Success)
+              \`;
+            } else if (status === 'failed') {
+              triggerBtn.innerHTML = \`
+                <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Commit Built (Failed)
+              \`;
+            } else {
+              triggerBtn.innerHTML = \`
+                <svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Commit Built (\${status})
+              \`;
+            }
           } else {
             triggerBtn.disabled = false;
             triggerBtn.className = "flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition-all shadow-md shadow-emerald-900/20";
