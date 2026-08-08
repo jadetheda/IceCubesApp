@@ -568,8 +568,9 @@ private struct FeaturedImagePreView: View {
         return nil
       }
     }()
-    if let url = resolvedUrl, let namespace = quickLook.namespace {
-      _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
+    return Group {
+      if let url = resolvedUrl, let namespace = quickLook.namespace {
+        _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
           RoundedRectangle(cornerRadius: 10).fill(Color.gray)
             .overlay {
@@ -612,6 +613,7 @@ private struct FeaturedImagePreView: View {
         )
       }
       .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
     }
   }
 

@@ -380,17 +380,24 @@ public struct GalleryMediaCell: View {
           case .image:
             LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
               if let image = state.image {
-                let _ = DispatchQueue.main.async {
-                    if !imageLoaded { imageLoaded = true }
-                }
                 if mediaStatus.attachment.aspectRatio == nil && !isSquare {
                   image
                     .resizable()
                     .scaledToFit()
+                    .onAppear {
+                      DispatchQueue.main.async {
+                        if !imageLoaded { imageLoaded = true }
+                      }
+                    }
                 } else {
                   image
                     .resizable()
                     .scaledToFill()
+                    .onAppear {
+                      DispatchQueue.main.async {
+                        if !imageLoaded { imageLoaded = true }
+                      }
+                    }
                 }
               } else {
                 ZStack {

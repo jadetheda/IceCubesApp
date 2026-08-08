@@ -584,4 +584,9 @@
   - **[2026-08-08T05:25:00Z]**:
     - **Fixed Dev Server Syntax Error & Closed Mismatched Backticks**: Resolved a critical dev server startup issue caused by unescaped backticks and unescaped client-side template literal variables inside the `/scripts/companion_server.js` file. Fully escaped all nested backticks (`\``) and client-side variables (`\${}`) inside the HTML template string (specifically inside `triggerBuild` and `loadBuildHistory`).
     - **Restored Companion Server and Integrity Sync**: Re-compiled the applet, successfully booted the dev server back online, and validated repository state using the `/api/integrity/update` endpoint.
+  - **[2026-08-08T05:35:00Z]**:
+    - **Fixed Exit Code 65 (ViewBuilder Void Return in StatusKit)**: Pulled and analyzed failed Codemagic logs via the new Companion API. Identified two critical compiler crashes in `GalleryStatusesListView.swift` and `StatusRowMediaPreviewView.swift` involving invalid `()` void returns inside `ViewBuilder` closures.
+    - **GalleryStatusesListView.swift**: Removed `let _ = DispatchQueue.main.async` evaluation inside the ViewBuilder and correctly hoisted the side-effect into `.onAppear` on the Image view.
+    - **StatusRowMediaPreviewView.swift**: Wrapped the trailing `if let` expression in a `Group { }` and added an explicit `return` so the `body` correctly evaluates to a View instead of a `Void` statement.
+    - **Action**: Pushed fixes to GitHub to verify CI passing state.
 
