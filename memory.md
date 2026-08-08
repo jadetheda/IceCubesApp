@@ -589,4 +589,9 @@
     - **GalleryStatusesListView.swift**: Removed `let _ = DispatchQueue.main.async` evaluation inside the ViewBuilder and correctly hoisted the side-effect into `.onAppear` on the Image view.
     - **StatusRowMediaPreviewView.swift**: Wrapped the trailing `if let` expression in a `Group { }` and added an explicit `return` so the `body` correctly evaluates to a View instead of a `Void` statement.
     - **Action**: Pushed fixes to GitHub to verify CI passing state.
+  - **[2026-08-08T05:43:00Z]**:
+    - **Rebuilt Missing package.json**: Regenerated the root `package.json` after deletion to prevent "bun install failed" and "SyntaxError: Unexpected EOF" dev server errors.
+    - **Recompiled Applet and Restored Companion Server**: Re-compiled the workspace applet successfully, restarted the development server, and synchronized integrity states via `/api/integrity/update`.
+
+
 
