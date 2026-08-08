@@ -581,4 +581,7 @@
     - **Added API Endpoints**: Created `/api/codemagic/builds` to list application-filtered builds, and `/api/codemagic/builds/:buildId/logs` to retrieve and merge raw log content from all failed actions/steps.
     - **Designed Clean Logs UI**: Added a gorgeous scrollable "View Logs" modal with step-by-step logs, responsive styling, interactive copy-to-clipboard actions, and HTML-cleansed styling.
     - **Ensured CM_API fallback**: Configured endpoints to gracefully fall back to the environment `CM_API` secret variable, streamlining local and remote deployments.
+  - **[2026-08-08T05:25:00Z]**:
+    - **Fixed Dev Server Syntax Error & Closed Mismatched Backticks**: Resolved a critical dev server startup issue caused by unescaped backticks and unescaped client-side template literal variables inside the `/scripts/companion_server.js` file. Fully escaped all nested backticks (`\``) and client-side variables (`\${}`) inside the HTML template string (specifically inside `triggerBuild` and `loadBuildHistory`).
+    - **Restored Companion Server and Integrity Sync**: Re-compiled the applet, successfully booted the dev server back online, and validated repository state using the `/api/integrity/update` endpoint.
 

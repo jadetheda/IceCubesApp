@@ -725,13 +725,13 @@ const server = http.createServer((req, res) => {
       
       const originalHtml = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = `
+      btn.innerHTML = \`
         <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         Triggering...
-      `;
+      \`;
       btn.className = btn.className.replace('bg-emerald-600', 'bg-zinc-700 cursor-not-allowed');
       
       try {
@@ -741,10 +741,10 @@ const server = http.createServer((req, res) => {
         
         const resData = await response.json();
         if (resData.success) {
-          btn.innerHTML = `
+          btn.innerHTML = \`
             <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
             Triggered!
-          `;
+          \`;
           btn.className = btn.className.replace('bg-zinc-700', 'bg-emerald-800');
           setTimeout(() => {
             location.reload();
@@ -774,7 +774,7 @@ const server = http.createServer((req, res) => {
         const response = await fetch('/api/codemagic/builds');
         if (!response.ok) {
           const errData = await response.json();
-          container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Failed to load build history: ${errData.error || response.statusText}</div>`;
+          container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Failed to load build history: \${errData.error || response.statusText}</div>\`;
           return;
         }
         
@@ -782,7 +782,7 @@ const server = http.createServer((req, res) => {
         const builds = data.builds || [];
         
         if (builds.length === 0) {
-          container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-4 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">No builds found for this application ID.</div>`;
+          container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-4 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">No builds found for this application ID.</div>\`;
           return;
         }
         
@@ -816,52 +816,52 @@ const server = http.createServer((req, res) => {
             const diffMs = finishedDate - startedDate;
             const diffMin = Math.floor(diffMs / 60000);
             const diffSec = Math.floor((diffMs % 60000) / 1000);
-            timeLabel = `${diffMin}m ${diffSec}s`;
+            timeLabel = \`\${diffMin}m \${diffSec}s\`;
           } else if (startedDate) {
             const diffMs = Date.now() - startedDate;
             const diffMin = Math.floor(diffMs / 60000);
-            timeLabel = `Running for ${diffMin}m`;
+            timeLabel = \`Running for \${diffMin}m\`;
           }
           
           const commitMsg = b.commit?.message ? b.commit.message.split('\n')[0] : 'No commit message';
           const shortHash = b.commit?.hash ? b.commit.hash.substring(0, 7) : 'Unknown';
           const author = b.commit?.authorName || 'Unknown';
           
-          const actionBtnHtml = isFailed ? `
-            <button onclick="viewLogs('${b._id}')" class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded bg-red-950/50 hover:bg-red-900/50 text-red-300 border border-red-900/30 active:scale-95 transition-all">
+          const actionBtnHtml = isFailed ? \`
+            <button onclick="viewLogs('\${b._id}')" class="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold font-mono rounded bg-red-950/50 hover:bg-red-900/50 text-red-300 border border-red-900/30 active:scale-95 transition-all">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
               View Logs
             </button>
-          ` : '';
+          \` : '';
           
-          return `
+          return \`
             <div class="bg-zinc-950/20 rounded-xl border border-zinc-800/40 p-3 flex items-center justify-between gap-4">
               <div class="min-w-0 flex-1 space-y-1">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="text-zinc-400 font-bold font-mono text-xs">#${b.index}</span>
-                  <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border ${statusBadgeClass}">
-                    <span class="w-1 h-1 rounded-full ${statusDotClass}"></span>
-                    ${statusLabel}
+                  <span class="text-zinc-400 font-bold font-mono text-xs">#\${b.index}</span>
+                  <span class="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full border \${statusBadgeClass}">
+                    <span class="w-1 h-1 rounded-full \${statusDotClass}"></span>
+                    \${statusLabel}
                   </span>
-                  <span class="text-[10px] text-zinc-500 font-mono">${b.branch || 'main'}</span>
-                  ${timeLabel ? `<span class="text-[10px] text-zinc-500 font-mono">(${timeLabel})</span>` : ''}
+                  <span class="text-[10px] text-zinc-500 font-mono">\${b.branch || 'main'}</span>
+                  \${timeLabel ? \`<span class="text-[10px] text-zinc-500 font-mono">(\${timeLabel})</span>\` : ''}
                 </div>
                 <div class="text-xs text-zinc-300 truncate font-mono">
-                  <span class="text-blue-400 font-medium">${shortHash}</span> - ${commitMsg}
+                  <span class="text-blue-400 font-medium">\${shortHash}</span> - \${commitMsg}
                 </div>
                 <div class="text-[10px] text-zinc-500">
-                  By ${author} &bull; ${new Date(b.startedAt || b.createdAt).toLocaleString()}
+                  By \${author} &bull; \${new Date(b.startedAt || b.createdAt).toLocaleString()}
                 </div>
               </div>
               <div class="shrink-0">
-                ${actionBtnHtml}
+                \${actionBtnHtml}
               </div>
             </div>
-          `;
+          \`;
         }).join('');
         
       } catch (err) {
-        container.innerHTML = `<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Network error loading builds: ${err.message}</div>`;
+        container.innerHTML = \`<div class="text-xs text-zinc-500 font-mono py-2 bg-zinc-950/30 rounded-xl border border-zinc-800/40 text-center">Network error loading builds: \${err.message}</div>\`;
       }
     }
     
@@ -873,7 +873,7 @@ const server = http.createServer((req, res) => {
       if (!modal || !title || !body) return;
       
       title.innerText = 'Fetching Build Logs...';
-      body.innerHTML = `
+      body.innerHTML = \`
         <div class="flex flex-col items-center justify-center py-12 space-y-3">
           <svg class="animate-spin h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -881,7 +881,7 @@ const server = http.createServer((req, res) => {
           </svg>
           <span class="text-xs font-mono text-zinc-400">Downloading raw log output from Codemagic API...</span>
         </div>
-      `;
+      \`;
       modal.classList.remove('hidden');
       
       try {
