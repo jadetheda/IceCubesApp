@@ -572,7 +572,7 @@
   - **[2026-08-08T04:30:00Z]**:
     - **Settings Synchronization fix**: Found that when git index was corrupted during the scale-to-zero, the repository rolled back, mistakenly restoring the legacy `experimentalSection` and deleting the `debuggingSection` from `SettingsTab.swift`. The rollback also stripped out `ErrorService.swift`. I ran a script to remove the legacy section again, cleanly migrate the import/export buttons to the `generalSection`, and re-implemented `ErrorService` into `UserPreferences` and `AppView`.
   - **[2026-08-08T05:35:00Z]**:
-    - **Fixed Exit Code 65 (ViewBuilder Void Return in StatusKit)**: Pulled and analyzed failed Codemagic logs via the new Companion API. Identified two critical compiler crashes in `GalleryStatusesListView.swift` and `StatusRowMediaPreviewView.swift` involving invalid `()` void returns inside `ViewBuilder` closures.
+    - **Fixed Exit Code 65 (ViewBuilder Void Return in StatusKit)**: Pulled and analyzed failed Codemagic logs. Identified two critical compiler crashes in `GalleryStatusesListView.swift` and `StatusRowMediaPreviewView.swift` involving invalid `()` void returns inside `ViewBuilder` closures.
     - **GalleryStatusesListView.swift**: Removed `let _ = DispatchQueue.main.async` evaluation inside the ViewBuilder and correctly hoisted the side-effect into `.onAppear` on the Image view.
     - **StatusRowMediaPreviewView.swift**: Wrapped the trailing `if let` expression in a `Group { }` and added an explicit `return` so the `body` correctly evaluates to a View instead of a `Void` statement.
     - **Action**: Pushed fixes to GitHub to verify CI passing state.
