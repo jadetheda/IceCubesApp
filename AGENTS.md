@@ -293,3 +293,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Main Actor Isolation Mismatch on Default Parameters)
 - **Root Cause**: Using a MainActor-isolated singleton (like `UserPreferences.shared.showErrorPopups`) as a default parameter for a function inside a non-isolated class (like `ErrorService`) will result in `main actor-isolated default value in a nonisolated context`.
 - **Solution**: Annotate the entire class with `@MainActor` if it manages UI state and relies on other MainActor-isolated dependencies for its default parameters.
+
+## 🐛 Exit Code 65 Logs (Ternary Operator Type Inference for LocalizedStringKey)
+- **Root Cause**: Using a ternary operator in a single-expression `switch` case (implicit return) where one branch is a `String` literal (e.g. `"liked"`) and the other is a `LocalizedStringKey` created via string interpolation (e.g. `"notifications.label.favorite \(count)"`) causes the compiler to fail type inference and crash (Exit Code 65).
+- **Solution**: Avoid using ternary operators when returning `LocalizedStringKey` with mixed string interpolation. Refactor the `switch` statement to use explicit `return` statements and standard `if/else` control flow to help the compiler resolve the types correctly.
