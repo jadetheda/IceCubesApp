@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# 🚀 IceCubesApp Re-clone & Refresh Script
+# 🚀 IceCubesApp Sync & Refresh Script
 # ==============================================================================
 # This script completely deletes the existing local Git metadata, re-initializes
 # the repository, fetches/pulls the absolute latest version from GitHub, cleans
@@ -9,7 +9,7 @@
 # heals any mangled binary assets, and updates the workspace integrity system.
 #
 # Usage:
-#   bash /reclone_repo.sh
+#   bash /sync_repo.sh
 # ==============================================================================
 
 set -euo pipefail
@@ -58,9 +58,9 @@ git checkout -f -B main FETCH_HEAD
 git reset --hard FETCH_HEAD
 
 # 7. Clean up untracked files
-# We preserve 'node_modules' to avoid expensive re-installation, and 'reclone_repo.sh' itself.
+# We preserve 'node_modules' to avoid expensive re-installation, and 'sync_repo.sh' itself.
 echo "👉 Cleaning up untracked or modified local files..."
-git clean -fdx -e node_modules -e reclone_repo.sh
+git clean -fdx -e node_modules -e sync_repo.sh
 
 # 8. Ensure package.json is correctly configured for the companion server
 # This prevents dev server startup failures if package.json got lost or modified upstream.
