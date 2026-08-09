@@ -297,3 +297,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Ternary Operator Type Inference for LocalizedStringKey)
 - **Root Cause**: Using a ternary operator in a single-expression `switch` case (implicit return) where one branch is a `String` literal (e.g. `"liked"`) and the other is a `LocalizedStringKey` created via string interpolation (e.g. `"notifications.label.favorite \(count)"`) causes the compiler to fail type inference and crash (Exit Code 65).
 - **Solution**: Avoid using ternary operators when returning `LocalizedStringKey` with mixed string interpolation. Refactor the `switch` statement to use explicit `return` statements and standard `if/else` control flow to help the compiler resolve the types correctly.
+
+## 🐛 Exit Code 65 Logs (Missing Module Import for Environment Type)
+- **Root Cause**: Injecting an object using `@Environment(Type.self)` without importing the module where `Type` is defined will cause the Swift compiler to crash with a `Cannot find type in scope` error (Exit Code 65).
+- **Solution**: Always ensure that when you reference a type from another package (e.g. `Theme` from `DesignSystem`), the corresponding `import` statement (e.g. `import DesignSystem`) is present at the top of the file, even if it's only used as an Environment property.
