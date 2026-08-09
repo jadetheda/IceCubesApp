@@ -6,25 +6,29 @@ extension Models.Notification.NotificationType {
   public nonisolated func label(count: Int, isLike: Bool = false) -> LocalizedStringKey {
     switch self {
     case .status:
-      "notifications.label.status"
+      return "notifications.label.status"
     case .mention:
-      ""
+      return ""
     case .reblog:
-      "notifications.label.reblog \(count)"
+      return "notifications.label.reblog \(count)"
     case .follow:
-      "notifications.label.follow \(count)"
+      return "notifications.label.follow \(count)"
     case .follow_request:
-      "notifications.label.follow-request"
+      return "notifications.label.follow-request"
     case .favourite:
-      isLike ? "liked" : "notifications.label.favorite \(count)"
+      if isLike {
+        return "liked"
+      } else {
+        return "notifications.label.favorite \(count)"
+      }
     case .poll:
-      "notifications.label.poll"
+      return "notifications.label.poll"
     case .update:
-      "notifications.label.update"
+      return "notifications.label.update"
     case .quote:
-      "quoted your post"
+      return "quoted your post"
     case .quoted_update:
-      "updated a quoted status"
+      return "updated a quoted status"
     }
   }
 
