@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>UIFileSharingEnabled</key>
-	<false/>
+	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<false/>
+	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

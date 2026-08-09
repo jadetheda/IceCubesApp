@@ -40,7 +40,7 @@ struct ThemeApplier: ViewModifier {
               $0.light.name == theme.selectedSet || $0.dark.name == theme.selectedSet
             })
           {
-            theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name)
+            theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name, setBySystem: true)
           }
           setWindowTint(theme.tintColor)
           setWindowUserInterfaceStyle(from: theme.selectedScheme)
@@ -63,14 +63,14 @@ struct ThemeApplier: ViewModifier {
               $0.light.name == theme.selectedSet || $0.dark.name == theme.selectedSet
             })
           {
-            theme.applySet(set: newColorScheme == .dark ? sets.dark.name : sets.light.name)
+            theme.applySet(set: newColorScheme == .dark ? sets.dark.name : sets.light.name, setBySystem: true)
           }
         }
         .onChange(of: theme.followSystemColorScheme) { _, follow in
           if follow,
              let sets = availableColorsSets.first(where: { $0.light.name == theme.selectedSet || $0.dark.name == theme.selectedSet })
           {
-             theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name)
+             theme.applySet(set: colorScheme == .dark ? sets.dark.name : sets.light.name, setBySystem: true)
              setWindowUserInterfaceStyle(from: theme.selectedScheme)
           } else {
              setWindowUserInterfaceStyle(from: theme.selectedScheme)

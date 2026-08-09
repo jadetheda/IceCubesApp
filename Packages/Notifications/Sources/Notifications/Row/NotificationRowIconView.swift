@@ -2,6 +2,7 @@ import Models
 import SwiftUI
 
 struct NotificationRowIconView: View {
+  @Environment(Theme.self) private var theme
   let type: Models.Notification.NotificationType
   let status: Status?
   let showBorder: Bool
@@ -16,7 +17,7 @@ struct NotificationRowIconView: View {
         )
         .frame(width: showBorder ? 28 : 20, height: showBorder ? 28 : 20)
 
-      type.icon(isPrivate: status?.visibility == .direct)
+      type.icon(isPrivate: status?.visibility == .direct, isLike: theme.actionIsLike)
         .resizable()
         .scaledToFit()
         .frame(width: 16, height: 16)

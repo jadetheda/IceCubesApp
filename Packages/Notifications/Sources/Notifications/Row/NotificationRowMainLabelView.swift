@@ -8,7 +8,7 @@ import SwiftUI
 @MainActor
 struct NotificationRowMainLabelView: View {
   @Environment(\.redactionReasons) private var reasons
-
+  @Environment(Theme.self) private var theme
   let notification: ConsolidatedNotification
   let routerPath: RouterPath
 
@@ -31,11 +31,12 @@ struct NotificationRowMainLabelView: View {
         .offset(y: -1)
       }
       if !reasons.contains(.placeholder) {
+        let isLike = theme.actionIsLike
         HStack(spacing: 0) {
           EmojiTextApp(
             .init(stringValue: notification.accounts[0].safeDisplayName),
             emojis: notification.accounts[0].emojis,
-            append: { NotificationRowAppendTextView(notification: notification) }
+            append: { NotificationRowAppendTextView(notification: notification, isLike: isLike) }
           )
           .font(.scaledSubheadline)
           .emojiText.size(Font.scaledSubheadlineFont.emojiSize)

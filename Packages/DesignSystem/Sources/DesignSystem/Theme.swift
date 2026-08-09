@@ -419,9 +419,9 @@ public final class Theme {
     ]
   }
 
-  public func applySet(set: ColorSetName) {
+  public func applySet(set: ColorSetName, setBySystem: Bool = false) {
     selectedSet = set
-    setColor(withName: set)
+    setColor(withName: set, setBySystem: setBySystem)
   }
 
   public func registerCustomFonts() {
@@ -540,7 +540,7 @@ public final class Theme {
     } catch {}
   }
 
-  public func setColor(withName name: ColorSetName) {
+  public func setColor(withName name: ColorSetName, setBySystem: Bool = false) {
     let colorSet = Theme.allColorSet.filter { $0.name == name }.first ?? IceCubeDark()
     selectedScheme = colorSet.scheme
     tintColor = colorSet.tintColor
@@ -551,7 +551,9 @@ public final class Theme {
     actionLikeColor = colorSet.likeColor
     actionBoostColor = colorSet.boostColor
     actionBookmarkColor = colorSet.bookmarkColor
-    actionIsLike = colorSet.isLikeAction
+    if !setBySystem {
+      actionIsLike = colorSet.isLikeAction
+    }
     storedSet = name
   }
 }

@@ -1,7 +1,7 @@
 import Models
 import SwiftUI
 
-nonisolated func NotificationRowAppendTextView(notification: ConsolidatedNotification) -> Text {
+nonisolated func NotificationRowAppendTextView(notification: ConsolidatedNotification, isLike: Bool = false) -> Text {
   if notification.accounts.count > 1 {
     let othersCount: Int
     // For favorites and reblogs, use the actual count from the status
@@ -30,7 +30,7 @@ nonisolated func NotificationRowAppendTextView(notification: ConsolidatedNotific
       .foregroundStyle(.secondary)
   } else {
     return Text(" ")
-      + Text(notification.type.label(count: 1))
+      + Text(notification.type.label(count: 1, isLike: isLike))
       .font(.subheadline)
       .fontWeight(.regular)
       + Text(" ⸱ ")

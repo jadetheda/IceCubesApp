@@ -3,7 +3,7 @@ import Models
 import SwiftUI
 
 extension Models.Notification.NotificationType {
-  public nonisolated func label(count: Int) -> LocalizedStringKey {
+  public nonisolated func label(count: Int, isLike: Bool = false) -> LocalizedStringKey {
     switch self {
     case .status:
       "notifications.label.status"
@@ -16,7 +16,7 @@ extension Models.Notification.NotificationType {
     case .follow_request:
       "notifications.label.follow-request"
     case .favourite:
-      "notifications.label.favorite \(count)"
+      isLike ? "liked" : "notifications.label.favorite \(count)"
     case .poll:
       "notifications.label.poll"
     case .update:
@@ -53,7 +53,7 @@ extension Models.Notification.NotificationType {
     }
   }
 
-  func icon(isPrivate: Bool) -> Image {
+  func icon(isPrivate: Bool, isLike: Bool = false) -> Image {
     if isPrivate {
       return Image(systemName: "tray.fill")
     }
@@ -67,7 +67,7 @@ extension Models.Notification.NotificationType {
     case .follow, .follow_request:
       return Image(systemName: "person.fill.badge.plus")
     case .favourite:
-      return Image(systemName: "star.fill")
+      return isLike ? Image(systemName: "heart.fill") : Image(systemName: "star.fill")
     case .poll:
       return Image(systemName: "chart.bar.fill")
     case .update:
@@ -88,11 +88,11 @@ extension Models.Notification.NotificationType {
     case .status, .mention, .update, .poll:
       return Theme.shared.tintColor.opacity(0.80)
     case .reblog, .quote, .quoted_update:
-      return Color.teal.opacity(0.80)
+      return Theme.shared.actionBoostColor.opacity(0.80)
     case .follow, .follow_request:
       return Color.cyan.opacity(0.80)
     case .favourite:
-      return Color.yellow.opacity(0.80)
+      return Theme.shared.actionIsLike ? Theme.shared.actionLikeColor.opacity(0.80) : Theme.shared.actionFavoriteColor.opacity(0.80)
     }
   }
 

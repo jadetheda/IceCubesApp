@@ -26,17 +26,12 @@ import SwiftUI
   func preparePlayer(autoPlay: Bool, isCompact: Bool) {
     let asset: AVURLAsset
     if url.pathExtension.isEmpty || url.pathExtension.lowercased() == "gif" {
-      asset = AVURLAsset(url: url, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4", "AVURLAssetOverrideMIMETypeKey": "video/mp4"])
+      asset = AVURLAsset(url: url, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
     } else {
       asset = AVURLAsset(url: url)
     }
-    observer?.invalidate()
     let item = AVPlayerItem(asset: asset)
-    if player == nil {
-      player = .init(playerItem: item)
-    } else {
-      player?.replaceCurrentItem(with: item)
-    }
+    player = .init(playerItem: item)
     player?.audiovisualBackgroundPlaybackPolicy = .pauses
     #if !os(visionOS)
       player?.preventsDisplaySleepDuringVideoPlayback = false
@@ -76,6 +71,7 @@ import SwiftUI
   func stop() {
     isPlaying = false
     player?.pause()
+    player = nil
   }
 
   func play() {
@@ -105,7 +101,7 @@ import SwiftUI
             let wasPlaying = self.isPlaying
             let fallbackAsset: AVURLAsset
             if fallbackUrl.pathExtension.isEmpty || fallbackUrl.pathExtension.lowercased() == "gif" {
-              fallbackAsset = AVURLAsset(url: fallbackUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4", "AVURLAssetOverrideMIMETypeKey": "video/mp4"])
+              fallbackAsset = AVURLAsset(url: fallbackUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
             } else {
               fallbackAsset = AVURLAsset(url: fallbackUrl)
             }
