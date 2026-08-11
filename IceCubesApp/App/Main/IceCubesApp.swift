@@ -11,8 +11,6 @@ import StatusKit
 import SwiftUI
 import Timeline
 import WishKit
-import Nuke
-import NukeUI
 
 @main
 struct IceCubesApp: App {
