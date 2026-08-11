@@ -104,6 +104,49 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     guard let ratio = aspectRatio else { return nil }
     return min(max(ratio, 0.5), 2.0)
   }
+
+  public struct DisplayInfo: Sendable, Equatable {
+    public let url: URL
+    public let type: SupportedType
+    public let fallbackUrl: URL?
+    public let previewUrl: URL?
+  }
+
+  public func displayInfo(
+    useRemoteMedia: Bool = false,
+    fallbackOnFail: Bool = false,
+    neverLoadVideo: Bool = false
+  ) -> DisplayInfo? {
+    let resolvedUrl = useRemoteMedia ? (remoteUrl ?? url) : url
+    guard let url = resolvedUrl else { return nil }
+    guard let baseType = supportedType else { return nil }
+
+    let fallbackUrl: URL?
+    if fallbackOnFail {
+      let candidateFallback = useRemoteMedia ? self.url : remoteUrl
+      fallbackUrl = candidateFallback == url ? nil : candidateFallback
+    } else {
+      fallbackUrl = nil
+    }
+
+    var resolvedType = baseType
+    if resolvedType == .image {
+      let allExts = [url.pathExtension, self.url?.pathExtension, remoteUrl?.pathExtension, previewUrl?.pathExtension].compactMap { $0?.lowercased() }
+      let videoExts = ["mp4", "m4v", "mov", "webm"]
+      if allExts.contains(where: { videoExts.contains($0) }) || meta?.original?.duration != nil || meta?.original?.frameRate != nil {
+        resolvedType = .video
+      }
+    }
+
+    let pUrl = (useRemoteMedia && resolvedType == .image ? (remoteUrl ?? previewUrl) : previewUrl) ?? url
+
+    if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && previewUrl != nil {
+      return DisplayInfo(url: pUrl, type: .image, fallbackUrl: fallbackUrl, previewUrl: pUrl)
+    }
+
+    return DisplayInfo(url: url, type: resolvedType, fallbackUrl: fallbackUrl, previewUrl: pUrl)
+  }
+
 }
 
 extension MediaAttachment: Sendable {}

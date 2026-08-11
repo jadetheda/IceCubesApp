@@ -607,3 +607,4 @@
   - Reverted `git checkout upstream/main` changes via `git reset --hard HEAD~1` to bring back IceShrimp overrides.
   - Manually removed the `StatusBarTapTracker.swift` and all of the `.onReceive(NotificationCenter.default.publisher(for: .statusBarTapped))` lines since those were confirmed to be unwanted.
 - **Result**: IceShrimp and media fallbacks are back. StatusBar tap hack removed successfully.
+- 2026-08-11: Refactored custom IceShrimp and remote media logic to seamlessly blend with upstream architecture. Reverted the overarching `Env/MediaDisplayData.swift` and instead embedded a `.displayInfo()` resolver natively into `Models/MediaAttachment.swift`. Then simplified the duplicate blocks in `StatusRowMediaPreviewView`, `GalleryStatusesListView`, and `MediaUIView` to use this new native model extension.

@@ -421,37 +421,13 @@ private struct DisplayData: Identifiable, Hashable {
   let aspectRatio: CGFloat?
 
   init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
-    let resolvedUrl = (useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url)
-    guard let url = resolvedUrl else { return nil }
-    guard let type = attachment.supportedType else { return nil }
-    
-    id = attachment.id
-    if fallbackOnFail {
-      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
-      fallbackUrl = candidateFallback == url ? nil : candidateFallback
-    } else {
-      fallbackUrl = nil
-    }
-    var resolvedType = type
-    if resolvedType == .image {
-      let allExts = [url.pathExtension, attachment.url?.pathExtension, attachment.remoteUrl?.pathExtension, attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-      let videoExts = ["mp4", "m4v", "mov", "webm"]
-      if allExts.contains(where: { videoExts.contains($0) }) || attachment.meta?.original?.duration != nil || attachment.meta?.original?.frameRate != nil {
-        resolvedType = .video
-      }
-    }
+    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallbackOnFail, neverLoadVideo: neverLoadVideo) else { return nil }
 
-    let pUrl = (useRemoteMedia && resolvedType == .image ? (attachment.remoteUrl ?? attachment.previewUrl) : attachment.previewUrl) ?? url
-    previewUrl = pUrl
-    
-    if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && attachment.previewUrl != nil {
-      self.type = .image
-      self.url = pUrl
-    } else {
-      self.type = DisplayType(from: resolvedType)
-      self.url = url
-    }
-    
+    id = attachment.id
+    url = info.url
+    fallbackUrl = info.fallbackUrl
+    previewUrl = info.previewUrl
+    type = DisplayType(from: info.type)
     description = attachment.description
     accessibilityText = Self.getAccessibilityString(from: attachment)
     isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
