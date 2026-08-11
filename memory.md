@@ -600,3 +600,10 @@
 
 ## 🪵 Activity Log
 - **2026-08-11** (UTC): Completed code review of all 109 modified Swift and project files. Verified adherence to `CLAUDE.md` strictures (no nested Observables, no legacy ViewModels, proper use of native SwiftUI states). Confirmed that features like Gallery Mode, Custom Fonts, IceShrimp backward compatibility, and ErrorService have been correctly implemented without introducing architecture regressions. Marked all files as reviewed in `CODE_REVIEW_CHECKLIST.md`.
+
+### 2026-08-11 - Restored IceShrimp & Media Fallbacks
+- **Goal**: Revert the previous cleanup and strictly restore all the IceShrimp.NET compatibility features and remote media fallback options.
+- **Actions**:
+  - Reverted `git checkout upstream/main` changes via `git reset --hard HEAD~1` to bring back IceShrimp overrides.
+  - Manually removed the `StatusBarTapTracker.swift` and all of the `.onReceive(NotificationCenter.default.publisher(for: .statusBarTapped))` lines since those were confirmed to be unwanted.
+- **Result**: IceShrimp and media fallbacks are back. StatusBar tap hack removed successfully.
