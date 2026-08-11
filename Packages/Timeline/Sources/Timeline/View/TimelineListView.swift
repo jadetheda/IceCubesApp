@@ -137,13 +137,6 @@ struct TimelineListView: View {
           }
         }
       }
-      .onReceive(NotificationCenter.default.publisher(for: .statusBarTapped)) { _ in
-        if let previous = viewModel.handleScrollToTopTrigger() {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            scrollToIdAnimated = previous
-          }
-        }
-      }
     }
   }
 }

@@ -141,7 +141,6 @@ struct AppView: View {
     .onChange(of: errorService.isErrorDisplayed) { _, _ in }
 
     .onAppear {
-      StatusBarTapTracker.shared.setup()
     }
   }
 
