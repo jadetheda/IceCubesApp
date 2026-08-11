@@ -1,0 +1,109 @@
+- [x] IceCubesApp.xcodeproj/project.pbxproj - Marketing version bumped to 2.1.4.5
+- [x] IceCubesApp/App/Main/AppView.swift - Added ErrorService alert and StatusBarTapTracker
+- [x] IceCubesApp/App/Main/IceCubesApp+Scene.swift - Modified MediaUIView presentation from sheet to fullScreenCover
+- [x] IceCubesApp/App/Main/IceCubesApp.swift - Added Nuke/NukeUI imports and ErrorService
+- [x] IceCubesApp/App/Router/AppRegistry.swift - Added remoteLocalTimeline routing and IceShrimp update call
+- [x] IceCubesApp/App/Tabs/ExploreTab.swift - Added Local Timelines menu with SwiftData query
+- [x] IceCubesApp/App/Tabs/Settings/AboutView.swift - Updated attributions list and copyright year
+- [x] IceCubesApp/App/Tabs/Settings/AccountSettingView.swift - Added emoji caching stats and EmojiTextApp for name
+- [x] IceCubesApp/App/Tabs/Settings/ContentSettingsView.swift - Added IceShrimp workarounds, media fallback settings, and gallery mode toggles
+- [x] IceCubesApp/App/Tabs/Settings/DisplaySettingsView.swift - Added custom color settings for actions and gallery customizations
+- [x] IceCubesApp/App/Tabs/Settings/HideSeenPostsSettingsView.swift - Added experimental settings view for hiding seen posts
+- [x] IceCubesApp/App/Tabs/Settings/InstanceInfoView.swift - Modified to display info
+- [x] IceCubesApp/App/Tabs/Settings/SettingsTab.swift - Added support for exporting settings to JSON
+- [x] IceCubesApp/App/Tabs/TagGroup/EditTagGroupView.swift - Stripping hashtag prefixes automatically on creation
+- [x] IceCubesApp/App/Tabs/Timeline/TimelineTab.swift - Added timeline menu options for gallery mode, read posts, and pinned posts
+- [x] IceCubesApp/Info.plist
+- [x] IceCubesApp/Resources/Localization/Localizable.xcstrings
+- [x] IceCubesAppWidgetsExtension/Shared/SharedUtils.swift
+- [x] IceCubesNotifications/NotificationService.swift
+- [x] Packages/Account/Package.swift
+- [x] Packages/Account/Sources/Account/Detail/AccountDetailContextMenu.swift
+- [x] Packages/Account/Sources/Account/Detail/AccountDetailView.swift
+- [x] Packages/Account/Sources/Account/Detail/Components/AccountDetailToolbar.swift
+- [x] Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/Base/AccountTabFetcher.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/Base/AnyStatusesListView.swift - Added gallery mode integration
+- [x] Packages/Account/Sources/Account/Detail/Tabs/BookmarksTab.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/BoostsTab.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/FavoritesTab.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/MediaTab.swift - Replaced onTapGesture with Button for accessibility
+- [x] Packages/Account/Sources/Account/Detail/Tabs/RepliesTab.swift
+- [x] Packages/Account/Sources/Account/Detail/Tabs/StatusesTab.swift
+- [x] Packages/Account/Sources/Account/Filters/EditFilterView.swift
+- [x] Packages/Account/Sources/Account/Follow/FollowButton.swift
+- [x] Packages/Account/Sources/Account/StatusesLists/AccountStatusesListView.swift
+- [x] Packages/AppAccount/Sources/AppAccount/AppAccountsManager.swift
+- [x] Packages/Conversations/Sources/Conversations/List/ConversationsListView.swift
+- [x] Packages/DesignSystem/Sources/DesignSystem/ColorSet.swift
+- [x] Packages/DesignSystem/Sources/DesignSystem/FontPicker.swift
+- [x] Packages/DesignSystem/Sources/DesignSystem/Theme.swift
+- [x] Packages/DesignSystem/Sources/DesignSystem/ThemeApplier.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/DesignSystem/Sources/DesignSystem/Views/EmojiText.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/DesignSystem/Sources/DesignSystem/Views/LazyResizableImage.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/DesignSystem/Sources/DesignSystem/Views/ThemePreviewView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/CurrentInstance.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/CustomEmojiCache.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/CustomEnvValues.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/ErrorService.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/NotificationsName.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/Router.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/SeenPostsManager.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/StatusAction.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/StatusBarTapTracker.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/StatusDataController.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Env/Sources/Env/UserPreferences.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Explore/Sources/Explore/ExploreView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Explore/Sources/Explore/SearchResultsView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Explore/Sources/Explore/Sections/TrendingPostsSection.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Lists/Sources/Lists/AddAccounts/ListAddAccountViewModel.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentImageView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/MediaUI/Sources/MediaUI/MediaUIView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/MediaUI/Sources/MediaUI/MediaUIZoomableContainer.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/AppAccount.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/Emoji.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/Filter.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/Instance.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/MediaAttachement.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Models/Sources/Models/Status.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/NetworkClient/Sources/NetworkClient/Endpoint/Statuses.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/NetworkClient/Sources/NetworkClient/MastodonClient.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/List/NotificationsContentFilterView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/List/NotificationsListDataSource.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/List/NotificationsListView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/Models/Notification+Consolidated.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/Models/NotificationTypeExt.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/NotificationsContentFilter.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/Row/NotificationRowAppendTextView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/Row/NotificationRowIconView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Notifications/Sources/Notifications/Row/NotificationRowMainLabelView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Editor/Components/CustomEmojisView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Editor/Services/CustomEmojiService.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/List/GalleryStatusesListView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusActionButton.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowActionsView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContentView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContextMenu.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowMediaPreviewView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowSwipeView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Package.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/TimelineContentFilter.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/TimelineFilter.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/TimelineUnreadStatusesObserver.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineContentFilterView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineLanguageFilterView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineListView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineQuickAccessPills.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineTagHeaderView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineToolbarTagGroupButton.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineToolbarTitleView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineView.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/View/TimelineViewModel.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/actors/TimelineDatasource.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] Packages/Timeline/Sources/Timeline/actors/TimelineStatusFetcher.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] test_lazyimage.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] test_nuke.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
+- [x] test_size.swift - Reviewed: Structurally sound, compliant with CLAUDE.md (no new ViewModels or nested Observables found).
