@@ -24,6 +24,7 @@ public struct LazyResizableImage<Content: View>: View {
   let fallbackURL: URL?
   @State private var currentURL: URL?
   @State private var hasFailed = false
+  @State private var hasTriedFallback = false
   @State private var resizeProcessor: ImageProcessors.Resize?
   @State private var debouncedTask: Task<Void, Never>?
 
@@ -34,10 +35,10 @@ public struct LazyResizableImage<Content: View>: View {
     GeometryReader { proxy in
       LazyImage(url: currentURL ?? primaryURL) { state in
         if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed {
-          if let fallback = fallbackURL {
+          if let fallback = fallbackURL, !hasTriedFallback {
             DispatchQueue.main.async {
               self.currentURL = fallback
-              self.hasFailed = true
+              self.hasTriedFallback = true
             }
           } else if let error = state.error {
             DispatchQueue.main.async {
