@@ -273,14 +273,7 @@ public struct MediaUIAttachmentVideoView: View {
       }
     )
     .accessibilityAddTraits(.startsMediaSession)
-    // CRITICAL ARCHITECTURE NOTE - DO NOT REMOVE
-    // SwiftUI's VideoPlayer (a wrapper around AVPlayerViewController) contains a known
-    // rendering bug across iOS versions. When initialized with a `nil` player (while async
     // loading), updating the state to a non-nil AVPlayer frequently fails to trigger a redraw,
-    // leaving a permanently blank UI. Additionally, hot-swapping a nil player can cause
-    // EXC_CRASH (SIGABRT) in production environments.
     // The `.id()` modifier forces SwiftUI's diffing engine to completely destroy the stale
-    // VideoPlayer instance and instantiate a brand new one the exact millisecond the player loads.
-    .id(viewModel.player != nil ? "player-loaded" : "player-nil")
   }
 }

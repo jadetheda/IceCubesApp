@@ -132,7 +132,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     var resolvedType = baseType
     if resolvedType == .image {
       let allExts = [url.pathExtension, self.url?.pathExtension, remoteUrl?.pathExtension, previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-      let videoExts = ["mp4", "m4v", "mov", "webm", "gif"]
+      let videoExts = ["mp4", "m4v", "mov", "webm"]
       if allExts.contains(where: { videoExts.contains($0) }) || meta?.original?.duration != nil || meta?.original?.frameRate != nil {
         resolvedType = .video
       }
