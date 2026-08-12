@@ -99,7 +99,6 @@ import SwiftUI
     @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
     @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
     @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
-    @AppStorage("hide_seen_posts_require_media_loaded") public var hideSeenPostsRequireMediaLoaded: Bool = true
     @AppStorage("hide_seen_posts_include_boosts") public var hideSeenPostsIncludeBoosts: Bool = true
     @AppStorage("hide_seen_posts_is_toggle") public var hideSeenPostsIsToggle: Bool = true
 
@@ -569,12 +568,6 @@ import SwiftUI
     }
   }
 
-  public var hideSeenPostsRequireMediaLoaded: Bool {
-    didSet {
-      storage.hideSeenPostsRequireMediaLoaded = hideSeenPostsRequireMediaLoaded
-    }
-  }
-
   public var hideSeenPostsIncludeBoosts: Bool {
     didSet {
       storage.hideSeenPostsIncludeBoosts = hideSeenPostsIncludeBoosts
@@ -934,7 +927,6 @@ import SwiftUI
     hideSeenPostsThreshold = storage.hideSeenPostsThreshold
     hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly
     hideSeenPostsShowInHeader = storage.hideSeenPostsShowInHeader
-    hideSeenPostsRequireMediaLoaded = storage.hideSeenPostsRequireMediaLoaded
     hideSeenPostsIncludeBoosts = storage.hideSeenPostsIncludeBoosts
     hideSeenPostsIsToggle = storage.hideSeenPostsIsToggle
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback

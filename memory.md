@@ -12,9 +12,6 @@
 - 2026-06-30 07:49 UTC: Added experimental feature for a "Hide posts without media" toggle:
   - Modifed `TimelineDatasource.swift` to conditionally hide posts unless they (or their boosted source) contain `mediaAttachments`.
   - Added new `@AppStorage` configurations to safely toggle the feature in settings via the Timeline content filter menu.
-- 2026-06-30 07:38 UTC: Updated Web UI in `App.tsx` and `server.ts` for AI Studio preview:
-  - Added an endpoint `/api/git/action-status` to query the GitHub Actions API for the latest workflow status on the repository.
-  - Added a subtle UI indicator for GitHub Action status which polls every 30 seconds.
 - 2026-06-30 07:38 UTC: Refined 'Hide Seen Posts' logic in `TimelineViewModel`:
   - Enforced Nuke cache checking for media-loaded validation. Now checks if `ImagePipeline.shared.cache` contains the image before marking as seen, if the `hideSeenPostsRequireMediaLoaded` preference is enabled.
   - Filtered `newStatuses` directly when prepending them to `pendingStatuses` in `TimelineViewModel`, guaranteeing that if a post or its boost is already marked as seen, it correctly bypasses the unread statuses counter.

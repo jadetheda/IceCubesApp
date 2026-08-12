@@ -21,7 +21,6 @@ public struct HideSeenPostsSettingsView: View {
           }
           
           Toggle("settings.experimental.hide-seen-posts.liked-only", isOn: $preferences.hideSeenPostsLikedOnly)
-          Toggle("settings.experimental.hide-seen-posts.require-media-loaded", isOn: $preferences.hideSeenPostsRequireMediaLoaded)
           Toggle("settings.experimental.hide-seen-posts.include-boosts", isOn: $preferences.hideSeenPostsIncludeBoosts)
           Toggle("settings.experimental.hide-seen-posts.show-in-header", isOn: $preferences.hideSeenPostsShowInHeader)
           Toggle("settings.experimental.hide-seen-posts.is-toggle", isOn: $preferences.hideSeenPostsIsToggle)
