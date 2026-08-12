@@ -18,6 +18,18 @@ public struct MediaUIAttachmentImageView: View {
         } else if state.isLoading {
           ProgressView()
             .progressViewStyle(.circular)
+        } else if state.error != nil {
+          VStack(spacing: 16) {
+            Image(systemName: "photo.badge.exclamationmark")
+              .resizable()
+              .aspectRatio(contentMode: .fit)
+              .frame(width: 40, height: 40)
+              .foregroundColor(.gray)
+            Link(destination: url) {
+              Label("status.action.view-in-browser", systemImage: "safari")
+            }
+            .buttonStyle(.bordered)
+          }
         }
       }
       .draggable(MediaUIImageTransferable(url: url))
