@@ -635,7 +635,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       try? await Task.sleep(nanoseconds: UInt64(threshold * 1_000_000_000))
       if !Task.isCancelled {
         if visibleStatuses.contains(where: { $0.id == status.id }) {
-          if prefs.hideSeenPostsRequireMediaLoaded && !status.mediaAttachments.isEmpty {
+          if !status.mediaAttachments.isEmpty {
             // Check if image media is in cache. Wait up to 5 seconds.
             var allCached = false
             for _ in 0..<5 {
