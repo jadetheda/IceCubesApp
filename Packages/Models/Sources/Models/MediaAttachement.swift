@@ -54,6 +54,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
   public let url: URL?
   public let previewUrl: URL?
+  public let previewRemoteUrl: URL?
   public let remoteUrl: URL?
   public let description: String?
   public let meta: MetaContainer?
@@ -64,6 +65,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       type: "image",
       url: url,
       previewUrl: url,
+      previewRemoteUrl: nil,
       remoteUrl: nil,
       description: nil,
       meta: nil)
@@ -75,6 +77,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       type: "video",
       url: url,
       previewUrl: url,
+      previewRemoteUrl: nil,
       remoteUrl: nil,
       description: nil,
       meta: nil)
@@ -110,6 +113,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     public let type: SupportedType
     public let fallbackUrl: URL?
     public let previewUrl: URL?
+    public let previewFallbackUrl: URL?
   }
 
   public func displayInfo(
@@ -123,7 +127,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
     let fallbackUrl: URL?
     if fallbackOnFail {
-      let candidateFallback = useRemoteMedia ? self.url : remoteUrl
+      let candidateFallback = useRemoteMedia ? self.url : (remoteUrl ?? self.url)
       fallbackUrl = candidateFallback == url ? nil : candidateFallback
     } else {
       fallbackUrl = nil
@@ -138,13 +142,21 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       }
     }
 
-    let pUrl = (useRemoteMedia && resolvedType == .image ? (remoteUrl ?? previewUrl) : previewUrl) ?? url
-
-    if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && previewUrl != nil {
-      return DisplayInfo(url: pUrl, type: .image, fallbackUrl: fallbackUrl, previewUrl: pUrl)
+    let pUrl = (useRemoteMedia ? (previewRemoteUrl ?? previewUrl) : previewUrl) ?? url
+    
+    let pFallbackUrl: URL?
+    if fallbackOnFail {
+      let candidatePFallback = useRemoteMedia ? self.previewUrl : (previewRemoteUrl ?? self.previewUrl)
+      pFallbackUrl = candidatePFallback == pUrl ? nil : candidatePFallback
+    } else {
+      pFallbackUrl = nil
     }
 
-    return DisplayInfo(url: url, type: resolvedType, fallbackUrl: fallbackUrl, previewUrl: pUrl)
+    if neverLoadVideo && (resolvedType == .video || resolvedType == .gifv) && previewUrl != nil {
+      return DisplayInfo(url: pUrl, type: .image, fallbackUrl: pFallbackUrl, previewUrl: pUrl, previewFallbackUrl: pFallbackUrl)
+    }
+
+    return DisplayInfo(url: url, type: resolvedType, fallbackUrl: fallbackUrl, previewUrl: pUrl, previewFallbackUrl: pFallbackUrl)
   }
 
 }

@@ -200,7 +200,7 @@ private struct MediaPreview: View {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.fallbackUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
             if let image = state.image {
               image
                 .resizable()
@@ -412,6 +412,7 @@ private struct DisplayData: Identifiable, Hashable {
   let url: URL
   let fallbackUrl: URL?
   let previewUrl: URL?
+  let previewFallbackUrl: URL?
   let description: String?
   let type: DisplayType
   let accessibilityText: String
@@ -427,6 +428,7 @@ private struct DisplayData: Identifiable, Hashable {
     url = info.url
     fallbackUrl = info.fallbackUrl
     previewUrl = info.previewUrl
+    previewFallbackUrl = info.previewFallbackUrl
     type = DisplayType(from: info.type)
     description = attachment.description
     accessibilityText = Self.getAccessibilityString(from: attachment)
@@ -548,7 +550,7 @@ private struct FeaturedImagePreView: View {
             .overlay {
               switch data.type {
               case .image:
-                LazyResizableImage(url: data.previewUrl, fallbackUrl: data.fallbackUrl) { state in
+                LazyResizableImage(url: data.previewUrl, fallbackUrl: data.previewFallbackUrl ?? data.fallbackUrl) { state in
                   if let image = state.image {
                     image
                       .resizable()
@@ -772,7 +774,7 @@ private struct MediaGridCell: View {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.fallbackUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
             if let image = state.image {
               image
                 .resizable()

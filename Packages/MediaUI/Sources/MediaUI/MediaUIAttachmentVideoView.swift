@@ -14,7 +14,8 @@ import SwiftUI
   let forceAutoPlay: Bool
   var isPlaying: Bool = false
   public var onReady: (() -> Void)?
-  private var hasFalledBack = false
+  public var hasFalledBack = false
+  public var isDead = false
 
   public init(url: URL, fallbackUrl: URL? = nil, forceAutoPlay: Bool = false, onReady: (() -> Void)? = nil) {
     self.onReady = onReady
@@ -112,6 +113,7 @@ import SwiftUI
               self.player?.play()
             }
           } else {
+            self.isDead = true
             ErrorService.shared.handle(
               title: "Video Load Error", 
               message: "Failed to load video: \(item.error?.localizedDescription ?? "Unknown error"). URL: \(self.url.absoluteString)", 
@@ -251,7 +253,14 @@ public struct MediaUIAttachmentVideoView: View {
     VideoPlayer(
       player: viewModel.player,
       videoOverlay: {
-        if !preferences.autoPlayVideo,
+        if viewModel.isDead {
+          ZStack {
+            Color.black.opacity(0.5)
+            Image(systemName: "exclamationmark.triangle.fill")
+              .font(.largeTitle)
+              .foregroundColor(.white)
+          }
+        } else if !preferences.autoPlayVideo,
           !viewModel.forceAutoPlay,
           !isFullScreen,
           !viewModel.isPlaying,
