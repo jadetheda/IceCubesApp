@@ -257,7 +257,7 @@ private struct DisplayView: View {
   var body: some View {
     switch data.type {
     case .image:
-      MediaUIAttachmentImageView(url: data.url, onSingleTap: onSingleTap)
+      MediaUIAttachmentImageView(url: data.url, fallbackUrl: data.fallbackUrl, onSingleTap: onSingleTap)
         .ignoresSafeArea()
     case .av:
       MediaUIAttachmentVideoView(viewModel: .init(url: data.url, fallbackUrl: data.fallbackUrl, forceAutoPlay: true))

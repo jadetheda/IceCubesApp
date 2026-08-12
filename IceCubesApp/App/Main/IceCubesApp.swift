@@ -97,7 +97,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     Telemetry.setup()
     Telemetry.signal("app.launched")
     WishKit.configure(with: "AF21AE07-3BA9-4FE2-BFB1-59A3B3941730")
-    MediaUIConfiguration.registerVideoFallbackDecoder()
     return true
   }
 
