@@ -1,7 +1,6 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
-- 2026-08-11 23:20 UTC: Updated `README.md` to document several unlisted Community Edition features (Custom interaction colors, Like vs Favorite swapping, Smart Theme variant switching, omnipresent Undo Scroll-to-Top, Expanded Gallery Mode & gap fetching, 4-Way media filters, and native Error Logging to `IceCubes_Errors.log`). Applied explicit style guidelines to maintain brevity and objective technical tone.
 - 2026-08-11 22:33 UTC: Made the media cache check unconditional for "Hide Seen Posts". Removed the `hideSeenPostsRequireMediaLoaded` preference toggle from `HideSeenPostsSettingsView` and `UserPreferences`. Posts with media will now *always* verify media is cached before being marked as seen.
 - 2026-08-11 22:25 UTC: Restored and fixed `hideSeenPostsRequireMediaLoaded` logic in `TimelineViewModel`. It now properly aborts the marking process (returning early) if the image media cache check fails after the 5-second polling window. Also restored the setting toggle in `HideSeenPostsSettingsView` and re-added the property to `UserPreferences`.
 - 2026-08-07 07:30 UTC: Fixed theme bookmark icon colors in `ColorSet.swift`, updating Bluesky themes to use #0F72FC and Nemesis themes to use the old default color (.pink).
