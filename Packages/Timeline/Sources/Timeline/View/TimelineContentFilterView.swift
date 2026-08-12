@@ -6,6 +6,7 @@ import SwiftUI
 public struct TimelineContentFilterView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(RouterPath.self) private var routerPath
 
@@ -36,6 +37,20 @@ public struct TimelineContentFilterView: View {
             NavigationLink(destination: TimelineLanguageFilterView()) {
               Label("Filtered Languages (Text Posts)", systemImage: "globe")
             }
+          }
+        }
+        
+        Section {
+          Toggle(isOn: Binding(
+            get: {
+              userPreferences.appAutoExpandMedia == .showAll
+            },
+            set: { newValue in
+              userPreferences.useInstanceContentSettings = false
+              userPreferences.appAutoExpandMedia = newValue ? .showAll : .hideSensitive
+            }
+          )) {
+            Label("settings.display.media.show-sensitive", systemImage: "eye.trianglebadge.exclamationmark")
           }
         }
         
