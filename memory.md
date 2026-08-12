@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-08-11 22:25 UTC: Restored and fixed `hideSeenPostsRequireMediaLoaded` logic in `TimelineViewModel`. It now properly aborts the marking process (returning early) if the image media cache check fails after the 5-second polling window. Also restored the setting toggle in `HideSeenPostsSettingsView` and re-added the property to `UserPreferences`.
 - 2026-08-07 07:30 UTC: Fixed theme bookmark icon colors in `ColorSet.swift`, updating Bluesky themes to use #0F72FC and Nemesis themes to use the old default color (.pink).
 - 2026-08-06 08:55 UTC: Fixed Swift compilation crash (Exit Code 65) in `DisplaySettingsView.swift` caused by `Bindable<UserPreferences>` missing `hidePinnedItemsSymbol`. Converted `showPinnedItemsSymbol` and `hidePinnedItemsSymbol` into computed properties wrapping `storage.hidePinnedItemsSymbol` in `UserPreferences.swift`, using proper `access(keyPath:)` and `withMutation(keyPath:)` to safely support SwiftUI's Observation macro. Removed their direct initialization inside `init()`.
 - 2026-08-06 08:30 UTC: Fixed Swift compilation crash (Exit Code 65) related to `Bindable<UserPreferences>` lookup of `hideInteractionButtons`. Converted `showInteractionButtons` and `hideInteractionButtons` into computed properties backed by `storage.hideInteractionButtons` to work around SwiftUI's Observation macro limitations with stored properties with `didSet` observers and no initial values. Updated `UserPreferences` initialization to reflect these changes.
