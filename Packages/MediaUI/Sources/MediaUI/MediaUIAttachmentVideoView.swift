@@ -273,5 +273,6 @@ public struct MediaUIAttachmentVideoView: View {
       }
     )
     .accessibilityAddTraits(.startsMediaSession)
+    .id(viewModel.player != nil ? "player-loaded" : "player-nil")
   }
 }
