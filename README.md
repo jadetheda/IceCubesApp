@@ -22,18 +22,23 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 # Features
 
 ## New in **Community Edition:**
-* **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
+
+* **Expanded Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra)): Now supports Profiles and Pinned Posts, with native gap-fetching.
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 - **Content Filters for Notifications**
-- **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
-- **Media load auto-fallback on fail** (for when your server doesn’t have media cached)
+- **4-Way Timeline Content Filter:** Filter by All Posts, Posts with Media, Only Media, or Only Text.
+- **Config Import/Export:** Back up Tag Groups and local timelines directly to JSON.
+- **Media load auto-fallback on fail:** Prevents infinite loading loops when your server doesn't cache media.
 * **More places to access remote Local Timelines**
 * **Special IceShrimp.NET support**
-* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
 * **Server emote caching**
-* **Undo scroll-to-top** (tap the tab again to undo)
+* **Omnipresent Undo Scroll-to-Top:** Tap the tab again to undo a scroll-to-top across the Timeline, Notifications, Explore, Messages, and Profile tabs.
+* **Smart Theme Variant Switching:** Selecting a theme family correctly defaults to the light/dark variant based on your system appearance without disabling "Match System".
+* **Custom Interaction Styling:** Set custom colors for Favorite, Boost, and Bookmark actions.
+* **"Like" System Override:** Swap the standard Favorite Star for a Like Heart system-wide.
+* **Native Error Logging:** Silent media and AVPlayer failures dump to `IceCubes_Errors.log`, accessible via the iOS Files app or exportable in Settings.
 * **Bluesky theme set**
-* **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
+* **Better inline image handling**: Wide and long images are no longer always force-cropped; posts with fewer than 5 images display in a grid.
 * **Automatic dark mode switching**
 * **Tap to hide header overlay in image viewer**
 * and much more!
