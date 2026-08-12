@@ -90700,6 +90700,16 @@
           }
         }
       }
+    },
+    "timeline.filter.hide-sensitive-posts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide sensitive posts"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

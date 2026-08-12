@@ -279,6 +279,9 @@ actor TimelineDatasource {
       }
     }
     
+    if filter.hideSensitivePosts && (status.sensitive || status.reblog?.sensitive == true) {
+      return false
+    }
     var hideDueToLanguage = false
     if !filter.hiddenLanguages.isEmpty, let lang = status.language ?? status.reblog?.language {
       if filter.hiddenLanguages.contains(lang) {

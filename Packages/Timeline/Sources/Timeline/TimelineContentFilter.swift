@@ -10,6 +10,7 @@ import Env
     public let showThreads: Bool
     public let showQuotePosts: Bool
     public let hidePostsWithMedia: Bool
+    public let hideSensitivePosts: Bool
     public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
     public let isGalleryMode: Bool
@@ -25,6 +26,7 @@ import Env
       showThreads: Bool = true,
       showQuotePosts: Bool = true,
       hidePostsWithMedia: Bool = false,
+      hideSensitivePosts: Bool = false,
       hidePostsWithoutMedia: Bool = false,
       hidePostsFromBots: Bool = false,
       isGalleryMode: Bool = false,
@@ -39,6 +41,7 @@ import Env
       self.showThreads = showThreads
       self.showQuotePosts = showQuotePosts
       self.hidePostsWithMedia = hidePostsWithMedia
+      self.hideSensitivePosts = hideSensitivePosts
       self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
       self.isGalleryMode = isGalleryMode
@@ -56,6 +59,7 @@ import Env
     @AppStorage("timeline_show_threads") var showThreads: Bool = true
     @AppStorage("timeline_quote_posts") var showQuotePosts: Bool = true
     @AppStorage("timeline_hide_posts_with_media") var hidePostsWithMedia: Bool = false
+    @AppStorage("timeline_hide_sensitive_posts") var hideSensitivePosts: Bool = false
     @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
@@ -127,6 +131,21 @@ import Env
     }
   }
   
+
+  @ObservationIgnored
+  private var _hideSensitivePosts: Bool = false
+  public var hideSensitivePosts: Bool {
+    get {
+      access(keyPath: \.hideSensitivePosts)
+      return _hideSensitivePosts
+    }
+    set {
+      withMutation(keyPath: \.hideSensitivePosts) {
+        _hideSensitivePosts = newValue
+        storage.hideSensitivePosts = newValue
+      }
+    }
+  }
   @ObservationIgnored
   private var _hidePostsWithMedia: Bool = false
   public var hidePostsWithMedia: Bool {
@@ -240,6 +259,7 @@ import Env
     _showThreads = storage.showThreads
     _showQuotePosts = storage.showQuotePosts
     _hidePostsWithMedia = storage.hidePostsWithMedia
+    _hideSensitivePosts = storage.hideSensitivePosts
     _hidePostsWithoutMedia = storage.hidePostsWithoutMedia
     _hidePostsFromBots = storage.hidePostsFromBots
     _isGalleryMode = storage.isGalleryMode
@@ -255,6 +275,7 @@ import Env
       showThreads: showThreads,
       showQuotePosts: showQuotePosts,
       hidePostsWithMedia: hidePostsWithMedia,
+      hideSensitivePosts: hideSensitivePosts,
       hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
       isGalleryMode: isGalleryMode,
