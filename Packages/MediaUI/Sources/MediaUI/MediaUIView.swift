@@ -236,38 +236,16 @@ private struct DisplayData: Identifiable, Hashable {
   init?(from attachment: MediaAttachment) {
     let isIceShrimp = Env.CurrentInstance.shared.isIceShrimp
     let noVideo = Env.UserPreferences.shared.neverLoadVideo
-    let pUrl = attachment.previewUrl ?? attachment.url
     
     let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
-    let resolvedUrl = useRemoteMedia ? (attachment.remoteUrl ?? attachment.url) : attachment.url
-    guard let url = resolvedUrl else { return nil }
-    guard let type = attachment.supportedType else { return nil }
-
+    let fallback = Env.UserPreferences.shared.remoteMediaFallbackOnFail || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
+    
+    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) else { return nil }
+    
     id = attachment.id
-    if Env.UserPreferences.shared.remoteMediaFallbackOnFail || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp) {
-      let candidateFallback = useRemoteMedia ? attachment.url : attachment.remoteUrl
-      fallbackUrl = candidateFallback == url ? nil : candidateFallback
-    } else {
-      fallbackUrl = nil
-    }
-    
-    var resolvedType = type
-    if resolvedType == .image {
-      let allExts = [url.pathExtension, attachment.url?.pathExtension, attachment.remoteUrl?.pathExtension, attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-      let videoExts = ["mp4", "m4v", "mov", "webm"]
-      if allExts.contains(where: { videoExts.contains($0) }) || attachment.meta?.original?.duration != nil || attachment.meta?.original?.frameRate != nil {
-        resolvedType = .video
-      }
-    }
-    
-    if noVideo && (resolvedType == .video || resolvedType == .gifv) && attachment.previewUrl != nil {
-      self.type = .image
-      self.url = pUrl ?? url
-    } else {
-      self.type = DisplayType(from: resolvedType)
-      self.url = url
-    }
-    
+    url = info.url
+    type = DisplayType(from: info.type)
+    fallbackUrl = info.fallbackUrl
     description = attachment.description
   }
 }

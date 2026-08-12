@@ -344,28 +344,11 @@ public struct GalleryMediaCell: View {
     let isIceShrimp = mediaStatus.status.account.url?.absoluteString.lowercased().contains("iceshrimp") == true
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
-    let resolvedUrl = effectiveUseRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
-    let fallbackUrl: URL? = {
-      if fallback {
-        let candidateFallback = effectiveUseRemoteMedia ? mediaStatus.attachment.url : mediaStatus.attachment.remoteUrl
-        return candidateFallback == resolvedUrl ? nil : candidateFallback
-      } else {
-        return nil
-      }
-    }()
     
-    let resolvedType: MediaAttachment.SupportedType? = {
-      guard let url = resolvedUrl else { return mediaStatus.attachment.supportedType }
-      var type = mediaStatus.attachment.supportedType
-      if type == .image {
-        let allExts = [url.pathExtension, mediaStatus.attachment.url?.pathExtension, mediaStatus.attachment.remoteUrl?.pathExtension, mediaStatus.attachment.previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-        let videoExts = ["mp4", "m4v", "mov", "webm"]
-        if allExts.contains(where: { videoExts.contains($0) }) || mediaStatus.attachment.meta?.original?.duration != nil || mediaStatus.attachment.meta?.original?.frameRate != nil {
-          type = .video
-        }
-      }
-      return type
-    }()
+    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false)
+    let resolvedUrl = info?.url
+    let fallbackUrl = info?.fallbackUrl
+    let resolvedType = info?.type
 
     if let url = resolvedUrl {
       Button {
