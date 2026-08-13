@@ -535,7 +535,12 @@ public struct GalleryAspectRatioModifier: ViewModifier {
         }
         .clipped()
     } else {
-      content
+      Color.clear
+        .aspectRatio(1, contentMode: .fit)
+        .overlay {
+          content
+        }
+        .clipped()
     }
   }
 }
