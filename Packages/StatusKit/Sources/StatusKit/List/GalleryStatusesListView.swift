@@ -363,9 +363,9 @@ public struct GalleryMediaCell: View {
         Group {
           switch resolvedType {
           case .image:
-            LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
-              if let image = state.image {
-                if mediaStatus.attachment.aspectRatio == nil && !isSquare {
+            if mediaStatus.attachment.aspectRatio == nil && !isSquare {
+              LazyImage(url: autoFallbackTriggered ? (fallbackUrl ?? url) : url) { state in
+                if let image = state.image {
                   image
                     .resizable()
                     .scaledToFit()
@@ -374,7 +374,26 @@ public struct GalleryMediaCell: View {
                         if !imageLoaded { imageLoaded = true }
                       }
                     }
+                } else if state.error != nil {
+                  Color.secondary.opacity(0.1)
+                    .aspectRatio(1, contentMode: .fit)
+                    .onAppear {
+                      if !autoFallbackTriggered && fallbackUrl != nil {
+                        DispatchQueue.main.async { autoFallbackTriggered = true }
+                      }
+                    }
                 } else {
+                  ZStack {
+                    Color.secondary.opacity(0.1)
+                    ProgressView()
+                  }
+                  .aspectRatio(1, contentMode: .fit)
+                }
+              }
+              .transition(.opacity)
+            } else {
+              LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
+                if let image = state.image {
                   image
                     .resizable()
                     .scaledToFill()
@@ -383,16 +402,15 @@ public struct GalleryMediaCell: View {
                         if !imageLoaded { imageLoaded = true }
                       }
                     }
+                } else {
+                  ZStack {
+                    Color.secondary.opacity(0.1)
+                    ProgressView()
+                  }
                 }
-              } else {
-                ZStack {
-                  Color.secondary.opacity(0.1)
-                  ProgressView()
-                }
-                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
               }
+              .transition(.opacity)
             }
-            .transition(.opacity)
           case .gifv, .video:
             MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
               .allowsHitTesting(false)
@@ -535,12 +553,7 @@ public struct GalleryAspectRatioModifier: ViewModifier {
         }
         .clipped()
     } else {
-      Color.clear
-        .aspectRatio(1, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
+      content
     }
   }
 }
