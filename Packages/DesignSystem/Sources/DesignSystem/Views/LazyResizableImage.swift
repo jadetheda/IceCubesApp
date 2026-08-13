@@ -56,25 +56,7 @@ public struct LazyResizableImage<Content: View>: View {
             }
           }
         }
-        return Group {
-          if state.isLoading {
-            content(state)
-          } else if let image = state.image {
-            content(state)
-          } else if hasFailed || fallbackURL == nil {
-            ZStack {
-              RoundedRectangle(cornerRadius: 10)
-                .fill(Color.gray.opacity(0.3))
-              Image(systemName: "photo.badge.exclamationmark")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40)
-                .foregroundColor(.gray)
-            }
-          } else {
-            content(state)
-          }
-        }
+        return content(state)
       }
       .processors([resizeProcessor == nil ? .resize(size: proxy.size) : resizeProcessor!])
       .onChange(of: proxy.size, initial: true) { oldValue, newValue in
