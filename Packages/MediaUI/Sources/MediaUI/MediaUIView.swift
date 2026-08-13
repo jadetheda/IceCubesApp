@@ -240,7 +240,7 @@ private struct DisplayData: Identifiable, Hashable {
     let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let fallback = Env.UserPreferences.shared.remoteMediaFallbackOnFail || (Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     
-    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) else { return nil }
+    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo, isIceShrimp: Env.UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp) else { return nil }
     
     id = attachment.id
     url = info.url

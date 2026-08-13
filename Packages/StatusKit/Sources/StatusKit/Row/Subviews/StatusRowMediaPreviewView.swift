@@ -133,7 +133,7 @@ public struct StatusRowMediaPreviewView: View {
     let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
     let noVideo = userPreferences.neverLoadVideo
 
-    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
+    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo, isIceShrimp: userPreferences.useIceShrimpWorkarounds && isIceShrimp) {
       MediaPreview(
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
@@ -421,8 +421,8 @@ private struct DisplayData: Identifiable, Hashable {
   let standaloneAspectRatio: CGFloat?
   let aspectRatio: CGFloat?
 
-  init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
-    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallbackOnFail, neverLoadVideo: neverLoadVideo) else { return nil }
+  init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false, isIceShrimp: Bool = false) {
+    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallbackOnFail, neverLoadVideo: neverLoadVideo, isIceShrimp: isIceShrimp) else { return nil }
 
     id = attachment.id
     url = info.url
@@ -540,7 +540,7 @@ private struct FeaturedImagePreView: View {
     let isIceShrimp = CurrentInstance.shared.isIceShrimp
     let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
     let noVideo = userPreferences.neverLoadVideo
-    let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo)
+    let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo, isIceShrimp: userPreferences.useIceShrimpWorkarounds && isIceShrimp)
 
     return Group {
       if let data = displayData, let namespace = quickLook.namespace {
@@ -737,7 +737,7 @@ private struct StatusRowMediaGridView: View {
     let fallback = userPreferences.remoteMediaFallbackOnFail || (userPreferences.useIceShrimpWorkarounds && isIceShrimp)
     let noVideo = userPreferences.neverLoadVideo
 
-    if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
+    if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo, isIceShrimp: userPreferences.useIceShrimpWorkarounds && isIceShrimp) {
       MediaGridCell(
         sensitive: sensitive,
         displayData: data,

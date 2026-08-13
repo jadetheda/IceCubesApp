@@ -119,7 +119,8 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
   public func displayInfo(
     useRemoteMedia: Bool = false,
     fallbackOnFail: Bool = false,
-    neverLoadVideo: Bool = false
+    neverLoadVideo: Bool = false,
+    isIceShrimp: Bool = false
   ) -> DisplayInfo? {
     let resolvedUrl = useRemoteMedia ? (remoteUrl ?? url) : url
     guard let url = resolvedUrl else { return nil }
@@ -134,7 +135,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     }
 
     var resolvedType = baseType
-    if resolvedType == .image {
+    if resolvedType == .image && isIceShrimp {
       let allExts = [url.pathExtension, self.url?.pathExtension, remoteUrl?.pathExtension, previewUrl?.pathExtension].compactMap { $0?.lowercased() }
       let videoExts = ["mp4", "m4v", "mov", "webm"]
       if allExts.contains(where: { videoExts.contains($0) }) || meta?.original?.duration != nil || meta?.original?.frameRate != nil {

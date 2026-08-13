@@ -345,7 +345,7 @@ public struct GalleryMediaCell: View {
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
     
-    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false)
+    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false, isIceShrimp: UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
     let resolvedUrl = info?.url
     let fallbackUrl = info?.fallbackUrl
     let resolvedType = info?.type
