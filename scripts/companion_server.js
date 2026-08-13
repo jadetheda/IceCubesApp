@@ -539,7 +539,7 @@ const server = http.createServer((req, res) => {
         <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider">HEAD Commit</div>
         <h2 class="text-sm md:text-base font-semibold text-zinc-100 leading-snug">${git.subject}</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-950/70 p-3.5 rounded-xl border border-zinc-800/60 font-mono text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs py-2">
           <div class="min-w-0">
             <div class="text-[10px] text-zinc-500 uppercase tracking-wider mb-0.5">Hash</div>
             <div class="text-zinc-200 select-all font-medium truncate">${git.hash}</div>
@@ -561,7 +561,7 @@ const server = http.createServer((req, res) => {
           <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider">Continuous Integration</div>
         </div>
         
-        <div class="bg-zinc-950/40 rounded-xl border border-zinc-800/50 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="py-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <div class="p-2 bg-blue-950/40 text-blue-400 rounded-lg border border-blue-900/40">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -596,8 +596,8 @@ const server = http.createServer((req, res) => {
         <div id="buildsContainer" class="space-y-2.5">
           <!-- Loading skeleton -->
           <div class="animate-pulse space-y-2">
-            <div class="h-12 bg-zinc-950/40 rounded-xl border border-zinc-800/40"></div>
-            <div class="h-12 bg-zinc-950/40 rounded-xl border border-zinc-800/40"></div>
+            <div class="h-10 bg-zinc-800/20 rounded"></div>
+            <div class="h-10 bg-zinc-800/20 rounded"></div>
           </div>
         </div>
       </div>
@@ -606,7 +606,7 @@ const server = http.createServer((req, res) => {
       <!-- Recent Commit Log -->
       <div class="pt-1">
         <div class="text-[11px] font-semibold uppercase text-zinc-500 tracking-wider mb-2.5">Recent Commits</div>
-        <div class="bg-zinc-950/40 rounded-xl border border-zinc-800/50 p-3 font-mono text-xs space-y-0.5">
+        <div class="font-mono text-xs space-y-1">
           ${recentCommitsHtml}
         </div>
       </div>
@@ -620,7 +620,7 @@ const server = http.createServer((req, res) => {
 
   <!-- Config Modal -->
   <div id="configModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
         <h3 class="text-sm font-bold text-zinc-100 flex items-center gap-2">
           <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -660,7 +660,7 @@ const server = http.createServer((req, res) => {
 
   <!-- Logs Modal -->
   <div id="logsModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-3xl rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
+    <div class="bg-zinc-950 border border-zinc-800 w-full max-w-3xl rounded-2xl p-6 shadow-2xl flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
         <h3 id="logsModalTitle" class="text-sm font-bold text-zinc-100 flex items-center gap-2">
           Build Failed Step Logs
@@ -913,7 +913,7 @@ const server = http.createServer((req, res) => {
           else if (statusLabel === 'initializing') statusLabel = 'Initializing';
           
           banner.innerHTML = \`
-            <div class="bg-blue-950/30 border border-blue-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-xl shadow-blue-950/10 mb-5 animate-pulse">
+            <div class="bg-transparent border-y border-blue-500/20 py-4 flex items-center justify-between gap-4 shadow-xl shadow-blue-950/10 mb-5 animate-pulse">
               <div class="flex items-center gap-3 min-w-0">
                 <div class="relative flex h-3.5 w-3.5">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -1024,7 +1024,7 @@ const server = http.createServer((req, res) => {
           \` : '';
           
           return \`
-            <div class="bg-zinc-950/20 rounded-xl border border-zinc-800/40 p-3 flex items-center justify-between gap-4">
+            <div class="py-3 flex items-center justify-between gap-4 border-b border-zinc-800/40 last:border-0">
               <div class="min-w-0 flex-1 space-y-1">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-zinc-400 font-bold font-mono text-xs font-semibold">#\${b.index}</span>
@@ -1087,7 +1087,7 @@ const server = http.createServer((req, res) => {
         title.innerText = \`Build #\${data.index} - Failed Step Logs\`;
         
         if (!data.failedSteps || data.failedSteps.length === 0) {
-          body.innerHTML = \`<div class="p-4 bg-zinc-950/40 border border-zinc-800/40 rounded-xl text-zinc-400 font-mono text-xs text-center">No failed build steps were found for this build. This could mean the build failed before starting any specific script step.</div>\`;
+          body.innerHTML = \`<div class="py-8 border-y border-zinc-800/40 text-zinc-400 font-mono text-xs text-center">No failed build steps were found for this build. This could mean the build failed before starting any specific script step.</div>\`;
           return;
         }
         
