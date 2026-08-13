@@ -7,6 +7,9 @@ import NukeUI
 import SwiftUI
 
 @MainActor
+private class MediaLoadTracker { var loadedIds = Set<String>() }
+
+@MainActor
 public struct StatusRowMediaPreviewView: View {
   @Environment(\.openWindow) private var openWindow
   @Environment(\.isMediaCompact) private var isCompact: Bool
@@ -14,7 +17,7 @@ public struct StatusRowMediaPreviewView: View {
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPreferences
   @State private var autoFallbackTriggered: Bool = false
-  @State private var loadedAttachments: Set<String> = []
+  @State private var loadTracker = MediaLoadTracker()
   @State private var loadTask: Task<Void, Never>?
 
   private var effectiveUseRemoteMedia: Bool {
@@ -65,7 +68,7 @@ public struct StatusRowMediaPreviewView: View {
               ? nil
               : CGSize(width: imageMaxHeight, height: imageMaxHeight),
             sensitive: sensitive,
-            onLoaded: { loadedAttachments.insert(attachments[0].id) }
+            onLoaded: { markAsLoaded(id: attachments[0].id) }
           )
           .accessibilityElement(children: .ignore)
           .accessibilityLabel(Self.accessibilityLabel(for: attachments[0]))
@@ -78,7 +81,7 @@ public struct StatusRowMediaPreviewView: View {
             imageMaxHeight: imageMaxHeight,
             useRemoteMedia: effectiveUseRemoteMedia,
             userPreferences: userPreferences,
-            onLoaded: { id in loadedAttachments.insert(id) },
+            onLoaded: { id in markAsLoaded(id: id) },
             tabAction: { index in tabAction(for: index) }
           )
         }
@@ -89,7 +92,7 @@ public struct StatusRowMediaPreviewView: View {
           imageMaxHeight: imageMaxHeight,
           useRemoteMedia: effectiveUseRemoteMedia,
           userPreferences: userPreferences,
-          onLoaded: { id in loadedAttachments.insert(id) },
+          onLoaded: { id in markAsLoaded(id: id) },
           tabAction: { index in tabAction(for: index) }
         )
       } else {
@@ -109,7 +112,7 @@ public struct StatusRowMediaPreviewView: View {
         loadTask = Task {
           try? await Task.sleep(nanoseconds: UInt64(userPreferences.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
           if !Task.isCancelled {
-            if loadedAttachments.count < attachments.count {
+            if loadTracker.loadedIds.count < attachments.count {
               autoFallbackTriggered = true
             }
           }
@@ -119,12 +122,16 @@ public struct StatusRowMediaPreviewView: View {
     .onDisappear {
       loadTask?.cancel()
     }
-    .onChange(of: loadedAttachments) { _, newValue in
-      if newValue.count == attachments.count {
-        loadTask?.cancel()
-      }
-    }
 
+
+  }
+
+  
+  private func markAsLoaded(id: String) {
+    loadTracker.loadedIds.insert(id)
+    if loadTracker.loadedIds.count == attachments.count {
+      loadTask?.cancel()
+    }
   }
 
   @ViewBuilder
@@ -139,7 +146,7 @@ public struct StatusRowMediaPreviewView: View {
         imageMaxHeight: imageMaxHeight,
         displayData: data,
         isStandalone: attachments.count == 1,
-        onLoaded: { loadedAttachments.insert(attachement.id) }
+        onLoaded: { markAsLoaded(id: attachement.id) }
       )
       .id(data.url)
       .onTapGesture {
@@ -206,7 +213,7 @@ private struct MediaPreview: View {
                 .resizable()
                 .onAppear {
                   onLoaded()
-                  if displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
                     let ratio = size.width / size.height
                     DispatchQueue.main.async {
                       loadedAspectRatio = min(max(ratio, 0.25), 4.0)
@@ -780,7 +787,7 @@ private struct MediaGridCell: View {
                 .resizable()
                 .onAppear {
                   onLoaded()
-                  if displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
+                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
                     let ratio = size.width / size.height
                     DispatchQueue.main.async {
                       loadedAspectRatio = min(max(ratio, 0.25), 4.0)
