@@ -2,7 +2,11 @@
 
 ## Pending (some fresh, some stale)
 
-### Corrections
+### Massive fucking bugs
+
+- [ ] Gallery Mode is fucking broken BAD
+- [ ] Remote Media is broken as fuck now, which is a huge problem considering  IceShrimp.NET videos/GIFs need this.
+- [ ] In the process of trying to fix remote media, I think other media in general got fucked up.
 
 ### Features
 
