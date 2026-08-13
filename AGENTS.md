@@ -301,3 +301,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Missing Module Import for Environment Type)
 - **Root Cause**: Injecting an object using `@Environment(Type.self)` without importing the module where `Type` is defined will cause the Swift compiler to crash with a `Cannot find type in scope` error (Exit Code 65).
 - **Solution**: Always ensure that when you reference a type from another package (e.g. `Theme` from `DesignSystem`), the corresponding `import` statement (e.g. `import DesignSystem`) is present at the top of the file, even if it's only used as an Environment property.
+
+## 🐛 Exit Code 65 Logs (TimelineTab missed property rename)
+- **Root Cause**: When renaming `hideReadPosts` to `hideSeenPosts` globally, `TimelineTab.swift` was accidentally missed because the property reference was heavily nested in conditional SwiftUI blocks (e.g., `(preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts)`), leading to a missing dynamic member error in `TimelineContentFilter`.
+- **Solution**: Always run a global, case-insensitive project search (`grep -rni`) for the legacy string after renaming widely used properties, to catch occurrences inside SwiftUI view builders.
