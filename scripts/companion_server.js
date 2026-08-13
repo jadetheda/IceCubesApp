@@ -428,7 +428,7 @@ const server = http.createServer((req, res) => {
     if (config.appId) {
       const cacheBuster = Date.now();
       badgeHtml = `
-        <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center">
+        <a id="mainBadgeLink" href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center">
           <img id="mainBadgeImg" src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic build status" class="h-5" />
         </a>
       `;
@@ -446,7 +446,7 @@ const server = http.createServer((req, res) => {
       `;
 
       headerIndicatorHtml = `
-        <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
+        <a id="headerBadgeLink" href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
           <img id="headerBadgeImg" src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic" class="h-3.5" />
         </a>
       `;
@@ -930,7 +930,7 @@ const server = http.createServer((req, res) => {
                   </div>
                 </div>
               </div>
-              <a href="https://codemagic.io/app/\${CONFIG.appId}/\${CONFIG.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-95">
+              <a href="https://codemagic.io/app/\${CONFIG.appId}/build/\${activeBuild._id}" target="_blank" class="shrink-0 flex items-center gap-1 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-95">
                 Track Live
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
               </a>
@@ -940,9 +940,13 @@ const server = http.createServer((req, res) => {
           
           if (mainBadgeImg) {
             mainBadgeImg.src = 'https://img.shields.io/badge/Codemagic-building-blue?style=flat-square';
+            const mainBadgeLink = document.getElementById('mainBadgeLink');
+            if (mainBadgeLink) mainBadgeLink.href = 'https://codemagic.io/app/' + CONFIG.appId + '/build/' + activeBuild._id;
           }
           if (headerBadgeImg) {
             headerBadgeImg.src = 'https://img.shields.io/badge/Codemagic-building-blue?style=flat-square';
+            const headerBadgeLink = document.getElementById('headerBadgeLink');
+            if (headerBadgeLink) headerBadgeLink.href = 'https://codemagic.io/app/' + CONFIG.appId + '/build/' + activeBuild._id;
           }
           
           // Fast polling when build is active
