@@ -70,7 +70,7 @@ public struct TimelineContentFilterView: View {
           }
         Section {
           if UserPreferences.shared.hideSeenPostsEnabled && UserPreferences.shared.hideSeenPostsIsToggle {
-            Toggle(isOn: $contentFilter.hideReadPosts) {
+            Toggle(isOn: $contentFilter.hideSeenPosts) {
               Label("timeline.filter.hide-seen-posts", systemImage: "eye.slash")
             }
           }

@@ -22,7 +22,7 @@ struct ContentFilterOnChangeModifier: ViewModifier {
       .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in action() }
       .onChange(of: contentFilter.isGalleryMode) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsFromBots) { _, _ in action() }
-      .onChange(of: contentFilter.hideReadPosts) { _, _ in action() }
+      .onChange(of: contentFilter.hideSeenPosts) { _, _ in action() }
   }
 }
 
@@ -117,17 +117,17 @@ public struct TimelineView: View {
       ToolbarItem(placement: .navigationBarTrailing) {
         Button {
           if preferences.hideSeenPostsIsToggle {
-            contentFilter.hideReadPosts.toggle()
+            contentFilter.hideSeenPosts.toggle()
           } else {
             Task {
-              await viewModel.hideReadPosts()
+              await viewModel.hideSeenPosts()
             }
           }
         } label: {
-          Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
+          Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "eye" : "eye.slash")
         }
         .tint(theme.labelColor)
-        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
+        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
       }
     }
     TimelineToolbarTagGroupButton(timeline: $timeline)
@@ -249,9 +249,9 @@ public struct TimelineView: View {
       timeline = newValue
     }
     .modifier(ContentFilterOnChangeModifier(contentFilter: contentFilter, action: refreshContentFilter))
-    .onReceive(NotificationCenter.default.publisher(for: .hideReadPosts)) { _ in
+    .onReceive(NotificationCenter.default.publisher(for: .hideSeenPosts)) { _ in
       Task {
-        await viewModel.hideReadPosts()
+        await viewModel.hideSeenPosts()
       }
     }
     .onChange(of: contentFilter.hidePostsFromBots) { _, _ in

@@ -13,7 +13,7 @@ struct AnyStatusesListView: View {
   let isRemote: Bool
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
-  // toggles like hideReadPosts from affecting the profile media view.
+  // toggles like hideSeenPosts from affecting the profile media view.
   init(
     fetcher: any StatusesFetcher,
     client: MastodonClient,

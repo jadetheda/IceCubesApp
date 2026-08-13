@@ -14,7 +14,7 @@ import Env
     public let hidePostsWithoutMedia: Bool
     public let hidePostsFromBots: Bool
     public let isGalleryMode: Bool
-    public let hideReadPosts: Bool
+    public let hideSeenPosts: Bool
     public let hideOwnPosts: Bool
     public let hiddenLanguages: [String]
     public let hideSeenPostsEnabled: Bool
@@ -30,7 +30,7 @@ import Env
       hidePostsWithoutMedia: Bool = false,
       hidePostsFromBots: Bool = false,
       isGalleryMode: Bool = false,
-      hideReadPosts: Bool = false,
+      hideSeenPosts: Bool = false,
       hideOwnPosts: Bool = false,
       hiddenLanguages: [String] = [],
       hideSeenPostsEnabled: Bool = false,
@@ -45,7 +45,7 @@ import Env
       self.hidePostsWithoutMedia = hidePostsWithoutMedia
       self.hidePostsFromBots = hidePostsFromBots
       self.isGalleryMode = isGalleryMode
-      self.hideReadPosts = hideReadPosts
+      self.hideSeenPosts = hideSeenPosts
       self.hideOwnPosts = hideOwnPosts
       self.hiddenLanguages = hiddenLanguages
       self.hideSeenPostsEnabled = hideSeenPostsEnabled
@@ -63,7 +63,7 @@ import Env
     @AppStorage("timeline_hide_posts_without_media") var hidePostsWithoutMedia: Bool = false
     @AppStorage("timeline_hide_posts_from_bots") var hidePostsFromBots: Bool = false
     @AppStorage("timeline_gallery_mode") var isGalleryMode: Bool = false
-    @AppStorage("timeline_hide_read_posts") var hideReadPosts: Bool = false
+    @AppStorage("timeline_hide_read_posts") var hideSeenPosts: Bool = false
     @AppStorage("timeline_hide_own_posts") var hideOwnPosts: Bool = false
     @AppStorage("timeline_hidden_languages") var hiddenLanguages: [String] = []
   }
@@ -208,16 +208,16 @@ import Env
   }
     
   @ObservationIgnored
-  private var _hideReadPosts: Bool = false
-  public var hideReadPosts: Bool {
+  private var _hideSeenPosts: Bool = false
+  public var hideSeenPosts: Bool {
     get {
-      access(keyPath: \.hideReadPosts)
-      return _hideReadPosts
+      access(keyPath: \.hideSeenPosts)
+      return _hideSeenPosts
     }
     set {
-      withMutation(keyPath: \.hideReadPosts) {
-        _hideReadPosts = newValue
-        storage.hideReadPosts = newValue
+      withMutation(keyPath: \.hideSeenPosts) {
+        _hideSeenPosts = newValue
+        storage.hideSeenPosts = newValue
       }
     }
   }
@@ -263,7 +263,7 @@ import Env
     _hidePostsWithoutMedia = storage.hidePostsWithoutMedia
     _hidePostsFromBots = storage.hidePostsFromBots
     _isGalleryMode = storage.isGalleryMode
-    _hideReadPosts = storage.hideReadPosts
+    _hideSeenPosts = storage.hideSeenPosts
     _hideOwnPosts = storage.hideOwnPosts
     _hiddenLanguages = storage.hiddenLanguages
   }
@@ -279,7 +279,7 @@ import Env
       hidePostsWithoutMedia: hidePostsWithoutMedia,
       hidePostsFromBots: hidePostsFromBots,
       isGalleryMode: isGalleryMode,
-      hideReadPosts: hideReadPosts,
+      hideSeenPosts: hideSeenPosts,
       hideOwnPosts: hideOwnPosts,
       hiddenLanguages: hiddenLanguages,
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,

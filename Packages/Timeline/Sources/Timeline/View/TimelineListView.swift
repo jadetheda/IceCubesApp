@@ -68,6 +68,7 @@ struct TimelineListView: View {
               .onDisappear {
                 viewModel.scrollToTopVisible = false
               }
+            
             TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
             TimelineTagHeaderView(tag: $viewModel.tag)
             

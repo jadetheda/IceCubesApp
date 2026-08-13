@@ -429,7 +429,7 @@ const server = http.createServer((req, res) => {
       const cacheBuster = Date.now();
       badgeHtml = `
         <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="shrink-0 flex items-center">
-          <img src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic build status" class="h-5" />
+          <img id="mainBadgeImg" src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic build status" class="h-5" />
         </a>
       `;
       
@@ -447,7 +447,7 @@ const server = http.createServer((req, res) => {
 
       headerIndicatorHtml = `
         <a href="https://codemagic.io/app/${config.appId}/${config.workflowId}/latest_build" target="_blank" class="flex items-center gap-2 text-xs font-mono px-3 py-1 rounded-full border border-zinc-800 hover:bg-zinc-800/50 transition-colors">
-          <img src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic" class="h-3.5" />
+          <img id="headerBadgeImg" src="https://api.codemagic.io/apps/${config.appId}/${config.workflowId}/status_badge.svg?cachebuster=${cacheBuster}" alt="Codemagic" class="h-3.5" />
         </a>
       `;
     } else {
@@ -847,6 +847,8 @@ const server = http.createServer((req, res) => {
         isBuildActive = !!activeBuild;
         const banner = document.getElementById('activeBuildBanner');
         const triggerBtn = document.getElementById('triggerBtn');
+        const mainBadgeImg = document.getElementById('mainBadgeImg');
+        const headerBadgeImg = document.getElementById('headerBadgeImg');
         
         // Check if there is an existing finished/failed/canceled build for the current HEAD commit
         const existingBuildForCurrentCommit = builds.find(b => {
@@ -936,11 +938,25 @@ const server = http.createServer((req, res) => {
           \`;
           banner.classList.remove('hidden');
           
+          if (mainBadgeImg) {
+            mainBadgeImg.src = 'https://img.shields.io/badge/Codemagic-building-blue?style=flat-square';
+          }
+          if (headerBadgeImg) {
+            headerBadgeImg.src = 'https://img.shields.io/badge/Codemagic-building-blue?style=flat-square';
+          }
+          
           // Fast polling when build is active
           resetPolling(5000);
         } else if (banner) {
           banner.innerHTML = '';
           banner.classList.add('hidden');
+          
+          if (mainBadgeImg && mainBadgeImg.src.includes('img.shields.io')) {
+            mainBadgeImg.src = \`https://api.codemagic.io/apps/\${CONFIG.appId}/\${CONFIG.workflowId}/status_badge.svg?cachebuster=\${Date.now()}\`;
+          }
+          if (headerBadgeImg && headerBadgeImg.src.includes('img.shields.io')) {
+            headerBadgeImg.src = \`https://api.codemagic.io/apps/\${CONFIG.appId}/\${CONFIG.workflowId}/status_badge.svg?cachebuster=\${Date.now()}\`;
+          }
           
           // Slow polling when idle
           resetPolling(20000);
