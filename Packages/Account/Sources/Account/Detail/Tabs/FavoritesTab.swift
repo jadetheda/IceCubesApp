@@ -1,3 +1,4 @@
+import DesignSystem
 import Env
 import Models
 import NetworkClient
@@ -6,7 +7,9 @@ import SwiftUI
 
 struct FavoritesTab {
   let id = "favorites"
-  let iconName = "star"
+  var iconName: String {
+    Theme.shared.actionIsLike ? "heart" : "star"
+  }
   let accessibilityLabel: LocalizedStringKey = "accessibility.tabs.profile.picker.favorites"
   let isAvailableForCurrentUser = true
   let isAvailableForOtherUsers = false
