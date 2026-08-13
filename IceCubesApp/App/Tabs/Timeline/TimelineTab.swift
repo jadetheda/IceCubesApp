@@ -124,11 +124,11 @@ struct TimelineTab: View {
     if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
       Button {
         if preferences.hideSeenPostsIsToggle {
-          contentFilter.hideReadPosts.toggle()
+          contentFilter.hideSeenPosts.toggle()
         }
-        NotificationCenter.default.post(name: .hideReadPosts, object: nil)
+        NotificationCenter.default.post(name: .hideSeenPosts, object: nil)
       } label: {
-        Label((preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "timeline.filter.show-seen-posts" : "timeline.filter.hide-seen-posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts) ? "eye" : "eye.slash")
+        Label((preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "timeline.filter.show-seen-posts" : "timeline.filter.hide-seen-posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "eye" : "eye.slash")
       }
       Divider()
     }
