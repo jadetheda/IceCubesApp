@@ -46,6 +46,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
+      .frame(maxWidth: .infinity)
       .redacted(reason: .placeholder)
       .allowsHitTesting(false)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -310,6 +311,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       }
     }
+    .frame(maxWidth: .infinity)
     .clipped()
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
   }
