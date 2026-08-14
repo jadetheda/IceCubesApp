@@ -17,8 +17,8 @@ extension StatusEditor {
       }
       return ImagePipeline(configuration: config)
     }()
-
     @Environment(\.dismiss) private var dismiss
+
     @Environment(Theme.self) private var theme
 
     var store: EditorStore
@@ -35,6 +35,7 @@ extension StatusEditor {
                       image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
+                        
                         .accessibilityLabel(
                           emoji.shortcode.replacingOccurrences(of: "_", with: " ")
                         )
@@ -42,6 +43,7 @@ extension StatusEditor {
                     } else if state.isLoading {
                       Rectangle()
                         .fill(Color.gray)
+                        
                         .accessibility(hidden: true)
                     }
                   }
@@ -57,11 +59,10 @@ extension StatusEditor {
                   .bold()
                   .foregroundStyle(Color.secondary)
                   .frame(maxWidth: .infinity, alignment: .leading)
-                  .padding(.vertical, 8)
+                  .padding(.horizontal, 16)
               }
             }
           }
-          .padding(.horizontal, 16)
         }
         .toolbar {
           CancelToolbarItem()
