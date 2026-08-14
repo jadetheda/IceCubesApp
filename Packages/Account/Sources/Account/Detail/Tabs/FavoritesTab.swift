@@ -5,6 +5,7 @@ import NetworkClient
 import StatusKit
 import SwiftUI
 
+@MainActor
 struct FavoritesTab {
   let id = "favorites"
   var iconName: String {
