@@ -46,7 +46,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
-      .frame(maxWidth: .infinity)
       .redacted(reason: .placeholder)
       .allowsHitTesting(false)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -166,8 +165,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
     let chunks = chunkItems(items)
     
-    ForEach(chunks) { chunk in
-      VStack(spacing: 0) {
+    VStack(spacing: 0) {
+      ForEach(chunks) { chunk in
         if chunk.isGap, let gap = chunk.gap {
           if let gapLoader = fetcher as? GapLoadingFetcher {
             TimelineGapView(gap: gap) {
@@ -180,9 +179,9 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           makeGridChunk(for: chunk.items)
         }
       }
-      .listRowBackground(theme.primaryBackgroundColor)
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
+    .listRowBackground(theme.primaryBackgroundColor)
+    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     .task(id: items.count) {
       let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
       let columns = UserPreferences.shared.galleryColumns
@@ -311,7 +310,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       }
     }
-    .frame(maxWidth: .infinity)
     .clipped()
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
   }
@@ -337,21 +335,21 @@ public struct GalleryMediaCell: View {
   @State private var showSelectableText: Bool = false
   @State private var isBlockConfirmationPresented = false
   @State private var isShareAsImageSheetPresented = false
-  @State private var autoFallbackTriggered = false
-  @State private var imageLoaded = false
-  @State private var loadTask: Task<Void, Never>? = nil
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
     let isIceShrimp = mediaStatus.status.account.url?.absoluteString.lowercased().contains("iceshrimp") == true
     let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
-    let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
-    
-    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false, isIceShrimp: UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
-    let resolvedUrl = info?.url
-    let fallbackUrl = info?.fallbackUrl
-    let resolvedType = info?.type
-
+    let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce
+    let resolvedUrl = effectiveUseRemoteMedia ? (mediaStatus.attachment.remoteUrl ?? mediaStatus.attachment.url) : mediaStatus.attachment.url
+    let fallbackUrl: URL? = {
+      if fallback {
+        let candidateFallback = effectiveUseRemoteMedia ? mediaStatus.attachment.url : mediaStatus.attachment.remoteUrl
+        return candidateFallback == resolvedUrl ? nil : candidateFallback
+      } else {
+        return nil
+      }
+    }()
     if let url = resolvedUrl {
       Button {
         if let viewModel {
@@ -361,56 +359,28 @@ public struct GalleryMediaCell: View {
         }
       } label: {
         Group {
-          switch resolvedType {
+          switch mediaStatus.attachment.supportedType {
           case .image:
-            if mediaStatus.attachment.aspectRatio == nil && !isSquare {
-              LazyImage(url: autoFallbackTriggered ? (fallbackUrl ?? url) : url) { state in
-                if let image = state.image {
+            LazyImage(url: url, transaction: Transaction(animation: .easeIn)) { state in
+              if let image = state.image {
+                if mediaStatus.attachment.aspectRatio == nil && !isSquare {
                   image
                     .resizable()
                     .scaledToFit()
-                    .onAppear {
-                      DispatchQueue.main.async {
-                        if !imageLoaded { imageLoaded = true }
-                      }
-                    }
-                } else if state.error != nil {
-                  Color.secondary.opacity(0.1)
-                    .aspectRatio(1, contentMode: .fit)
-                    .onAppear {
-                      if !autoFallbackTriggered && fallbackUrl != nil {
-                        DispatchQueue.main.async { autoFallbackTriggered = true }
-                      }
-                    }
                 } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
-                  .aspectRatio(1, contentMode: .fit)
-                }
-              }
-              .transition(.opacity)
-            } else {
-              LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
-                if let image = state.image {
                   image
                     .resizable()
                     .scaledToFill()
-                    .onAppear {
-                      DispatchQueue.main.async {
-                        if !imageLoaded { imageLoaded = true }
-                      }
-                    }
-                } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
                 }
+              } else {
+                ZStack {
+                  Color.secondary.opacity(0.1)
+                  ProgressView()
+                }
+                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
               }
-              .transition(.opacity)
             }
+            .transition(.opacity)
           case .gifv, .video:
             MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
               .allowsHitTesting(false)
@@ -454,24 +424,6 @@ public struct GalleryMediaCell: View {
             filterContext: filterContext
           )
         }
-        if UserPreferences.shared.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
-            loadTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(UserPreferences.shared.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
-                if !Task.isCancelled {
-                    if !imageLoaded {
-                        autoFallbackTriggered = true
-                    }
-                }
-            }
-        }
-      }
-      .onDisappear {
-          loadTask?.cancel()
-      }
-      .onChange(of: imageLoaded) { _, newValue in
-          if newValue {
-              loadTask?.cancel()
-          }
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {

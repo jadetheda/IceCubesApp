@@ -46,7 +46,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
-      .frame(maxWidth: .infinity)
       .redacted(reason: .placeholder)
       .allowsHitTesting(false)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -166,8 +165,8 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
     let chunks = chunkItems(items)
     
-    ForEach(chunks) { chunk in
-      VStack(spacing: 0) {
+    VStack(spacing: 0) {
+      ForEach(chunks) { chunk in
         if chunk.isGap, let gap = chunk.gap {
           if let gapLoader = fetcher as? GapLoadingFetcher {
             TimelineGapView(gap: gap) {
@@ -180,9 +179,9 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
           makeGridChunk(for: chunk.items)
         }
       }
-      .listRowBackground(theme.primaryBackgroundColor)
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
+    .listRowBackground(theme.primaryBackgroundColor)
+    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     .task(id: items.count) {
       let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
       let columns = UserPreferences.shared.galleryColumns
@@ -311,7 +310,6 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
       }
     }
-    .frame(maxWidth: .infinity)
     .clipped()
     .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
   }
@@ -363,9 +361,9 @@ public struct GalleryMediaCell: View {
         Group {
           switch resolvedType {
           case .image:
-            if mediaStatus.attachment.aspectRatio == nil && !isSquare {
-              LazyImage(url: autoFallbackTriggered ? (fallbackUrl ?? url) : url) { state in
-                if let image = state.image {
+            LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
+              if let image = state.image {
+                if mediaStatus.attachment.aspectRatio == nil && !isSquare {
                   image
                     .resizable()
                     .scaledToFit()
@@ -374,26 +372,7 @@ public struct GalleryMediaCell: View {
                         if !imageLoaded { imageLoaded = true }
                       }
                     }
-                } else if state.error != nil {
-                  Color.secondary.opacity(0.1)
-                    .aspectRatio(1, contentMode: .fit)
-                    .onAppear {
-                      if !autoFallbackTriggered && fallbackUrl != nil {
-                        DispatchQueue.main.async { autoFallbackTriggered = true }
-                      }
-                    }
                 } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
-                  .aspectRatio(1, contentMode: .fit)
-                }
-              }
-              .transition(.opacity)
-            } else {
-              LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
-                if let image = state.image {
                   image
                     .resizable()
                     .scaledToFill()
@@ -402,15 +381,16 @@ public struct GalleryMediaCell: View {
                         if !imageLoaded { imageLoaded = true }
                       }
                     }
-                } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
                 }
+              } else {
+                ZStack {
+                  Color.secondary.opacity(0.1)
+                  ProgressView()
+                }
+                .aspectRatio(mediaStatus.attachment.meta?.original == nil ? 1 : nil, contentMode: .fit)
               }
-              .transition(.opacity)
             }
+            .transition(.opacity)
           case .gifv, .video:
             MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
               .allowsHitTesting(false)

@@ -116,7 +116,7 @@ actor TimelineDatasource {
 
   // MARK: - Status Operations
 
-  func hideReadPosts(seen: Set<String>, includeBoosts: Bool) async {
+  func hideSeenPosts(seen: Set<String>, includeBoosts: Bool) async {
     let currentAccountId = await CurrentAccount.shared.account?.id
     items.removeAll { item in
       if case .status(let status) = item {
@@ -311,7 +311,7 @@ actor TimelineDatasource {
       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
-      && (!filter.hideReadPosts || !isSeen || filter.isGalleryMode)
+      && (!filter.hideSeenPosts || !isSeen || filter.isGalleryMode)
       && (!filter.hideOwnPosts || status.account.id != currentAccountId)
   }
 }

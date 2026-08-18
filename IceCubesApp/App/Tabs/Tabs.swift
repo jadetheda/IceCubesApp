@@ -267,7 +267,7 @@ enum AppTab: Identifiable, Hashable, CaseIterable, Codable {
     case .bookmarks:
       "bookmark"
     case .favorites:
-      "star"
+      Theme.shared.actionIsLike ? "heart" : "star"
     case .metrics:
       "chart.bar"
     case .post:

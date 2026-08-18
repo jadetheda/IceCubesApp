@@ -197,7 +197,7 @@ import Nuke
   var marker: Marker.Content?
 
   @ObservationIgnored
-  nonisolated(unsafe) private var hideReadPostsObserver: NSObjectProtocol?
+  nonisolated(unsafe) private var hideSeenPostsObserver: NSObjectProtocol?
   @ObservationIgnored
   nonisolated(unsafe) private var statusUpdatedObserver: NSObjectProtocol?
 
@@ -207,18 +207,18 @@ import Nuke
       await datasource.setFilterContext(timeline.filterContext)
     }
 
-    // Both the toolbar toggle and the one-off "hide read posts" action post this
-    // notification. Without this observer, toggling `TimelineContentFilter.shared.hideReadPosts`
+    // Both the toolbar toggle and the one-off "hide seen posts" action post this
+    // notification. Without this observer, toggling `TimelineContentFilter.shared.hideSeenPosts`
     // (or firing the one-off action) never re-filters `statusesState`, so the button appears to
     // do nothing even for posts that are already marked seen.
-    hideReadPostsObserver = NotificationCenter.default.addObserver(
-      forName: .hideReadPosts,
+    hideSeenPostsObserver = NotificationCenter.default.addObserver(
+      forName: .hideSeenPosts,
       object: nil,
       queue: .main
     ) { [weak self] _ in
       guard let self else { return }
       Task { @MainActor in
-        await self.hideReadPosts()
+        await self.hideSeenPosts()
       }
     }
     
@@ -244,8 +244,8 @@ import Nuke
   }
 
   deinit {
-    if let hideReadPostsObserver {
-      NotificationCenter.default.removeObserver(hideReadPostsObserver)
+    if let hideSeenPostsObserver {
+      NotificationCenter.default.removeObserver(hideSeenPostsObserver)
     }
     if let statusUpdatedObserver {
       NotificationCenter.default.removeObserver(statusUpdatedObserver)
@@ -328,7 +328,7 @@ extension TimelineViewModel: GapLoadingFetcher {
 
   func refreshTimelineContentFilter() async {
     timelineTask?.cancel()
-    if TimelineContentFilter.shared.hideReadPosts {
+    if TimelineContentFilter.shared.hideSeenPosts {
       sessionSeenPosts = SeenPostsManager.shared.seenPosts
     }
     await updateStatusesState()
@@ -357,7 +357,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       if pullToRefresh || sessionSeenPosts.isEmpty {
         sessionSeenPosts = SeenPostsManager.shared.seenPosts
         if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
-          await datasource.hideReadPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+          await datasource.hideSeenPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
         }
       }
       if let marker {
@@ -688,12 +688,12 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   @MainActor
-  func hideReadPosts() async {
+  func hideSeenPosts() async {
     exemptFromHideSeen = []
     sessionSeenPosts = SeenPostsManager.shared.seenPosts
     
     if UserPreferences.shared.hideSeenPostsEnabled, !UserPreferences.shared.hideSeenPostsIsToggle {
-      await datasource.hideReadPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
+      await datasource.hideSeenPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
     }
     
     var items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
@@ -768,7 +768,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     } catch {
       // If loading fails, reset the gap loading state
       await datasource.updateGapLoadingState(id: gap.id, isLoading: false)
-      await refreshTimelineContentFilter()
+      await updateStatusesStateWithAnimation()
     }
   }
 
