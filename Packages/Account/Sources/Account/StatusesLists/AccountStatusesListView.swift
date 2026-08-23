@@ -48,7 +48,12 @@ public struct AccountStatusesListView: View {
       if TimelineContentFilter.shared.isGalleryMode {
         ScrollView {
           LazyVStack(spacing: 0) {
-            GalleryStatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
+            GalleryStatusesListView(
+              statusesState: fetcher.statusesState,
+              client: client,
+              fetchNextPage: fetcher.fetchNextPage,
+              fetchNewestStatuses: { await fetcher.fetchNewestStatuses(pullToRefresh: false) }
+            )
           }
         }
       } else {

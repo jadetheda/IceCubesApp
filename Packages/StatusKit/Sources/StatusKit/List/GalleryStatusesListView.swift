@@ -7,26 +7,42 @@ import NukeUI
 import SwiftUI
 
 @MainActor
-public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
+public struct GalleryStatusesListView: View {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
 
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-  @State private var fetcher: Fetcher
+  private let statusesState: StatusesState
+  private let fetchNextPage: () async throws -> Void
+  private let fetchNewestStatuses: () async -> Void
+  private let loadGap: ((TimelineGap) async -> Void)?
+
   private let isRemote: Bool
   private let client: MastodonClient
   private let filterContext: Filter.Context?
 
-  public init(fetcher: Fetcher, client: MastodonClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
-    _fetcher = .init(initialValue: fetcher)
-    self.isRemote = isRemote
+  public init(
+    statusesState: StatusesState,
+    client: MastodonClient,
+    routerPath: RouterPath? = nil,
+    isRemote: Bool = false,
+    filterContext: Filter.Context? = nil,
+    fetchNextPage: @escaping () async throws -> Void,
+    fetchNewestStatuses: @escaping () async -> Void,
+    loadGap: ((TimelineGap) async -> Void)? = nil
+  ) {
+    self.statusesState = statusesState
     self.client = client
+    self.isRemote = isRemote
     self.filterContext = filterContext
+    self.fetchNextPage = fetchNextPage
+    self.fetchNewestStatuses = fetchNewestStatuses
+    self.loadGap = loadGap
   }
 
   public var body: some View {
-    switch fetcher.statusesState {
+    switch statusesState {
     case .loading:
       let columns = UserPreferences.shared.galleryColumns
       let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
@@ -56,7 +72,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         message: "status.error.loading.message",
         buttonTitle: "action.retry"
       ) {
-        await fetcher.fetchNewestStatuses(pullToRefresh: false)
+        await fetchNewestStatuses()
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
@@ -155,7 +171,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
     if nextPageState == .hasNextPage {
       NextPageView {
-        try await fetcher.fetchNextPage()
+        try await fetchNextPage()
       }
       .padding(.vertical)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -169,9 +185,9 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     ForEach(chunks) { chunk in
       VStack(spacing: 0) {
         if chunk.isGap, let gap = chunk.gap {
-          if let gapLoader = fetcher as? GapLoadingFetcher {
+          if let loadGap = loadGap {
             TimelineGapView(gap: gap) {
-              await gapLoader.loadGap(gap: gap)
+              await loadGap(gap)
             }
             .padding(.horizontal, .layoutPadding)
             .padding(.vertical, 8)
@@ -190,7 +206,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       let targetMediaCount = columns * itemsPerColumn
       
       if mediaCount < targetMediaCount && nextPageState == .hasNextPage {
-        try? await fetcher.fetchNextPage()
+        try? await fetchNextPage()
       }
     }
     

@@ -115,11 +115,12 @@ struct AnyStatusesListView: View {
   @ViewBuilder
   private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> some View {
     GalleryStatusesListView(
-      fetcher: f,
+      statusesState: f.statusesState,
       client: client,
-      routerPath: routerPath,
       isRemote: isRemote,
-      filterContext: .account
+      filterContext: .account,
+      fetchNextPage: f.fetchNextPage,
+      fetchNewestStatuses: { await f.fetchNewestStatuses(pullToRefresh: false) }
     )
   }
 }

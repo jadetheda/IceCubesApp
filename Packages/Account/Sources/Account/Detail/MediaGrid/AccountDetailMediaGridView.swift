@@ -9,78 +9,6 @@ import SwiftUI
 import StatusKit
 import Observation
 
-/// `AccountMediaFetcher` provides a unified `StatusesFetcher` conforming interface for the 
-/// Profile Media Gallery. This eliminates the fragmentation of having a custom grid layout 
-/// just for profiles, allowing us to leverage `GalleryStatusesListView` natively.
-@MainActor
-@Observable
-public class AccountMediaFetcher: StatusesFetcher {
-  public let accountId: String
-  public var client: MastodonClient?
-  
-  public var statusesState: StatusesState = .loading
-  public var statuses: [Status] = []
-  
-  public init(accountId: String, client: MastodonClient? = nil, initialStatuses: [Status] = []) {
-    self.accountId = accountId
-    self.client = client
-    if !initialStatuses.isEmpty {
-      self.statuses = initialStatuses
-      // Standardize the next page state based on the provided items
-      self.statusesState = .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none)
-    }
-  }
-  
-  public func fetchNewestStatuses(pullToRefresh: Bool) async {
-    guard let client else { return }
-    do {
-      statusesState = .loading
-      let newStatuses: [Status] = try await client.get(
-        endpoint: Accounts.statuses(
-          id: accountId,
-          sinceId: nil,
-          tag: nil,
-          onlyMedia: true,
-          excludeReplies: true,
-          excludeReblogs: true,
-          pinned: nil
-        )
-      )
-      
-      statuses = newStatuses
-      StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-      // Check for empty to determine pagination end safely
-      statusesState = .display(statuses: newStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
-    } catch {
-      statusesState = .error(error: .noData)
-    }
-  }
-  
-  public func fetchNextPage() async throws {
-    guard let client, let lastId = statuses.last?.id else { return }
-    
-    let newStatuses: [Status] = try await client.get(
-      endpoint: Accounts.statuses(
-        id: accountId,
-        sinceId: lastId,
-        tag: nil,
-        onlyMedia: true,
-        excludeReplies: true,
-        excludeReblogs: true,
-        pinned: nil
-      )
-    )
-    
-    statuses.append(contentsOf: newStatuses)
-    StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-    // Safely check if we're out of remote pages
-    statusesState = .display(statuses: statuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
-  }
-  
-  public func statusDidAppear(status: Status) {}
-  public func statusDidDisappear(status: Status) {}
-}
-
 @MainActor
 public struct AccountDetailMediaGridView: View {
   @Environment(Theme.self) private var theme
@@ -88,7 +16,8 @@ public struct AccountDetailMediaGridView: View {
   @Environment(MastodonClient.self) private var client
   
   let account: Account
-  @State private var fetcher: AccountMediaFetcher
+  @State var mediaStatuses: [MediaStatus]
+  @State private var statusesState: StatusesState
   
   private var isRemote: Bool {
     guard let host = account.url?.host else { return false }
@@ -97,20 +26,24 @@ public struct AccountDetailMediaGridView: View {
   
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
     self.account = account
+    mediaStatuses = initialMediaStatuses
     let initialStatuses = initialMediaStatuses.map { $0.status }
-    _fetcher = .init(initialValue: AccountMediaFetcher(accountId: account.id, initialStatuses: initialStatuses))
+    if !initialStatuses.isEmpty {
+      _statusesState = .init(initialValue: .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none))
+    } else {
+      _statusesState = .init(initialValue: .loading)
+    }
   }
   
   public var body: some View {
     ScrollView {
       LazyVStack(spacing: 0) {
-        // Reuse the exact same masonry gallery implementation from the Timeline
-        // This eliminates layout bugs and standardizes remote-media behavior.
         GalleryStatusesListView(
-          fetcher: fetcher,
+          statusesState: statusesState,
           client: client,
-          routerPath: routerPath,
-          isRemote: isRemote
+          isRemote: isRemote,
+          fetchNextPage: fetchNextPage,
+          fetchNewestStatuses: fetchNewestStatuses
         )
       }
       .padding(.top, .layoutPadding)
@@ -123,12 +56,9 @@ public struct AccountDetailMediaGridView: View {
       }
     }
     .onAppear {
-      if fetcher.client == nil {
-        fetcher.client = client
-        if fetcher.statuses.isEmpty {
-          Task {
-            await fetcher.fetchNewestStatuses(pullToRefresh: false)
-          }
+      if mediaStatuses.isEmpty {
+        Task {
+          await fetchNewestStatuses()
         }
       }
     }
@@ -136,10 +66,49 @@ public struct AccountDetailMediaGridView: View {
       .background(theme.primaryBackgroundColor.ignoresSafeArea())
     #endif
     .refreshable {
-      await fetcher.fetchNewestStatuses(pullToRefresh: true)
+      await fetchNewestStatuses()
     }
-    .refreshable {
-      await fetcher.fetchNewestStatuses(pullToRefresh: true)
+  }
+
+  private func fetchNewestStatuses() async {
+    do {
+      statusesState = .loading
+      let newStatuses: [Status] = try await client.get(
+        endpoint: Accounts.statuses(
+          id: account.id,
+          sinceId: nil,
+          tag: nil,
+          onlyMedia: true,
+          excludeReplies: true,
+          excludeReblogs: true,
+          pinned: nil
+        )
+      )
+      
+      mediaStatuses = newStatuses.flatMap { $0.asMediaStatus }
+      StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+      statusesState = .display(statuses: newStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
+    } catch {
+      statusesState = .error(error: .noData)
     }
+  }
+  
+  private func fetchNextPage() async throws {
+    let newStatuses: [Status] = try await client.get(
+      endpoint: Accounts.statuses(
+        id: account.id,
+        sinceId: mediaStatuses.last?.id,
+        tag: nil,
+        onlyMedia: true,
+        excludeReplies: true,
+        excludeReblogs: true,
+        pinned: nil
+      )
+    )
+    
+    mediaStatuses.append(contentsOf: newStatuses.flatMap { $0.asMediaStatus })
+    let allStatuses = mediaStatuses.map { $0.status }
+    StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
+    statusesState = .display(statuses: allStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
   }
 }

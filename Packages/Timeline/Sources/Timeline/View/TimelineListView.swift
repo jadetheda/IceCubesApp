@@ -43,17 +43,23 @@ struct TimelineListView: View {
               switch viewModel.timeline {
               case .remoteLocal:
                 GalleryStatusesListView(
-                  fetcher: viewModel,
+                  statusesState: viewModel.statusesState,
                   client: client,
-                  routerPath: routerPath,
                   isRemote: true,
-                  filterContext: timeline.filterContext)
+                  filterContext: timeline.filterContext,
+                  fetchNextPage: viewModel.fetchNextPage,
+                  fetchNewestStatuses: { await viewModel.fetchNewestStatuses(pullToRefresh: false) },
+                  loadGap: viewModel.loadGap
+                )
               default:
                 GalleryStatusesListView(
-                  fetcher: viewModel,
+                  statusesState: viewModel.statusesState,
                   client: client,
-                  routerPath: routerPath,
-                  filterContext: timeline.filterContext)
+                  filterContext: timeline.filterContext,
+                  fetchNextPage: viewModel.fetchNextPage,
+                  fetchNewestStatuses: { await viewModel.fetchNewestStatuses(pullToRefresh: false) },
+                  loadGap: viewModel.loadGap
+                )
                   .environment(\.isHomeTimeline, timeline == .home)
               }
             }
