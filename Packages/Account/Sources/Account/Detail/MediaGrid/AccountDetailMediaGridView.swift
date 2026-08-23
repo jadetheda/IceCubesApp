@@ -26,7 +26,7 @@ public struct AccountDetailMediaGridView: View {
   
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
     self.account = account
-    mediaStatuses = initialMediaStatuses
+    _mediaStatuses = .init(initialValue: initialMediaStatuses)
     let initialStatuses = initialMediaStatuses.map { $0.status }
     if !initialStatuses.isEmpty {
       _statusesState = .init(initialValue: .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none))
