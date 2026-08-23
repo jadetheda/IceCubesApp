@@ -120,7 +120,9 @@ struct AnyStatusesListView: View {
       isRemote: isRemote,
       filterContext: .account,
       fetchNextPage: f.fetchNextPage,
-      fetchNewestStatuses: { await f.fetchNewestStatuses(pullToRefresh: false) }
+      fetchNewestStatuses: { await f.fetchNewestStatuses(pullToRefresh: false) },
+      statusDidAppear: f.statusDidAppear,
+      statusDidDisappear: f.statusDidDisappear
     )
   }
 }

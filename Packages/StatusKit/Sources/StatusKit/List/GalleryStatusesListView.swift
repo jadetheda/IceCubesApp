@@ -17,6 +17,8 @@ public struct GalleryStatusesListView: View {
   private let fetchNextPage: () async throws -> Void
   private let fetchNewestStatuses: () async -> Void
   private let loadGap: ((TimelineGap) async -> Void)?
+  private let statusDidAppear: ((Status) -> Void)?
+  private let statusDidDisappear: ((Status) -> Void)?
 
   private let isRemote: Bool
   private let client: MastodonClient
@@ -30,7 +32,9 @@ public struct GalleryStatusesListView: View {
     filterContext: Filter.Context? = nil,
     fetchNextPage: @escaping () async throws -> Void,
     fetchNewestStatuses: @escaping () async -> Void,
-    loadGap: ((TimelineGap) async -> Void)? = nil
+    loadGap: ((TimelineGap) async -> Void)? = nil,
+    statusDidAppear: ((Status) -> Void)? = nil,
+    statusDidDisappear: ((Status) -> Void)? = nil
   ) {
     self.statusesState = statusesState
     self.client = client
@@ -39,6 +43,8 @@ public struct GalleryStatusesListView: View {
     self.fetchNextPage = fetchNextPage
     self.fetchNewestStatuses = fetchNewestStatuses
     self.loadGap = loadGap
+    self.statusDidAppear = statusDidAppear
+    self.statusDidDisappear = statusDidDisappear
   }
 
   public var body: some View {
@@ -318,8 +324,8 @@ public struct GalleryStatusesListView: View {
                 )
                 .id(mediaStatus.id)
                 .padding(.bottom, 4)
-                .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
-                .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+                .onAppear { statusDidAppear?(mediaStatus.status) }
+                .onDisappear { statusDidDisappear?(mediaStatus.status) }
               }
             }
           }

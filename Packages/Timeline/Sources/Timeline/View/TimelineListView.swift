@@ -49,7 +49,9 @@ struct TimelineListView: View {
                   filterContext: timeline.filterContext,
                   fetchNextPage: viewModel.fetchNextPage,
                   fetchNewestStatuses: { await viewModel.fetchNewestStatuses(pullToRefresh: false) },
-                  loadGap: viewModel.loadGap
+                  loadGap: viewModel.loadGap,
+                  statusDidAppear: viewModel.statusDidAppear,
+                  statusDidDisappear: viewModel.statusDidDisappear
                 )
               default:
                 GalleryStatusesListView(
@@ -58,7 +60,9 @@ struct TimelineListView: View {
                   filterContext: timeline.filterContext,
                   fetchNextPage: viewModel.fetchNextPage,
                   fetchNewestStatuses: { await viewModel.fetchNewestStatuses(pullToRefresh: false) },
-                  loadGap: viewModel.loadGap
+                  loadGap: viewModel.loadGap,
+                  statusDidAppear: viewModel.statusDidAppear,
+                  statusDidDisappear: viewModel.statusDidDisappear
                 )
                   .environment(\.isHomeTimeline, timeline == .home)
               }
@@ -106,7 +110,7 @@ struct TimelineListView: View {
       #endif
       .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {
-          let targetId = newValue ? viewModel.getTopVisibleMediaStatusId() : viewModel.getTopVisibleStatusId()
+          let targetId = viewModel.getTopVisibleStatusId()
           if let targetId = targetId {
             Task {
               try? await Task.sleep(nanoseconds: 300_000_000)

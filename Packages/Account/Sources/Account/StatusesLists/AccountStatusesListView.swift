@@ -52,7 +52,9 @@ public struct AccountStatusesListView: View {
               statusesState: fetcher.statusesState,
               client: client,
               fetchNextPage: fetcher.fetchNextPage,
-              fetchNewestStatuses: { await fetcher.fetchNewestStatuses(pullToRefresh: false) }
+              fetchNewestStatuses: { await fetcher.fetchNewestStatuses(pullToRefresh: false) },
+              statusDidAppear: fetcher.statusDidAppear,
+              statusDidDisappear: fetcher.statusDidDisappear
             )
           }
         }
