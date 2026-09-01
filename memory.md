@@ -645,3 +645,5 @@
   - Decoupled the core masonry layout (`GalleryStatusesListView`) from the legacy `StatusesFetcher` protocol generic constraint. `GalleryStatusesListView` is now a pure, "dumb" SwiftUI component driven purely by `@State` and closures for pagination.
   - Converted `AccountDetailMediaGridView` to drive its API requests natively via `@State`, matching the desired modern SwiftUI architectural patterns.
   - Updated all dependent call sites (`TimelineListView`, `AnyStatusesListView`, `AccountStatusesListView`, etc.) to interface cleanly with the modernized `GalleryStatusesListView` signature, preserving their downstream behavior while vastly simplifying the upstream dependency graph.
+-e 
+- **2026-09-01**: Fixed bug where enabling Timeline Gallery Mode globally hijacked the Account Profile 'Posts' and 'Replies' tabs. Added `isMediaTab` flag to `AnyStatusesListView` to ensure Gallery Mode masonry grids are only applied to the dedicated Media tab. (Pushed to both `main` and `gallery_mode_refactor` branches).
