@@ -79,13 +79,11 @@ struct AnyStatusesListView: View {
         }
         
         if nextPageState == .hasNextPage {
-          loadMoreView
-            .id(statuses.count)
-            .onAppear {
-              Task {
-                try? await fetcher.fetchNextPage()
-              }
-            }
+          NextPageView {
+            try await fetcher.fetchNextPage()
+          }
+          .listRowBackground(theme.primaryBackgroundColor)
+          .id(statuses.count)
         }
       case .error:
         ErrorView(
@@ -117,16 +115,6 @@ struct AnyStatusesListView: View {
     }
   }
 
-  private var loadMoreView: some View {
-    HStack {
-      Spacer()
-      ProgressView()
-      Spacer()
-    }
-    .padding()
-    .listRowBackground(theme.primaryBackgroundColor)
-  }
-  
   @ViewBuilder
   private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> some View {
     GalleryStatusesListView(
