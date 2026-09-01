@@ -651,3 +651,5 @@
 - **2026-09-01**: Fixed a bug where timeline filters (like `hidePostsWithoutMedia`) were inadvertently erasing text posts from the 'Posts' and 'Replies' tabs on Account Profiles. Removed the `filteredStatuses` function from `AnyStatusesListView` so that global timeline content filters no longer leak into user profile pages.
 -e 
 - **2026-09-01**: Restored TimelineContentFilter filtering to Account Profile tabs ('Posts' and 'Replies') as it can be considered a feature. Added a visual warning indicator to `AnyStatusesListView` so users know when their global timeline filters are actively hiding posts from a user's profile.
+-e 
+- **2026-09-01**: Fixed critical pagination stalling bug in `AnyStatusesListView`. When profile tabs (like Replies) had many text posts filtered out by active timeline filters, the `loadMoreView` would stay on screen but fail to re-trigger its `onAppear` action, halting pagination completely. Attached `.id(statuses.count)` to the spinner to force recreation and re-trigger fetching when filtered arrays remain static while underlying datasets grow.

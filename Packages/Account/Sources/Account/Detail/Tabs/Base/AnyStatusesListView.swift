@@ -80,6 +80,7 @@ struct AnyStatusesListView: View {
         
         if nextPageState == .hasNextPage {
           loadMoreView
+            .id(statuses.count)
             .onAppear {
               Task {
                 try? await fetcher.fetchNextPage()
