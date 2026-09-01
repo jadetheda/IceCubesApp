@@ -649,3 +649,5 @@
 - **2026-09-01**: Fixed bug where enabling Timeline Gallery Mode globally hijacked the Account Profile 'Posts' and 'Replies' tabs. Added `isMediaTab` flag to `AnyStatusesListView` to ensure Gallery Mode masonry grids are only applied to the dedicated Media tab. (Pushed to both `main` and `gallery_mode_refactor` branches).
 -e 
 - **2026-09-01**: Fixed a bug where timeline filters (like `hidePostsWithoutMedia`) were inadvertently erasing text posts from the 'Posts' and 'Replies' tabs on Account Profiles. Removed the `filteredStatuses` function from `AnyStatusesListView` so that global timeline content filters no longer leak into user profile pages.
+-e 
+- **2026-09-01**: Restored TimelineContentFilter filtering to Account Profile tabs ('Posts' and 'Replies') as it can be considered a feature. Added a visual warning indicator to `AnyStatusesListView` so users know when their global timeline filters are actively hiding posts from a user's profile.

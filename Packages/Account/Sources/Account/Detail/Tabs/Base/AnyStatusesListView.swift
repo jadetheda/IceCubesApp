@@ -55,7 +55,18 @@ struct AnyStatusesListView: View {
           .allowsHitTesting(false)
         }
       case let .display(statuses, nextPageState):
-        ForEach(statuses) { status in
+        if contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia {
+          HStack {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+            Text("Some posts are hidden by your active timeline filters")
+            Spacer()
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .listRowBackground(theme.primaryBackgroundColor)
+        }
+        
+        ForEach(filteredStatuses(statuses)) { status in
           StatusRowExternalView(
             viewModel: .init(
               status: status,
@@ -93,6 +104,18 @@ struct AnyStatusesListView: View {
     }
   }
   
+  private func filteredStatuses(_ statuses: [Status]) -> [Status] {
+    return statuses.filter { status in
+      if contentFilter.hidePostsWithMedia {
+        if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
+      }
+      if contentFilter.hidePostsWithoutMedia {
+        if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
+      }
+      return true
+    }
+  }
+
   private var loadMoreView: some View {
     HStack {
       Spacer()
