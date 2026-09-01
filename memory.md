@@ -647,3 +647,5 @@
   - Updated all dependent call sites (`TimelineListView`, `AnyStatusesListView`, `AccountStatusesListView`, etc.) to interface cleanly with the modernized `GalleryStatusesListView` signature, preserving their downstream behavior while vastly simplifying the upstream dependency graph.
 -e 
 - **2026-09-01**: Fixed bug where enabling Timeline Gallery Mode globally hijacked the Account Profile 'Posts' and 'Replies' tabs. Added `isMediaTab` flag to `AnyStatusesListView` to ensure Gallery Mode masonry grids are only applied to the dedicated Media tab. (Pushed to both `main` and `gallery_mode_refactor` branches).
+-e 
+- **2026-09-01**: Fixed a bug where timeline filters (like `hidePostsWithoutMedia`) were inadvertently erasing text posts from the 'Posts' and 'Replies' tabs on Account Profiles. Removed the `filteredStatuses` function from `AnyStatusesListView` so that global timeline content filters no longer leak into user profile pages.
