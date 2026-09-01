@@ -55,7 +55,7 @@ struct AnyStatusesListView: View {
           .allowsHitTesting(false)
         }
       case let .display(statuses, nextPageState):
-        ForEach(filteredStatuses(statuses)) { status in
+        ForEach(statuses) { status in
           StatusRowExternalView(
             viewModel: .init(
               status: status,
@@ -90,18 +90,6 @@ struct AnyStatusesListView: View {
       case .displayWithGaps:
         EmptyView()
       }
-    }
-  }
-  
-  private func filteredStatuses(_ statuses: [Status]) -> [Status] {
-    return statuses.filter { status in
-      if contentFilter.hidePostsWithMedia {
-        if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
-      }
-      if contentFilter.hidePostsWithoutMedia {
-        if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
-      }
-      return true
     }
   }
   
