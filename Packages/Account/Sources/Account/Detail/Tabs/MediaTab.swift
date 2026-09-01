@@ -114,7 +114,8 @@ private struct MediaTabView: View {
         fetcher: fetcher,
         client: client,
         routerPath: routerPath,
-        isRemote: account?.url?.host?.lowercased() != client.server.lowercased()
+        isRemote: account?.url?.host?.lowercased() != client.server.lowercased(),
+        isMediaTab: true
       )
     }
   }
