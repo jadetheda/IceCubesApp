@@ -11,6 +11,7 @@ struct AnyStatusesListView: View {
   let client: MastodonClient
   let routerPath: RouterPath
   let isRemote: Bool
+  let isMediaTab: Bool
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
   // toggles like hideSeenPosts from affecting the profile media view.
@@ -18,12 +19,14 @@ struct AnyStatusesListView: View {
     fetcher: any StatusesFetcher,
     client: MastodonClient,
     routerPath: RouterPath,
-    isRemote: Bool = false
+    isRemote: Bool = false,
+    isMediaTab: Bool = false
   ) {
     self.fetcher = fetcher
     self.client = client
     self.routerPath = routerPath
     self.isRemote = isRemote
+    self.isMediaTab = isMediaTab
   }
   
   @Environment(Theme.self) private var theme
@@ -31,7 +34,7 @@ struct AnyStatusesListView: View {
   var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    if contentFilter.isGalleryMode {
+    if isMediaTab && contentFilter.isGalleryMode {
       AnyView(unboxedGallery(fetcher))
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
