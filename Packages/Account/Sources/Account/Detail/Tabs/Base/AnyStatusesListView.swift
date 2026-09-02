@@ -12,6 +12,7 @@ struct AnyStatusesListView: View {
   let routerPath: RouterPath
   let isRemote: Bool
   let isMediaTab: Bool
+  let showFilterWarning: Bool
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
   // toggles like hideSeenPosts from affecting the profile media view.
@@ -20,13 +21,15 @@ struct AnyStatusesListView: View {
     client: MastodonClient,
     routerPath: RouterPath,
     isRemote: Bool = false,
-    isMediaTab: Bool = false
+    isMediaTab: Bool = false,
+    showFilterWarning: Bool = true
   ) {
     self.fetcher = fetcher
     self.client = client
     self.routerPath = routerPath
     self.isRemote = isRemote
     self.isMediaTab = isMediaTab
+    self.showFilterWarning = showFilterWarning
   }
   
   @Environment(Theme.self) private var theme
@@ -55,7 +58,7 @@ struct AnyStatusesListView: View {
           .allowsHitTesting(false)
         }
       case let .display(statuses, nextPageState):
-        if contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia {
+        if showFilterWarning && (contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia) {
           HStack {
             Image(systemName: "line.3.horizontal.decrease.circle")
             Text("Some posts are hidden by your active timeline filters")
