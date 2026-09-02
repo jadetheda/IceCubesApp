@@ -346,24 +346,3 @@ public struct BlueskyLight: ColorSet {
   }
 }
 
-public struct BlueskyDark: ColorSet {
-  public var name: ColorSetName = .blueskyDark
-  public var scheme: ColorScheme = .dark
-  public var tintColor: Color = .init(hex: 0x4D97FF)
-  public var primaryBackgroundColor: Color = .init(hex: 0x151D28)
-  public var secondaryBackgroundColor: Color = .init(hex: 0x151D28)
-  public var labelColor: Color = .white
-
-  public init() {}
-}
-
-public struct BlueskyLight: ColorSet {
-  public var name: ColorSetName = .blueskyLight
-  public var scheme: ColorScheme = .light
-  public var tintColor: Color = .init(hex: 0x006AFF)
-  public var primaryBackgroundColor: Color = .init(hex: 0xFFFFFF)
-  public var secondaryBackgroundColor: Color = .init(hex: 0xFFFFFF)
-  public var labelColor: Color = .black
-
-  public init() {}
-}
