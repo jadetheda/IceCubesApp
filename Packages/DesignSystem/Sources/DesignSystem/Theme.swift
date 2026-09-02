@@ -74,7 +74,6 @@ public final class Theme {
         "SF Rounded"
       case .inter:
         "Inter (Bluesky)"
-      case .custom:
       }
     }
   }

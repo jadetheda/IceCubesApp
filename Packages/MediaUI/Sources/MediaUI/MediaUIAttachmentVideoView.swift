@@ -135,9 +135,6 @@ import SwiftUI
     }
   }
 
-  deinit {
-    NotificationCenter.default.removeObserver(
-      self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
   isolated deinit {
     if let playbackEndObserver {
       NotificationCenter.default.removeObserver(playbackEndObserver)
