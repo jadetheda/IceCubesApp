@@ -61,7 +61,6 @@ public final class Theme {
     case hyperLegible
     case SFRounded
     case inter
-    case custom
 
     public var title: LocalizedStringKey {
       switch self {
@@ -76,7 +75,6 @@ public final class Theme {
       case .inter:
         "Inter (Bluesky)"
       case .custom:
-        "settings.display.font.custom"
       }
     }
   }

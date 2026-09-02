@@ -25,6 +25,7 @@ public struct AccountDetailView: View {
   @State private var viewState: AccountDetailState = .loading
   @State private var relationship: Relationship?
   @State private var familiarFollowers: [Account] = []
+  @State private var collections: [AccountCollection] = []
   @State private var followButtonViewModel: FollowButtonViewModel?
   @State private var translation: Translation?
   @State private var isLoadingTranslation = false
@@ -105,6 +106,8 @@ public struct AccountDetailView: View {
             .applyAccountDetailsRowStyle(theme: theme)
           FeaturedTagsView(featuredTags: featuredTags, accountId: accountId)
             .applyAccountDetailsRowStyle(theme: theme)
+          AccountCollectionsView(collections: collections)
+            .applyAccountDetailsRowStyle(theme: theme)
           if let tabManager {
             makeTabPicker(tabManager: tabManager)
               .pickerStyle(.segmented)
@@ -183,6 +186,9 @@ public struct AccountDetailView: View {
                 await fetchFamiliarFollowers()
               }
             }
+            group.addTask {
+              await fetchCollections()
+            }
           }
         }
       }
@@ -192,6 +198,7 @@ public struct AccountDetailView: View {
         SoundEffectManager.shared.playSound(.pull)
         HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
         await fetchAccount()
+        await fetchCollections()
         if let tabManager {
           await tabManager.refreshCurrentTab()
         }
@@ -214,6 +221,7 @@ public struct AccountDetailView: View {
       if oldValue == .accountEditInfo || newValue == .accountEditInfo {
         Task {
           await fetchAccount()
+          await fetchCollections()
           await preferences.refreshServerPreferences()
         }
       }
@@ -396,6 +404,17 @@ extension AccountDetailView {
       account: account,
       featuredTags: featuredTags,
       relationships: [])
+  }
+
+  private func fetchCollections() async {
+    if let apiVersion = currentInstance.instance?.apiVersions?.mastodon, apiVersion < 10 {
+      collections = []
+      return
+    }
+    guard let response: AccountCollectionsResponse = try? await client.get(
+      endpoint: Collections.accountCollections(id: accountId))
+    else { return }
+    collections = response.collections.filter(\.discoverable)
   }
 
   private func fetchFamiliarFollowers() async {

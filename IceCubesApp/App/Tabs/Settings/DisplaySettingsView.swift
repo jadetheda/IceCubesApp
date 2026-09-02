@@ -15,10 +15,6 @@ import SwiftUI
   var labelColor = Theme.shared.labelColor
   var lineSpacing = Theme.shared.lineSpacing
   var fontSizeScale = Theme.shared.fontSizeScale
-  var actionFavoriteColor = Theme.shared.actionFavoriteColor
-  var actionLikeColor = Theme.shared.actionLikeColor
-  var actionBoostColor = Theme.shared.actionBoostColor
-  var actionBookmarkColor = Theme.shared.actionBookmarkColor
 }
 
 @MainActor
@@ -30,8 +26,6 @@ struct DisplaySettingsView: View {
   @Environment(UserPreferences.self) private var userPreferences
 
   @State private var localValues = DisplaySettingsLocalValues()
-
-  @State private var isFontSelectorPresented = false
 
   private let previewStatusViewModel = StatusRowViewModel(
     status: Status.placeholder(forSettings: true, language: "la"),
@@ -82,22 +76,6 @@ struct DisplaySettingsView: View {
         do { try await Task.sleep(for: .microseconds(500)) } catch {}
         theme.fontSizeScale = localValues.fontSizeScale
       }
-      .task(id: localValues.actionLikeColor) {
-        do { try await Task.sleep(for: .microseconds(500)) } catch {}
-        theme.actionLikeColor = localValues.actionLikeColor
-      }
-      .task(id: localValues.actionFavoriteColor) {
-        do { try await Task.sleep(for: .microseconds(500)) } catch {}
-        theme.actionFavoriteColor = localValues.actionFavoriteColor
-      }
-      .task(id: localValues.actionBoostColor) {
-        do { try await Task.sleep(for: .microseconds(500)) } catch {}
-        theme.actionBoostColor = localValues.actionBoostColor
-      }
-      .task(id: localValues.actionBookmarkColor) {
-        do { try await Task.sleep(for: .microseconds(500)) } catch {}
-        theme.actionBookmarkColor = localValues.actionBookmarkColor
-      }
       #if !os(visionOS)
         examplePost
       #endif
@@ -129,7 +107,6 @@ struct DisplaySettingsView: View {
     @Bindable var theme = theme
     Section {
       Toggle("settings.display.theme.systemColor", isOn: $theme.followSystemColorScheme)
-      Toggle("Like instead of Favorite", isOn: $theme.actionIsLike)
       themeSelectorButton
       Group {
         ColorPicker("settings.display.theme.tint", selection: $localValues.tintColor)
@@ -139,10 +116,6 @@ struct DisplaySettingsView: View {
           "settings.display.theme.secondary-background",
           selection: $localValues.secondaryBackgroundColor)
         ColorPicker("settings.display.theme.text-color", selection: $localValues.labelColor)
-        ColorPicker("Favorite Color", selection: $localValues.actionFavoriteColor)
-        ColorPicker("Like Color", selection: $localValues.actionLikeColor)
-        ColorPicker("Boost Color", selection: $localValues.actionBoostColor)
-        ColorPicker("Bookmark Color", selection: $localValues.actionBookmarkColor)
       }
       .disabled(theme.followSystemColorScheme)
       .opacity(theme.followSystemColorScheme ? 0.5 : 1.0)
@@ -151,10 +124,6 @@ struct DisplaySettingsView: View {
         localValues.primaryBackgroundColor = theme.primaryBackgroundColor
         localValues.secondaryBackgroundColor = theme.secondaryBackgroundColor
         localValues.labelColor = theme.labelColor
-        localValues.actionFavoriteColor = theme.actionFavoriteColor
-        localValues.actionLikeColor = theme.actionLikeColor
-        localValues.actionBoostColor = theme.actionBoostColor
-        localValues.actionBookmarkColor = theme.actionBookmarkColor
       }
     } header: {
       Text("settings.display.section.theme")
@@ -180,10 +149,8 @@ struct DisplaySettingsView: View {
               return FontState.hyperLegible
             } else if theme.chosenFont?.fontName == ".AppleSystemUIFontRounded-Regular" {
               return FontState.SFRounded
-            } else if theme.chosenFont?.fontName == "Inter-Regular" || theme.chosenFont?.fontName == "Inter" {
-              return FontState.inter
             }
-            return theme.chosenFontData != nil ? FontState.custom : FontState.system
+            return FontState.system
           },
           set: { newValue in
             switch newValue {
@@ -195,10 +162,6 @@ struct DisplaySettingsView: View {
               theme.chosenFont = UIFont(name: "Atkinson Hyperlegible", size: 1)
             case .SFRounded:
               theme.chosenFont = UIFont.systemFont(ofSize: 1).rounded()
-            case .inter:
-              theme.chosenFont = UIFont(name: "Inter-Regular", size: 1) ?? UIFont(name: "Inter", size: 1)
-            case .custom:
-              isFontSelectorPresented = true
             }
           })
       ) {
@@ -206,12 +169,6 @@ struct DisplaySettingsView: View {
           Text(fontState.title).tag(fontState)
         }
       }
-      .navigationDestination(isPresented: $isFontSelectorPresented, destination: { FontPicker() })
-      
-      NavigationLink(destination: FontPicker()) {
-        Text("settings.display.font.custom")
-      }
-
       VStack {
         Slider(value: $localValues.fontSizeScale, in: 0.5...1.5, step: 0.1)
         Text("settings.display.font.scaling-\(String(format: "%.1f", localValues.fontSizeScale))")
@@ -254,9 +211,6 @@ struct DisplaySettingsView: View {
       }
       Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
       Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
-      Toggle("Hide interaction buttons on Timeline", isOn: $userPreferences.hideInteractionButtons)
-      Toggle("Show 'Hide Pinned' in Timeline Menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
-      Toggle("Hide Pinned Items Symbol", isOn: $userPreferences.hidePinnedItemsSymbol)
       Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
         ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
           Text(buttonStyle.description).tag(buttonStyle)
@@ -277,8 +231,6 @@ struct DisplaySettingsView: View {
           Text(buttonStyle.description).tag(buttonStyle)
         }
       }
-      Toggle("Multi-Image Grid Layout", isOn: $userPreferences.statusMediaGridMode)
-      Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
       Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
       Toggle("settings.display.pending-at-bottom", isOn: $userPreferences.pendingShownAtBottom)
       Toggle("settings.display.pending-left", isOn: $userPreferences.pendingShownLeft)
@@ -305,31 +257,6 @@ struct DisplaySettingsView: View {
       Toggle("settings.display.show-account-popover", isOn: $userPreferences.showAccountPopover)
       Toggle("Compact Layout", isOn: $theme.compactLayoutPadding)
     }
-    
-
-      Section("settings.display.gallery.title") {
-        Stepper(String(format: NSLocalizedString("settings.display.gallery.columns", comment: ""), userPreferences.galleryColumns), value: $userPreferences.galleryColumns, in: 2...4)
-        Toggle(isOn: $userPreferences.galleryCropToSquare) {
-          Label("settings.display.gallery.crop-square", systemImage: "crop")
-        }
-        Toggle(isOn: $userPreferences.galleryOptimizeItemLayout) {
-          Label("settings.display.gallery.optimize-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
-        }
-        Toggle(isOn: $userPreferences.galleryRoundCorners) {
-          Label("Round corners", systemImage: "squareshape")
-        }
-        Toggle(isOn: $userPreferences.galleryAddThinMargins) {
-          Label("settings.display.gallery.add-margins", systemImage: "arrow.left.and.right")
-        }
-      }
-      
-      Section("settings.display.undo-scroll.title") {
-        Toggle("settings.display.undo-scroll.enable", isOn: $userPreferences.undoScrollToTopEnabled)
-        if userPreferences.undoScrollToTopEnabled {
-          Stepper(String(format: NSLocalizedString("settings.display.undo-scroll.timeout", comment: ""), userPreferences.undoScrollToTopTimeout), value: $userPreferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
-        }
-      }
-
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif

@@ -32,7 +32,7 @@
 		9F7788E62BE6543D004E6BEF /* NetworkClient in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7788E52BE6543D004E6BEF /* NetworkClient */; };
 		9F7788F02BE78E77004E6BEF /* Timeline in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7788EF2BE78E77004E6BEF /* Timeline */; };
 		9F7D93942980063100EE6B7A /* AppAccount in Frameworks */ = {isa = PBXBuildFile; productRef = 9F7D93932980063100EE6B7A /* AppAccount */; };
-		9F9191592C6DDF20001C89E7 /* WishKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9F9191582C6DDF20001C89E7 /* WishKit */; };
+		9F9191592C6DDF20001C89E7 /* WishKit in Frameworks */ = {isa = PBXBuildFile; platformFilters = (ios, ); productRef = 9F9191582C6DDF20001C89E7 /* WishKit */; };
 		9FAD858E29743F7400496AB1 /* (null) in Resources */ = {isa = PBXBuildFile; };
 		9FAD859229743F7400496AB1 /* IceCubesShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9FAD858829743F7400496AB1 /* IceCubesShareExtension.appex */; platformFilters = (ios, maccatalyst, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9FAD859A297440CB00496AB1 /* KeychainSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9FAD8599297440CB00496AB1 /* KeychainSwift */; };
@@ -1070,12 +1070,13 @@
 				CURRENT_PROJECT_VERSION = 3066;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"IceCubesApp/Resources\"";
-				DEVELOPMENT_TEAM = "$(DEVELOPMENT_TEAM)";
+				DEVELOPMENT_TEAM = Z6P74P6T99;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = IceCubesApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ice Cubes";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Upload photos & videos to attach to your Mastodon posts.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2024 Thomas Ricouard";
@@ -1141,12 +1142,13 @@
 				CURRENT_PROJECT_VERSION = 3066;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"IceCubesApp/Resources\"";
-				DEVELOPMENT_TEAM = "$(DEVELOPMENT_TEAM)";
+				DEVELOPMENT_TEAM = Z6P74P6T99;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = IceCubesApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Ice Cubes";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Upload photos & videos to attach to your Mastodon posts.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2024 Thomas Ricouard";
@@ -1335,7 +1337,7 @@
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.78.0;
+				minimumVersion = 5.86.0;
 			};
 		};
 		9F9191572C6DDF20001C89E7 /* XCRemoteSwiftPackageReference "wishkit-ios" */ = {
@@ -1343,15 +1345,15 @@
 			repositoryURL = "https://github.com/wishkit/wishkit-ios.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 4.1.1;
+				minimumVersion = 5.1.2;
 			};
 		};
 		9FAE4ACC29379A5A00772766 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
 			requirement = {
-				branch = master;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 24.0.0;
 			};
 		};
 		DA0B24F92A6876D40045BDD7 /* XCRemoteSwiftPackageReference "SFSafeSymbols" */ = {
@@ -1359,7 +1361,7 @@
 			repositoryURL = "https://github.com/SFSafeSymbols/SFSafeSymbols";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 4.1.1;
+				minimumVersion = 7.0.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

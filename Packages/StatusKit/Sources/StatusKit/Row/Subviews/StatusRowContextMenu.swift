@@ -232,7 +232,10 @@ Button {
         Button(
           role: .destructive,
           action: { viewModel.showDeleteAlert = true },
-          label: { Label("status.action.delete", systemImage: "trash") })
+          label: {
+            Label("status.action.delete", systemImage: "trash")
+              .tint(.red)
+          })
       }
     } else {
       if !viewModel.isRemote {
@@ -284,7 +287,7 @@ Button {
           viewModel.routerPath.presentedSheet = .report(
             status: viewModel.status.reblogAsAsStatus ?? viewModel.status)
         } label: {
-          Label("status.action.report", systemImage: "exclamationmark.bubble")
+          Label("status.action.report", systemImage: "exclamationmark.bubble").tint(.red)
         }
       }
     }
