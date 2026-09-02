@@ -22,7 +22,7 @@ let package = Package(
     .package(name: "Env", path: "../Env"),
     .package(name: "StatusKit", path: "../StatusKit"),
     .package(name: "DesignSystem", path: "../DesignSystem"),
-    .package(url: "https://github.com/kean/Nuke", exact: "12.8.0"),
+    .package(url: "https://github.com/kean/Nuke", exact: "13.2.0"),
     .package(url: "https://github.com/siteline/swiftui-introspect", exact: "26.0.1"),
     .package(url: "https://github.com/mergesort/Bodega", exact: "2.1.3"),
   ],
