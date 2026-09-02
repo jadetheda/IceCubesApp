@@ -111,10 +111,24 @@ private struct StatusesTabView: View {
   let isRemote: Bool
 
   @Environment(Theme.self) private var theme
+  var contentFilter = TimelineContentFilter.shared
 
   var body: some View {
     Group {
-      if !fetcher.pinned.isEmpty {
+      if case .display = fetcher.statusesState {
+        if contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia {
+          HStack {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+            Text("Some posts are hidden by your active timeline filters")
+            Spacer()
+          }
+          .font(.caption)
+          .foregroundStyle(.secondary)
+          .listRowBackground(theme.primaryBackgroundColor)
+        }
+      }
+
+      if !filteredPinned.isEmpty {
         pinnedPostsView
       }
 
@@ -122,8 +136,22 @@ private struct StatusesTabView: View {
         fetcher: fetcher,
         client: client,
         routerPath: routerPath,
-        isRemote: isRemote
+        isRemote: isRemote,
+        isMediaTab: false,
+        showFilterWarning: false
       )
+    }
+  }
+
+  private var filteredPinned: [Status] {
+    fetcher.pinned.filter { status in
+      if contentFilter.hidePostsWithMedia {
+        if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
+      }
+      if contentFilter.hidePostsWithoutMedia {
+        if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
+      }
+      return true
     }
   }
 
@@ -148,7 +176,7 @@ private struct StatusesTabView: View {
 
     let contentFilter = TimelineContentFilter.shared
     if contentFilter.isGalleryMode {
-      let mediaStatuses = fetcher.pinned.flatMap { $0.asMediaStatus }
+      let mediaStatuses = filteredPinned.flatMap { $0.asMediaStatus }
       let columns = UserPreferences.shared.galleryColumns
       
       let columnItems: [[MediaStatus]] = {
@@ -206,7 +234,7 @@ private struct StatusesTabView: View {
       .listRowBackground(theme.primaryBackgroundColor)
       .listRowInsets(EdgeInsets())
     } else {
-      ForEach(fetcher.pinned) { status in
+      ForEach(filteredPinned) { status in
         StatusRowExternalView(
           viewModel: .init(
             status: status,
