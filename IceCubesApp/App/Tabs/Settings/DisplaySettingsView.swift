@@ -149,6 +149,8 @@ struct DisplaySettingsView: View {
               return FontState.hyperLegible
             } else if theme.chosenFont?.fontName == ".AppleSystemUIFontRounded-Regular" {
               return FontState.SFRounded
+            } else if theme.chosenFont?.fontName == "Inter-Regular" || theme.chosenFont?.fontName == "Inter" {
+              return FontState.inter
             }
             return FontState.system
           },
@@ -162,6 +164,8 @@ struct DisplaySettingsView: View {
               theme.chosenFont = UIFont(name: "Atkinson Hyperlegible", size: 1)
             case .SFRounded:
               theme.chosenFont = UIFont.systemFont(ofSize: 1).rounded()
+            case .inter:
+              theme.chosenFont = UIFont(name: "Inter-Regular", size: 1) ?? UIFont(name: "Inter", size: 1)
             }
           })
       ) {
