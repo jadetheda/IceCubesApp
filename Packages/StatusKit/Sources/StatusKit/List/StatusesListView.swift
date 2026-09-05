@@ -242,13 +242,13 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
     private struct GalleryChunk: Identifiable {
       var id: String {
         if let gap = gap { return gap.id }
-        return items.first?.id ?? UUID().uuidString
+        return items.last?.id ?? UUID().uuidString
       }
       var items: [TimelineItem] = []
       var gap: TimelineGap? = nil
       var isGap: Bool { gap != nil }
     }
-  
+
     private func chunkItems(_ items: [TimelineItem]) -> [GalleryChunk] {
       var chunks: [GalleryChunk] = []
       var currentChunk = GalleryChunk()
@@ -261,8 +261,12 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
             currentChunk = GalleryChunk()
           }
           chunks.append(GalleryChunk(gap: gap))
-        case .status:
+        case .status(let status):
           currentChunk.items.append(item)
+          if status.id.hashValue % 18 == 0 {
+            chunks.append(currentChunk)
+            currentChunk = GalleryChunk()
+          }
         }
       }
       
