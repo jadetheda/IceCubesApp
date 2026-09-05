@@ -165,21 +165,49 @@ import Nuke
   }
 
   func getTopVisibleMediaStatusId() -> String? {
+      var topVisibleStatusId: String? = nil
+      
       if case .displayWithGaps(let items, _) = statusesState {
-          let topStatusId = items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
-          if let topStatusId = topStatusId, let status = items.compactMap({ $0.status }).first(where: { $0.id == topStatusId }) {
-              let attachments = status.reblog?.mediaAttachments ?? status.mediaAttachments
-              return attachments.first?.id
+          for item in items {
+              if let id = item.status?.id, visibleStatusesCount[id] != nil {
+                  topVisibleStatusId = id
+                  break
+              }
           }
       } else if case .display(let statuses, _) = statusesState {
-          let topStatusId = statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
-          if let topStatusId = topStatusId, let status = statuses.first(where: { $0.id == topStatusId }) {
-              let attachments = status.reblog?.mediaAttachments ?? status.mediaAttachments
-              return attachments.first?.id
+          for status in statuses {
+              if visibleStatusesCount[status.id] != nil {
+                  topVisibleStatusId = status.id
+                  break
+              }
+          }
+      } else {
+          topVisibleStatusId = visibleStatuses.first?.id
+      }
+      
+      guard let topId = topVisibleStatusId else { return nil }
+      
+      if case .displayWithGaps(let items, _) = statusesState {
+          if let startIndex = items.firstIndex(where: { $0.status?.id == topId }) {
+              let itemsFromIndex = items[startIndex...]
+              for item in itemsFromIndex {
+                  if let status = item.status, !status.asMediaStatus.isEmpty {
+                      return (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id
+                  }
+              }
+          }
+      } else if case .display(let statuses, _) = statusesState {
+          if let startIndex = statuses.firstIndex(where: { $0.id == topId }) {
+              let statusesFromIndex = statuses[startIndex...]
+              for status in statusesFromIndex {
+                  if !status.asMediaStatus.isEmpty {
+                      return (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id
+                  }
+              }
           }
       }
-      let attachments = visibleStatuses.first?.reblog?.mediaAttachments ?? visibleStatuses.first?.mediaAttachments
-      return attachments?.first?.id
+      
+      return nil
   }
   
   private func updateLastTopVisibleStatusId() {
@@ -396,7 +424,22 @@ extension TimelineViewModel: GapLoadingFetcher {
       if let latestSeenId = await cache.getLatestSeenStatus(for: client, filter: timeline.id)?.first
       {
         // Restore cache and scroll to latest seen status.
-        scrollToId = latestSeenId
+        if TimelineContentFilter.shared.isGalleryMode {
+            if let index = items.firstIndex(where: { $0.status?.id == latestSeenId }) {
+                let itemsFromIndex = items[index...]
+                if let statusItem = itemsFromIndex.first(where: { $0.status?.asMediaStatus.isEmpty == false }),
+                   let status = statusItem.status,
+                   let mediaId = (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id {
+                    scrollToId = mediaId
+                } else {
+                    scrollToId = latestSeenId
+                }
+            } else {
+                scrollToId = latestSeenId
+            }
+        } else {
+            scrollToId = latestSeenId
+        }
         statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
       } else {
         // Restore cache and scroll to top.
@@ -569,16 +612,23 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
 
-    if let topStatus = topStatus,
-      visibleStatuses.contains(where: { $0.id == topStatus.id }),
-      scrollToTopVisible
-    {
-      scrollToId = topStatus.id
-      statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
-    } else {
-      withAnimation {
+    let isGalleryMode = TimelineContentFilter.shared.isGalleryMode
+
+    if isGalleryMode {
+        scrollToId = getTopVisibleMediaStatusId()
         statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
-      }
+    } else {
+        if let topStatus = topStatus,
+          visibleStatuses.contains(where: { $0.id == topStatus.id }),
+          scrollToTopVisible
+        {
+          scrollToId = topStatus.id
+          statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+        } else {
+          withAnimation {
+            statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+          }
+        }
     }
   }
 
