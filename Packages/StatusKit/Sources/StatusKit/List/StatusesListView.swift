@@ -3,6 +3,7 @@ import Env
 import Models
 import NetworkClient
 import SwiftUI
+import Timeline
 
 @MainActor
 public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
@@ -228,7 +229,6 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
           makeGrid(for: items, nextPageState: nextPageState)
         }
       }
-  }
 
   private struct GalleryNode: Identifiable, Equatable {
       let id: String
@@ -478,3 +478,4 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
       .clipped()
       .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
     }
+}
