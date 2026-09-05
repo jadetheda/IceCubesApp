@@ -478,4 +478,3 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
       .clipped()
       .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
     }
-}
