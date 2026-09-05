@@ -3,7 +3,6 @@ import Env
 import Models
 import NetworkClient
 import SwiftUI
-import Timeline
 
 @MainActor
 public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
@@ -35,7 +34,7 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
   }
 
   public var body: some View {
-    if isForceGalleryMode || TimelineContentFilter.shared.isGalleryMode {
+    if isForceGalleryMode {
       galleryBody
     } else {
       listBody

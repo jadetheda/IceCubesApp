@@ -45,13 +45,15 @@ struct TimelineListView: View {
             client: client,
             routerPath: routerPath,
             isRemote: true,
-            filterContext: timeline.filterContext)
+            filterContext: timeline.filterContext,
+            isForceGalleryMode: TimelineContentFilter.shared.isGalleryMode)
         default:
           StatusesListView(
             fetcher: viewModel,
             client: client,
             routerPath: routerPath,
-            filterContext: timeline.filterContext)
+            filterContext: timeline.filterContext,
+            isForceGalleryMode: TimelineContentFilter.shared.isGalleryMode)
             .environment(\.isHomeTimeline, timeline == .home)
         }
       }
