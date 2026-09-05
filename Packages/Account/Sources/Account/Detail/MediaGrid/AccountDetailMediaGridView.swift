@@ -36,17 +36,17 @@ public struct AccountDetailMediaGridView: View {
   }
   
   public var body: some View {
-    List {
-      StatusesListView(
-        fetcher: fetcher,
-        client: client,
-        routerPath: routerPath,
-        isRemote: isRemote,
-        isForceGalleryMode: true
-      )
+    ScrollView {
+      LazyVStack(spacing: 0) {
+        StatusesListView(
+          fetcher: fetcher,
+          client: client,
+          routerPath: routerPath,
+          isRemote: isRemote,
+          isForceGalleryMode: true
+        )
+      }
     }
-    .listStyle(.plain)
-    .environment(\.defaultMinListRowHeight, 1)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .principal) {
