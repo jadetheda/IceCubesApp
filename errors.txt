@@ -1,0 +1,9 @@
+Line 4689: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:481:1: error: extraneous '}' at top level
+}
+^
+Line 4692: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:481:1: error: Extraneous '}' at top level
+}
+^ (in target 'StatusKit' from project 'StatusKit')
+Line 4716: ** BUILD FAILED **
+
+

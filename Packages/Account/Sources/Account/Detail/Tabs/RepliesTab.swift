@@ -23,7 +23,8 @@ struct RepliesTab {
       fetcher: fetcher,
       client: client,
       routerPath: routerPath,
-      isRemote: account?.url?.host?.lowercased() != client.server.lowercased()
+      isRemote: account?.url?.host?.lowercased() != client.server.lowercased(),
+      supportsGalleryMode: false
     )
   }
 }

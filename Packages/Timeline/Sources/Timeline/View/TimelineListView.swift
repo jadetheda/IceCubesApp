@@ -25,7 +25,10 @@ struct TimelineListView: View {
   var body: some View {
     @Bindable var viewModel = viewModel
     ScrollViewReader { proxy in
-      List {
+      Group {
+        if TimelineContentFilter.shared.isGalleryMode {
+          ScrollView {
+            LazyVStack(spacing: 0) {
         ScrollToView()
           .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
           .onAppear {
@@ -55,6 +58,44 @@ struct TimelineListView: View {
             filterContext: timeline.filterContext,
             isForceGalleryMode: TimelineContentFilter.shared.isGalleryMode)
             .environment(\.isHomeTimeline, timeline == .home)
+        }
+
+            }
+          }
+        } else {
+          List {
+        ScrollToView()
+          .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
+          .onAppear {
+            viewModel.scrollToTopVisible = true
+          }
+          .onDisappear {
+            viewModel.scrollToTopVisible = false
+          }
+        
+        TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
+        TimelineTagHeaderView(tag: $viewModel.tag)
+        
+        switch viewModel.timeline {
+        case .remoteLocal:
+          StatusesListView(
+            fetcher: viewModel,
+            client: client,
+            routerPath: routerPath,
+            isRemote: true,
+            filterContext: timeline.filterContext,
+            isForceGalleryMode: TimelineContentFilter.shared.isGalleryMode)
+        default:
+          StatusesListView(
+            fetcher: viewModel,
+            client: client,
+            routerPath: routerPath,
+            filterContext: timeline.filterContext,
+            isForceGalleryMode: TimelineContentFilter.shared.isGalleryMode)
+            .environment(\.isHomeTimeline, timeline == .home)
+        }
+
+          }
         }
       }
       .id(client.id)

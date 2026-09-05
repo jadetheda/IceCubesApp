@@ -13,6 +13,7 @@ struct AnyStatusesListView: View {
   let isRemote: Bool
   let isMediaTab: Bool
   let showFilterWarning: Bool
+  let supportsGalleryMode: Bool
   // When false (default for profile tabs), this view does not observe or apply
   // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
   // toggles like hideSeenPosts from affecting the profile media view.
@@ -22,7 +23,8 @@ struct AnyStatusesListView: View {
     routerPath: RouterPath,
     isRemote: Bool = false,
     isMediaTab: Bool = false,
-    showFilterWarning: Bool = true
+    showFilterWarning: Bool = true,
+    supportsGalleryMode: Bool = true
   ) {
     self.fetcher = fetcher
     self.client = client
@@ -30,6 +32,7 @@ struct AnyStatusesListView: View {
     self.isRemote = isRemote
     self.isMediaTab = isMediaTab
     self.showFilterWarning = showFilterWarning
+    self.supportsGalleryMode = supportsGalleryMode
   }
   
   @Environment(Theme.self) private var theme
@@ -37,7 +40,7 @@ struct AnyStatusesListView: View {
   var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    if isMediaTab || contentFilter.isGalleryMode {
+    if isMediaTab || (supportsGalleryMode && contentFilter.isGalleryMode) {
       AnyView(unboxedStatusesList(fetcher))
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
@@ -126,7 +129,7 @@ struct AnyStatusesListView: View {
       routerPath: routerPath,
       isRemote: isRemote,
       filterContext: .account,
-      isForceGalleryMode: isMediaTab
+      isForceGalleryMode: isMediaTab || (supportsGalleryMode && contentFilter.isGalleryMode)
     )
   }
 }

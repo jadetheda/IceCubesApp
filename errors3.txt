@@ -1,0 +1,57 @@
+Line 4728: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:37:30: error: cannot find 'TimelineContentFilter' in scope
+    if isForceGalleryMode || TimelineContentFilter.shared.isGalleryMode {
+                             ^~~~~~~~~~~~~~~~~~~~~
+Line 4731: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:321:21: error: cannot find 'fetcher' in scope
+          try await fetcher.fetchNextPage()
+                    ^~~~~~~
+Line 4734: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:324:28: error: cannot find 'theme' in scope
+        .listRowBackground(theme.primaryBackgroundColor)
+                           ^~~~~
+Line 4737: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:335:30: error: cannot find 'fetcher' in scope
+            if let loadGap = fetcher as? GapLoadingFetcher {
+                             ^~~~~~~
+Line 4740: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:346:28: error: cannot find 'theme' in scope
+        .listRowBackground(theme.primaryBackgroundColor)
+                           ^~~~~
+Line 4743: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:352:30: error: cannot find 'horizontalSizeClass' in scope
+        let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
+                             ^~~~~~~~~~~~~~~~~~~
+Line 4746: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:356:22: error: cannot find 'fetcher' in scope
+          try? await fetcher.fetchNextPage()
+                     ^~~~~~~
+Line 4749: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:346:10: error: generic parameter 'V' could not be inferred
+        .listRowBackground(theme.primaryBackgroundColor)
+         ^
+Line 4755: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:461:33: error: cannot find 'routerPath' in scope
+                    routerPath: routerPath,
+                                ^~~~~~~~~~
+Line 4758: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:462:29: error: cannot find 'client' in scope
+                    client: client,
+                            ^~~~~~
+Line 4761: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:463:31: error: cannot find 'isRemote' in scope
+                    isRemote: isRemote,
+                              ^~~~~~~~
+Line 4764: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:464:36: error: cannot find 'filterContext' in scope
+                    filterContext: filterContext
+                                   ^~~~~~~~~~~~~
+Line 4767: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:468:31: error: cannot find 'fetcher' in scope
+                  .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
+                              ^~~~~~~
+Line 4770: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:469:34: error: cannot find 'fetcher' in scope
+                  .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+                                 ^~~~~~~
+Line 4773: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:451:32: error: cannot convert value of type '[GalleryNode]' to expected argument type 'Binding<C>'
+            ForEach(columnItems[colIndex]) { node in
+                               ^
+Line 4776: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:451:13: error: generic parameter 'C' could not be inferred
+            ForEach(columnItems[colIndex]) { node in
+            ^
+Line 4782: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:453:30: error: generic parameter 'Subject' could not be inferred
+                ForEach(node.anchorIds, id: \\.self) { anchorId in
+                             ^
+Line 4788: /Users/builder/clone/Packages/StatusKit/Sources/StatusKit/List/StatusesListView.swift:456:22: error: instance method 'id' requires that 'Binding<Subject.Element>' conform to 'Hashable'
+                    .id(anchorId)
+                     ^
+Line 4797: ** BUILD FAILED **
+
+
