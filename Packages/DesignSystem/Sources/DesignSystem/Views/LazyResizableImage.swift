@@ -25,7 +25,7 @@ public struct LazyResizableImage<Content: View>: View {
   @State private var currentURL: URL?
   @State private var hasFailed = false
   @State private var hasTriedFallback = false
-  @State private var resizeProcessor: ImageProcessors.Resize?
+  @State private var processorSize: CGSize?
   @State private var debouncedTask: Task<Void, Never>?
 
   @ViewBuilder
@@ -33,6 +33,8 @@ public struct LazyResizableImage<Content: View>: View {
 
   public var body: some View {
     GeometryReader { proxy in
+      let sizeToUse = processorSize ?? proxy.size
+      
       LazyImage(url: currentURL ?? primaryURL) { state in
         if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed {
           if let fallback = fallbackURL, !hasTriedFallback {
@@ -58,10 +60,15 @@ public struct LazyResizableImage<Content: View>: View {
         }
         return content(state)
       }
-      .processors([resizeProcessor == nil ? .resize(size: proxy.size) : resizeProcessor!])
+      .processors(sizeToUse.width > 0 && sizeToUse.height > 0 ? [.resize(size: sizeToUse)] : [])
       .onChange(of: proxy.size, initial: true) { oldValue, newValue in
-        guard oldValue != newValue else { return }
-        updateResizing(with: newValue)
+        guard newValue.width > 0 && newValue.height > 0 else { return }
+        
+        if processorSize == nil {
+            processorSize = newValue
+        } else if oldValue != newValue {
+            updateResizing(with: newValue)
+        }
       }
       .onChange(of: primaryURL) { _, newValue in
         currentURL = newValue
@@ -75,7 +82,7 @@ public struct LazyResizableImage<Content: View>: View {
     debouncedTask = Task {
       do { try await Task.sleep(for: .milliseconds(200)) } catch { return }
       await MainActor.run {
-        resizeProcessor = .resize(size: newSize)
+        processorSize = newSize
       }
     }
   }
