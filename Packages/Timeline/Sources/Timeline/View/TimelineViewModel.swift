@@ -611,8 +611,6 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
 
-    let isGalleryMode = TimelineContentFilter.shared.isGalleryMode
-
     if isGalleryMode {
         scrollToId = getTopVisibleMediaStatusId()
         statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
