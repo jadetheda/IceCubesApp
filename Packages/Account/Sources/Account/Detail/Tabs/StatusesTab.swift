@@ -138,8 +138,8 @@ private struct StatusesTabView: View {
         routerPath: routerPath,
         isRemote: isRemote,
         isMediaTab: false,
-        supportsGalleryMode: false,
-        showFilterWarning: false
+        showFilterWarning: false,
+        supportsGalleryMode: false
       )
     }
   }
