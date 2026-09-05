@@ -425,18 +425,17 @@ extension TimelineViewModel: GapLoadingFetcher {
       {
         // Restore cache and scroll to latest seen status.
         if TimelineContentFilter.shared.isGalleryMode {
+            var foundMediaId: String? = nil
             if let index = items.firstIndex(where: { $0.status?.id == latestSeenId }) {
                 let itemsFromIndex = items[index...]
-                if let statusItem = itemsFromIndex.first(where: { $0.status?.asMediaStatus.isEmpty == false }),
-                   let status = statusItem.status,
-                   let mediaId = (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id {
-                    scrollToId = mediaId
-                } else {
-                    scrollToId = latestSeenId
+                for item in itemsFromIndex {
+                    if let status = item.status, !status.asMediaStatus.isEmpty {
+                        foundMediaId = (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id
+                        break
+                    }
                 }
-            } else {
-                scrollToId = latestSeenId
             }
+            scrollToId = foundMediaId ?? latestSeenId
         } else {
             scrollToId = latestSeenId
         }
