@@ -16,8 +16,8 @@ public struct AccountDetailMediaGridView: View {
   @Environment(MastodonClient.self) private var client
   
   let account: Account
-  @State var mediaStatuses: [MediaStatus]
-  @State private var statusesState: StatusesState
+  @State private var fetcher: AccountDetailMediaGridFetcher
+  @State private var isLoaded = false
   
   private var isRemote: Bool {
     guard let host = account.url?.host else { return false }
@@ -26,28 +26,28 @@ public struct AccountDetailMediaGridView: View {
   
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
     self.account = account
-    _mediaStatuses = .init(initialValue: initialMediaStatuses)
+    let f = AccountDetailMediaGridFetcher(account: account)
     let initialStatuses = initialMediaStatuses.map { $0.status }
     if !initialStatuses.isEmpty {
-      _statusesState = .init(initialValue: .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none))
-    } else {
-      _statusesState = .init(initialValue: .loading)
+      f.statusesState = .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none)
+      f.mediaStatuses = initialMediaStatuses
     }
+    _fetcher = .init(initialValue: f)
   }
   
   public var body: some View {
-    ScrollView {
-      LazyVStack(spacing: 0) {
-        GalleryStatusesListView(
-          statusesState: statusesState,
-          client: client,
-          isRemote: isRemote,
-          fetchNextPage: fetchNextPage,
-          fetchNewestStatuses: fetchNewestStatuses
-        )
-      }
-      .padding(.top, .layoutPadding)
+    List {
+      StatusesListView(
+        fetcher: fetcher,
+        client: client,
+        routerPath: routerPath,
+        isRemote: isRemote,
+        isForceGalleryMode: true
+      )
+      .listRowInsets(EdgeInsets())
+      .listRowBackground(theme.primaryBackgroundColor)
     }
+    .listStyle(.plain)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
       ToolbarItem(placement: .principal) {
@@ -56,23 +56,36 @@ public struct AccountDetailMediaGridView: View {
       }
     }
     .onAppear {
-      if mediaStatuses.isEmpty {
-        Task {
-          await fetchNewestStatuses()
+      if !isLoaded {
+        fetcher.client = client
+        if fetcher.mediaStatuses.isEmpty {
+          Task { await fetcher.fetchNewestStatuses(pullToRefresh: false) }
         }
+        isLoaded = true
       }
     }
     #if !os(visionOS)
       .background(theme.primaryBackgroundColor.ignoresSafeArea())
     #endif
     .refreshable {
-      await fetchNewestStatuses()
+      await fetcher.fetchNewestStatuses(pullToRefresh: true)
     }
   }
+}
+class AccountDetailMediaGridFetcher: StatusesFetcher {
+  var statusesState: StatusesState = .loading
+  var mediaStatuses: [MediaStatus] = []
+  var client: MastodonClient?
+  let account: Account
 
-  private func fetchNewestStatuses() async {
+  init(account: Account) {
+    self.account = account
+  }
+
+  func fetchNewestStatuses(pullToRefresh: Bool) async {
+    guard let client = client else { return }
     do {
-      statusesState = .loading
+      if pullToRefresh { statusesState = .loading }
       let newStatuses: [Status] = try await client.get(
         endpoint: Accounts.statuses(
           id: account.id,
@@ -84,7 +97,6 @@ public struct AccountDetailMediaGridView: View {
           pinned: nil
         )
       )
-      
       mediaStatuses = newStatuses.flatMap { $0.asMediaStatus }
       StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
       statusesState = .display(statuses: newStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
@@ -92,8 +104,9 @@ public struct AccountDetailMediaGridView: View {
       statusesState = .error(error: .noData)
     }
   }
-  
-  private func fetchNextPage() async throws {
+
+  func fetchNextPage() async throws {
+    guard let client = client else { return }
     let newStatuses: [Status] = try await client.get(
       endpoint: Accounts.statuses(
         id: account.id,
@@ -105,10 +118,12 @@ public struct AccountDetailMediaGridView: View {
         pinned: nil
       )
     )
-    
     mediaStatuses.append(contentsOf: newStatuses.flatMap { $0.asMediaStatus })
     let allStatuses = mediaStatuses.map { $0.status }
     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
     statusesState = .display(statuses: allStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
   }
+
+  func statusDidAppear(status: Status) {}
+  func statusDidDisappear(status: Status) {}
 }

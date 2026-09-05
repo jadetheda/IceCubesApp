@@ -44,28 +44,11 @@ public struct AccountStatusesListView: View {
   }
 
   public var body: some View {
-    Group {
-      if TimelineContentFilter.shared.isGalleryMode {
-        ScrollView {
-          LazyVStack(spacing: 0) {
-            GalleryStatusesListView(
-              statusesState: fetcher.statusesState,
-              client: client,
-              fetchNextPage: fetcher.fetchNextPage,
-              fetchNewestStatuses: { await fetcher.fetchNewestStatuses(pullToRefresh: false) },
-              statusDidAppear: fetcher.statusDidAppear,
-              statusDidDisappear: fetcher.statusDidDisappear
-            )
-          }
-        }
-      } else {
-        List {
-          StatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
-            .listSectionSeparator(.hidden, edges: .top)
-        }
-        .listStyle(.plain)
-      }
+    List {
+      StatusesListView(fetcher: fetcher, client: client, routerPath: routerPath)
+        .listSectionSeparator(.hidden, edges: .top)
     }
+    .listStyle(.plain)
     #if !os(visionOS)
       .scrollContentBackground(.hidden)
       .background(theme.primaryBackgroundColor.ignoresSafeArea())

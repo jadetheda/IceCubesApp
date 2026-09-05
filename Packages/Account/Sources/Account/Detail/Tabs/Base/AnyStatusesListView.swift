@@ -37,8 +37,8 @@ struct AnyStatusesListView: View {
   var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    if isMediaTab && contentFilter.isGalleryMode {
-      AnyView(unboxedGallery(fetcher))
+    if isMediaTab || contentFilter.isGalleryMode {
+      AnyView(unboxedStatusesList(fetcher))
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
     } else {
@@ -119,16 +119,14 @@ struct AnyStatusesListView: View {
   }
 
   @ViewBuilder
-  private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> some View {
-    GalleryStatusesListView(
-      statusesState: f.statusesState,
+  private func unboxedStatusesList<F: StatusesFetcher>(_ f: F) -> some View {
+    StatusesListView(
+      fetcher: f,
       client: client,
+      routerPath: routerPath,
       isRemote: isRemote,
       filterContext: .account,
-      fetchNextPage: f.fetchNextPage,
-      fetchNewestStatuses: { await f.fetchNewestStatuses(pullToRefresh: false) },
-      statusDidAppear: f.statusDidAppear,
-      statusDidDisappear: f.statusDidDisappear
+      isForceGalleryMode: isMediaTab
     )
   }
 }
