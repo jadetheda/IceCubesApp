@@ -7,6 +7,7 @@ import NukeUI
 import SFSafeSymbols
 import SwiftData
 import SwiftUI
+import Timeline
 
 @MainActor
 struct EditTagGroupView: View {
@@ -14,7 +15,9 @@ struct EditTagGroupView: View {
   @Environment(\.modelContext) private var context
   @Environment(Theme.self) private var theme
 
+  @AppStorage("timeline_pinned_filters") private var pinnedFilters: [TimelineFilter] = []
   @State private var tagGroup: TagGroup
+  @State private var initialTitle: String
 
   private let onSaved: ((TagGroup) -> Void)?
   private let isNewGroup: Bool
@@ -80,6 +83,7 @@ struct EditTagGroupView: View {
 
   init(tagGroup: TagGroup = .emptyGroup(), onSaved: ((TagGroup) -> Void)? = nil) {
     _tagGroup = State(wrappedValue: tagGroup)
+    _initialTitle = State(initialValue: tagGroup.title)
     self.onSaved = onSaved
     isNewGroup = tagGroup.title.isEmpty
   }
@@ -87,6 +91,15 @@ struct EditTagGroupView: View {
   private func save() {
     tagGroup.format()
     context.insert(tagGroup)
+    
+    if !isNewGroup {
+      for (index, filter) in pinnedFilters.enumerated() {
+        if case let .tagGroup(title, _, _) = filter, title == initialTitle {
+          pinnedFilters[index] = .tagGroup(title: tagGroup.title, tags: tagGroup.tags, symbolName: tagGroup.symbolName)
+        }
+      }
+    }
+    
     onSaved?(tagGroup)
 
     dismiss()

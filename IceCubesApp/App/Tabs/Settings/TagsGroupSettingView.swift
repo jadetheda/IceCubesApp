@@ -3,6 +3,7 @@ import Env
 import Models
 import SwiftData
 import SwiftUI
+import Timeline
 
 struct TagsGroupSettingView: View {
   @Environment(\.modelContext) private var context
@@ -11,6 +12,7 @@ struct TagsGroupSettingView: View {
   @Environment(Theme.self) private var theme
 
   @Query(sort: \TagGroup.creationDate, order: .reverse) var tagGroups: [TagGroup]
+  @AppStorage("timeline_pinned_filters") private var pinnedFilters: [TimelineFilter] = []
 
   var body: some View {
     Form {
@@ -22,7 +24,14 @@ struct TagsGroupSettingView: View {
       }
       .onDelete { indexes in
         if let index = indexes.first {
-          context.delete(tagGroups[index])
+          let group = tagGroups[index]
+          pinnedFilters.removeAll { filter in
+            if case let .tagGroup(title, _, _) = filter {
+              return title == group.title
+            }
+            return false
+          }
+          context.delete(group)
         }
       }
       #if !os(visionOS)

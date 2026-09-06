@@ -141,6 +141,18 @@ struct AppView: View {
     .onChange(of: errorService.isErrorDisplayed) { _, _ in }
 
     .onAppear {
+      syncTagGroups()
+    }
+  }
+
+  private func syncTagGroups() {
+    for filter in pinnedFilters {
+      if case let .tagGroup(title, tags, symbolName) = filter {
+        if !tagGroups.contains(where: { $0.title == title }) {
+          let newGroup = TagGroup(title: title, symbolName: symbolName ?? "number", tags: tags)
+          context.insert(newGroup)
+        }
+      }
     }
   }
 
