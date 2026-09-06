@@ -422,28 +422,28 @@ public struct GalleryMediaCell: View {
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
-        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
-        .contextMenu {
-          if let viewModel {
-            StatusRowContextMenu(
-              viewModel: viewModel,
-              showTextForSelection: $showSelectableText,
-              isBlockConfirmationPresented: $isBlockConfirmationPresented,
-              isShareAsImageSheetPresented: $isShareAsImageSheetPresented
-            )
-            .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
-            .tint(.primary)
-            .onAppear {
-              Task {
-                await viewModel.loadAuthorRelationship()
-              }
-            }
-          } else {
-            ProgressView()
-          }
-        }
       }
       .buttonStyle(.plain)
+      .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
+      .contextMenu {
+        if let viewModel {
+          StatusRowContextMenu(
+            viewModel: viewModel,
+            showTextForSelection: $showSelectableText,
+            isBlockConfirmationPresented: $isBlockConfirmationPresented,
+            isShareAsImageSheetPresented: $isShareAsImageSheetPresented
+          )
+          .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
+          .tint(.primary)
+          .onAppear {
+            Task {
+              await viewModel.loadAuthorRelationship()
+            }
+          }
+        } else {
+          ProgressView()
+        }
+      }
       .onAppear {
         if viewModel == nil {
           viewModel = StatusRowViewModel(
