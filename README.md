@@ -27,17 +27,17 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 * **Native on-device text extraction (OCR)** for generating image alt-text in the composer (credit: @ianinx!)
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
-* **True "Hide Sensitive Posts" filter** (actually completely hides them from the feed, rather than just blurring them)
-- **Hide your own posts** timeline filter
+* **True "Hide Sensitive Posts" filter** (hides them completely, instead of just blurring)
+- **Hide your own posts** filter
 * **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
 - **Content Filters for Notifications**
-* **Custom .otf and .ttf font loading** (from iOS Files)
-* **Inter font** included by default
+* **Custom .otf and .ttf font loading**
+* **Inter font** built-in
 * **Bluesky theme set**
-- **Customizable interaction colors** (and the ability to swap the Favorite star for a Like heart!)
+- **Customizable interaction colors** (and swap the Favorite star for a Like heart!)
 * **Automatic dark mode switching**
 - **Media load auto-fallback on fail** (for when your server doesn’t have media cached)
-* **"Open in Browser" fallback button** for media viewer (when weird videos disguise themselves as images)
+* **"Open in Browser" media fallback button**
 * **Tap to hide header overlay in image viewer**
 * **Undo scroll-to-top** (tap the tab again to undo)
 - **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
@@ -45,7 +45,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Server emote caching**
 * **Custom server emojis render natively in profile headers**
 * **Special IceShrimp.NET support**, including:
-  - **Alternative Tag Group Fetching** (client-side merge workaround for IceShrimp servers!)
+  - **Alternative Tag Group Fetching** (client-side merge workaround)
   - **Custom client-side trending algorithm**
 * and much more!
 
