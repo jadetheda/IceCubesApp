@@ -36,6 +36,9 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
 * **Automatic dark mode switching**
 * **Tap to hide header overlay in image viewer**
+* **Native on-device text extraction (OCR)** for generating image alt-text in the composer
+* **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
+* **Custom server emojis render natively in profile headers**
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
