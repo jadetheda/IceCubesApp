@@ -23,30 +23,30 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 
 ## New in **Community Edition:**
 * **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
-- **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
-- **Content Filters for Notifications**
-- **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
-- **Media load auto-fallback on fail** (for when your server doesn’t have media cached)
-* **More places to access remote Local Timelines**
-* **Special IceShrimp.NET support**
-* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
-* **Server emote caching**
-* **Undo scroll-to-top** (tap the tab again to undo)
-* **Bluesky theme set**
 * **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
-* **Automatic dark mode switching**
-* **Tap to hide header overlay in image viewer**
-* **Native on-device text extraction (OCR)** for generating image alt-text in the composer
-* **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
-* **Custom server emojis render natively in profile headers**
-* **Custom .otf and .ttf font loading** (from iOS Files)
-* **Inter font** included by default
-- **Customizable interaction colors** (and the ability to swap the Favorite star for a Like heart!)
+- **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
+* **Native on-device text extraction (OCR)** for generating image alt-text in the composer (credit: @ianinx!)
+* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
 * **True "Hide Sensitive Posts" filter** (actually completely hides them from the feed, rather than just blurring them)
 - **Hide your own posts** timeline filter
-* **Custom client-side trending algorithm**
-- **Alternative Tag Group Fetching** (client-side merge workaround for IceShrimp servers!)
+* **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
+- **Content Filters for Notifications**
+* **Custom .otf and .ttf font loading** (from iOS Files)
+* **Inter font** included by default
+* **Bluesky theme set**
+- **Customizable interaction colors** (and the ability to swap the Favorite star for a Like heart!)
+* **Automatic dark mode switching**
+- **Media load auto-fallback on fail** (for when your server doesn’t have media cached)
 * **"Open in Browser" fallback button** for media viewer (when weird videos disguise themselves as images)
+* **Tap to hide header overlay in image viewer**
+* **Undo scroll-to-top** (tap the tab again to undo)
+- **Rudimentary config Import/Export** (useful for backing up Tag Groups and such!)
+* **More places to access remote Local Timelines**
+* **Server emote caching**
+* **Custom server emojis render natively in profile headers**
+* **Special IceShrimp.NET support**, including:
+  - **Alternative Tag Group Fetching** (client-side merge workaround for IceShrimp servers!)
+  - **Custom client-side trending algorithm**
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
