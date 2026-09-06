@@ -23,7 +23,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 
 ## New in **Community Edition:**
 * **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
-* **Better inline image handling**: Wide and long images are no long always force-cropped, posts with less than 5 are displayed in a grid. (Both these options are configurable.)
+* **Better inline image handling**: Wide and long images are no longer always force-cropped, posts with fewer than 5 images are displayed in a grid. (Both these options are configurable.)
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 * **Native on-device text extraction (OCR)** for generating image alt-text in the composer (credit: @ianinx!)
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
