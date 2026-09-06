@@ -61,12 +61,18 @@ struct AnyStatusesListView: View {
         if showFilterWarning && (contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia) {
           HStack {
             Image(systemName: "line.3.horizontal.decrease.circle")
-            Text("Some posts are hidden by your active timeline filters")
+            Text("Content Filter")
             Spacer()
+            Button("Change") {
+              routerPath.presentedSheet = .timelineContentFilter
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
           }
           .font(.caption)
           .foregroundStyle(.secondary)
           .listRowBackground(theme.primaryBackgroundColor)
+          .listRowSeparator(.hidden)
         }
         
         ForEach(filteredStatuses(statuses)) { status in
