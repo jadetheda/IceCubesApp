@@ -311,7 +311,7 @@ actor TimelineDatasource {
       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
       && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
-      && (!filter.hideSeenPosts || !isSeen || filter.isGalleryMode)
+      && (!filter.hideSeenPosts || !isSeen)
       && (!filter.hideOwnPosts || status.account.id != currentAccountId)
   }
 }
