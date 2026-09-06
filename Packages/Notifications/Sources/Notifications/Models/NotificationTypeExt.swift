@@ -119,9 +119,9 @@ extension Models.Notification.NotificationType {
     case .update:
       "notifications.menu-title.update"
     case .quote:
-      "Quote"
+      "notifications.menu-title.quote"
     case .quoted_update:
-      "Quote updated"
+      "notifications.menu-title.quote-updated"
     }
   }
 }

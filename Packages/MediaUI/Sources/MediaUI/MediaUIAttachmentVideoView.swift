@@ -13,6 +13,7 @@ import SwiftUI
   let fallbackUrl: URL?
   let forceAutoPlay: Bool
   var isPlaying: Bool = false
+  @ObservationIgnored private var playbackEndObserver: NSObjectProtocol?
   public var onReady: (() -> Void)?
   public var hasFalledBack = false
   public var isDead = false
@@ -48,13 +49,17 @@ import SwiftUI
     setupObserver(for: player?.currentItem)
 
     guard let player else { return }
-    NotificationCenter.default.addObserver(
+    if let playbackEndObserver {
+      NotificationCenter.default.removeObserver(playbackEndObserver)
+    }
+    playbackEndObserver = NotificationCenter.default.addObserver(
       forName: .AVPlayerItemDidPlayToEndTime,
       object: player.currentItem, queue: .main
-    ) { _ in
-      Task { @MainActor [weak self] in
-        if autoPlay || self?.forceAutoPlay == true {
-          self?.play()
+    ) { [weak self] _ in
+      Task { @MainActor in
+        guard let self else { return }
+        if autoPlay || self.forceAutoPlay {
+          self.play()
         }
       }
     }
@@ -130,9 +135,10 @@ import SwiftUI
     }
   }
 
-  deinit {
-    NotificationCenter.default.removeObserver(
-      self, name: .AVPlayerItemDidPlayToEndTime, object: nil)
+  isolated deinit {
+    if let playbackEndObserver {
+      NotificationCenter.default.removeObserver(playbackEndObserver)
+    }
   }
 }
 
