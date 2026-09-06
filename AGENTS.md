@@ -305,3 +305,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (TimelineTab missed property rename)
 - **Root Cause**: When renaming `hideReadPosts` to `hideSeenPosts` globally, `TimelineTab.swift` was accidentally missed because the property reference was heavily nested in conditional SwiftUI blocks (e.g., `(preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts)`), leading to a missing dynamic member error in `TimelineContentFilter`.
 - **Solution**: Always run a global, case-insensitive project search (`grep -rni`) for the legacy string after renaming widely used properties, to catch occurrences inside SwiftUI view builders.
+
+## 🐛 Exit Code 65 Logs (Nuke 13 ImageResponse API Change)
+- **Root Cause**: When upstream bumped Nuke to 13.2.0, the `ImagePipeline.shared.image(for:)` asynchronous method was refactored. In Nuke 12 it returned an `ImageResponse` (with an `.image` property), but in Nuke 13 it returns the raw `UIImage` directly. Accessing `.image` on the return type was inadvertently calling an internal static function on Gifu, causing a type-inference failure.
+- **Solution**: Remove the `.image` accessor when using Nuke 13's `ImagePipeline.shared.image(for:)`, and pass the returned `UIImage` directly.
