@@ -62,7 +62,9 @@ struct StatusRowContentView: View {
             client: viewModel.client,
             routerPath: viewModel.routerPath
           )
+          #if !targetEnvironment(macCatalyst)
           .fixedSize(horizontal: false, vertical: true)
+          #endif
           .transition(.opacity)
         } else {
           StatusEmbeddedView(
@@ -70,7 +72,9 @@ struct StatusRowContentView: View {
             client: viewModel.client,
             routerPath: viewModel.routerPath
           )
+          #if !targetEnvironment(macCatalyst)
           .fixedSize(horizontal: false, vertical: true)
+          #endif
           .redacted(reason: .placeholder)
           .transition(.opacity)
         }

@@ -9,7 +9,6 @@ import Nuke
 import SwiftData
 import SwiftUI
 import Timeline
-import UniformTypeIdentifiers
 
 @MainActor
 struct SettingsTabs: View {
@@ -22,17 +21,12 @@ struct SettingsTabs: View {
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(AppAccountsManager.self) private var appAccountsManager
   @Environment(Theme.self) private var theme
-  @Environment(ToastCenter.self) private var toastCenter
-  @Environment(\.modelContext) private var context
 
   @State private var routerPath = RouterPath()
   @State private var addAccountSheetPresented = false
   @State private var isEditingAccount = false
   @State private var cachedRemoved = false
   @State private var timelineCache = TimelineCache()
-  @State private var isExportingSettings = false
-  @State private var isImportingSettings = false
-  @State private var settingsDocument: IceCubesDocument? = nil
 
   let isModal: Bool
 
@@ -43,7 +37,6 @@ struct SettingsTabs: View {
       Form {
         appSection
         accountsSection
-        debuggingSection
         generalSection
         socialKeyboardSection
         streamHomeTimelineSection
@@ -103,30 +96,6 @@ struct SettingsTabs: View {
         case .translation:
           TranslationSettingsView()
         }
-      }
-    }
-    .fileExporter(isPresented: $isExportingSettings, document: settingsDocument, contentType: .json, defaultFilename: "IceCubes_Settings") { result in
-      switch result {
-      case .success(let url):
-        print("Saved to \(url)")
-      case .failure(let error):
-        print(error.localizedDescription)
-      }
-    }
-    .fileImporter(isPresented: $isImportingSettings, allowedContentTypes: [.json]) { result in
-      switch result {
-      case .success(let url):
-        do {
-          _ = url.startAccessingSecurityScopedResource()
-          let data = try Data(contentsOf: url)
-          let export = try JSONDecoder().decode(AppExport.self, from: data)
-          url.stopAccessingSecurityScopedResource()
-          applyExport(export)
-        } catch {
-          print(error)
-        }
-      case .failure(let error):
-        print(error.localizedDescription)
       }
     }
     .onAppear {
@@ -234,13 +203,6 @@ struct SettingsTabs: View {
         }
         .tint(theme.labelColor)
       #endif
-      
-      Button("settings.export.title") {
-        prepareExport()
-      }
-      Button("settings.import.title") {
-        isImportingSettings = true
-      }
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -287,7 +249,7 @@ struct SettingsTabs: View {
         Label("settings.other.social-keyboard", systemImage: "keyboard")
       }
     } footer: {
-      Text("settings.other.social-keyboard.footer")
+      Text("Adds @ and # keys directly on the keyboard for faster mentions and hashtags.")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -298,11 +260,11 @@ struct SettingsTabs: View {
     @Bindable var preferences = preferences
     return Section {
       Toggle(isOn: $preferences.streamHomeTimeline) {
-        Label("settings.experimental.stream-home", systemImage: "antenna.radiowaves.left.and.right")
+        Label("Stream home timeline", systemImage: "antenna.radiowaves.left.and.right")
           .symbolVariant(preferences.streamHomeTimeline ? .none : .slash)
       }
     } footer: {
-      Text("settings.experimental.stream-home.footer")
+      Text("Keeps your home timeline up to date in real time using streaming when available. Disable in case of performance issues.")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -313,46 +275,16 @@ struct SettingsTabs: View {
     @Bindable var preferences = preferences
     return Section {
       Toggle(isOn: $preferences.fullTimelineFetch) {
-        Label("settings.experimental.full-timeline-fetch", systemImage: "arrow.triangle.2.circlepath")
+        Label("Full timeline fetch", systemImage: "arrow.triangle.2.circlepath")
           .symbolVariant(preferences.fullTimelineFetch ? .none : .slash)
       }
     } footer: {
-      Text("settings.experimental.full-timeline-fetch.footer")
+      Text("Fetches all new timeline posts (up to 800) instead of only the latest 40 + manually loading the gap.")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
   }
-  
-  private var debuggingSection: some View {
-    @Bindable var userPreferences = preferences
-    return Section {
-      Toggle("Show Error Popups", isOn: $userPreferences.showErrorPopups)
-      Toggle("Log Errors to File", isOn: $userPreferences.logErrors)
-      if userPreferences.logErrors {
-        ShareLink(item: ErrorService.shared.logFileURL) {
-          Text("Export Error Logs")
-        }
-        Button("View Error Logs") {
-          let logs = ErrorService.shared.readLogs() ?? "No logs found."
-          let displayLogs = logs.count > 1000 ? String(logs.suffix(1000)) : logs
-          ErrorService.shared.handle(title: "Error Logs", message: displayLogs, showPopup: true, log: false)
-        }
-        Button("Clear Error Logs") {
-          ErrorService.shared.clearLogs()
-          toastCenter.show(.init(title: "Logs Cleared", systemImage: "trash"))
-        }
-      }
-    } header: {
-      Text("Debugging")
-    }
-    #if !os(visionOS)
-      .listRowBackground(theme.primaryBackgroundColor)
-    #endif
-  }
-
-
-
 
   private var appSection: some View {
     Section {
@@ -401,11 +333,13 @@ struct SettingsTabs: View {
         Label("settings.app.about", systemImage: "info.circle")
       }
 
-      NavigationLink {
-        WishlistView()
-      } label: {
-        Label("settings.wishlist.title", systemImage: "list.bullet.rectangle.portrait")
-      }
+      #if !targetEnvironment(macCatalyst)
+        NavigationLink {
+          WishlistView()
+        } label: {
+          Label("Feature Requests", systemImage: "list.bullet.rectangle.portrait")
+        }
+      #endif
 
     } header: {
       Text("settings.section.app")
@@ -448,11 +382,7 @@ struct SettingsTabs: View {
   }
 
   private var cacheSection: some View {
-    @Bindable var preferences = preferences
-    return Section {
-      Toggle(isOn: $preferences.cacheServerEmotes) {
-        Text("settings.other.cache-server-emotes")
-      }
+    Section {
       if cachedRemoved {
         Text("action.done")
           .transition(.move(edge: .leading))
@@ -467,222 +397,10 @@ struct SettingsTabs: View {
     } header: {
       Text("settings.section.cache")
     } footer: {
-      Text("settings.cache.footer")
+      Text("Remove all cached images and videos")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
-  }
-
-  /// Extracts the current UserDefaults state and SwiftData models into an AppExport payload.
-  private func prepareExport() {
-    var appDefaults: [String: AnyCodable] = [:]
-    
-    let defaultsDict = UserDefaults.standard.dictionaryRepresentation()
-    let sharedDict = UserPreferences.sharedDefault?.dictionaryRepresentation() ?? [:]
-    
-    // Filter standard Apple keys to prevent importing system/device-specific state
-    for (key, value) in defaultsDict.merging(sharedDict, uniquingKeysWith: { a, _ in a }) {
-      if key.starts(with: "Apple") || key.starts(with: "NS") || key.starts(with: "WebKit") || key.starts(with: "UI") || key.starts(with: "Metal") || key.starts(with: "com.apple") {
-        continue
-      }
-      if let codableValue = AnyCodable.parse(value) {
-        appDefaults[key] = codableValue
-      }
-    }
-    
-    // Fetch SwiftData configurations (TagGroups)
-    let descriptor = FetchDescriptor<TagGroup>()
-    let tags = try? context.fetch(descriptor).map { tag in
-      ExportedTagGroup(title: tag.title, symbolName: tag.symbolName, tags: tag.tags, creationDate: tag.creationDate)
-    }
-    
-    // Fetch SwiftData configurations (LocalTimelines)
-    let ltDescriptor = FetchDescriptor<LocalTimeline>()
-    let localTimelines = try? context.fetch(ltDescriptor).map { lt in
-      ExportedLocalTimeline(instance: lt.instance, creationDate: lt.creationDate)
-    }
-    
-    let export = AppExport(userDefaults: appDefaults, tagGroups: tags, localTimelines: localTimelines)
-    settingsDocument = IceCubesDocument(export: export)
-    isExportingSettings = true
-  }
-
-  /// Injects an AppExport payload directly into UserDefaults and SwiftData.
-  private func applyExport(_ export: AppExport) {
-    // 1. Restore UserDefaults keys
-    for (key, anyCodable) in export.userDefaults {
-      UserDefaults.standard.set(anyCodable.value, forKey: key)
-      UserPreferences.sharedDefault?.set(anyCodable.value, forKey: key)
-    }
-    UserDefaults.standard.synchronize()
-    UserPreferences.sharedDefault?.synchronize()
-    
-    // 2. Restore TagGroups in SwiftData (wiping existing)
-    if let tags = export.tagGroups {
-      let descriptor = FetchDescriptor<TagGroup>()
-      if let existing = try? context.fetch(descriptor) {
-        for tag in existing {
-          context.delete(tag)
-        }
-      }
-      for tag in tags {
-        let newTag = TagGroup(title: tag.title, symbolName: tag.symbolName, tags: tag.tags)
-        newTag.creationDate = tag.creationDate
-        context.insert(newTag)
-      }
-    }
-    
-    // 3. Restore LocalTimelines in SwiftData (wiping existing)
-    if let localTimelines = export.localTimelines {
-      let descriptor = FetchDescriptor<LocalTimeline>()
-      if let existing = try? context.fetch(descriptor) {
-        for lt in existing {
-          context.delete(lt)
-        }
-      }
-      for lt in localTimelines {
-        let newLt = LocalTimeline(instance: lt.instance)
-        newLt.creationDate = lt.creationDate
-        context.insert(newLt)
-      }
-    }
-    
-    try? context.save()
-    
-    // Let app reload preferences if needed. UI responds via @AppStorage listeners implicitly.
-  }
-}
-
-/// Represents a complete snapshot of user preferences and saved instances.
-public struct AppExport: Codable, Sendable {
-  public let userDefaults: [String: AnyCodable]
-  public let tagGroups: [ExportedTagGroup]?
-  public let localTimelines: [ExportedLocalTimeline]?
-  
-  public init(userDefaults: [String: AnyCodable], tagGroups: [ExportedTagGroup]?, localTimelines: [ExportedLocalTimeline]?) {
-    self.userDefaults = userDefaults
-    self.tagGroups = tagGroups
-    self.localTimelines = localTimelines
-  }
-
-  enum CodingKeys: String, CodingKey {
-    case userDefaults, tagGroups, localTimelines
-  }
-
-  nonisolated public init(from decoder: Decoder) throws {
-    let container = try decoder.container(keyedBy: CodingKeys.self)
-    self.userDefaults = try container.decode([String: AnyCodable].self, forKey: .userDefaults)
-    self.tagGroups = try container.decodeIfPresent([ExportedTagGroup].self, forKey: .tagGroups)
-    self.localTimelines = try container.decodeIfPresent([ExportedLocalTimeline].self, forKey: .localTimelines)
-  }
-
-  nonisolated public func encode(to encoder: Encoder) throws {
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(userDefaults, forKey: .userDefaults)
-    try container.encodeIfPresent(tagGroups, forKey: .tagGroups)
-    try container.encodeIfPresent(localTimelines, forKey: .localTimelines)
-  }
-}
-
-/// A Codable representation of the TagGroup model used for file export.
-public struct ExportedTagGroup: Codable, Sendable {
-  public let title: String
-  public let symbolName: String
-  public let tags: [String]
-  public let creationDate: Date
-}
-
-/// A Codable representation of the LocalTimeline model used for file export.
-public struct ExportedLocalTimeline: Codable, Sendable {
-  public let instance: String
-  public let creationDate: Date
-}
-
-/// A type-erased wrapper to handle encoding/decoding mixed-type UserDefaults dictionaries.
-public enum AnyCodable: Codable, Sendable {
-  case string(String)
-  case integer(Int)
-  case double(Double)
-  case boolean(Bool)
-  case data(Data)
-  case date(Date)
-  case array([AnyCodable])
-  case dict([String: AnyCodable])
-  
-  nonisolated public init(from decoder: Decoder) throws {
-    let container = try decoder.singleValueContainer()
-    if let x = try? container.decode(Bool.self) { self = .boolean(x) }
-    else if let x = try? container.decode(Int.self) { self = .integer(x) }
-    else if let x = try? container.decode(Double.self) { self = .double(x) }
-    else if let x = try? container.decode(String.self) { self = .string(x) }
-    else if let x = try? container.decode(Data.self) { self = .data(x) }
-    else if let x = try? container.decode(Date.self) { self = .date(x) }
-    else if let x = try? container.decode([AnyCodable].self) { self = .array(x) }
-    else if let x = try? container.decode([String: AnyCodable].self) { self = .dict(x) }
-    else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid AnyCodable value") }
-  }
-  
-  nonisolated public func encode(to encoder: Encoder) throws {
-    var container = encoder.singleValueContainer()
-    switch self {
-    case .string(let x): try container.encode(x)
-    case .integer(let x): try container.encode(x)
-    case .double(let x): try container.encode(x)
-    case .boolean(let x): try container.encode(x)
-    case .data(let x): try container.encode(x)
-    case .date(let x): try container.encode(x)
-    case .array(let x): try container.encode(x)
-    case .dict(let x): try container.encode(x)
-    }
-  }
-  
-  public var value: Any {
-    switch self {
-    case .string(let x): return x
-    case .integer(let x): return x
-    case .double(let x): return x
-    case .boolean(let x): return x
-    case .data(let x): return x
-    case .date(let x): return x
-    case .array(let x): return x.map { $0.value }
-    case .dict(let x): return x.mapValues { $0.value }
-    }
-  }
-  
-  public static func parse(_ value: Any) -> AnyCodable? {
-    if let x = value as? String { return .string(x) }
-    if let x = value as? Bool { return .boolean(x) }
-    if let x = value as? Int { return .integer(x) }
-    if let x = value as? Double { return .double(x) }
-    if let x = value as? Data { return .data(x) }
-    if let x = value as? Date { return .date(x) }
-    if let x = value as? [Any] { return .array(x.compactMap { parse($0) }) }
-    if let x = value as? [String: Any] { return .dict(x.compactMapValues { parse($0) }) }
-    return nil
-  }
-}
-
-public struct IceCubesDocument: FileDocument, Sendable {
-  public static var readableContentTypes: [UTType] { [.json] }
-  public var export: AppExport
-
-  public init(export: AppExport) {
-    self.export = export
-  }
-
-  nonisolated public init(configuration: ReadConfiguration) throws {
-    guard let data = configuration.file.regularFileContents else {
-      throw CocoaError(.fileReadCorruptFile)
-    }
-    let decoded = try JSONDecoder().decode(AppExport.self, from: data)
-    // we must initialize self.export in a nonisolated way, which should be fine for a struct.
-    // wait, FileDocument init is mutating if it's a struct!
-    self.export = decoded
-  }
-
-  nonisolated public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-    let data = try JSONEncoder().encode(export)
-    return .init(regularFileWithContents: data)
   }
 }
