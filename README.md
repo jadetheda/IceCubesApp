@@ -39,14 +39,14 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Native on-device text extraction (OCR)** for generating image alt-text in the composer
 * **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
 * **Custom server emojis render natively in profile headers**
-* **Custom Font Import (.ttf / .otf):** Import and apply custom fonts natively directly from the iOS Files app
-* **Integrated Inter Font:** Out-of-the-box support for the Bluesky-style "Inter" font
-* **Custom Interaction Icons & Colors:** Choose between "Like" (Heart) and "Favorite" (Star), along with independent tint colors for Like, Boost, and Bookmark actions
-* **Hide Sensitive Posts (Complete Filter):** A true timeline filter toggle that completely prevents sensitive posts from appearing in the feed
-* **Hide Own & Pinned Posts:** Dedicated timeline filters allowing users to hide their own posts and explicitly hide pinned items from feeds
-* **Custom Client-Side Trending Algorithm:** Locally configurable trending algorithm (with adjustable thresholds and half-lives)
-* **Alternative Tag Group Fetching:** Experimental client-side tag merge logic to prevent array query failures on IceShrimp servers
-* **Media Viewer "Open in Browser" Escape Hatch:** A native fallback button in the media viewer that lets users open unplayable/disguised videos directly in Safari
+* **Custom .otf and .ttf font loading** (from iOS Files)
+* **Inter font** included by default
+- **Customizable interaction colors** (and the ability to swap the Favorite star for a Like heart!)
+* **True "Hide Sensitive Posts" filter** (actually completely hides them from the feed, rather than just blurring them)
+- **Hide your own posts** and **Hide pinned posts** timeline filters
+* **Custom client-side trending algorithm**
+- **Alternative Tag Group Fetching** (client-side merge workaround for IceShrimp servers!)
+* **"Open in Browser" fallback button** for media viewer (when weird videos disguise themselves as images)
 * and much more!
 
 Configuration for these new features is available under a new **Experimental Features** section in Settings.
