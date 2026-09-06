@@ -92618,6 +92618,17 @@
           }
         }
       }
+    },
+    "settings.display.gallery.round-corners": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round corners"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

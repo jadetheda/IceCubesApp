@@ -337,7 +337,7 @@ struct SettingsTabs: View {
         NavigationLink {
           WishlistView()
         } label: {
-          Label("Feature Requests", systemImage: "list.bullet.rectangle.portrait")
+          Label("settings.wishlist.title", systemImage: "list.bullet.rectangle.portrait")
         }
       #endif
 

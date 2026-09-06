@@ -316,7 +316,7 @@ struct DisplaySettingsView: View {
           Label("settings.display.gallery.optimize-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
         }
         Toggle(isOn: $userPreferences.galleryRoundCorners) {
-          Label("Round corners", systemImage: "squareshape")
+          Label("settings.display.gallery.round-corners", systemImage: "squareshape")
         }
         Toggle(isOn: $userPreferences.galleryAddThinMargins) {
           Label("settings.display.gallery.add-margins", systemImage: "arrow.left.and.right")
