@@ -43,7 +43,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Inter font** included by default
 - **Customizable interaction colors** (and the ability to swap the Favorite star for a Like heart!)
 * **True "Hide Sensitive Posts" filter** (actually completely hides them from the feed, rather than just blurring them)
-- **Hide your own posts** and **Hide pinned posts** timeline filters
+- **Hide your own posts** timeline filter
 * **Custom client-side trending algorithm**
 - **Alternative Tag Group Fetching** (client-side merge workaround for IceShrimp servers!)
 * **"Open in Browser" fallback button** for media viewer (when weird videos disguise themselves as images)
