@@ -220,9 +220,9 @@ extension StatusEditor {
       if #available(iOS 16.0, macOS 13.0, *) {
         let analyzer = ImageAnalyzer()
         do {
-          let response = try await ImagePipeline.shared.image(for: url)
+          let image = try await ImagePipeline.shared.image(for: url)
           let configuration = ImageAnalyzer.Configuration([.text])
-          let analysis = try await analyzer.analyze(response.image, configuration: configuration)
+          let analysis = try await analyzer.analyze(image, configuration: configuration)
           return analysis.transcript
         } catch {
           print("Error: \(error)")
