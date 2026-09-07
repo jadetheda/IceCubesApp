@@ -6,6 +6,7 @@ import SwiftUI
 
 @MainActor
 public struct StatusDetailView: View {
+  @Environment(\.openURL) private var openURL
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(StreamWatcher.self) private var watcher
@@ -90,7 +91,7 @@ public struct StatusDetailView: View {
 
             if !result {
               if let url = viewModel.remoteStatusURL {
-                await UIApplication.shared.open(url)
+                openURL(url)
               }
               DispatchQueue.main.async {
                 _ = routerPath.path.popLast()

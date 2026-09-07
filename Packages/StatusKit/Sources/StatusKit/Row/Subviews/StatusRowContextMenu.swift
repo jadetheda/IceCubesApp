@@ -6,6 +6,7 @@ import SwiftUI
 
 @MainActor
 struct StatusRowContextMenu: View {
+  @Environment(\.openURL) private var openURL
   @Environment(\.openWindow) var openWindow
 
   @Environment(MastodonClient.self) private var client
@@ -145,7 +146,7 @@ struct StatusRowContextMenu: View {
 
     if let url = viewModel.url {
       Button {
-        UIApplication.shared.open(url)
+        openURL(url)
       } label: {
         Label("status.action.view-in-browser", systemImage: "safari")
       }

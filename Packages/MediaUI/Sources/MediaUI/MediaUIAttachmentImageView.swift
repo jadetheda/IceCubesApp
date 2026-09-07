@@ -11,6 +11,7 @@ public struct MediaUIAttachmentImageView: View {
   @State private var hasTriedFallback = false
   @State private var hasFailed = false
   @GestureState private var zoom = 1.0
+  @State private var showSafari = false
 
   public init(url: URL, fallbackUrl: URL? = nil, onSingleTap: (() -> Void)? = nil) {
     self.url = url
@@ -49,10 +50,16 @@ public struct MediaUIAttachmentImageView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 40, height: 40)
                 .foregroundColor(.gray)
-              Link(destination: url) {
+              Button {
+                showSafari = true
+              } label: {
                 Label("status.action.view-in-browser", systemImage: "safari")
               }
               .buttonStyle(.bordered)
+              .sheet(isPresented: $showSafari) {
+                SafariView(url: url)
+                  .ignoresSafeArea()
+              }
             }
           }
         }
