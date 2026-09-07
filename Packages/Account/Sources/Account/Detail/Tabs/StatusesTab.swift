@@ -119,7 +119,7 @@ private struct StatusesTabView: View {
         if contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia {
           HStack {
             Image(systemName: "line.3.horizontal.decrease.circle")
-            Text("Some posts are hidden by your \(String(localized: \"timeline.content-filter.title\"))")
+            Text("Some posts are hidden by your \(String(localized: "timeline.content-filter.title"))")
             Spacer()
             Button("Change") {
               routerPath.presentedSheet = .timelineContentFilter
