@@ -37,7 +37,7 @@ struct AnyStatusesListView: View {
   var contentFilter = TimelineContentFilter.shared
   
   var body: some View {
-    if isMediaTab && contentFilter.isGalleryMode {
+    if contentFilter.isGalleryMode {
       AnyView(unboxedGallery(fetcher))
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
