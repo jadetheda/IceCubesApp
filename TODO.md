@@ -23,7 +23,7 @@
 
 - [ ] Maybe: long-press profile tab to open profile switcher
 - [ ] Make word filters work in more contexts for IceShrimp
-- [ ] Add status.server to instance info
+- [x] Add status.server to instance info
 - [ ] toggle to set separate custom theme settings for light/dark
 - [ ] optional (off by default) button in timeline menu to hide the pinned items temporarily 
 

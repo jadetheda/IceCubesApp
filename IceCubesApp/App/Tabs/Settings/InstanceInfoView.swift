@@ -29,7 +29,7 @@ public struct InstanceInfoSection: View {
   public var body: some View {
     Section("instance.info.section.info") {
       LabeledContent("Server", value: instance.domain)
-      if let statusURL = instance.configuration?.urls?.status {
+      if let statusURL = instance.configuration?.urls?.status ?? URL(string: "https://status.\(instance.domain)") {
         Link("Server Status", destination: statusURL)
       }
       LabeledContent("instance.info.name", value: instance.title)
