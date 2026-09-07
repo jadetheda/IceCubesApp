@@ -672,3 +672,4 @@
 - **Bug Fix (2026-09-06):** Restored the context to the Content Filter warning string that was accidentally shortened. It now correctly reads 'Some posts are hidden by your active Content Filter', aligning terminology with the app's menus.
 - **UX Improvement (2026-09-06):** Shortened the Content Filter warning string to 'Some posts are hidden by your Content Filter' so that it gracefully fits on one line alongside the Change button.
 - **UX Improvement (2026-09-06):** Forced list row separators to be visible above and below the Content Filter warning message using `.listRowSeparator(.visible, edges: .all)` to match the aesthetic of the divided timeline posts.
+- **Bug Fix (2026-09-06):** Fixed a compiler crash caused by over-escaping quotes inside a SwiftUI string interpolation block (`Text("... \(String(localized: "..."))")`). Documented the Swift syntax rule in `AGENTS.md`.
