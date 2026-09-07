@@ -15,6 +15,7 @@ import SwiftUI
     @AppStorage("recently_used_languages") public var recentlyUsedLanguages: [String] = []
     @AppStorage("social_keyboard_composer") public var isSocialKeyboardEnabled: Bool = false
     @AppStorage("show_language_filters") public var showLanguageFilters: Bool = false
+    @AppStorage("lists_gallery_mode") public var listsGalleryMode: [String] = []
 
     @AppStorage("use_instance_content_settings") public var useInstanceContentSettings: Bool = true
     @AppStorage("app_auto_expand_spoilers") public var appAutoExpandSpoilers = false
@@ -203,6 +204,12 @@ import SwiftUI
   public var recentlyUsedLanguages: [String] {
     didSet {
       storage.recentlyUsedLanguages = recentlyUsedLanguages
+    }
+  }
+
+  public var listsGalleryMode: [String] {
+    didSet {
+      storage.listsGalleryMode = listsGalleryMode
     }
   }
 

@@ -14,6 +14,7 @@ struct TimelineListView: View {
 
   @Environment(MastodonClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
+  @Environment(UserPreferences.self) private var preferences
   @Environment(Theme.self) private var theme
 
   var viewModel: TimelineViewModel
@@ -22,11 +23,18 @@ struct TimelineListView: View {
   @Binding var selectedTagGroup: TagGroup?
   @Binding var scrollToIdAnimated: String?
 
+  private var isGalleryMode: Bool {
+    if case .list(let list) = viewModel.timeline, preferences.listsGalleryMode.contains(list.id) {
+      return true
+    }
+    return TimelineContentFilter.shared.isGalleryMode
+  }
+
   var body: some View {
     @Bindable var viewModel = viewModel
     ScrollViewReader { proxy in
       Group {
-        if TimelineContentFilter.shared.isGalleryMode {
+        if isGalleryMode {
           ScrollView {
             LazyVStack(spacing: 0) {
               ScrollToView()
@@ -98,7 +106,7 @@ struct TimelineListView: View {
         .scrollContentBackground(.hidden)
         .background(theme.primaryBackgroundColor.ignoresSafeArea())
       #endif
-      .onChange(of: TimelineContentFilter.shared.isGalleryMode) { oldValue, newValue in
+      .onChange(of: isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {
           let targetId = newValue ? viewModel.getTopVisibleMediaStatusId() : viewModel.getTopVisibleStatusId()
           if let targetId = targetId {

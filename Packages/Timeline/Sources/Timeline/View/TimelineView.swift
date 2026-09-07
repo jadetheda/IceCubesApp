@@ -136,15 +136,39 @@ public struct TimelineView: View {
       ToolbarItem(placement: .navigationBarTrailing) {
         Menu {
           Toggle(isOn: Binding(
-              get: { contentFilter.isGalleryMode },
+              get: { 
+                  if case .list(let list) = timeline, preferences.listsGalleryMode.contains(list.id) {
+                      return true
+                  }
+                  return contentFilter.isGalleryMode 
+              },
               set: { newValue in 
                   if newValue {
                       contentFilter.hidePostsWithoutMedia = true
                   }
-                  contentFilter.isGalleryMode = newValue
+                  if case .list(let list) = timeline {
+                      if newValue {
+                          if !preferences.listsGalleryMode.contains(list.id) {
+                              preferences.listsGalleryMode.append(list.id)
+                          }
+                      } else {
+                          preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
+                          contentFilter.isGalleryMode = false
+                      }
+                  } else {
+                      contentFilter.isGalleryMode = newValue
+                  }
               }
           )) {
-            Label(contentFilter.isGalleryMode ? "Exit Gallery Mode" : "Gallery Mode", systemImage: "rectangle.grid.1x2")
+            Group {
+              if case .list(let list) = timeline, preferences.listsGalleryMode.contains(list.id) {
+                Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+              } else if contentFilter.isGalleryMode {
+                Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+              } else {
+                Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
+              }
+            }
           }
           
           Button {

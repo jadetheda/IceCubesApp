@@ -1,6 +1,7 @@
 import Account
 import DesignSystem
 import EmojiText
+import Env
 import Models
 import NetworkClient
 import SwiftUI
@@ -10,6 +11,7 @@ public struct ListEditView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(Theme.self) private var theme
   @Environment(MastodonClient.self) private var client
+  @Environment(UserPreferences.self) private var preferences
 
   @State private var viewModel: ListEditViewModel
 
@@ -34,6 +36,21 @@ public struct ListEditView: View {
             }
           }
           Toggle("list.edit.isExclusive", isOn: $viewModel.isExclusive)
+          Toggle(
+            "list.edit.always-gallery-mode",
+            isOn: Binding(
+              get: { preferences.listsGalleryMode.contains(viewModel.list.id) },
+              set: { newValue in
+                if newValue {
+                  if !preferences.listsGalleryMode.contains(viewModel.list.id) {
+                    preferences.listsGalleryMode.append(viewModel.list.id)
+                  }
+                } else {
+                  preferences.listsGalleryMode.removeAll(where: { $0 == viewModel.list.id })
+                }
+              }
+            )
+          )
         }
         #if !os(visionOS)
           .listRowBackground(theme.primaryBackgroundColor)

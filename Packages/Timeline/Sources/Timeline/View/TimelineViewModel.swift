@@ -139,7 +139,7 @@ import Nuke
       undoTimer = nil
       return previous
     } else {
-      let first = TimelineContentFilter.shared.isGalleryMode ? getTopVisibleMediaStatusId() : getTopVisibleStatusId()
+      let first = isGalleryMode ? getTopVisibleMediaStatusId() : getTopVisibleStatusId()
       
       if let first = first {
         previousScrollPosition = first
@@ -424,7 +424,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       if let latestSeenId = await cache.getLatestSeenStatus(for: client, filter: timeline.id)?.first
       {
         // Restore cache and scroll to latest seen status.
-        if TimelineContentFilter.shared.isGalleryMode {
+        if isGalleryMode {
             var foundMediaId: String? = nil
             if let index = items.firstIndex(where: { $0.status?.id == latestSeenId }) {
                 let itemsFromIndex = items[index...]
@@ -581,7 +581,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       if case .status(let status) = item { return status.id }
       return nil
     })
-    let isGalleryMode = TimelineContentFilter.shared.isGalleryMode
+    let isGalleryMode = isGalleryMode
 
     let newStatusesIDs = newStatuses.filter { status in
       guard renderedStatusIds.contains(status.id) else { return false }
