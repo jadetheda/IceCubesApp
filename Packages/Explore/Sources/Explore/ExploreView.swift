@@ -60,7 +60,11 @@ public struct ExploreView: View {
     }
   }
 
-  public init() {}
+    public init(searchQuery: String = "", searchScope: SearchScope = .all) {
+    _searchQuery = State(initialValue: searchQuery)
+    _searchScope = State(initialValue: searchScope)
+    _isSearchPresented = State(initialValue: !searchQuery.isEmpty)
+  }
 
   public var body: some View {
     ScrollViewReader { proxy in

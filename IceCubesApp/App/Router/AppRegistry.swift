@@ -124,6 +124,9 @@ extension View {
         AccountsListView(mode: .rebloggedBy(statusId: id))
       case .accountsList(let accounts):
         AccountsListView(mode: .accountsList(accounts: accounts))
+      
+      case .explore(let searchQuery):
+        ExploreView(searchQuery: searchQuery ?? "", searchScope: .all)
       case .trendingTimeline:
         TimelineView(
           timeline: .constant(.trending),

@@ -25,6 +25,7 @@ public enum RouterDestination: Hashable {
   case quotes(id: String)
   case accountsList(accounts: [Account])
   case trendingTimeline
+  case explore(searchQuery: String?)
   case linkTimeline(url: URL, title: String)
   case trendingLinks(cards: [Card])
   case tagsList(tags: [Tag])
@@ -147,8 +148,14 @@ public enum SettingsStartingPoint {
 
   public init() {}
 
-  public func navigate(to: RouterDestination) {
-    path.append(to)
+  public func navigate(to destination: RouterDestination) {
+    if case .hashTag(let tag, _) = destination {
+      if let client, client.isIceShrimpWorkaroundsEnabled {
+        path.append(.explore(searchQuery: "#" + tag))
+        return
+      }
+    }
+    path.append(destination)
   }
 
   public func handleStatus(status: AnyStatus, url: URL) -> OpenURLAction.Result {
@@ -290,7 +297,7 @@ public enum SettingsStartingPoint {
     if let account = results?.accounts.first {
       navigate(to: .accountDetailWithAccount(account: account))
     } else {
-      _ = await UIApplication.shared.open(url)
+      await MainActor.run { handlerOrDefault(url: url) }
     }
   }
 
@@ -306,7 +313,7 @@ public enum SettingsStartingPoint {
     if let account = results?.accounts.first {
       navigate(to: .accountDetailWithAccount(account: account))
     } else {
-      _ = await UIApplication.shared.open(url)
+      await MainActor.run { handlerOrDefault(url: url) }
     }
   }
 }
