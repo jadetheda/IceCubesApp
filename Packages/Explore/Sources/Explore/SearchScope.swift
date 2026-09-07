@@ -1,9 +1,9 @@
 import SwiftUI
 
-enum SearchScope: String, CaseIterable {
+public enum SearchScope: String, CaseIterable {
   case all, people, hashtags, posts
   
-  var localizedString: LocalizedStringKey {
+  public var localizedString: LocalizedStringKey {
     switch self {
     case .all:
       .init("explore.scope.all")
