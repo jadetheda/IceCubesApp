@@ -6,6 +6,12 @@
 
 <img src="Images/promo.png" />
 
+<p align="center">
+  <a href="https://altdirect.app/?url=https://raw.githubusercontent.com/jadetheda/IceCubesApp/gh-pages/apps.json" target="_blank"><img src="https://altdirect.app/assets/png/AltSource_Blue.png" alt="Add AltSource" width="200"></a>
+  <a href="https://github.com/jadetheda/IceCubesApp/releases/latest/download/IceCubesApp-Unsigned.ipa" target="_blank"><img src="https://altdirect.app/assets/png/Download_Blue.png" alt="Download .ipa" width="200"></a>
+</p>
+
+
 IceCubesApp is an open-source application for accessing the decentralized social network Mastodon! It's built entirely in SwiftUI, making it fast, lightweight, and easy to use.
 
 **Community Edition** takes this app to the next-level, implementing feature requests & bug fixes as suggested by the community (through the in-app Feature Requests feature).

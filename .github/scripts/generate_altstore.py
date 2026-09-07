@@ -5,6 +5,8 @@ from datetime import datetime
 
 repo = os.environ.get("GITHUB_REPOSITORY")
 tag = os.environ.get("TAG_NAME")
+if tag and not tag.startswith("v") and "." in tag:
+    tag = "v" + tag
 token = os.environ.get("GITHUB_TOKEN")
 
 if not repo or not tag:
@@ -39,7 +41,7 @@ download_url = ipa_asset["browser_download_url"]
 size = ipa_asset["size"]
 
 app_data = {
-    "name": "Jade's Repository",
+    "name": "Ice Cubes: Community Edition",
     "identifier": "com.jadetheda.icecubes.repo",
     "apps": [
         {
@@ -50,7 +52,7 @@ app_data = {
             "versionDate": date,
             "versionDescription": notes,
             "downloadURL": download_url,
-            "localizedDescription": "A customized build of Ice Cubes for Mastodon.",
+            "localizedDescription": "IceCubesApp is an open-source application for accessing the decentralized social network Mastodon! It's built entirely in SwiftUI, making it fast, lightweight, and easy to use.\n\nCommunity Edition takes this app to the next-level, implementing feature requests & bug fixes as suggested by the community.",
             "iconURL": f"https://raw.githubusercontent.com/{repo}/main/IceCubesApp/Assets.xcassets/Icon.appiconset/AppIcon.png",
             "tintColor": "FF0000",
             "size": size
