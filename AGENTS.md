@@ -309,3 +309,5 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Nuke 13 ImageResponse API Change)
 - **Root Cause**: When upstream bumped Nuke to 13.2.0, the `ImagePipeline.shared.image(for:)` asynchronous method was refactored. In Nuke 12 it returned an `ImageResponse` (with an `.image` property), but in Nuke 13 it returns the raw `UIImage` directly. Accessing `.image` on the return type was inadvertently calling an internal static function on Gifu, causing a type-inference failure.
 - **Solution**: Remove the `.image` accessor when using Nuke 13's `ImagePipeline.shared.image(for:)`, and pass the returned `UIImage` directly.
+
+- **Swift String Interpolation Syntax**: When using string interpolation `\()` inside a String literal, do NOT escape the inner quotes (e.g. use `\(String(localized: "key"))`, NEVER `\(String(localized: \"key\"))`). Escaping quotes inside interpolation blocks confuses the Swift parser and breaks the outer string literal bounds, resulting in `Exit Code 65` ("Unterminated string literal").
