@@ -423,7 +423,7 @@ public struct GalleryMediaCell: View {
         .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
         .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.borderless)
       .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
       .contextMenu {
         if let viewModel {

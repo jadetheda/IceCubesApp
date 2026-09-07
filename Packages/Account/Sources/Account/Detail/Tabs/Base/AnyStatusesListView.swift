@@ -38,9 +38,14 @@ struct AnyStatusesListView: View {
   
   var body: some View {
     if contentFilter.isGalleryMode {
-      AnyView(unboxedGallery(fetcher))
-        .listRowBackground(theme.primaryBackgroundColor)
-        .listRowInsets(EdgeInsets())
+      AnyView(
+        unboxedGallery(fetcher)
+          .buttonStyle(.borderless)
+          .background(theme.primaryBackgroundColor)
+      )
+      .listRowBackground(Color.clear)
+      .listRowInsets(EdgeInsets())
+      .listRowSeparator(.hidden)
     } else {
       switch fetcher.statusesState {
       case .loading:
