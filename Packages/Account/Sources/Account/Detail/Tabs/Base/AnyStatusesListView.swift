@@ -72,7 +72,7 @@ struct AnyStatusesListView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
           .listRowBackground(theme.primaryBackgroundColor)
-          .listRowSeparator(.hidden)
+          .listRowSeparator(.visible, edges: .all)
         }
         
         ForEach(filteredStatuses(statuses)) { status in
@@ -105,7 +105,7 @@ struct AnyStatusesListView: View {
           }
         }
         .listRowBackground(theme.primaryBackgroundColor)
-        .listRowSeparator(.hidden)
+        .listRowSeparator(.visible, edges: .all)
       case .displayWithGaps:
         EmptyView()
       }

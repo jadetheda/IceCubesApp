@@ -130,7 +130,7 @@ private struct StatusesTabView: View {
           .font(.caption)
           .foregroundStyle(.secondary)
           .listRowBackground(theme.primaryBackgroundColor)
-          .listRowSeparator(.hidden)
+          .listRowSeparator(.visible, edges: .all)
         }
       }
 
@@ -175,7 +175,7 @@ private struct StatusesTabView: View {
           bottom: 0,
           trailing: .layoutPadding)
       )
-      .listRowSeparator(.hidden)
+      .listRowSeparator(.visible, edges: .all)
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
@@ -259,7 +259,7 @@ private struct StatusesTabView: View {
       #endif
       .frame(height: 12)
       .listRowInsets(.init())
-      .listRowSeparator(.hidden)
+      .listRowSeparator(.visible, edges: .all)
       .accessibilityHidden(true)
   }
 }
