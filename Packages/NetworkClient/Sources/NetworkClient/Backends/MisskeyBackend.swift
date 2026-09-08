@@ -169,6 +169,23 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path == "custom_emojis" {
             let emojis: [Emoji] = []
             return emojis as! Entity
+        } else if path == "conversations" {
+            let convs: [Conversation] = []
+            return convs as! Entity
+        } else if path == "lists" {
+            let lists: [Models.List] = []
+            return lists as! Entity
+        } else if path.hasPrefix("trends/") {
+            if path == "trends/tags" {
+                let tags: [Tag] = []
+                return tags as! Entity
+            } else if path == "trends/statuses" {
+                let statuses: [Status] = []
+                return statuses as! Entity
+            } else if path == "trends/links" {
+                let links: [Card] = []
+                return links as! Entity
+            }
         } else if path == "accounts/relationships" {
             var rels: [Relationship] = []
             if let ids = params["id[]"] as? [String] {
@@ -210,6 +227,23 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path == "custom_emojis" {
             let emojis: [Emoji] = []
             return emojis as! Entity
+        } else if path == "conversations" {
+            let convs: [Conversation] = []
+            return convs as! Entity
+        } else if path == "lists" {
+            let lists: [Models.List] = []
+            return lists as! Entity
+        } else if path.hasPrefix("trends/") {
+            if path == "trends/tags" {
+                let tags: [Tag] = []
+                return tags as! Entity
+            } else if path == "trends/statuses" {
+                let statuses: [Status] = []
+                return statuses as! Entity
+            } else if path == "trends/links" {
+                let links: [Card] = []
+                return links as! Entity
+            }
         } else if path == "accounts/relationships" {
             var rels: [Relationship] = []
             if let ids = params["id[]"] as? [String] {
