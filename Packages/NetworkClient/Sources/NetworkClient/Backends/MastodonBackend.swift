@@ -148,38 +148,42 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     return (entity, linkHandler)
   }
 
-  public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
+  public func post<Entity: Decodable>(endpoint: Endpoint) async throws
     -> Entity
   {
-    try await makeEntityRequest(endpoint: endpoint, method: "POST", forceVersion: forceVersion)
+    try await makeEntityRequest(endpoint: endpoint, method: "POST")
   }
 
-  public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
+  public func post(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "POST")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
   }
 
-  public func patch(endpoint: Endpoint) async throws -> HTTPURLResponse? {
+  public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    try await makeEntityRequest(endpoint: endpoint, method: "PATCH")
+  }
+
+  public func put<Entity: Decodable>(endpoint: Endpoint) async throws
+    -> Entity
+  {
+    try await makeEntityRequest(endpoint: endpoint, method: "PUT")
+  }
+
+  public func put(endpoint: Endpoint) async throws -> HTTPURLResponse? {
     let url = try makeURL(endpoint: endpoint)
-    let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "PATCH")
+    let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "PUT")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
   }
 
-  public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
-    -> Entity
-  {
-    try await makeEntityRequest(endpoint: endpoint, method: "PUT", forceVersion: forceVersion)
-  }
-
-  public func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
+  public func delete(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "DELETE")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
