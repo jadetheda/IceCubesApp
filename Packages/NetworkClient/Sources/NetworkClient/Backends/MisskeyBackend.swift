@@ -135,12 +135,58 @@ public final class MisskeyBackend: FediverseBackend {
             let data = try await makeMisskeyRequest(path: "i", params: params)
             let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
             return misskeyUser.toAccount() as! Entity
+        } else if path == "search" {
+            let query = (params["q"] as? String) ?? ""
+            let type = params["type"] as? String
+            
+            var accounts: [Account] = []
+            var statuses: [Status] = []
+            var hashtags: [Tag] = [] // Not easily supported by Misskey natively
+            
+            if type == "statuses" || type == nil {
+                if let data = try? await makeMisskeyRequest(path: "notes/search", params: ["query": query]),
+                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
+                    statuses = notes.map { $0.toStatus() }
+                }
+            }
+            if type == "accounts" || type == nil {
+                if let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
+                   let users = try? JSONDecoder().decode([MisskeyUser].self, from: data) {
+                    accounts = users.map { $0.toAccount() }
+                }
+            }
+            
+            let results = SearchResults(accounts: accounts, relationships: [], statuses: statuses, hashtags: hashtags)
+            return results as! Entity
         } else if path.hasPrefix("accounts/") && path.components(separatedBy: "/").count == 2 {
             let id = path.replacingOccurrences(of: "accounts/", with: "")
             params["userId"] = id
             let data = try await makeMisskeyRequest(path: "users/show", params: params)
             let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
             return misskeyUser.toAccount() as! Entity
+        } else if path == "search" {
+            let query = (params["q"] as? String) ?? ""
+            let type = params["type"] as? String
+            
+            var accounts: [Account] = []
+            var statuses: [Status] = []
+            var hashtags: [Tag] = [] // Not easily supported by Misskey natively
+            
+            if type == "statuses" || type == nil {
+                if let data = try? await makeMisskeyRequest(path: "notes/search", params: ["query": query]),
+                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
+                    statuses = notes.map { $0.toStatus() }
+                }
+            }
+            if type == "accounts" || type == nil {
+                if let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
+                   let users = try? JSONDecoder().decode([MisskeyUser].self, from: data) {
+                    accounts = users.map { $0.toAccount() }
+                }
+            }
+            
+            let results = SearchResults(accounts: accounts, relationships: [], statuses: statuses, hashtags: hashtags)
+            return results as! Entity
         } else if path.hasSuffix("/statuses") && path.hasPrefix("accounts/") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/statuses", with: "")
             params["userId"] = id
