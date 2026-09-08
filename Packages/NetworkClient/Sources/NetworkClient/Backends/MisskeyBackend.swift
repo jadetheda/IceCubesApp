@@ -335,13 +335,53 @@ public final class MisskeyBackend: FediverseBackend {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func delete(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
+    public func delete(endpoint: Endpoint) async throws -> HTTPURLResponse? {
+        let path = endpoint.path()
+        var params = extractParams(from: endpoint)
+        
+        if path.hasPrefix("statuses/") && path.components(separatedBy: "/").count == 2 {
+            let id = path.replacingOccurrences(of: "statuses/", with: "")
+            params["noteId"] = id
+            let _ = try await makeMisskeyRequest(path: "notes/delete", params: params)
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        }
+        
+        return nil
+    }
     
     public func makeWebSocketTask(endpoint: Endpoint, instanceStreamingURL: URL?) throws -> URLSessionWebSocketTask {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
     public func mediaUpload<Entity: Decodable>(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> Entity {
-        throw FediverseClient.ClientError.unexpectedRequest
+        let url = URL(string: "https://\(server)/api/drive/files/create")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        
+        let boundary = UUID().uuidString
+        request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        if let token = oauthToken?.accessToken {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"i\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(token)\r\n".data(using: .utf8)!)
+        }
+        
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(data)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (responseData, response) = try await URLSession.shared.data(for: request)
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
+            print("Misskey error: \(String(data: responseData, encoding: .utf8) ?? "")")
+        }
+        let misskeyFile = try JSONDecoder().decode(MisskeyFile.self, from: responseData)
+        return misskeyFile.toMediaAttachment() as! Entity
     }
 }
