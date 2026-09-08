@@ -27,14 +27,44 @@ public final class MisskeyBackend: FediverseBackend {
     public func addConnections(_ connections: [String]) {}
     public func hasConnection(with url: URL) -> Bool { false }
     
-    public func oauthURL() async throws -> URL {
-        // Implement MiAuth fake URL
-        throw FediverseClient.OauthError.missingApp
-    }
     
-    public func continueOauthFlow(url: URL) async throws -> OauthToken {
+    private static var currentSessionId: String?
+
+    public func oauthURL() async throws -> URL {
+        let sessionId = UUID().uuidString
+        Self.currentSessionId = sessionId
+        
+        let permissions = "read:account,write:account,read:blocks,write:blocks,read:drive,write:drive,read:favorites,write:favorites,read:following,write:following,read:mutes,write:mutes,write:notes,read:notifications,write:notifications,read:reactions,write:reactions,write:votes"
+        let appName = "IceCubesApp".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "IceCubesApp"
+        let callback = AppInfo.scheme.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? AppInfo.scheme
+        
+        let urlString = "https://\(server)/miauth/\(sessionId)?name=\(appName)&callback=\(callback)&permission=\(permissions)"
+        if let url = URL(string: urlString) {
+            return url
+        }
         throw FediverseClient.OauthError.missingApp
     }
+
+    public func continueOauthFlow(url: URL) async throws -> OauthToken {
+        guard let sessionId = Self.currentSessionId else {
+            throw FediverseClient.OauthError.missingApp
+        }
+        
+        let requestUrl = URL(string: "https://\(server)/api/miauth/\(sessionId)/check")!
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        struct MiAuthResponse: Decodable {
+            let token: String
+        }
+        
+        let response = try JSONDecoder().decode(MiAuthResponse.self, from: data)
+        return OauthToken(accessToken: response.token, tokenType: "Bearer", scope: nil, createdAt: Int(Date().timeIntervalSince1970))
+    }
+
     
     public func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity {
         if endpoint.path() == "timelines/home" {
