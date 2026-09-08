@@ -149,12 +149,6 @@ public enum SettingsStartingPoint {
   public init() {}
 
   public func navigate(to destination: RouterDestination) {
-    if case .hashTag(let tag, _) = destination {
-      if let client, client.isIceShrimpWorkaroundsEnabled {
-        path.append(.explore(searchQuery: "#" + tag))
-        return
-      }
-    }
     path.append(destination)
   }
 
