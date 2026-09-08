@@ -44,11 +44,7 @@ public enum Statuses: Endpoint {
     case .favoritedBy(let id, _):
       "statuses/\(id)/favourited_by"
     case .quotesBy(let id, _):
-      if UserDefaults.standard.bool(forKey: "use_iceshrimp_workarounds") {
-        "pleroma/statuses/\(id)/quotes"
-      } else {
-        "statuses/\(id)/quotes"
-      }
+      "statuses/\(id)/quotes"
     case .pin(let id):
       "statuses/\(id)/pin"
     case .unpin(let id):
