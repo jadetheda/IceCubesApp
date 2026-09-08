@@ -12,6 +12,13 @@ import Nuke
   var lastTopVisibleStatusId: String?
   @ObservationIgnored private var cacheUpdateTask: Task<Void, Never>?
   var statusesState: StatusesState = .loading
+  private var isGalleryMode: Bool {
+    if case .list(let list) = timeline, UserPreferences.shared.listsGalleryMode.contains(list.id) {
+      return true
+    }
+    return TimelineContentFilter.shared.isGalleryMode
+  }
+
   var timeline: TimelineFilter = .home {
     willSet {
       if timeline == .home,
@@ -581,7 +588,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       if case .status(let status) = item { return status.id }
       return nil
     })
-    let isGalleryMode = isGalleryMode
+    let isGalleryMode = self.isGalleryMode
 
     let newStatusesIDs = newStatuses.filter { status in
       guard renderedStatusIds.contains(status.id) else { return false }
