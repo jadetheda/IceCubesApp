@@ -38,11 +38,7 @@ struct AnyStatusesListView: View {
   
   var body: some View {
     if contentFilter.isGalleryMode {
-      AnyView(
-        unboxedGallery(fetcher)
-          .buttonStyle(.borderless)
-          .background(theme.primaryBackgroundColor)
-      )
+      unboxedGallery(fetcher)
       .listRowBackground(Color.clear)
       .listRowInsets(EdgeInsets())
       .listRowSeparator(.hidden)
@@ -129,14 +125,17 @@ struct AnyStatusesListView: View {
     }
   }
 
-  @ViewBuilder
-  private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> some View {
-    GalleryStatusesListView(
-      fetcher: f,
-      client: client,
-      routerPath: routerPath,
-      isRemote: isRemote,
-      filterContext: .account
+  private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> AnyView {
+    AnyView(
+      GalleryStatusesListView(
+        fetcher: f,
+        client: client,
+        routerPath: routerPath,
+        isRemote: isRemote,
+        filterContext: .account
+      )
+      .buttonStyle(.borderless)
+      .background(theme.primaryBackgroundColor)
     )
   }
 }
