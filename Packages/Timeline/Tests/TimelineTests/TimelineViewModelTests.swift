@@ -10,7 +10,7 @@ import XCTest
 struct Tests {
   func makeSubject() -> TimelineViewModel {
     let subject = TimelineViewModel()
-    let client = MastodonClient(server: "localhost")
+    let client = FediverseClient(server: "localhost")
     subject.client = client
     subject.timeline = .home
     subject.timelineTask?.cancel()
@@ -124,7 +124,7 @@ struct Tests {
       nextPages: [hiddenSecondPage, visibleThirdPage])
 
     let subject = TimelineViewModel(statusFetcher: fetcher)
-    subject.client = MastodonClient(server: "localhost")
+    subject.client = FediverseClient(server: "localhost")
     await subject.reset()
 
     await subject.fetchNewestStatuses(pullToRefresh: false)

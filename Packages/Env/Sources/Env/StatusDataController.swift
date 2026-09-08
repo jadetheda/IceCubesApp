@@ -27,12 +27,12 @@ public final class StatusDataControllerProvider {
 
   private struct CacheKey: Hashable {
     let statusId: String
-    let client: MastodonClient
+    let client: FediverseClient
   }
 
 
 
-  public func dataController(for status: any AnyStatus, client: MastodonClient)
+  public func dataController(for status: any AnyStatus, client: FediverseClient)
     -> StatusDataController
   {
     let key = CacheKey(statusId: status.id, client: client)
@@ -44,7 +44,7 @@ public final class StatusDataControllerProvider {
     return controller
   }
 
-  public func updateDataControllers(for statuses: [Status], client: MastodonClient) {
+  public func updateDataControllers(for statuses: [Status], client: FediverseClient) {
     for status in statuses {
       let realStatus: AnyStatus = status.reblog ?? status
       let controller = dataController(for: realStatus, client: client)
@@ -56,7 +56,7 @@ public final class StatusDataControllerProvider {
 @MainActor
 @Observable public final class StatusDataController: StatusDataControlling {
   private let status: AnyStatus
-  private let client: MastodonClient
+  private let client: FediverseClient
 
   public var isReblogged: Bool
   public var isBookmarked: Bool
@@ -68,7 +68,7 @@ public final class StatusDataControllerProvider {
   public var repliesCount: Int
   public var quotesCount: Int
 
-  init(status: AnyStatus, client: MastodonClient) {
+  init(status: AnyStatus, client: FediverseClient) {
     self.status = status
     self.client = client
 

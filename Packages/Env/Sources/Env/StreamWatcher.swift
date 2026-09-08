@@ -7,7 +7,7 @@ import Observation
 
 @MainActor
 @Observable public class StreamWatcher {
-  private var client: MastodonClient?
+  private var client: FediverseClient?
   private var task: URLSessionWebSocketTask?
   private var watchedStreams: [Stream] = []
   private var instanceStreamingURL: URL?
@@ -34,7 +34,7 @@ import Observation
   private init() {
   }
 
-  public func setClient(client: MastodonClient, instanceStreamingURL: URL?) {
+  public func setClient(client: FediverseClient, instanceStreamingURL: URL?) {
     if self.client != nil {
       stopWatching()
     }

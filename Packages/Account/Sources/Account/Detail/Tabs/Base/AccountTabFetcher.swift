@@ -9,14 +9,14 @@ import Env
 @Observable
 class AccountTabFetcher: StatusesFetcher {
   let accountId: String
-  let client: MastodonClient
+  let client: FediverseClient
   let isCurrentUser: Bool
   
   var statusesState: StatusesState = .loading
   var visibleStatusesCount: [String: Int] = [:]
   var statuses: [Status] = []
   
-  init(accountId: String, client: MastodonClient, isCurrentUser: Bool) {
+  init(accountId: String, client: FediverseClient, isCurrentUser: Bool) {
     self.accountId = accountId
     self.client = client
     self.isCurrentUser = isCurrentUser

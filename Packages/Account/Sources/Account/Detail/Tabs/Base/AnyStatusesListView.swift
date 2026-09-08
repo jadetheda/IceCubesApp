@@ -8,7 +8,7 @@ import Timeline
 
 struct AnyStatusesListView: View {
   let fetcher: any StatusesFetcher
-  let client: MastodonClient
+  let client: FediverseClient
   let routerPath: RouterPath
   let isRemote: Bool
   let isMediaTab: Bool
@@ -18,7 +18,7 @@ struct AnyStatusesListView: View {
   // toggles like hideSeenPosts from affecting the profile media view.
   init(
     fetcher: any StatusesFetcher,
-    client: MastodonClient,
+    client: FediverseClient,
     routerPath: RouterPath,
     isRemote: Bool = false,
     isMediaTab: Bool = false,

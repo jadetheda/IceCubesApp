@@ -60,7 +60,7 @@ extension StatusEditor {
 }
 
 @MainActor
-extension MastodonClient: StatusEditor.MediaDescriptionService.Client {
+extension FediverseClient: StatusEditor.MediaDescriptionService.Client {
   public func updateDescription(
     mediaId: String,
     description: String

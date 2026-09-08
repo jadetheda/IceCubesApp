@@ -19,7 +19,7 @@ struct IceShrimpListCache {
   var inLists: [Models.List] = []
   var isLoadingInfo: Bool = true
 
-  var client: MastodonClient?
+  var client: FediverseClient?
 
   init(account: Account) {
     self.account = account

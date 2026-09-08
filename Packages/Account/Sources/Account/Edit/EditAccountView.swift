@@ -8,7 +8,7 @@ import SwiftUI
 @MainActor
 public struct EditAccountView: View {
   @Environment(\.dismiss) private var dismiss
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPrefs
 

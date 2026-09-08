@@ -16,7 +16,7 @@ struct TimelineTab: View {
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(UserPreferences.self) private var preferences
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @State private var routerPath = RouterPath()
   @State private var contentFilter = TimelineContentFilter.shared
 

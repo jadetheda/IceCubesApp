@@ -16,12 +16,12 @@ import Observation
 @Observable
 public class AccountMediaFetcher: StatusesFetcher {
   public let accountId: String
-  public var client: MastodonClient?
+  public var client: FediverseClient?
   
   public var statusesState: StatusesState = .loading
   public var statuses: [Status] = []
   
-  public init(accountId: String, client: MastodonClient? = nil, initialStatuses: [Status] = []) {
+  public init(accountId: String, client: FediverseClient? = nil, initialStatuses: [Status] = []) {
     self.accountId = accountId
     self.client = client
     if !initialStatuses.isEmpty {
@@ -85,7 +85,7 @@ public class AccountMediaFetcher: StatusesFetcher {
 public struct AccountDetailMediaGridView: View {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   
   let account: Account
   @State private var fetcher: AccountMediaFetcher

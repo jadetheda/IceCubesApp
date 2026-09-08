@@ -16,7 +16,7 @@ import Observation
   public private(set) var updatingFollowRequestAccountIds = Set<String>()
   public private(set) var isLoadingAccount: Bool = false
 
-  private var client: MastodonClient?
+  private var client: FediverseClient?
 
   public static let shared = CurrentAccount()
 
@@ -30,7 +30,7 @@ import Observation
 
   private init() {}
 
-  public func setClient(client: MastodonClient) {
+  public func setClient(client: FediverseClient) {
     self.client = client
     guard client.isAuth else { return }
     Task(priority: .userInitiated) {

@@ -6,7 +6,7 @@ import SwiftUI
 public struct StatusEditHistoryView: View {
   @Environment(\.dismiss) private var dismiss
 
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(Theme.self) private var theme
 
   private let statusId: String

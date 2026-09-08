@@ -11,14 +11,14 @@ struct BoostsTab {
   let isAvailableForCurrentUser = true
   let isAvailableForOtherUsers = true
 
-  func createFetcher(accountId: String, client: MastodonClient, isCurrentUser: Bool)
+  func createFetcher(accountId: String, client: FediverseClient, isCurrentUser: Bool)
     -> any StatusesFetcher
   {
     BoostsTabFetcher(accountId: accountId, client: client, isCurrentUser: isCurrentUser)
   }
 
   func makeView(
-    fetcher: any StatusesFetcher, client: MastodonClient, routerPath: RouterPath, account: Account?
+    fetcher: any StatusesFetcher, client: FediverseClient, routerPath: RouterPath, account: Account?
   ) -> some View {
     AnyStatusesListView(
       fetcher: fetcher,

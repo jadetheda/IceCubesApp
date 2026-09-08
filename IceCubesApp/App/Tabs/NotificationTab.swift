@@ -13,7 +13,7 @@ struct NotificationsTab: View {
   @Environment(\.scenePhase) private var scenePhase
 
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(AppAccountsManager.self) private var appAccount
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(UserPreferences.self) private var userPreferences

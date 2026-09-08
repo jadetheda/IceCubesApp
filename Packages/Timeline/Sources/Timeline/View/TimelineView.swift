@@ -33,7 +33,7 @@ public struct TimelineView: View {
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var account
   @Environment(StreamWatcher.self) private var watcher
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   @Environment(UserPreferences.self) private var preferences
 
@@ -210,7 +210,7 @@ public struct TimelineView: View {
       if viewModel.client == nil {
         switch timeline {
         case .remoteLocal(let server, _):
-          viewModel.client = MastodonClient(server: server)
+          viewModel.client = FediverseClient(server: server)
         default:
           viewModel.client = client
         }
@@ -253,12 +253,12 @@ public struct TimelineView: View {
       guard oldValue != newValue else { return }
       switch newValue {
       case .remoteLocal(let server, _):
-        viewModel.client = MastodonClient(server: server)
+        viewModel.client = FediverseClient(server: server)
       default:
         switch oldValue {
         case .remoteLocal(let server, _):
           if newValue == .latest {
-            viewModel.client = MastodonClient(server: server)
+            viewModel.client = FediverseClient(server: server)
           } else {
             viewModel.client = client
           }

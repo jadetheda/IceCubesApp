@@ -61,9 +61,9 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
   public let repliesCount: Int
   public let reblogsCount: Int
   public let quotesCount: Int?
-  public let favouritesCount: Int
+  public var favouritesCount: Int
   public let card: Card?
-  public let favourited: Bool?
+  public var favourited: Bool?
   public let reblogged: Bool?
   public let pinned: Bool?
   public let bookmarked: Bool?
@@ -248,9 +248,9 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
   public let repliesCount: Int
   public let reblogsCount: Int
   public let quotesCount: Int?
-  public let favouritesCount: Int
+  public var favouritesCount: Int
   public let card: Card?
-  public let favourited: Bool?
+  public var favourited: Bool?
   public let reblogged: Bool?
   public let pinned: Bool?
   public let bookmarked: Bool?

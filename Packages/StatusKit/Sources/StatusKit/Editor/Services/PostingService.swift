@@ -75,7 +75,7 @@ extension StatusEditor {
 }
 
 @MainActor
-extension MastodonClient: StatusEditor.PostingService.Client {
+extension FediverseClient: StatusEditor.PostingService.Client {
   public func postStatus(data: StatusData) async throws -> Status {
     try await post(endpoint: Statuses.postStatus(json: data))
   }

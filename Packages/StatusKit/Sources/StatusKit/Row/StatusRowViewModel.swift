@@ -18,7 +18,7 @@ import SwiftUI
   let finalStatus: AnyStatus
   let filterContext: Filter.Context?
 
-  let client: MastodonClient
+  let client: FediverseClient
   let routerPath: RouterPath
 
   let userFollowedTag: HTMLString.Link?
@@ -143,7 +143,7 @@ import SwiftUI
 
   public init(
     status: Status,
-    client: MastodonClient,
+    client: FediverseClient,
     routerPath: RouterPath,
     isRemote: Bool = false,
     showActions: Bool = true,

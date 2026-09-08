@@ -18,7 +18,7 @@ func testRouterThreadsURL() {
 @MainActor
 func testRouterLocalStatusURL() {
   let router = RouterPath()
-  let client = MastodonClient(
+  let client = FediverseClient(
     server: "mastodon.social",
     oauthToken: .init(accessToken: "", tokenType: "", scope: "", createdAt: 0))
   client.addConnections(["mastodon.social"])
@@ -32,7 +32,7 @@ func testRouterLocalStatusURL() {
 @MainActor
 func testRouterRemoteStatusURL() {
   let router = RouterPath()
-  let client = MastodonClient(
+  let client = FediverseClient(
     server: "mastodon.social",
     oauthToken: .init(accessToken: "", tokenType: "", scope: "", createdAt: 0))
   client.addConnections(["mastodon.social", "mastodon.online"])

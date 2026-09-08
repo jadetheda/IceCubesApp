@@ -112,7 +112,6 @@ import SwiftUI
     @AppStorage("show_timeline_hide_pinned_toggle") public var showTimelineHidePinnedToggle: Bool = false
     @AppStorage("timeline_pinned_hidden") public var timelinePinnedHidden: Bool = false
     @AppStorage("hide_pinned_items_symbol") public var hidePinnedItemsSymbol: Bool = false
-    @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
     @AppStorage("iceshrimp_hide_boosts_button") public var iceShrimpHideBoostsButton: Bool = true
     @AppStorage("iceshrimp_hide_incompatible_buttons") public var iceShrimpHideIncompatibleButtons: Bool = true
     @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
@@ -156,7 +155,7 @@ import SwiftUI
   public static let shared = UserPreferences()
   private let storage = Storage()
 
-  private var client: MastodonClient?
+  private var client: FediverseClient?
 
   public var preferredBrowser: PreferredBrowser {
     didSet {
@@ -597,9 +596,7 @@ import SwiftUI
       storage.remoteMediaFallbackOnFail = remoteMediaFallbackOnFail
     }
   }
-  public var useIceShrimpWorkarounds: Bool {
     didSet {
-      storage.useIceShrimpWorkarounds = useIceShrimpWorkarounds
     }
   }
   public var iceShrimpShowBoostsButton: Bool {
@@ -840,7 +837,7 @@ import SwiftUI
 
   public var serverPreferences: ServerPreferences?
 
-  public func setClient(client: MastodonClient) {
+  public func setClient(client: FediverseClient) {
     self.client = client
     Task {
       await refreshServerPreferences()
@@ -940,7 +937,6 @@ import SwiftUI
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
-    useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     iceShrimpShowBoostsButton = !storage.iceShrimpHideBoostsButton
     iceShrimpShowIncompatibleButtons = !storage.iceShrimpHideIncompatibleButtons
     neverLoadVideo = storage.neverLoadVideo

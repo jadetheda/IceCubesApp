@@ -123,7 +123,7 @@ import Nuke
     }
   }
 
-  var client: MastodonClient? {
+  var client: FediverseClient? {
     didSet {
       if oldValue != client {
         Task {
@@ -412,7 +412,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   // Hydrate statuses in the Timeline when statuses are empty.
-  private func fetchFirstPage(client: MastodonClient) async throws {
+  private func fetchFirstPage(client: FediverseClient) async throws {
     pendingStatusesObserver.pendingStatuses = []
 
     let datasourceIsEmpty = await datasource.isEmpty
@@ -480,7 +480,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   // Fetch pages from the top most status of the timeline.
-  private func fetchNewPagesFrom(latestStatus: String, client: MastodonClient) async throws {
+  private func fetchNewPagesFrom(latestStatus: String, client: FediverseClient) async throws {
     canStreamEvents = false
     let initialTimeline = timeline
 
@@ -826,7 +826,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   private func updateDatasourceAndState(
-    statuses: [Status], client: MastodonClient, replaceExisting: Bool
+    statuses: [Status], client: FediverseClient, replaceExisting: Bool
   )
     async
   {
@@ -988,7 +988,7 @@ extension TimelineViewModel {
     }
   }
 
-  private func handleUpdateEvent(_ event: StreamEventUpdate, client: MastodonClient) async {
+  private func handleUpdateEvent(_ event: StreamEventUpdate, client: FediverseClient) async {
     let shouldStream =
       switch timeline {
       case .home:
@@ -1101,7 +1101,7 @@ extension TimelineViewModel {
     }
   }
 
-  private func handleStatusUpdateEvent(_ event: StreamEventStatusUpdate, client: MastodonClient)
+  private func handleStatusUpdateEvent(_ event: StreamEventStatusUpdate, client: FediverseClient)
     async
   {
     guard let originalIndex = await datasource.indexOf(statusId: event.status.id) else { return }

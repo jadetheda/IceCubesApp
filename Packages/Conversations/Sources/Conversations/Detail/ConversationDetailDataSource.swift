@@ -21,7 +21,7 @@ public final class ConversationDetailDataSource {
     let conversation: Conversation
   }
 
-  public func fetchMessages(client: MastodonClient) async throws -> FetchResult {
+  public func fetchMessages(client: FediverseClient) async throws -> FetchResult {
     guard let lastMessageId = messages.last?.id else {
       return FetchResult(messages: messages, conversation: conversation)
     }
@@ -56,7 +56,7 @@ public final class ConversationDetailDataSource {
   }
 
   public func postMessage(
-    client: MastodonClient,
+    client: FediverseClient,
     messageText: String
   ) async throws -> PostMessageResult {
     var finalText = conversation.accounts.map { "@\($0.acct)" }.joined(separator: " ")

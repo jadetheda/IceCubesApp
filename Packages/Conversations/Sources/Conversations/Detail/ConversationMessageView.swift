@@ -12,7 +12,7 @@ struct ConversationMessageView: View {
   @Environment(QuickLook.self) private var quickLook
   @Environment(RouterPath.self) private var routerPath
   @Environment(CurrentAccount.self) private var currentAccount
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(Theme.self) private var theme
   @Environment(ToastCenter.self) private var toastCenter
 

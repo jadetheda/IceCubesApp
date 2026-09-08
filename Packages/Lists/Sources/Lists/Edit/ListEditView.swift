@@ -10,7 +10,7 @@ import SwiftUI
 public struct ListEditView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(UserPreferences.self) private var preferences
 
   @State private var viewModel: ListEditViewModel

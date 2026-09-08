@@ -6,7 +6,7 @@ import SwiftUI
 
 @MainActor
 @Observable public class StatusPollViewModel {
-  public var client: MastodonClient?
+  public var client: FediverseClient?
   public var instance: Instance?
 
   var poll: Poll

@@ -17,7 +17,7 @@ struct SettingsTabs: View {
 
   @Environment(PushNotificationsService.self) private var pushNotifications
   @Environment(UserPreferences.self) private var preferences
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(AppAccountsManager.self) private var appAccountsManager
   @Environment(Theme.self) private var theme
@@ -150,7 +150,7 @@ struct SettingsTabs: View {
     if let token = account.oauthToken,
       let sub = pushNotifications.subscriptions.first(where: { $0.account.token == token })
     {
-      let client = MastodonClient(server: account.server, oauthToken: token)
+      let client = FediverseClient(server: account.server, oauthToken: token)
       await timelineCache.clearCache(for: client.id)
       await sub.deleteSubscription()
       appAccountsManager.delete(account: account)

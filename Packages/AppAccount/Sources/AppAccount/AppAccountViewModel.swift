@@ -11,7 +11,7 @@ import SwiftUI
   private static var accountsCache: [String: Account] = [:]
 
   var appAccount: AppAccount
-  let client: MastodonClient
+  let client: FediverseClient
   let isCompact: Bool
   let isInSettings: Bool
   let showBadge: Bool
@@ -40,7 +40,7 @@ import SwiftUI
     self.isCompact = isCompact
     self.isInSettings = isInSettings
     self.showBadge = showBadge
-    client = .init(server: appAccount.server, oauthToken: appAccount.oauthToken)
+    client = .init(server: appAccount.server, oauthToken: appAccount.oauthToken, serverSoftware: appAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
   }
 
   func fetchAccount() async {

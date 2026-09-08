@@ -10,7 +10,7 @@ import SwiftUI
 public struct ExploreView: View {
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var preferences
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
 
   @State private var searchQuery = ""

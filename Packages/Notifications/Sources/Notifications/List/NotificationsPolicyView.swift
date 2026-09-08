@@ -6,7 +6,7 @@ import SwiftUI
 struct NotificationsPolicyView: View {
   @Environment(\.dismiss) private var dismiss
 
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   @State private var policy: NotificationsPolicy?
   @State private var isUpdating: Bool = false

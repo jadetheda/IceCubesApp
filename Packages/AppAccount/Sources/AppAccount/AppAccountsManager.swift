@@ -14,18 +14,15 @@ import SwiftUI
     didSet {
       Self.latestCurrentAccountKey = currentAccount.id
       currentClient = .init(
+        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon",
         server: currentAccount.server,
         oauthToken: currentAccount.oauthToken)
         
-      if let isShrimp = currentAccount.isIceShrimp {
-        UserPreferences.shared.useIceShrimpWorkarounds = isShrimp
-        currentClient.isIceShrimpWorkaroundsEnabled = isShrimp
-      }
     }
   }
 
   public var availableAccounts: [AppAccount]
-  public var currentClient: MastodonClient
+  public var currentClient: FediverseClient
 
   public var pushAccounts: [PushAccount] {
     availableAccounts.filter { $0.oauthToken != nil }
@@ -46,7 +43,8 @@ import SwiftUI
       defaultAccount = keychainAccounts.last ?? defaultAccount
     }
     currentAccount = defaultAccount
-    currentClient = .init(server: defaultAccount.server, oauthToken: defaultAccount.oauthToken)
+    currentClient = .init(
+        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon",server: defaultAccount.server, oauthToken: defaultAccount.oauthToken)
   }
 
   public func add(account: AppAccount) {
@@ -59,15 +57,12 @@ import SwiftUI
 
   public func updateIceShrimpStatus(for account: AppAccount) async {
     if let isShrimp = account.isIceShrimp {
-      if currentAccount.id == account.id {
-        UserPreferences.shared.useIceShrimpWorkarounds = isShrimp
-      }
       return
     }
     
     var isShrimp = false
     do {
-      let client = MastodonClient(server: account.server, oauthToken: account.oauthToken)
+      let client = FediverseClient(server: account.server, oauthToken: account.oauthToken)
       if let instance: Models.Instance = try? await client.get(endpoint: Instances.instance, forceVersion: .v2) {
          if instance.version.lowercased().contains("iceshrimp") {
            isShrimp = true
@@ -102,13 +97,5 @@ import SwiftUI
   public func delete(account: AppAccount) {
     availableAccounts.removeAll(where: { $0.id == account.id })
     account.delete()
-    if currentAccount.id == account.id {
-      currentAccount =
-        availableAccounts.first
-        ?? AppAccount(
-          server: AppInfo.defaultServer,
-          accountName: nil,
-          oauthToken: nil)
-    }
   }
 }

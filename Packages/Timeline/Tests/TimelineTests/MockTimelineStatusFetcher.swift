@@ -13,12 +13,12 @@ actor MockTimelineStatusFetcher: TimelineStatusFetching {
     self.nextPages = nextPages
   }
 
-  func fetchFirstPage(client: MastodonClient?, timeline: TimelineFilter) async throws -> [Status] {
+  func fetchFirstPage(client: FediverseClient?, timeline: TimelineFilter) async throws -> [Status] {
     firstPage
   }
 
   func fetchNewPages(
-    client: MastodonClient?,
+    client: FediverseClient?,
     timeline: TimelineFilter,
     minId: String,
     maxPages: Int
@@ -27,7 +27,7 @@ actor MockTimelineStatusFetcher: TimelineStatusFetching {
   }
 
   func fetchNextPage(
-    client: MastodonClient?,
+    client: FediverseClient?,
     timeline: TimelineFilter,
     lastId: String,
     offset: Int

@@ -12,7 +12,7 @@ struct ExploreTab: View {
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var preferences
   @Environment(CurrentAccount.self) private var currentAccount
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @State private var routerPath = RouterPath()
   
   @Query(sort: \LocalTimeline.creationDate, order: .reverse) var localTimelines: [LocalTimeline]

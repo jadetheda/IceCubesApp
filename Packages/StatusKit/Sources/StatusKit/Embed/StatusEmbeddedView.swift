@@ -10,10 +10,10 @@ public struct StatusEmbeddedView: View {
   @Environment(Theme.self) private var theme
 
   public let status: Status
-  public let client: MastodonClient
+  public let client: FediverseClient
   public let routerPath: RouterPath
 
-  public init(status: Status, client: MastodonClient, routerPath: RouterPath) {
+  public init(status: Status, client: FediverseClient, routerPath: RouterPath) {
     self.status = status
     self.client = client
     self.routerPath = routerPath

@@ -23,7 +23,7 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
   }
 
   public let id: String
-  public let type: String
+  public var type: String
   public var supportedType: SupportedType? {
     SupportedType(rawValue: type)
   }
@@ -135,13 +135,6 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     }
 
     var resolvedType = baseType
-    if resolvedType == .image && isIceShrimp {
-      let allExts = [url.pathExtension, self.url?.pathExtension, remoteUrl?.pathExtension, previewUrl?.pathExtension].compactMap { $0?.lowercased() }
-      let videoExts = ["mp4", "m4v", "mov", "webm"]
-      if allExts.contains(where: { videoExts.contains($0) }) || meta?.original?.duration != nil || meta?.original?.frameRate != nil {
-        resolvedType = .video
-      }
-    }
 
     let pUrl = (useRemoteMedia ? (previewRemoteUrl ?? previewUrl) : previewUrl) ?? url
     

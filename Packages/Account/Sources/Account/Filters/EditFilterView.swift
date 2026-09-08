@@ -10,7 +10,7 @@ struct EditFilterView: View {
 
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var account
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   @State private var isSavingFilter: Bool = false
   @State private var filter: ServerFilter?
@@ -290,7 +290,7 @@ struct EditFilterView: View {
     .disabled(!canSave)
   }
 
-  private func saveFilter(_ client: MastodonClient) async {
+  private func saveFilter(_ client: FediverseClient) async {
     do {
       isSavingFilter = true
       if let filter {
@@ -307,7 +307,7 @@ struct EditFilterView: View {
     isSavingFilter = false
   }
 
-  private func addKeyword(_ client: MastodonClient, name: String) async {
+  private func addKeyword(_ client: FediverseClient, name: String) async {
     guard let filterId = filter?.id else { return }
     isSavingFilter = true
     do {
@@ -322,7 +322,7 @@ struct EditFilterView: View {
     isSavingFilter = false
   }
 
-  private func deleteKeyword(_ client: MastodonClient, keyword: ServerFilter.Keyword) async {
+  private func deleteKeyword(_ client: FediverseClient, keyword: ServerFilter.Keyword) async {
     isSavingFilter = true
     do {
       let response = try await client.delete(

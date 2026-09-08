@@ -9,7 +9,7 @@ import SwiftUI
 struct AboutView: View {
   @Environment(RouterPath.self) private var routerPath
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   @State private var dimillianAccount: AccountsListRowViewModel?
   @State private var iceCubesAccount: AccountsListRowViewModel?
@@ -174,7 +174,7 @@ struct AboutView: View {
     }
   }
 
-  private func fetchAccountViewModel(_ client: MastodonClient, account: String) async throws
+  private func fetchAccountViewModel(_ client: FediverseClient, account: String) async throws
     -> AccountsListRowViewModel
   {
     let dimillianAccount: Account = try await client.get(endpoint: Accounts.lookup(name: account))

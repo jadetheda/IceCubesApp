@@ -6,7 +6,7 @@ import SwiftUI
 @MainActor
 public struct CollectionDetailView: View {
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   public let collection: AccountCollection
 

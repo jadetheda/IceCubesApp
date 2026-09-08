@@ -38,7 +38,7 @@ extension StatusEditor {
 }
 
 @MainActor
-extension MastodonClient: StatusEditor.CustomEmojiService.Client {
+extension FediverseClient: StatusEditor.CustomEmojiService.Client {
   public func fetchCustomEmojis() async throws -> [Emoji] {
     if let cached = await CustomEmojiCache.shared.get(for: server) {
       Task {

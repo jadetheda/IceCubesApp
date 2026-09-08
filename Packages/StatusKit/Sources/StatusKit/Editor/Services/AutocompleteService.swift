@@ -40,7 +40,7 @@ extension StatusEditor {
 }
 
 @MainActor
-extension MastodonClient: StatusEditor.AutocompleteService.Client {
+extension FediverseClient: StatusEditor.AutocompleteService.Client {
   public func searchHashtags(query: String) async throws -> [Tag] {
     let results: SearchResults = try await get(
       endpoint: Search.search(

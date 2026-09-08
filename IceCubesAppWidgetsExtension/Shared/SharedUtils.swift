@@ -12,7 +12,7 @@ func loadStatuses(
   account: AppAccountEntity,
   widgetFamily: WidgetFamily
 ) async -> [Status] {
-  let client = MastodonClient(server: account.account.server, oauthToken: account.account.oauthToken)
+  let client = FediverseClient(server: account.account.server, oauthToken: account.account.oauthToken)
   do {
     var statuses = try await timeline.fetchStatuses(
       client: client,

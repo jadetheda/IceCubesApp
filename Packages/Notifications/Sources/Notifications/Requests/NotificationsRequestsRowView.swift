@@ -6,7 +6,7 @@ import SwiftUI
 
 struct NotificationsRequestsRowView: View {
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   let request: NotificationsRequest
 

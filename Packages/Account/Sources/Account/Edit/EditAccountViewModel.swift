@@ -18,7 +18,7 @@ import SwiftUI
     }
   }
 
-  public var client: MastodonClient?
+  public var client: FediverseClient?
 
   var displayName: String = ""
   var note: String = ""

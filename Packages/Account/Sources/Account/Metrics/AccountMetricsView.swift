@@ -9,7 +9,7 @@ import SwiftUI
 
 public struct AccountMetricsView: View {
   @Environment(CurrentAccount.self) private var currentAccount
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
   @Environment(\.modelContext) private var modelContext

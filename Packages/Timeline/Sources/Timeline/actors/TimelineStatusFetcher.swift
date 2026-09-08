@@ -4,19 +4,19 @@ import NetworkClient
 
 nonisolated protocol TimelineStatusFetching: Sendable {
   func fetchFirstPage(
-    client: MastodonClient?,
+    client: FediverseClient?,
     timeline: TimelineFilter
   ) async throws -> [Status]
 
   func fetchNewPages(
-    client: MastodonClient?,
+    client: FediverseClient?,
     timeline: TimelineFilter,
     minId: String,
     maxPages: Int
   ) async throws -> [Status]
 
   func fetchNextPage(
-    client: MastodonClient?,
+    client: FediverseClient?,
     timeline: TimelineFilter,
     lastId: String,
     offset: Int
@@ -28,7 +28,7 @@ enum StatusFetcherError: Error {
 }
 
 struct TimelineStatusFetcher: TimelineStatusFetching {
-  func fetchFirstPage(client: MastodonClient?, timeline: TimelineFilter) async throws -> [Status] {
+  func fetchFirstPage(client: FediverseClient?, timeline: TimelineFilter) async throws -> [Status] {
     guard let client = client else { throw StatusFetcherError.noClientAvailable }
     return try await timeline.fetchStatuses(
       client: client,
@@ -40,7 +40,7 @@ struct TimelineStatusFetcher: TimelineStatusFetching {
     )
   }
 
-  func fetchNewPages(client: MastodonClient?, timeline: TimelineFilter, minId: String, maxPages: Int)
+  func fetchNewPages(client: FediverseClient?, timeline: TimelineFilter, minId: String, maxPages: Int)
     async throws -> [Status]
   {
     guard let client = client else { throw StatusFetcherError.noClientAvailable }
@@ -69,7 +69,7 @@ struct TimelineStatusFetcher: TimelineStatusFetching {
     return allStatuses
   }
 
-  func fetchNextPage(client: MastodonClient?, timeline: TimelineFilter, lastId: String, offset: Int)
+  func fetchNextPage(client: FediverseClient?, timeline: TimelineFilter, lastId: String, offset: Int)
     async throws -> [Status]
   {
     guard let client = client else { throw StatusFetcherError.noClientAvailable }

@@ -8,7 +8,7 @@ import Timeline
 
 struct TrendingPostsSection: View {
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   
   let trendingStatuses: [Status]

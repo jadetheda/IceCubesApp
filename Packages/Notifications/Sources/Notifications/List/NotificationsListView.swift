@@ -10,7 +10,7 @@ public struct NotificationsListView: View {
 
   @Environment(Theme.self) private var theme
   @Environment(StreamWatcher.self) private var watcher
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   @Environment(CurrentAccount.self) private var account
   @Environment(CurrentInstance.self) private var currentInstance

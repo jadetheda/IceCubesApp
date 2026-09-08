@@ -21,7 +21,7 @@ public struct StatusRowView: View {
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPreferences
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(ToastCenter.self) private var toastCenter
 
   @State private var showSelectableText: Bool = false

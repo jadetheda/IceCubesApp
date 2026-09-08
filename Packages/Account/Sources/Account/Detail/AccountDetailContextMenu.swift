@@ -6,7 +6,7 @@ import Timeline
 
 public struct AccountDetailContextMenu: View {
   @Environment(\.openURL) private var openURL
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(UserPreferences.self) private var preferences

@@ -9,7 +9,7 @@ import SwiftUI
 @MainActor
 struct NotificationRowContentView: View {
   let notification: ConsolidatedNotification
-  let client: MastodonClient
+  let client: FediverseClient
   let routerPath: RouterPath
 
   var body: some View {

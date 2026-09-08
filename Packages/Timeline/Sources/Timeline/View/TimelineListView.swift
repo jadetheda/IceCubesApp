@@ -12,7 +12,7 @@ struct TimelineListView: View {
   @Environment(\.selectedTabScrollToTop) private var selectedTabScrollToTop
   @Environment(\.currentTabId) private var currentTabId
 
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   @Environment(UserPreferences.self) private var preferences
   @Environment(Theme.self) private var theme

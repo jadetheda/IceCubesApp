@@ -6,7 +6,7 @@ import SwiftUI
 
 public struct TrendingLinksListView: View {
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   @State private var links: [Card]
 

@@ -76,7 +76,7 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     hasher.combine(id)
   }
 
-  public static func availableTimeline(client: MastodonClient) -> [TimelineFilter] {
+  public static func availableTimeline(client: FediverseClient) -> [TimelineFilter] {
     if !client.isAuth {
       return [.local, .federated, .trending]
     }
@@ -457,7 +457,7 @@ extension RemoteTimelineFilter: RawRepresentable {
 extension TimelineFilter {
   @MainActor
   public func fetchStatuses(
-    client: MastodonClient,
+    client: FediverseClient,
     sinceId: String?,
     maxId: String?,
     minId: String?,

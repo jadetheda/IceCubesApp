@@ -17,7 +17,7 @@ public struct AccountDetailView: View {
   @Environment(CurrentInstance.self) private var currentInstance
   @Environment(UserPreferences.self) private var preferences
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
 
   private let accountId: String
@@ -379,7 +379,7 @@ extension AccountDetailView {
     }
   }
 
-  private func fetchAccountData(accountId: String, client: MastodonClient) async throws
+  private func fetchAccountData(accountId: String, client: FediverseClient) async throws
     -> AccountData
   {
     async let account: Account = client.get(endpoint: Accounts.accounts(id: accountId))

@@ -15,10 +15,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @State private var fetcher: Fetcher
   private let isRemote: Bool
-  private let client: MastodonClient
+  private let client: FediverseClient
   private let filterContext: Filter.Context?
 
-  public init(fetcher: Fetcher, client: MastodonClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
+  public init(fetcher: Fetcher, client: FediverseClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
     _fetcher = .init(initialValue: fetcher)
     self.isRemote = isRemote
     self.client = client
@@ -319,11 +319,11 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 public struct GalleryMediaCell: View {
   public let mediaStatus: MediaStatus
   public let routerPath: RouterPath
-  public let client: MastodonClient
+  public let client: FediverseClient
   public let isRemote: Bool
   public let filterContext: Filter.Context?
 
-  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: MastodonClient, isRemote: Bool, filterContext: Filter.Context?) {
+  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: FediverseClient, isRemote: Bool, filterContext: Filter.Context?) {
     self.mediaStatus = mediaStatus
     self.routerPath = routerPath
     self.client = client

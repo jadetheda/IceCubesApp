@@ -9,7 +9,7 @@ struct StatusRowContextMenu: View {
   @Environment(\.openURL) private var openURL
   @Environment(\.openWindow) var openWindow
 
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(SceneDelegate.self) private var sceneDelegate
   @Environment(UserPreferences.self) private var preferences
   @Environment(CurrentAccount.self) private var account

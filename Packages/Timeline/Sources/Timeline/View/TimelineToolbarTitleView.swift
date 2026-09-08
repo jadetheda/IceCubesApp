@@ -2,7 +2,7 @@ import SwiftUI
 import NetworkClient
 
 struct TimelineToolbarTitleView: ToolbarContent {
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   
   @Binding var timeline: TimelineFilter
   let canFilterTimeline: Bool

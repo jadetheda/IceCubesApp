@@ -31,7 +31,7 @@ struct AccountWidgetProvider: AppIntentTimelineProvider {
     guard let account = configuration.account else {
       return .placeholder()
     }
-    let client = MastodonClient(
+    let client = FediverseClient(
       server: account.account.server,
       oauthToken: account.account.oauthToken)
     do {

@@ -10,7 +10,7 @@ import SwiftUI
 
 @MainActor
 @Observable public class AccountsListRowViewModel {
-  var client: MastodonClient?
+  var client: FediverseClient?
 
   var account: Account
   var relationShip: Relationship?
@@ -26,7 +26,7 @@ public struct AccountsListRow: View {
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(RouterPath.self) private var routerPath
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(QuickLook.self) private var quickLook
   @Environment(StreamWatcher.self) private var watcher
   @Environment(AppAccountsManager.self) private var appAccountsManager

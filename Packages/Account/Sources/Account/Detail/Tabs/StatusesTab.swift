@@ -13,13 +13,13 @@ struct StatusesTab {
   let isAvailableForCurrentUser = true
   let isAvailableForOtherUsers = true
 
-  func createFetcher(accountId: String, client: MastodonClient, isCurrentUser: Bool) -> any StatusesFetcher
+  func createFetcher(accountId: String, client: FediverseClient, isCurrentUser: Bool) -> any StatusesFetcher
   {
     StatusesTabFetcher(accountId: accountId, client: client, isCurrentUser: isCurrentUser)
   }
 
   func makeView(
-    fetcher: any StatusesFetcher, client: MastodonClient, routerPath: RouterPath, account: Account?
+    fetcher: any StatusesFetcher, client: FediverseClient, routerPath: RouterPath, account: Account?
   ) -> some View {
     let isRemote = account?.url?.host?.lowercased() != client.server.lowercased()
     return StatusesTabView(
@@ -106,7 +106,7 @@ private class StatusesTabFetcher: AccountTabFetcher {
 
 private struct StatusesTabView: View {
   let fetcher: StatusesTabFetcher
-  let client: MastodonClient
+  let client: FediverseClient
   let routerPath: RouterPath
   let isRemote: Bool
 

@@ -10,7 +10,7 @@ public struct StatusDetailView: View {
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(StreamWatcher.self) private var watcher
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(RouterPath.self) private var routerPath
   @Environment(\.isCompact) private var isCompact: Bool
   @Environment(UserPreferences.self) private var userPreferences: UserPreferences

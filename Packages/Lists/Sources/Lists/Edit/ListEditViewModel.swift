@@ -9,7 +9,7 @@ import SwiftUI
 @Observable public class ListEditViewModel {
   var list: Models.List
 
-  var client: MastodonClient?
+  var client: FediverseClient?
 
   var isLoadingAccounts: Bool = true
   var accounts: [Account] = []

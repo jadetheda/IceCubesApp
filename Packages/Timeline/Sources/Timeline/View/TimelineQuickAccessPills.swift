@@ -6,7 +6,7 @@ import SwiftUI
 
 @MainActor
 public struct TimelineQuickAccessPills: View {
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(UserPreferences.self) private var preferences

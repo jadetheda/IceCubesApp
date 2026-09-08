@@ -6,42 +6,12 @@ import Observation
 import SwiftUI
 import os
 
-@Observable
-public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
-  public static func == (lhs: MastodonClient, rhs: MastodonClient) -> Bool {
-    let lhsToken = lhs.critical.withLock { $0.oauthToken }
-    let rhsToken = rhs.critical.withLock { $0.oauthToken }
-
-    return (lhsToken != nil) == (rhsToken != nil) && lhs.server == rhs.server
-      && lhsToken?.accessToken == rhsToken?.accessToken
-  }
-
-  public enum Version: String, Sendable {
-    case v1, v2
-  }
-
-  public enum ClientError: Error {
-    case unexpectedRequest
-  }
-
-  public enum OauthError: Error {
-    case missingApp
-    case invalidRedirectURL
-  }
-
-  public var id: String {
-    critical.withLock {
-      let isAuth = $0.oauthToken != nil
-      return "\(isAuth)\(server)\($0.oauthToken?.createdAt ?? 0)"
-    }
-  }
-
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine(id)
-  }
-
+open class MastodonBackend: FediverseBackend {
   public let server: String
-  public let version: Version
+  open var capabilities = ServerCapabilities()
+  public var isAuth: Bool { oauthToken != nil }
+  public var oauthToken: OauthToken? { critical.withLock { $0.oauthToken } }
+  public let version: FediverseClient.Version
   private let urlSession: URLSession
   private let decoder = JSONDecoder()
 
@@ -75,7 +45,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     critical.withLock { $0.connections }
   }
 
-  public init(server: String, version: Version = .v1, oauthToken: OauthToken? = nil) {
+  public init(server: String, version: FediverseClient.Version = .v1, oauthToken: OauthToken? = nil) {
     self.server = server
     self.version = version
     critical = .init(initialState: Critical(oauthToken: oauthToken, connections: [server]))
@@ -105,7 +75,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
   private func makeURL(
     scheme: String = "https",
     endpoint: Endpoint,
-    forceVersion: Version? = nil,
+    forceVersion: FediverseClient.Version? = nil,
     forceServer: String? = nil
   ) throws -> URL {
     var components = URLComponents()
@@ -149,7 +119,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     return makeURLRequest(url: url, endpoint: endpoint, httpMethod: "GET")
   }
 
-  public func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws
+  open func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {
     try await makeEntityRequest(endpoint: endpoint, method: "GET", forceVersion: forceVersion)
@@ -179,13 +149,13 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     return (entity, linkHandler)
   }
 
-  public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws
+  public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {
     try await makeEntityRequest(endpoint: endpoint, method: "POST", forceVersion: forceVersion)
   }
 
-  public func post(endpoint: Endpoint, forceVersion: Version? = nil) async throws
+  public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> HTTPURLResponse?
   {
     let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
@@ -201,13 +171,13 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
     return httpResponse as? HTTPURLResponse
   }
 
-  public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws
+  public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {
     try await makeEntityRequest(endpoint: endpoint, method: "PUT", forceVersion: forceVersion)
   }
 
-  public func delete(endpoint: Endpoint, forceVersion: Version? = nil) async throws
+  public func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> HTTPURLResponse?
   {
     let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
@@ -217,7 +187,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
   }
 
 
-  private func applyIceShrimpFilters(_ statuses: [Status]) async -> [Status] {
+  public func applyIceShrimpFilters(_ statuses: [Status]) async -> [Status] {
     let isFetching = critical.withLock { $0.isFetchingFilters }
     if isFetching { return statuses }
     
@@ -280,7 +250,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
   private func makeEntityRequest<Entity: Decodable>(
     endpoint: Endpoint,
     method: String,
-    forceVersion: Version? = nil
+    forceVersion: FediverseClient.Version? = nil
   ) async throws -> Entity {
     let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: method)
@@ -346,7 +316,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
 
   public func mediaUpload<Entity: Decodable>(
     endpoint: Endpoint,
-    version: Version,
+    version: FediverseClient.Version,
     method: String,
     mimeType: String,
     filename: String,
@@ -373,7 +343,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
 
   public func mediaUpload<Entity: Decodable>(
     endpoint: Endpoint,
-    version: Version,
+    version: FediverseClient.Version,
     method: String,
     mimeType: String,
     filename: String,
@@ -402,7 +372,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
 
   public func mediaUpload(
     endpoint: Endpoint,
-    version: Version,
+    version: FediverseClient.Version,
     method: String,
     mimeType: String,
     filename: String,
@@ -421,7 +391,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
 
   public func mediaUpload(
     endpoint: Endpoint,
-    version: Version,
+    version: FediverseClient.Version,
     method: String,
     mimeType: String,
     filename: String,
@@ -441,7 +411,7 @@ public final class MastodonClient: Equatable, Identifiable, Hashable, Sendable {
 
   private func makeFormDataRequest(
     endpoint: Endpoint,
-    version: Version,
+    version: FediverseClient.Version,
     method: String,
     mimeType: String,
     filename: String,

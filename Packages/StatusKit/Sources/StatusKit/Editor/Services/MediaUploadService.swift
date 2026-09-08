@@ -256,7 +256,7 @@ extension StatusEditor {
   }
 }
 
-extension MastodonClient: StatusEditor.MediaUploadService.Client {
+extension FediverseClient: StatusEditor.MediaUploadService.Client {
   public func uploadMedia(
     data: Data,
     mimeType: String,

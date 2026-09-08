@@ -9,7 +9,7 @@ import SwiftUI
 public struct ListCreateView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(ToastCenter.self) private var toastCenter
 

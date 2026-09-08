@@ -138,7 +138,7 @@ public enum SettingsStartingPoint {
 
 @MainActor
 @Observable public class RouterPath {
-  public var client: MastodonClient?
+  public var client: FediverseClient?
   public var urlHandler: ((URL) -> OpenURLAction.Result)?
 
   public var path: [RouterDestination] = []

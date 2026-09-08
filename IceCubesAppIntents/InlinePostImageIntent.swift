@@ -42,7 +42,7 @@ struct InlinePostImageIntent: AppIntent {
       return .result(dialog: "No images provided to post.")
     }
 
-    let client = MastodonClient(
+    let client = FediverseClient(
       server: account.account.server,
       version: .v1,
       oauthToken: account.account.oauthToken)

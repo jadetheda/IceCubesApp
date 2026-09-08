@@ -8,7 +8,7 @@ import Observation
 @Observable public class CurrentInstance {
   public private(set) var instance: Instance?
 
-  private var client: MastodonClient?
+  private var client: FediverseClient?
 
   public static let shared = CurrentInstance()
 
@@ -23,9 +23,6 @@ import Observation
     return 0
   }
 
-  public var isIceShrimp: Bool {
-    instance?.version.lowercased().contains("iceshrimp") == true
-  }
   public var isFiltersSupported: Bool {
     version >= 4
   }
@@ -66,7 +63,7 @@ import Observation
 
   private init() {}
 
-  public func setClient(client: MastodonClient) {
+  public func setClient(client: FediverseClient) {
     self.client = client
   }
 

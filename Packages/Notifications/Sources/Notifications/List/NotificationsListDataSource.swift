@@ -31,7 +31,7 @@ public final class NotificationsListDataSource {
   }
 
   public func fetchNotifications(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?,
     lockedAccountId: String?
   ) async throws -> FetchResult {
@@ -78,7 +78,7 @@ public final class NotificationsListDataSource {
   }
 
   public func fetchNextPage(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?,
     lockedAccountId: String?
   ) async throws -> FetchResult {
@@ -106,7 +106,7 @@ public final class NotificationsListDataSource {
     )
   }
 
-  public func fetchPolicy(client: MastodonClient) async -> Models.NotificationsPolicy? {
+  public func fetchPolicy(client: FediverseClient) async -> Models.NotificationsPolicy? {
     if UserPreferences.shared.useIceShrimpWorkarounds && !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
       return nil
     }
@@ -116,7 +116,7 @@ public final class NotificationsListDataSource {
   // MARK: - V1 API Methods
 
   private func fetchNotificationsV1(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?,
     lockedAccountId: String?
   ) async throws {
@@ -142,7 +142,7 @@ public final class NotificationsListDataSource {
   }
 
   private func refreshNotificationsV1(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?,
     lockedAccountId: String?
   ) async throws {
@@ -168,7 +168,7 @@ public final class NotificationsListDataSource {
   }
 
   private func fetchNextPageV1(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?,
     lockedAccountId: String?
   ) async throws {
@@ -196,7 +196,7 @@ public final class NotificationsListDataSource {
   }
 
   private func fetchNewPages(
-    client: MastodonClient,
+    client: FediverseClient,
     minId: String,
     maxPages: Int,
     selectedType: Models.Notification.NotificationType?,
@@ -233,7 +233,7 @@ public final class NotificationsListDataSource {
   // MARK: - V2 API Methods
 
   private func fetchNotificationsV2(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?
   ) async throws {
     let results = try await fetchGroupedNotifications(
@@ -248,7 +248,7 @@ public final class NotificationsListDataSource {
   }
 
   private func refreshNotificationsV2(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?
   ) async throws {
     guard let firstGroup = consolidatedNotifications.first else { return }
@@ -264,7 +264,7 @@ public final class NotificationsListDataSource {
   }
 
   private func fetchNextPageV2(
-    client: MastodonClient,
+    client: FediverseClient,
     selectedType: Models.Notification.NotificationType?
   ) async throws {
     guard let lastGroup = lastNotificationGroup else { return }
@@ -391,7 +391,7 @@ public final class NotificationsListDataSource {
     return excludedTypes.isEmpty ? nil : excludedTypes.map(\.rawValue)
   }
 
-  private func markAsRead(client: MastodonClient) {
+  private func markAsRead(client: FediverseClient) {
     let id = latestNotificationIdForMarker
       ?? consolidatedNotifications.first?.mostRecentNotificationId
     guard let id else { return }
@@ -446,7 +446,7 @@ public final class NotificationsListDataSource {
   }
 
   private func fetchGroupedNotifications(
-    client: MastodonClient,
+    client: FediverseClient,
     sinceId: String?,
     maxId: String?,
     selectedType: Models.Notification.NotificationType?

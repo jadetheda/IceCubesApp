@@ -7,7 +7,7 @@ import SwiftUI
 public struct EditRelationshipNoteView: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(Theme.self) private var theme
-  @Environment(MastodonClient.self) private var client
+  @Environment(FediverseClient.self) private var client
 
   let accountId: String
   let relationship: Relationship?

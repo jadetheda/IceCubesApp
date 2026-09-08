@@ -15,10 +15,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @State private var fetcher: Fetcher
   private let isRemote: Bool
-  private let client: MastodonClient
+  private let client: FediverseClient
   private let filterContext: Filter.Context?
 
-  public init(fetcher: Fetcher, client: MastodonClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
+  public init(fetcher: Fetcher, client: FediverseClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
     _fetcher = .init(initialValue: fetcher)
     self.isRemote = isRemote
     self.client = client
@@ -321,11 +321,11 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 public struct GalleryMediaCell: View {
   public let mediaStatus: MediaStatus
   public let routerPath: RouterPath
-  public let client: MastodonClient
+  public let client: FediverseClient
   public let isRemote: Bool
   public let filterContext: Filter.Context?
 
-  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: MastodonClient, isRemote: Bool, filterContext: Filter.Context?) {
+  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: FediverseClient, isRemote: Bool, filterContext: Filter.Context?) {
     self.mediaStatus = mediaStatus
     self.routerPath = routerPath
     self.client = client
@@ -343,11 +343,11 @@ public struct GalleryMediaCell: View {
 
   public var body: some View {
     let isSquare = UserPreferences.shared.galleryCropToSquare
-    let isIceShrimp = mediaStatus.status.account.url?.absoluteString.lowercased().contains("iceshrimp") == true
-    let fallback = UserPreferences.shared.remoteMediaFallbackOnFail || (UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
+    
+    let fallback = UserPreferences.shared.remoteMediaFallbackOnFail
     let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
     
-    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false, isIceShrimp: UserPreferences.shared.useIceShrimpWorkarounds && isIceShrimp)
+    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false)
     let resolvedUrl = info?.url
     let fallbackUrl = info?.fallbackUrl
     let resolvedType = info?.type
