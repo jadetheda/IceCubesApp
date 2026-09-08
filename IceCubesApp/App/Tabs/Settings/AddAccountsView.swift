@@ -123,10 +123,23 @@ struct AddAccountView: View {
 
           do {
             // bare bones preflight for domain validity
-            let instanceDetailClient = FediverseClient(server: sanitizedName, version: .v2)
-            if instanceDetailClient.server.contains("."),
-              instanceDetailClient.server.last != "."
-            {
+            if sanitizedName.contains("."), sanitizedName.last != "." {
+              var software = "mastodon"
+              if let url = URL(string: "https://\(sanitizedName)/nodeinfo/2.0"),
+                 let (data, _) = try? await URLSession.shared.data(from: url),
+                 let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                 let softwareDict = json["software"] as? [String: Any],
+                 let name = softwareDict["name"] as? String {
+                 if name.lowercased().contains("misskey") {
+                     software = "misskey"
+                 } else if name.lowercased().contains("iceshrimp") {
+                     software = "iceshrimp"
+                 }
+              }
+              detectedSoftware = software
+              
+              let instanceDetailClient = FediverseClient(server: sanitizedName, version: .v2, serverSoftware: software)
+              
               let instance: Instance = try await instanceDetailClient.get(
                 endpoint: Instances.instance)
               withAnimation {
@@ -283,7 +296,7 @@ struct AddAccountView: View {
   }
 
   private func signIn() async {
-    signInClient = .init(server: sanitizedName)
+    signInClient = .init(server: sanitizedName, serverSoftware: detectedSoftware)
     if let oauthURL = try? await signInClient?.oauthURL(),
       let url = try? await webAuthenticationSession.authenticate(
         using: oauthURL,
@@ -309,7 +322,8 @@ struct AddAccountView: View {
         account: AppAccount(
           server: client.server,
           accountName: "\(account.acct)@\(client.server)",
-          oauthToken: oauthToken))
+          oauthToken: oauthToken,
+          serverSoftware: detectedSoftware))
       Task {
         pushNotifications.setAccounts(accounts: appAccountsManager.pushAccounts)
         await pushNotifications.updateSubscriptions(forceCreate: true)

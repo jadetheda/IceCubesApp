@@ -13,10 +13,11 @@ import SwiftUI
   public var currentAccount: AppAccount {
     didSet {
       Self.latestCurrentAccountKey = currentAccount.id
+      let software = currentAccount.serverSoftware ?? (currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
       currentClient = .init(
         server: currentAccount.server,
         oauthToken: currentAccount.oauthToken,
-        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
+        serverSoftware: software)
         
     }
   }
@@ -43,10 +44,11 @@ import SwiftUI
       defaultAccount = keychainAccounts.last ?? defaultAccount
     }
     currentAccount = defaultAccount
+    let software = currentAccount.serverSoftware ?? (currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
     currentClient = .init(
         server: defaultAccount.server,
         oauthToken: defaultAccount.oauthToken,
-        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon"
+        serverSoftware: software
     )
   }
 
