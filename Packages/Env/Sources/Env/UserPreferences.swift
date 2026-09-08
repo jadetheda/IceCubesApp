@@ -124,6 +124,7 @@ import SwiftUI
     @AppStorage("iceshrimp_trending_halflife") public var iceShrimpTrendingHalfLife: Double = 1.0
 
     @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
+    @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
 
     init() {
       prepareTranslationType()
@@ -687,6 +688,12 @@ import SwiftUI
     }
   }
 
+  public var useIceShrimpWorkarounds: Bool {
+    didSet {
+      storage.useIceShrimpWorkarounds = useIceShrimpWorkarounds
+    }
+  }
+
   public var hideSeenPostsIsToggle: Bool {
     didSet {
       storage.hideSeenPostsIsToggle = hideSeenPostsIsToggle
@@ -949,6 +956,7 @@ import SwiftUI
     showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
     timelinePinnedHidden = storage.timelinePinnedHidden
     tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
+    useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
 }
