@@ -23,6 +23,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   public enum OauthError: Error {
     case missingApp
     case invalidRedirectURL
+    case requiresNativeLogin
   }
 
   public var id: String {

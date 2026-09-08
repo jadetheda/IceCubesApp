@@ -28,7 +28,7 @@ public final class BlueskyBackend: FediverseBackend {
     public func hasConnection(with url: URL) -> Bool { false }
     
     public func oauthURL() async throws -> URL {
-        throw FediverseClient.OauthError.missingApp // requiresNativeLogin
+        throw FediverseClient.OauthError.requiresNativeLogin
     }
     
     public func continueOauthFlow(url: URL) async throws -> OauthToken {
