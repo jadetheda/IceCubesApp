@@ -14,9 +14,9 @@ import SwiftUI
     didSet {
       Self.latestCurrentAccountKey = currentAccount.id
       currentClient = .init(
-        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon",
         server: currentAccount.server,
-        oauthToken: currentAccount.oauthToken)
+        oauthToken: currentAccount.oauthToken,
+        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
         
     }
   }
@@ -44,7 +44,10 @@ import SwiftUI
     }
     currentAccount = defaultAccount
     currentClient = .init(
-        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon",server: defaultAccount.server, oauthToken: defaultAccount.oauthToken)
+        server: defaultAccount.server,
+        oauthToken: defaultAccount.oauthToken,
+        serverSoftware: currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon"
+    )
   }
 
   public func add(account: AppAccount) {
