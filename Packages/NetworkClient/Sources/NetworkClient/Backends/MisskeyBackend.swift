@@ -78,6 +78,17 @@ public final class MisskeyBackend: FediverseBackend {
             let (data, _) = try await URLSession.shared.data(for: request)
             let misskeyNotes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return misskeyNotes.map { $0.toStatus() } as! Entity
+        } else if endpoint.path() == "accounts/verify_credentials" {
+            let url = URL(string: "https://\(server)/api/i")!
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            if let token = oauthToken?.accessToken {
+                request.httpBody = try? JSONEncoder().encode(["i": token])
+            }
+            let (data, _) = try await URLSession.shared.data(for: request)
+            let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
+            return misskeyUser.toAccount() as! Entity
         }
         throw FediverseClient.ClientError.unexpectedRequest
     }
