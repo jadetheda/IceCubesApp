@@ -10,6 +10,13 @@ public struct SearchResults: Decodable {
   public var statuses: [Status]
   public var hashtags: [Tag]
 
+  public init(accounts: [Account], relationships: [Relationship] = [], statuses: [Status], hashtags: [Tag]) {
+    self.accounts = accounts
+    self.relationships = relationships
+    self.statuses = statuses
+    self.hashtags = hashtags
+  }
+
   public var isEmpty: Bool {
     accounts.isEmpty && statuses.isEmpty && hashtags.isEmpty
   }
