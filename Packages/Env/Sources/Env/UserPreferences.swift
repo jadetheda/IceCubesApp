@@ -596,9 +596,6 @@ import SwiftUI
       storage.remoteMediaFallbackOnFail = remoteMediaFallbackOnFail
     }
   }
-    didSet {
-    }
-  }
   public var iceShrimpShowBoostsButton: Bool {
     didSet {
       storage.iceShrimpHideBoostsButton = !iceShrimpShowBoostsButton
