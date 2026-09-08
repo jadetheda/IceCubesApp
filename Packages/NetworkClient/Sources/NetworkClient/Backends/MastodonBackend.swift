@@ -114,7 +114,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   }
 
   private func makeGet(endpoint: Endpoint) throws -> URLRequest {
-    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint)
     return makeURLRequest(url: url, endpoint: endpoint, httpMethod: "GET")
   }
 
@@ -157,7 +157,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   public func post(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "POST")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
@@ -183,7 +183,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   public func delete(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "DELETE")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
