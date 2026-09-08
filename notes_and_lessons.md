@@ -1,5 +1,7 @@
 # Notes & Lessons
 
+- **Codemagic compile failure (2026-09-08):** `Models/Alias/ServerDate.swift` contained two `public init(date: Date)` declarations after date-formatting work landed together. The Release build failed in `Models` with `invalid redeclaration of 'init(date:)'`. Keep one initializer; use the named `aDay` interval instead of a second literal-`86400` implementation.
+
 - **FAILED ATTEMPT**: Tried fixing Gallery Mode scroll jumping by restoring `scrollToIdAnimated` to `viewModel.lastTopVisibleStatusId` after a 0.5s delay. IT DID NOT WORK.
   - **Reason**: The `GalleryStatusesListView` sets its row IDs to `mediaStatus.id` (which is `attachment.id`), NOT `status.id`. So scrolling to `lastTopVisibleStatusId` did nothing when entering Gallery Mode.
   - **Solution**: We must calculate `lastTopVisibleMediaStatusId` by finding the first visible status with media, and grabbing its `mediaAttachments.first?.id`. When `isGalleryMode` becomes true, we `proxy.scrollTo(lastTopVisibleMediaStatusId)`. When it becomes false, we `proxy.scrollTo(lastTopVisibleStatusId)`.

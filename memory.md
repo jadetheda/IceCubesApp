@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-09-08 06:24 UTC: Fixed the failed Codemagic Release build in `ServerDate.swift`. The cross-spec branch contained two identical `init(date:)` declarations, so Swift stopped `Models` with `invalid redeclaration of 'init(date:)'`. Removed the second initializer and retained the version using the named one-day interval. Restores CI compilation; no runtime behavior changes.
 - 2026-08-11 22:33 UTC: Made the media cache check unconditional for "Hide Seen Posts". Removed the `hideSeenPostsRequireMediaLoaded` preference toggle from `HideSeenPostsSettingsView` and `UserPreferences`. Posts with media will now *always* verify media is cached before being marked as seen.
 - 2026-08-11 22:25 UTC: Restored and fixed `hideSeenPostsRequireMediaLoaded` logic in `TimelineViewModel`. It now properly aborts the marking process (returning early) if the image media cache check fails after the 5-second polling window. Also restored the setting toggle in `HideSeenPostsSettingsView` and re-added the property to `UserPreferences`.
 - 2026-08-07 07:30 UTC: Fixed theme bookmark icon colors in `ColorSet.swift`, updating Bluesky themes to use #0F72FC and Nemesis themes to use the old default color (.pink).

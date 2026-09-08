@@ -311,3 +311,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 - **Solution**: Remove the `.image` accessor when using Nuke 13's `ImagePipeline.shared.image(for:)`, and pass the returned `UIImage` directly.
 
 - **Swift String Interpolation Syntax**: When using string interpolation `\()` inside a String literal, do NOT escape the inner quotes (e.g. use `\(String(localized: "key"))`, NEVER `\(String(localized: \"key\"))`). Escaping quotes inside interpolation blocks confuses the Swift parser and breaks the outer string literal bounds, resulting in `Exit Code 65` ("Unterminated string literal").
+
+## 🐛 Exit Code 65 Logs (Duplicate ServerDate initializer)
+- **Root Cause**: Two date-formatting changes each added `ServerDate.init(date:)`. Swift reported `invalid redeclaration of 'init(date:)'` while compiling the `Models` package in Codemagic.
+- **Solution**: Keep one initializer. Prefer the version with a named `aDay` interval; search the edited type for duplicate initializer signatures before triggering CI.

@@ -33,10 +33,6 @@ public struct ServerDate: Codable, Hashable, Equatable, Sendable {
     let aDay: TimeInterval = 60 * 60 * 24
     isOlderThanADay = Date().timeIntervalSince(asDate) >= aDay
   }
-  public init(date: Date) {
-    asDate = date
-    isOlderThanADay = Date().timeIntervalSince(date) >= 86400
-  }
 
   public init() {
     asDate = Date() - 100
