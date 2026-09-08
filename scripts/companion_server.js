@@ -416,7 +416,28 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+
+  // 6c. POST /api/repo/sync
+  if (pathname === '/api/repo/sync' && req.method === 'POST') {
+    try {
+      const gitDir = fs.existsSync('ios-workspace') ? 'ios-workspace' : '.';
+      const branch = require('child_process').execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8', cwd: gitDir }).trim();
+      require('child_process').execSync('git fetch origin && git reset --hard origin/' + branch, { cwd: gitDir });
+      const healScript = require('fs').existsSync(require('path').join(gitDir, 'heal_pngs.sh')) ? require('path').join(gitDir, 'heal_pngs.sh') : 'heal_pngs.sh';
+      if (require('fs').existsSync(healScript)) {
+          require('child_process').execSync('bash ' + healScript, { cwd: gitDir });
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, branch }));
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: err.message || String(err) }));
+    }
+    return;
+  }
+
   // 7. GET /
+
   if (pathname === '/' || pathname === '/index.html') {
     const git = getGitInfo();
     const config = getCodemagicConfig();
@@ -434,7 +455,12 @@ const server = http.createServer((req, res) => {
       `;
       
       triggerButtonHtml = config.token ? `
-        <button onclick="triggerBuild()" id="triggerBtn" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition-all shadow-md shadow-emerald-900/20">
+        
+        <button onclick="syncRepo()" id="syncBtn" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white transition-all shadow-md shadow-indigo-900/20 mr-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"></path></svg>
+          Sync Repo
+        </button>
+    <button onclick="triggerBuild()" id="triggerBtn" class="flex items-center gap-1.5 text-xs font-mono font-semibold px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white transition-all shadow-md shadow-emerald-900/20">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           Trigger Build
         </button>
@@ -691,7 +717,34 @@ const server = http.createServer((req, res) => {
     let isBuildActive = false;
     let pollInterval = null;
 
+
+    async function syncRepo() {
+      const btn = document.getElementById('syncBtn');
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> Syncing...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/repo/sync', { method: 'POST' });
+        if (res.ok) {
+          btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Synced!';
+          btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+          btn.classList.replace('hover:bg-indigo-500', 'hover:bg-emerald-500');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          const err = await res.json();
+          alert('Sync failed: ' + err.error);
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        }
+      } catch(e) {
+        alert('Network error during sync');
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+      }
+    }
+    
     function resetPolling(ms) {
+
       if (pollInterval) clearInterval(pollInterval);
       pollInterval = setInterval(loadBuildHistory, ms);
     }
