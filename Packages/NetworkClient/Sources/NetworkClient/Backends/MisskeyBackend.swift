@@ -97,7 +97,15 @@ public final class MisskeyBackend: FediverseBackend {
                     if item.name == "max_id" { params["untilId"] = value }
                     else if item.name == "since_id" { params["sinceId"] = value }
                     else if item.name == "limit" { params["limit"] = Int(value) ?? 20 }
-                    else { params[item.name] = value }
+                    else {
+                        if item.name.hasSuffix("[]") {
+                            var arr = params[item.name] as? [String] ?? []
+                            arr.append(value)
+                            params[item.name] = arr
+                        } else {
+                            params[item.name] = value
+                        }
+                    }
                 }
             }
         }
@@ -158,6 +166,18 @@ public final class MisskeyBackend: FediverseBackend {
             
             let results = SearchResults(accounts: accounts, relationships: [], statuses: statuses, hashtags: hashtags)
             return results as! Entity
+        } else if path == "custom_emojis" {
+            let emojis: [Emoji] = []
+            return emojis as! Entity
+        } else if path == "accounts/relationships" {
+            var rels: [Relationship] = []
+            if let ids = params["id[]"] as? [String] {
+                // Return dummy relationships to prevent crash on Misskey
+                rels = ids.map { Relationship(id: $0, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "") }
+            } else if let id = params["id[]"] as? String {
+                rels = [Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "")]
+            }
+            return rels as! Entity
         } else if path.hasPrefix("accounts/") && path.components(separatedBy: "/").count == 2 {
             let id = path.replacingOccurrences(of: "accounts/", with: "")
             params["userId"] = id
@@ -187,6 +207,18 @@ public final class MisskeyBackend: FediverseBackend {
             
             let results = SearchResults(accounts: accounts, relationships: [], statuses: statuses, hashtags: hashtags)
             return results as! Entity
+        } else if path == "custom_emojis" {
+            let emojis: [Emoji] = []
+            return emojis as! Entity
+        } else if path == "accounts/relationships" {
+            var rels: [Relationship] = []
+            if let ids = params["id[]"] as? [String] {
+                // Return dummy relationships to prevent crash on Misskey
+                rels = ids.map { Relationship(id: $0, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "") }
+            } else if let id = params["id[]"] as? String {
+                rels = [Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "")]
+            }
+            return rels as! Entity
         } else if path.hasSuffix("/statuses") && path.hasPrefix("accounts/") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/statuses", with: "")
             params["userId"] = id
