@@ -315,3 +315,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Duplicate ServerDate initializer)
 - **Root Cause**: Two date-formatting changes each added `ServerDate.init(date:)`. Swift reported `invalid redeclaration of 'init(date:)'` while compiling the `Models` package in Codemagic.
 - **Solution**: Keep one initializer. Prefer the version with a named `aDay` interval; search the edited type for duplicate initializer signatures before triggering CI.
+
+## 🐛 Exit Code 65 Logs (Default argument in protocol requirement)
+- **Root Cause**: `FediverseBackend.get(endpoint:forceVersion:)` declared `= nil` in its protocol requirement. Swift rejects default arguments in protocol declarations.
+- **Solution**: Keep defaults on the concrete client API or a protocol extension. Require an explicit argument on the protocol requirement and its existential calls.

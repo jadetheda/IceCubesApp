@@ -1,5 +1,7 @@
 # Notes & Lessons
 
+- **Codemagic compile failure (2026-09-08):** `FediverseBackend` put `= nil` on a protocol requirement. Swift permits defaults on concrete methods, not protocol requirements. Keep the default on `FediverseClient.get`; make callers of the existential pass `forceVersion` explicitly.
+
 - **Codemagic compile failure (2026-09-08):** `Models/Alias/ServerDate.swift` contained two `public init(date: Date)` declarations after date-formatting work landed together. The Release build failed in `Models` with `invalid redeclaration of 'init(date:)'`. Keep one initializer; use the named `aDay` interval instead of a second literal-`86400` implementation.
 
 - **FAILED ATTEMPT**: Tried fixing Gallery Mode scroll jumping by restoring `scrollToIdAnimated` to `viewModel.lastTopVisibleStatusId` after a 0.5s delay. IT DID NOT WORK.

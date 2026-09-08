@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-09-08 06:31 UTC: Fixed the second Codemagic Release compile failure in `FediverseBackend`. The protocol requirement for `get(endpoint:forceVersion:)` declared a default `nil` argument, which Swift forbids in protocol declarations. Removed the default from the requirement; `FediverseClient` keeps the public default and forwards the explicit value to its backend. Restores NetworkClient compilation without changing request routing.
 - 2026-09-08 06:24 UTC: Fixed the failed Codemagic Release build in `ServerDate.swift`. The cross-spec branch contained two identical `init(date:)` declarations, so Swift stopped `Models` with `invalid redeclaration of 'init(date:)'`. Removed the second initializer and retained the version using the named one-day interval. Restores CI compilation; no runtime behavior changes.
 - 2026-08-11 22:33 UTC: Made the media cache check unconditional for "Hide Seen Posts". Removed the `hideSeenPostsRequireMediaLoaded` preference toggle from `HideSeenPostsSettingsView` and `UserPreferences`. Posts with media will now *always* verify media is cached before being marked as seen.
 - 2026-08-11 22:25 UTC: Restored and fixed `hideSeenPostsRequireMediaLoaded` logic in `TimelineViewModel`. It now properly aborts the marking process (returning early) if the image media cache check fails after the 5-second polling window. Also restored the setting toggle in `HideSeenPostsSettingsView` and re-added the property to `UserPreferences`.

@@ -35,7 +35,7 @@ public protocol FediverseBackend: Sendable {
     func oauthURL() async throws -> URL
     func continueOauthFlow(url: URL) async throws -> OauthToken
     
-    func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity
+    func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
     func getWithLink<Entity: Decodable>(endpoint: Endpoint) async throws -> (Entity, LinkHandler?)
     
     func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
