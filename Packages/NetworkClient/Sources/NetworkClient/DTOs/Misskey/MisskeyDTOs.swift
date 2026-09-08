@@ -30,6 +30,11 @@ public struct MisskeyUser: Codable {
     public let isCat: Bool
     public let emojis: [MisskeyEmoji]?
     public let onlineStatus: String?
+    public let followersCount: Int?
+    public let followingCount: Int?
+    public let notesCount: Int?
+    public let description: String?
+    public let isLocked: Bool?
 }
 
 public struct MisskeyFile: Codable {
