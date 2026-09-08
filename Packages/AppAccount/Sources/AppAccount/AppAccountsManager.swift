@@ -43,13 +43,13 @@ import SwiftUI
     } else {
       defaultAccount = keychainAccounts.last ?? defaultAccount
     }
-    currentAccount = defaultAccount
-    let software = currentAccount.serverSoftware ?? (currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
+    let software = defaultAccount.serverSoftware ?? (defaultAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
     currentClient = .init(
         server: defaultAccount.server,
         oauthToken: defaultAccount.oauthToken,
         serverSoftware: software
     )
+    currentAccount = defaultAccount
   }
 
   public func add(account: AppAccount) {
