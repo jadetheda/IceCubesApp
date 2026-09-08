@@ -56,7 +56,7 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
   public let createdAt: ServerDate
   public let editedAt: ServerDate?
   public let reblog: ReblogStatus?
-  public let mediaAttachments: [MediaAttachment]
+  public var mediaAttachments: [MediaAttachment]
   public let mentions: [Mention]
   public let repliesCount: Int
   public let reblogsCount: Int
@@ -243,7 +243,7 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
   public let account: Account
   public let createdAt: ServerDate
   public let editedAt: ServerDate?
-  public let mediaAttachments: [MediaAttachment]
+  public var mediaAttachments: [MediaAttachment]
   public let mentions: [Mention]
   public let repliesCount: Int
   public let reblogsCount: Int

@@ -30,9 +30,9 @@ open class IceShrimpBackend: MastodonBackend {
         
         if let statuses = entity as? [Status] {
             for status in statuses {
-                for attachment in status.mediaAttachments {
-                    if attachment.url?.pathExtension.lowercased() == "mp4" {
-                        attachment.type = "video"
+                for i in 0..<status.mediaAttachments.count {
+                    if status.mediaAttachments[i].url?.pathExtension.lowercased() == "mp4" {
+                        status.mediaAttachments[i].type = "video"
                     }
                 }
             }

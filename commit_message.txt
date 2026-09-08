@@ -1,0 +1,15 @@
+Architecture: Implement polymorphic FediverseClient and cross-spec adapters
+
+Potential Root Cause:
+The `MastodonClient` was a monolithic `@Observable` environment object that hardcoded URLSession, JSONDecoder, and API routes. This architecture caused severe technical debt when supporting non-compliant instances (IceShrimp), leaking `isIceShrimp` checks into 15+ SwiftUI views. It strictly prevented supporting platforms with disparate schemas (Bluesky XRPC, Misskey MiAuth) without completely duplicating the app's UI layers.
+
+Attempted Solution:
+- Protocol Extraction: Defined `FediverseBackend` protocol and extracted existing network logic into `MastodonBackend`.
+- Client Factory: Refactored `MastodonClient` into `FediverseClient`. It acts as a dependency injection shell, dynamically returning the correct backend based on `AppAccount.serverSoftware`.
+- Global UI Refactor: Replaced `MastodonClient` with `FediverseClient` across 115+ SwiftUI files.
+- Tech-Debt Purge: Deleted all `isIceShrimp` and `useIceShrimpWorkarounds` logic from `MediaUIView`, `GalleryStatusesListView`, and `StatusRowMediaPreviewView`.
+- IceShrimp Adapter: Created `IceShrimpBackend` (subclass of `MastodonBackend`) to intercept REST responses, mutating `.mp4` payloads to `type = "video"` and returning empty arrays for the missing `/api/v1/trends` endpoint before the UI parses them.
+- Misskey Integration: Defined `MisskeyNote`, `MisskeyUser`, and recursive DTOs. Implemented translator extensions strictly matching the 30-parameter `Status` initializer (including `ReblogStatus` and `FavouritesCount` aggregation). Mapped Misskey's cursor to a fake HTTP `Link` header for native pagination.
+- Bluesky Integration: Defined `FeedViewPost` ATProto DTOs. Stubbed `BlueskyBackend` to intercept XRPC routes (e.g. `timelines/home`) and bypass HTML parsing by mapping directly from Facet data.
+- Model Fixes: Mutated `MediaAttachment.type`, `Status.favourited`, and `Status.favouritesCount` to `var`. Injected `init(date: Date)` into the custom `ServerDate` alias to allow translators to bypass the default cache logic.
+- Account Switcher: Updated `AppAccountViewModel` and `AppAccountsManager` to natively pass the server software flag to the `FediverseClient` factory upon context switch.
