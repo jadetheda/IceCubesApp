@@ -8,10 +8,29 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       public let aspect: Double?
       public let duration: Double?
       public let frameRate: String?
+
+      public init(
+        width: Int?,
+        height: Int?,
+        aspect: Double? = nil,
+        duration: Double? = nil,
+        frameRate: String? = nil
+      ) {
+        self.width = width
+        self.height = height
+        self.aspect = aspect
+        self.duration = duration
+        self.frameRate = frameRate
+      }
     }
 
     public let original: Meta?
     public let small: Meta?
+
+    public init(original: Meta?, small: Meta? = nil) {
+      self.original = original
+      self.small = small
+    }
   }
 
   public enum SupportedType: String {
@@ -58,6 +77,26 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
   public let remoteUrl: URL?
   public let description: String?
   public let meta: MetaContainer?
+
+  public init(
+    id: String,
+    type: String,
+    url: URL?,
+    previewUrl: URL?,
+    previewRemoteUrl: URL? = nil,
+    remoteUrl: URL? = nil,
+    description: String?,
+    meta: MetaContainer?
+  ) {
+    self.id = id
+    self.type = type
+    self.url = url
+    self.previewUrl = previewUrl
+    self.previewRemoteUrl = previewRemoteUrl
+    self.remoteUrl = remoteUrl
+    self.description = description
+    self.meta = meta
+  }
 
   public static func imageWith(url: URL) -> MediaAttachment {
     .init(

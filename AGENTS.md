@@ -319,3 +319,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Default argument in protocol requirement)
 - **Root Cause**: `FediverseBackend.get(endpoint:forceVersion:)` declared `= nil` in its protocol requirement. Swift rejects default arguments in protocol declarations.
 - **Solution**: Keep defaults on the concrete client API or a protocol extension. Require an explicit argument on the protocol requirement and its existential calls.
+
+## 🐛 Exit Code 65 Logs (Cross-spec adapter model and concurrency mismatch)
+- **Root Cause**: The Fediverse adapters used undeclared `ServerCapabilities` fields, duplicate backend properties, unqualified nested client errors, and synthesized model initializers that are not public. The open Mastodon backend also inherited the protocol's `Sendable` requirement while keeping mutable lock-protected state.
+- **Solution**: Add each declared capability and deliberate public model initializer used by adapters. Use the installed model parameter names and top-level `Visibility`. Keep the protocol's concurrency contract; mark the open lock-protected backend hierarchy `@unchecked Sendable` and avoid mutable overridden capability storage.

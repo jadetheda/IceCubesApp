@@ -6,10 +6,9 @@ import Observation
 import SwiftUI
 import os
 
-open class MastodonBackend: FediverseBackend {
+open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   public let server: String
-  open var capabilities = ServerCapabilities()
-  public var isAuth: Bool { oauthToken != nil }
+  open var capabilities: ServerCapabilities { ServerCapabilities() }
   public var oauthToken: OauthToken? { critical.withLock { $0.oauthToken } }
   public let version: FediverseClient.Version
   private let urlSession: URLSession
@@ -88,7 +87,7 @@ open class MastodonBackend: FediverseBackend {
     }
     components.queryItems = endpoint.queryItems()
     guard let url = components.url else {
-      throw ClientError.unexpectedRequest
+      throw FediverseClient.ClientError.unexpectedRequest
     }
     return url
   }
@@ -286,12 +285,12 @@ open class MastodonBackend: FediverseBackend {
 
   public func continueOauthFlow(url: URL) async throws -> OauthToken {
     guard let app = critical.withLock({ $0.oauthApp }) else {
-      throw OauthError.missingApp
+      throw FediverseClient.OauthError.missingApp
     }
     guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
       let code = components.queryItems?.first(where: { $0.name == "code" })?.value
     else {
-      throw OauthError.invalidRedirectURL
+      throw FediverseClient.OauthError.invalidRedirectURL
     }
     let token: OauthToken = try await post(
       endpoint: Oauth.token(

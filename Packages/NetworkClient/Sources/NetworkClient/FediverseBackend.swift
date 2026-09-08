@@ -7,19 +7,22 @@ public struct ServerCapabilities: Sendable {
     public var supportsLocalTimeline: Bool = true
     public var supportsPolls: Bool = true
     public var supportsFollowRequests: Bool = true
+    public var supportsCustomEmojis: Bool = true
     
     public init(
         supportsAdvancedFilterContexts: Bool = true,
         supportsEndorsements: Bool = true,
         supportsLocalTimeline: Bool = true,
         supportsPolls: Bool = true,
-        supportsFollowRequests: Bool = true
+        supportsFollowRequests: Bool = true,
+        supportsCustomEmojis: Bool = true
     ) {
         self.supportsAdvancedFilterContexts = supportsAdvancedFilterContexts
         self.supportsEndorsements = supportsEndorsements
         self.supportsLocalTimeline = supportsLocalTimeline
         self.supportsPolls = supportsPolls
         self.supportsFollowRequests = supportsFollowRequests
+        self.supportsCustomEmojis = supportsCustomEmojis
     }
 }
 

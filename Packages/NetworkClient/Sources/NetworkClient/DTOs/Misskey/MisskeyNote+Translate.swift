@@ -8,7 +8,9 @@ extension MisskeyNote {
         
         let favouritesCount = self.reactions.values.reduce(0, +)
         let mediaAttachments = self.files.map { $0.toMediaAttachment() }
-        let customEmojis = self.emojis?.map { Emoji(shortcode: $0.name, url: URL(string: $0.url)!, staticUrl: URL(string: $0.url)!, visibleInPicker: false) } ?? []
+        let customEmojis = self.emojis?.map {
+            Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
+        } ?? []
         
         var reblog: ReblogStatus? = nil
         if let renote = self.renote {
@@ -34,7 +36,7 @@ extension MisskeyNote {
                 application: nil,
                 inReplyToId: renote.replyId,
                 inReplyToAccountId: nil,
-                visibility: Status.Visibility(rawValue: renote.visibility) ?? .pub,
+                visibility: Visibility(rawValue: renote.visibility) ?? .pub,
                 poll: nil,
                 spoilerText: HTMLString(stringValue: renote.cw ?? ""),
                 filtered: [],
@@ -69,7 +71,7 @@ extension MisskeyNote {
             application: nil,
             inReplyToId: self.replyId,
             inReplyToAccountId: nil,
-            visibility: Status.Visibility(rawValue: self.visibility) ?? .pub,
+            visibility: Visibility(rawValue: self.visibility) ?? .pub,
             poll: nil,
             spoilerText: HTMLString(stringValue: self.cw ?? ""),
             filtered: [],
@@ -128,10 +130,8 @@ extension MisskeyFile {
                 width: self.properties.width,
                 height: self.properties.height,
                 aspect: nil,
-                size: nil,
                 duration: nil,
-                framerate: nil,
-                bitrate: nil
+                frameRate: nil
             )
         )
         
@@ -140,6 +140,8 @@ extension MisskeyFile {
             type: type,
             url: url,
             previewUrl: preview,
+            previewRemoteUrl: nil,
+            remoteUrl: nil,
             description: self.name,
             meta: meta
         )

@@ -1,7 +1,7 @@
 import Foundation
 import Models
 
-open class IceShrimpBackend: MastodonBackend {
+open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
     
     override public var capabilities: ServerCapabilities {
         return ServerCapabilities(

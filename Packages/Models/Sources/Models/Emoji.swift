@@ -14,4 +14,18 @@ public struct Emoji: Codable, Hashable, Identifiable, Equatable, Sendable {
   public let staticUrl: String
   public let visibleInPicker: Bool
   public let category: String?
+
+  public init(
+    shortcode: String,
+    url: String,
+    staticUrl: String,
+    visibleInPicker: Bool,
+    category: String? = nil
+  ) {
+    self.shortcode = shortcode
+    self.url = url
+    self.staticUrl = staticUrl
+    self.visibleInPicker = visibleInPicker
+    self.category = category
+  }
 }

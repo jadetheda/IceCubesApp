@@ -1,5 +1,7 @@
 # Notes & Lessons
 
+- **Codemagic compile batch (2026-09-08):** The initial cross-spec adapter pass assumed public memberwise initializers for `Emoji`, `MediaAttachment`, and nested media metadata. `public` stored properties do not make Swift's synthesized memberwise initializer public. Add deliberate public initializers for adapter construction, then match parameter names and types to the installed models. Keep `FediverseBackend: Sendable`; an open backend with lock-protected mutable state must explicitly use `@unchecked Sendable` rather than silently dropping the concurrency contract.
+
 - **Codemagic compile failure (2026-09-08):** `FediverseBackend` put `= nil` on a protocol requirement. Swift permits defaults on concrete methods, not protocol requirements. Keep the default on `FediverseClient.get`; make callers of the existential pass `forceVersion` explicitly.
 
 - **Codemagic compile failure (2026-09-08):** `Models/Alias/ServerDate.swift` contained two `public init(date: Date)` declarations after date-formatting work landed together. The Release build failed in `Models` with `invalid redeclaration of 'init(date:)'`. Keep one initializer; use the named `aDay` interval instead of a second literal-`86400` implementation.
