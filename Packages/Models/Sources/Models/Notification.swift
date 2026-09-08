@@ -13,6 +13,15 @@ public struct Notification: Decodable, Identifiable, Equatable {
   public let status: Status?
   public let groupKey: String?
 
+  public init(id: String, type: String, createdAt: ServerDate, account: Account, status: Status?, groupKey: String?) {
+    self.id = id
+    self.type = type
+    self.createdAt = createdAt
+    self.account = account
+    self.status = status
+    self.groupKey = groupKey
+  }
+
   public var supportedType: NotificationType? {
     .init(rawValue: type)
   }

@@ -1,7 +1,7 @@
 import Foundation
 import Models
 
-private struct PleromaEndpoint: Endpoint {
+private struct PleromaEndpoint: Endpoint, @unchecked Sendable {
     let internalPath: String
     let internalQueryItems: [URLQueryItem]?
     let internalJsonValue: Encodable?

@@ -15,6 +15,22 @@ public struct Relationship: Codable, Equatable, Identifiable {
   public let note: String
   public let notifying: Bool
 
+  public init(id: String, following: Bool, showingReblogs: Bool, followedBy: Bool, blocking: Bool, blockedBy: Bool, muting: Bool, mutingNotifications: Bool, requested: Bool, domainBlocking: Bool, endorsed: Bool, note: String, notifying: Bool) {
+    self.id = id
+    self.following = following
+    self.showingReblogs = showingReblogs
+    self.followedBy = followedBy
+    self.blocking = blocking
+    self.blockedBy = blockedBy
+    self.muting = muting
+    self.mutingNotifications = mutingNotifications
+    self.requested = requested
+    self.domainBlocking = domainBlocking
+    self.endorsed = endorsed
+    self.note = note
+    self.notifying = notifying
+  }
+
   public static func placeholder() -> Relationship {
     .init(
       id: UUID().uuidString,
