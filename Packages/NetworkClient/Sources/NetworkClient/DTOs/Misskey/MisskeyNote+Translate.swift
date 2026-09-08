@@ -147,3 +147,31 @@ extension MisskeyFile {
         )
     }
 }
+
+extension MisskeyNotification {
+    public func toNotification() -> Models.Notification? {
+        guard let user = self.user else { return nil }
+        
+        var mappedType = "update"
+        switch self.type {
+        case "follow": mappedType = "follow"
+        case "receiveFollowRequest": mappedType = "follow_request"
+        case "mention", "reply": mappedType = "mention"
+        case "renote", "quote": mappedType = "reblog"
+        case "reaction": mappedType = "favourite"
+        case "pollVote": mappedType = "poll"
+        default: mappedType = "update"
+        }
+        
+        let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
+        
+        return Models.Notification(
+            id: self.id,
+            type: mappedType,
+            createdAt: ServerDate(date: createdAtDate),
+            account: user.toAccount(),
+            status: self.note?.toStatus(),
+            groupKey: nil
+        )
+    }
+}

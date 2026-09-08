@@ -55,3 +55,12 @@ public struct MisskeyEmoji: Codable {
     public let name: String
     public let url: String
 }
+
+public struct MisskeyNotification: Codable {
+    public let id: String
+    public let createdAt: String
+    public let type: String
+    public let user: MisskeyUser?
+    public let note: MisskeyNote?
+    public let reaction: String?
+}

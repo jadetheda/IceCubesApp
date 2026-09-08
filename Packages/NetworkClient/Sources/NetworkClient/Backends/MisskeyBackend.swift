@@ -66,33 +66,122 @@ public final class MisskeyBackend: FediverseBackend {
     }
 
     
-    public func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity {
-        if endpoint.path() == "timelines/home" {
-            let url = URL(string: "https://\(server)/api/notes/timeline")!
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            if let token = oauthToken?.accessToken {
-                request.httpBody = try? JSONEncoder().encode(["i": token])
+    
+    private func makeMisskeyRequest(path: String, params: [String: Any]) async throws -> Data {
+        let url = URL(string: "https://\(server)/api/\(path)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        var bodyParams = params
+        if let token = oauthToken?.accessToken {
+            bodyParams["i"] = token
+        }
+        
+        request.httpBody = try? JSONSerialization.data(withJSONObject: bodyParams)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
+            print("Misskey error: \(String(data: data, encoding: .utf8) ?? "")")
+        }
+        
+        return data
+    }
+
+    private func extractParams(from endpoint: Endpoint) -> [String: Any] {
+        var params: [String: Any] = [:]
+        
+        if let queryItems = endpoint.queryItems() {
+            for item in queryItems {
+                if let value = item.value {
+                    if item.name == "max_id" { params["untilId"] = value }
+                    else if item.name == "since_id" { params["sinceId"] = value }
+                    else if item.name == "limit" { params["limit"] = Int(value) ?? 20 }
+                    else { params[item.name] = value }
+                }
             }
-            let (data, _) = try await URLSession.shared.data(for: request)
+        }
+        
+        if let jsonValue = endpoint.jsonValue {
+            if let data = try? JSONEncoder().encode(jsonValue),
+               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                // Map common Mastodon post fields to Misskey
+                if let status = dict["status"] as? String { params["text"] = status }
+                if let visibility = dict["visibility"] as? String { params["visibility"] = visibility }
+                if let inReplyToId = dict["inReplyToId"] as? String { params["replyId"] = inReplyToId }
+                if let mediaIds = dict["mediaIds"] as? [String] { params["fileIds"] = mediaIds }
+                if let cw = dict["spoilerText"] as? String, !cw.isEmpty { params["cw"] = cw }
+                if let renoteId = dict["quotedStatusId"] as? String { params["renoteId"] = renoteId }
+            }
+        }
+        return params
+    }
+
+    public func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity {
+        let path = endpoint.path()
+        var params = extractParams(from: endpoint)
+        
+        if path == "timelines/home" {
+            let data = try await makeMisskeyRequest(path: "notes/timeline", params: params)
             let misskeyNotes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return misskeyNotes.map { $0.toStatus() } as! Entity
-        } else if endpoint.path() == "accounts/verify_credentials" {
-            let url = URL(string: "https://\(server)/api/i")!
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-            if let token = oauthToken?.accessToken {
-                request.httpBody = try? JSONEncoder().encode(["i": token])
-            }
-            let (data, _) = try await URLSession.shared.data(for: request)
+        } else if path == "timelines/public" {
+            let isLocal = (params["local"] as? String) == "true"
+            let apiPath = isLocal ? "notes/local-timeline" : "notes/global-timeline"
+            let data = try await makeMisskeyRequest(path: apiPath, params: params)
+            let misskeyNotes = try JSONDecoder().decode([MisskeyNote].self, from: data)
+            return misskeyNotes.map { $0.toStatus() } as! Entity
+        } else if path == "accounts/verify_credentials" {
+            let data = try await makeMisskeyRequest(path: "i", params: params)
             let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
             return misskeyUser.toAccount() as! Entity
+        } else if path.hasPrefix("accounts/") && path.components(separatedBy: "/").count == 2 {
+            let id = path.replacingOccurrences(of: "accounts/", with: "")
+            params["userId"] = id
+            let data = try await makeMisskeyRequest(path: "users/show", params: params)
+            let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
+            return misskeyUser.toAccount() as! Entity
+        } else if path.hasSuffix("/statuses") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/statuses", with: "")
+            params["userId"] = id
+            let data = try await makeMisskeyRequest(path: "users/notes", params: params)
+            let misskeyNotes = try JSONDecoder().decode([MisskeyNote].self, from: data)
+            return misskeyNotes.map { $0.toStatus() } as! Entity
+        } else if path.hasPrefix("statuses/") && path.components(separatedBy: "/").count == 2 {
+            let id = path.replacingOccurrences(of: "statuses/", with: "")
+            params["noteId"] = id
+            let data = try await makeMisskeyRequest(path: "notes/show", params: params)
+            let misskeyNote = try JSONDecoder().decode(MisskeyNote.self, from: data)
+            return misskeyNote.toStatus() as! Entity
+        } else if path.hasSuffix("/context") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/context", with: "")
+            params["noteId"] = id
+            
+            var ancestors: [Status] = []
+            var descendants: [Status] = []
+            
+            // Misskey /notes/children and /notes/conversation
+            if let convData = try? await makeMisskeyRequest(path: "notes/conversation", params: params),
+               let convNotes = try? JSONDecoder().decode([MisskeyNote].self, from: convData) {
+                ancestors = convNotes.map { $0.toStatus() }
+            }
+            if let childrenData = try? await makeMisskeyRequest(path: "notes/children", params: params),
+               let childrenNotes = try? JSONDecoder().decode([MisskeyNote].self, from: childrenData) {
+                descendants = childrenNotes.map { $0.toStatus() }
+            }
+            
+            // StatusContext
+            let ctx = StatusContext(ancestors: ancestors, descendants: descendants)
+            return ctx as! Entity
+        } else if path == "notifications" {
+            let data = try await makeMisskeyRequest(path: "i/notifications", params: params)
+            let misskeyNotifs = try JSONDecoder().decode([MisskeyNotification].self, from: data)
+            return misskeyNotifs.compactMap { $0.toNotification() } as! Entity
         }
+        
         throw FediverseClient.ClientError.unexpectedRequest
     }
-    
+
     public func getWithLink<Entity: Decodable>(endpoint: Endpoint) async throws -> (Entity, LinkHandler?) {
         let entity: Entity = try await get(endpoint: endpoint, forceVersion: nil)
         
@@ -104,13 +193,138 @@ public final class MisskeyBackend: FediverseBackend {
         
         return (entity, linkHandler)
     }
-    
+
     public func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+        let path = endpoint.path()
+        var params = extractParams(from: endpoint)
+        
+        if path == "statuses" {
+            let data = try await makeMisskeyRequest(path: "notes/create", params: params)
+            
+            // Misskey's notes/create returns { "createdNote": { ... } }
+            struct NoteCreateResponse: Decodable {
+                let createdNote: MisskeyNote
+            }
+            if let response = try? JSONDecoder().decode(NoteCreateResponse.self, from: data) {
+                return response.createdNote.toStatus() as! Entity
+            }
+            
+            let misskeyNote = try JSONDecoder().decode(MisskeyNote.self, from: data)
+            return misskeyNote.toStatus() as! Entity
+        } else if path.hasSuffix("/context") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/context", with: "")
+            params["noteId"] = id
+            
+            var ancestors: [Status] = []
+            var descendants: [Status] = []
+            
+            // Misskey /notes/children and /notes/conversation
+            if let convData = try? await makeMisskeyRequest(path: "notes/conversation", params: params),
+               let convNotes = try? JSONDecoder().decode([MisskeyNote].self, from: convData) {
+                ancestors = convNotes.map { $0.toStatus() }
+            }
+            if let childrenData = try? await makeMisskeyRequest(path: "notes/children", params: params),
+               let childrenNotes = try? JSONDecoder().decode([MisskeyNote].self, from: childrenData) {
+                descendants = childrenNotes.map { $0.toStatus() }
+            }
+            
+            // StatusContext
+            let ctx = StatusContext(ancestors: ancestors, descendants: descendants)
+            return ctx as! Entity
+        } else if path == "notifications" {
+            let data = try await makeMisskeyRequest(path: "i/notifications", params: params)
+            let misskeyNotifs = try JSONDecoder().decode([MisskeyNotification].self, from: data)
+            return misskeyNotifs.compactMap { $0.toNotification() } as! Entity
+        } else if path.hasSuffix("/favourite") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/favourite", with: "")
+            params["noteId"] = id
+            params["reaction"] = "👍"
+            let _ = try await makeMisskeyRequest(path: "notes/reactions/create", params: params)
+            // Mastodon expects the status back.
+            let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
+            let misskeyNote = try JSONDecoder().decode(MisskeyNote.self, from: data)
+            return misskeyNote.toStatus() as! Entity
+        } else if path.hasSuffix("/context") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/context", with: "")
+            params["noteId"] = id
+            
+            var ancestors: [Status] = []
+            var descendants: [Status] = []
+            
+            // Misskey /notes/children and /notes/conversation
+            if let convData = try? await makeMisskeyRequest(path: "notes/conversation", params: params),
+               let convNotes = try? JSONDecoder().decode([MisskeyNote].self, from: convData) {
+                ancestors = convNotes.map { $0.toStatus() }
+            }
+            if let childrenData = try? await makeMisskeyRequest(path: "notes/children", params: params),
+               let childrenNotes = try? JSONDecoder().decode([MisskeyNote].self, from: childrenData) {
+                descendants = childrenNotes.map { $0.toStatus() }
+            }
+            
+            // StatusContext
+            let ctx = StatusContext(ancestors: ancestors, descendants: descendants)
+            return ctx as! Entity
+        } else if path == "notifications" {
+            let data = try await makeMisskeyRequest(path: "i/notifications", params: params)
+            let misskeyNotifs = try JSONDecoder().decode([MisskeyNotification].self, from: data)
+            return misskeyNotifs.compactMap { $0.toNotification() } as! Entity
+        } else if path.hasSuffix("/reblog") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/reblog", with: "")
+            params["renoteId"] = id
+            let data = try await makeMisskeyRequest(path: "notes/create", params: params)
+            
+            struct NoteCreateResponse: Decodable {
+                let createdNote: MisskeyNote
+            }
+            if let response = try? JSONDecoder().decode(NoteCreateResponse.self, from: data) {
+                return response.createdNote.toStatus() as! Entity
+            }
+        } else if path.hasSuffix("/follow") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/follow", with: "")
+            params["userId"] = id
+            let _ = try await makeMisskeyRequest(path: "following/create", params: params)
+            // Fetch relationship mock
+            let rel = Relationship(id: id, following: true, showingReblogs: true, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "")
+            return rel as! Entity
+        } else if path.hasSuffix("/unreblog") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unreblog", with: "")
+            params["noteId"] = id
+            let _ = try await makeMisskeyRequest(path: "notes/unrenote", params: params)
+            let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
+            let misskeyNote = try JSONDecoder().decode(MisskeyNote.self, from: data)
+            return misskeyNote.toStatus() as! Entity
+        } else if path.hasSuffix("/unfollow") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/unfollow", with: "")
+            params["userId"] = id
+            let _ = try await makeMisskeyRequest(path: "following/delete", params: params)
+            let rel = Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "")
+            return rel as! Entity
+        } else if path.hasSuffix("/unreblog") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unreblog", with: "")
+            params["noteId"] = id
+            let _ = try await makeMisskeyRequest(path: "notes/unrenote", params: params)
+            let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
+            let misskeyNote = try JSONDecoder().decode(MisskeyNote.self, from: data)
+            return misskeyNote.toStatus() as! Entity
+        }
+        
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
-    
+    public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? { 
+        let path = endpoint.path()
+        var params = extractParams(from: endpoint)
+        
+        if path.hasSuffix("/unfavourite") && path.hasPrefix("statuses/") {
+            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unfavourite", with: "")
+            params["noteId"] = id
+            let _ = try await makeMisskeyRequest(path: "notes/reactions/delete", params: params)
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+        }
+        
+        return nil 
+    }
+
     public func put<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
     }
