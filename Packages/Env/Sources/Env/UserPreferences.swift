@@ -880,6 +880,7 @@ import SwiftUI
     recentlyUsedLanguages = storage.recentlyUsedLanguages
     isSocialKeyboardEnabled = storage.isSocialKeyboardEnabled
     _showLanguageFilters = storage.showLanguageFilters
+    listsGalleryMode = storage.listsGalleryMode
     useInstanceContentSettings = storage.useInstanceContentSettings
     appAutoExpandSpoilers = storage.appAutoExpandSpoilers
     appAutoExpandMedia = storage.appAutoExpandMedia
