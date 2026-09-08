@@ -114,7 +114,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   }
 
   private func makeGet(endpoint: Endpoint) throws -> URLRequest {
-    let url = try makeURL(endpoint: endpoint)
+    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
     return makeURLRequest(url: url, endpoint: endpoint, httpMethod: "GET")
   }
 
@@ -157,7 +157,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   public func post(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint)
+    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "POST")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
@@ -167,14 +167,14 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     try await makeEntityRequest(endpoint: endpoint, method: "PATCH")
   }
 
-  public func put<Entity: Decodable>(endpoint: Endpoint) async throws
+  public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {
-    try await makeEntityRequest(endpoint: endpoint, method: "PUT")
+    try await makeEntityRequest(endpoint: endpoint, method: "PUT", forceVersion: forceVersion)
   }
 
-  public func put(endpoint: Endpoint) async throws -> HTTPURLResponse? {
-    let url = try makeURL(endpoint: endpoint)
+  public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
+    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "PUT")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
@@ -183,7 +183,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   public func delete(endpoint: Endpoint) async throws
     -> HTTPURLResponse?
   {
-    let url = try makeURL(endpoint: endpoint)
+    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "DELETE")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse

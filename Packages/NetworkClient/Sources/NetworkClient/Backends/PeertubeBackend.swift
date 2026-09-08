@@ -49,11 +49,11 @@ public final class PeertubeBackend: FediverseBackend {
     
     public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
     
-    public func put<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func put(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
+    public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
     
     public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest

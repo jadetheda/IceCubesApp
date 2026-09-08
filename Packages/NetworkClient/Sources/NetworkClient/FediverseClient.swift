@@ -89,12 +89,12 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     return try await backend.post(endpoint: endpoint)
   }
 
-  public func put<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
-    return try await backend.put(endpoint: endpoint)
+  public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> Entity {
+    return try await backend.put(endpoint: endpoint, forceVersion: forceVersion)
   }
 
-  public func put(endpoint: Endpoint) async throws -> HTTPURLResponse? {
-    return try await backend.put(endpoint: endpoint)
+  public func put(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> HTTPURLResponse? {
+    return try await backend.put(endpoint: endpoint, forceVersion: forceVersion)
   }
 
   public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {

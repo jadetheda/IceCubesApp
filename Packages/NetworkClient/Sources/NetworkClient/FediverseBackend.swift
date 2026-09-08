@@ -44,8 +44,8 @@ public protocol FediverseBackend: Sendable {
     func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
     func post(endpoint: Endpoint) async throws -> HTTPURLResponse?
     
-    func put<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
-    func put(endpoint: Endpoint) async throws -> HTTPURLResponse?
+    func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
+    func put(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
     func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
     

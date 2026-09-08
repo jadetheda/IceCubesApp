@@ -147,7 +147,7 @@ struct NotificationsPolicyView: View {
     }
     do {
       isUpdating = true
-      policy = try await client.get(endpoint: Notifications.policy, forceVersion: .v2)
+      policy = try await client.get(endpoint: Notifications.policy, forceVersion: FediverseClient.Version.v2)
     } catch {
       dismiss()
     }
@@ -161,7 +161,7 @@ struct NotificationsPolicyView: View {
       do {
         isUpdating = true
         self.policy = try await client.put(
-          endpoint: Notifications.putPolicy(policy: policy), forceVersion: .v2)
+          endpoint: Notifications.putPolicy(policy: policy), forceVersion: FediverseClient.Version.v2)
       } catch {}
     }
   }
