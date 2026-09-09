@@ -31,6 +31,7 @@ struct AddAccountView: View {
   @State private var instanceSocialClient = InstanceSocialClient()
   @State private var searchingTask = Task<Void, Never> {}
   @State private var getInstanceDetailTask = Task<Void, Never> {}
+  @State private var detectedSoftware: String = "mastodon"
 
   private let instanceNamePublisher = PassthroughSubject<String, Never>()
 
