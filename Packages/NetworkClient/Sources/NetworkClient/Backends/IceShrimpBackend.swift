@@ -63,7 +63,7 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
         return entity
     }
     
-    open override func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    open override func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         var overridingEndpoint = endpoint
         if let notificationsEndpoint = endpoint as? Notifications {
             switch notificationsEndpoint {
@@ -77,10 +77,10 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
                 break
             }
         }
-        return try await super.post(endpoint: overridingEndpoint)
+        return try await super.post(endpoint: overridingEndpoint, forceVersion: forceVersion)
     }
     
-    open override func post(endpoint: Endpoint) async throws -> HTTPURLResponse? {
+    open override func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
         var overridingEndpoint = endpoint
         if let notificationsEndpoint = endpoint as? Notifications {
             switch notificationsEndpoint {
@@ -94,6 +94,6 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
                 break
             }
         }
-        return try await super.post(endpoint: overridingEndpoint)
+        return try await super.post(endpoint: overridingEndpoint, forceVersion: forceVersion)
     }
 }

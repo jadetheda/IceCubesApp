@@ -148,23 +148,21 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     return (entity, linkHandler)
   }
 
-  public func post<Entity: Decodable>(endpoint: Endpoint) async throws
+  public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {
-    try await makeEntityRequest(endpoint: endpoint, method: "POST")
+    try await makeEntityRequest(endpoint: endpoint, method: "POST", forceVersion: forceVersion)
   }
 
-  public func post(endpoint: Endpoint) async throws
-    -> HTTPURLResponse?
-  {
+  public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
     let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "POST")
     let (_, httpResponse) = try await urlSession.data(for: request)
     return httpResponse as? HTTPURLResponse
   }
 
-  public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
-    try await makeEntityRequest(endpoint: endpoint, method: "PATCH")
+  public func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
+    try await makeEntityRequest(endpoint: endpoint, method: "PATCH", forceVersion: forceVersion)
   }
 
   public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
@@ -180,9 +178,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     return httpResponse as? HTTPURLResponse
   }
 
-  public func delete(endpoint: Endpoint) async throws
-    -> HTTPURLResponse?
-  {
+  public func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
     let url = try makeURL(endpoint: endpoint)
     let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "DELETE")
     let (_, httpResponse) = try await urlSession.data(for: request)

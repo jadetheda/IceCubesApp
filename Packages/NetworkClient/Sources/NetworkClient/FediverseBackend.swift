@@ -42,17 +42,18 @@ public protocol FediverseBackend: Sendable {
     func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
     func getWithLink<Entity: Decodable>(endpoint: Endpoint) async throws -> (Entity, LinkHandler?)
     
-    func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
-    func post(endpoint: Endpoint) async throws -> HTTPURLResponse?
+    func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
+    func post(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
     func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
     func put(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
-    func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity
+    func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
     
-    func delete(endpoint: Endpoint) async throws -> HTTPURLResponse?
+    func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
     func makeWebSocketTask(endpoint: Endpoint, instanceStreamingURL: URL?) throws -> URLSessionWebSocketTask
     
     func mediaUpload<Entity: Decodable>(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> Entity
+    func mediaUpload(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> HTTPURLResponse?
 }

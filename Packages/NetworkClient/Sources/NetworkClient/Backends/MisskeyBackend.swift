@@ -254,7 +254,7 @@ public final class MisskeyBackend: FediverseBackend {
         return (entity, linkHandler)
     }
 
-    public func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         let path = endpoint.path()
         var params = extractParams(from: endpoint)
         
@@ -369,7 +369,7 @@ public final class MisskeyBackend: FediverseBackend {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? { 
+    public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { 
         let path = endpoint.path()
         var params = extractParams(from: endpoint)
         
@@ -389,11 +389,11 @@ public final class MisskeyBackend: FediverseBackend {
     
     public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
     
-    public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    public func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func delete(endpoint: Endpoint) async throws -> HTTPURLResponse? {
+    public func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
         let path = endpoint.path()
         var params = extractParams(from: endpoint)
         

@@ -45,6 +45,9 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   public var oauthToken: OauthToken? { backend.oauthToken }
   public var capabilities: ServerCapabilities { backend.capabilities }
 
+  public var isIceShrimpWorkaroundsEnabled: Bool { backend is IceShrimpBackend }
+
+
   public init(server: String, version: Version = .v1, oauthToken: OauthToken? = nil, serverSoftware: String = "mastodon") {
     self.server = server
     self.version = version
@@ -82,12 +85,12 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     return try await backend.getWithLink(endpoint: endpoint)
   }
 
-  public func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
-    return try await backend.post(endpoint: endpoint)
+  public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> Entity {
+    return try await backend.post(endpoint: endpoint, forceVersion: forceVersion)
   }
 
-  public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? {
-    return try await backend.post(endpoint: endpoint)
+  public func post(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> HTTPURLResponse? {
+    return try await backend.post(endpoint: endpoint, forceVersion: forceVersion)
   }
 
   public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> Entity {
@@ -98,16 +101,28 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     return try await backend.put(endpoint: endpoint, forceVersion: forceVersion)
   }
 
-  public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
-    return try await backend.patch(endpoint: endpoint)
+  public func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> Entity {
+    return try await backend.patch(endpoint: endpoint, forceVersion: forceVersion)
   }
 
-  public func delete(endpoint: Endpoint) async throws -> HTTPURLResponse? {
-    return try await backend.delete(endpoint: endpoint)
+  public func delete(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> HTTPURLResponse? {
+    return try await backend.delete(endpoint: endpoint, forceVersion: forceVersion)
   }
 
   public func makeWebSocketTask(endpoint: Endpoint, instanceStreamingURL: URL?) throws -> URLSessionWebSocketTask {
     return try backend.makeWebSocketTask(endpoint: endpoint, instanceStreamingURL: instanceStreamingURL)
+  }
+
+  
+  public func mediaUpload(
+    endpoint: Endpoint,
+    version: Version,
+    method: String,
+    mimeType: String,
+    filename: String,
+    data: Data
+  ) async throws -> HTTPURLResponse? {
+    return try await backend.mediaUpload(endpoint: endpoint, version: version, method: method, mimeType: mimeType, filename: filename, data: data)
   }
 
   public func mediaUpload<Entity: Decodable>(

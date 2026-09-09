@@ -81,7 +81,7 @@ struct EditFilterView: View {
       if filter == nil {
         focusedField = .title
       }
-      if client.isIceShrimpWorkaroundsEnabled {
+      if client.backend is IceShrimpBackend {
         contexts = [.home]
       }
     }
@@ -233,12 +233,12 @@ struct EditFilterView: View {
         ) {
           Label(context.name, systemImage: context.iconName)
         }
-        .disabled(isSavingFilter || (client.isIceShrimpWorkaroundsEnabled && context != .home))
+        .disabled(isSavingFilter || (client.backend is IceShrimpBackend && context != .home))
       }
     } header: {
       Text("filter.edit.contexts")
     } footer: {
-      if client.isIceShrimpWorkaroundsEnabled {
+      if client.backend is IceShrimpBackend {
         Text("IceShrimp instances only support the Home filter context.")
       }
     }

@@ -102,7 +102,7 @@ import SwiftUI
         locked: isLocked,
         discoverable: isDiscoverable,
         fieldsAttributes: fields.map { .init(name: $0.name, value: $0.value) })
-      let response = try await client?.patch(endpoint: Accounts.updateCredentials(json: data))
+      let response: HTTPURLResponse? = try await client?.patch(endpoint: Accounts.updateCredentials(json: data))
       if response?.statusCode != 200 {
         saveError = true
       }
@@ -138,7 +138,7 @@ import SwiftUI
   private func uploadHeader(data: Data) async -> Bool {
     guard let client else { return false }
     do {
-      let response = try await client.mediaUpload(
+      let response: HTTPURLResponse? = try await client.mediaUpload(
         endpoint: Accounts.updateCredentialsMedia,
         version: .v1,
         method: "PATCH",
@@ -154,7 +154,7 @@ import SwiftUI
   private func uploadAvatar(data: Data) async -> Bool {
     guard let client else { return false }
     do {
-      let response = try await client.mediaUpload(
+      let response: HTTPURLResponse? = try await client.mediaUpload(
         endpoint: Accounts.updateCredentialsMedia,
         version: .v1,
         method: "PATCH",

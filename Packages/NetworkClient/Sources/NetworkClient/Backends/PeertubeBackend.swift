@@ -44,11 +44,11 @@ public final class PeertubeBackend: FediverseBackend {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func post<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    public func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func post(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
+    public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
     
     public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
@@ -56,11 +56,11 @@ public final class PeertubeBackend: FediverseBackend {
     
     public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
     
-    public func patch<Entity: Decodable>(endpoint: Endpoint) async throws -> Entity {
+    public func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         throw FediverseClient.ClientError.unexpectedRequest
     }
     
-    public func delete(endpoint: Endpoint) async throws -> HTTPURLResponse? { nil }
+    public func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
     
     public func makeWebSocketTask(endpoint: Endpoint, instanceStreamingURL: URL?) throws -> URLSessionWebSocketTask {
         throw FediverseClient.ClientError.unexpectedRequest
