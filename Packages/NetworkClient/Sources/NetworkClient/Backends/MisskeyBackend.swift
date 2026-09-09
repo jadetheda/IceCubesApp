@@ -442,4 +442,8 @@ public final class MisskeyBackend: FediverseBackend {
         let misskeyFile = try JSONDecoder().decode(MisskeyFile.self, from: responseData)
         return misskeyFile.toMediaAttachment() as! Entity
     }
+
+    public func mediaUpload(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> HTTPURLResponse? { nil }
+
+    public func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
 }

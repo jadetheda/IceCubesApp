@@ -32,7 +32,6 @@ public protocol FediverseBackend: Sendable {
     var oauthToken: OauthToken? { get }
     var isAuth: Bool { get }
     var capabilities: ServerCapabilities { get }
-    var isIceShrimpWorkaroundsEnabled: Bool { get }
   func addConnections(_ connections: [String])
   func hasConnection(with url: URL) -> Bool
     
@@ -49,6 +48,7 @@ public protocol FediverseBackend: Sendable {
     func put(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
     func patch<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity
+    func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     
     func delete(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> HTTPURLResponse?
     

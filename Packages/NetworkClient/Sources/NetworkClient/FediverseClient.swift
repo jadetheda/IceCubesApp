@@ -45,7 +45,6 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   public var oauthToken: OauthToken? { backend.oauthToken }
   public var capabilities: ServerCapabilities { backend.capabilities }
 
-  public var isIceShrimpWorkaroundsEnabled: Bool { backend is IceShrimpBackend }
 
 
   public init(server: String, version: Version = .v1, oauthToken: OauthToken? = nil, serverSoftware: String = "mastodon") {
