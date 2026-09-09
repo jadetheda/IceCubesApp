@@ -216,7 +216,15 @@ public final class MisskeyBackend: FediverseBackend {
             return notes.map { $0.toStatus() } as! Entity
 
         } else if path.hasPrefix("timelines/") {
-            // List/tag timelines — unsupported, return empty.
+            // Tag timelines come in as "timelines/tag/:tag" — route to notes/search-by-tag.
+            let components = path.components(separatedBy: "/")
+            if components.count >= 3 && components[1] == "tag" {
+                let tag = components[2]
+                if let data = try? await makeMisskeyRequest(path: "notes/search-by-tag", params: ["tag": tag, "limit": params["limit"] ?? 20]),
+                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
+                    return notes.map { $0.toStatus() } as! Entity
+                }
+            }
             return ([Status]() as! Entity)
 
         // --- Instance ---
@@ -297,13 +305,21 @@ public final class MisskeyBackend: FediverseBackend {
             return user.toAccount() as! Entity
 
         } else if path == "accounts/relationships" {
-            var rels: [Relationship] = []
+            // Use Misskey's users/relation endpoint to get real follow/block/mute state.
+            // The Mastodon endpoint takes id[] params; extract them and batch-query Misskey.
+            var userIds: [String] = []
             if let ids = params["id[]"] as? [String] {
-                rels = ids.map { emptyRelationship(id: $0) }
+                userIds = ids
             } else if let id = params["id[]"] as? String {
-                rels = [emptyRelationship(id: id)]
+                userIds = [id]
             }
-            return rels as! Entity
+            if !userIds.isEmpty {
+                if let data = try? await makeMisskeyRequest(path: "users/relation", params: ["userId": userIds]),
+                   let relations = try? JSONDecoder().decode([MisskeyRelation].self, from: data) {
+                    return relations.map { $0.toRelationship() } as! Entity
+                }
+            }
+            return userIds.map { emptyRelationship(id: $0) } as! Entity
 
         } else if path.hasPrefix("accounts/") && path.components(separatedBy: "/").count == 2 {
             let id = path.replacingOccurrences(of: "accounts/", with: "")
@@ -313,9 +329,19 @@ public final class MisskeyBackend: FediverseBackend {
             return user.toAccount() as! Entity
 
         } else if path.hasSuffix("/followers") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/followers", with: "")
+            if let data = try? await makeMisskeyRequest(path: "users/followers", params: ["userId": id, "limit": 40]),
+               let entries = try? JSONDecoder().decode([MisskeyFollowEntry].self, from: data) {
+                return entries.compactMap { $0.follower?.toAccount() } as! Entity
+            }
             return ([Account]() as! Entity)
 
         } else if path.hasSuffix("/following") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/following", with: "")
+            if let data = try? await makeMisskeyRequest(path: "users/following", params: ["userId": id, "limit": 40]),
+               let entries = try? JSONDecoder().decode([MisskeyFollowEntry].self, from: data) {
+                return entries.compactMap { $0.followee?.toAccount() } as! Entity
+            }
             return ([Account]() as! Entity)
 
         } else if path.hasSuffix("/featured_tags") && path.hasPrefix("accounts/") {
@@ -353,6 +379,11 @@ public final class MisskeyBackend: FediverseBackend {
             return ([Emoji]() as! Entity)
 
         } else if path == "bookmarks" {
+            // Misskey uses i/favorites for bookmarked notes.
+            if let data = try? await makeMisskeyRequest(path: "i/favorites", params: params),
+               let favorites = try? JSONDecoder().decode([MisskeyFavorite].self, from: data) {
+                return favorites.map { $0.note.toStatus() } as! Entity
+            }
             return ([Status]() as! Entity)
 
         } else if path == "favourites" {
@@ -366,7 +397,20 @@ public final class MisskeyBackend: FediverseBackend {
             }
             return ([Models.Notification]() as! Entity)
 
-        } else if path == "blocks" || path == "mutes" {
+        } else if path == "blocks" {
+            // Misskey's blocking/list returns objects with a nested blockee user.
+            if let data = try? await makeMisskeyRequest(path: "blocking/list", params: params),
+               let entries = try? JSONDecoder().decode([MisskeyBlockEntry].self, from: data) {
+                return entries.compactMap { $0.blockee?.toAccount() } as! Entity
+            }
+            return ([Account]() as! Entity)
+
+        } else if path == "mutes" {
+            // Misskey's mute/list returns objects with a nested mutee user.
+            if let data = try? await makeMisskeyRequest(path: "mute/list", params: params),
+               let entries = try? JSONDecoder().decode([MisskeyMuteEntry].self, from: data) {
+                return entries.compactMap { $0.mutee?.toAccount() } as! Entity
+            }
             return ([Account]() as! Entity)
 
         } else if path == "follow_requests" {
@@ -682,7 +726,8 @@ public final class MisskeyBackend: FediverseBackend {
         if path == "reports" {
             if let userId = params["account_id"] as? String {
                 let comment = params["comment"] as? String ?? ""
-                let _ = try? await makeMisskeyRequest(path: "users/report", params: ["userId": userId, "comment": comment])
+                // Misskey uses users/report-abuse, not users/report.
+                let _ = try? await makeMisskeyRequest(path: "users/report-abuse", params: ["userId": userId, "comment": comment])
             }
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
