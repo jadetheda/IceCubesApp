@@ -711,3 +711,4 @@
 - **Bug Fix (2026-09-09):** Fixed Exit Code 65 during compilation by restoring the missing `@State private var detectedSoftware: String = "mastodon"` in `AddAccountView`, resolving the 'cannot find in scope' compiler error.
 - **Bug Fix (2026-09-09):** Fixed GitHub Actions workflow (`build-ipa.yml`) failing at the packaging step by changing the `cp` command to use a glob (`*.app`) since `IceCubesApp` produces an archive with a space in the name (`Ice Cubes.app`).
 - **Success (2026-09-09):** Successfully compiled the multi-backend architecture (Mastodon, Misskey, IceShrimp, Peertube) and generated the unsigned IPA artifact via GitHub Actions.
+- **Bug Fix (2026-09-09):** Re-linked `useIceShrimpWorkarounds` preference seamlessly with `IceShrimpBackend` via dynamic `UserDefaults` lookups inside `MastodonBackend`, guaranteeing that the user's settings to bypass/apply IceShrimp hacks sync accurately without polluting the global Fediverse protocol definitions.
