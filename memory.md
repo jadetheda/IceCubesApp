@@ -704,3 +704,4 @@
   - Restored workspace from zero (re-cloned, checked out multi-spec-support branch, healed pngs).
   - Fixed FediverseBackend protocol conformance issues caused by missing implementations of optional `patch` and `mediaUpload` methods (that return `HTTPURLResponse?`) in `MisskeyBackend`, `PeertubeBackend`, and `IceShrimpBackend`.
   - Removed Bluesky integration as per user request (removed `BlueskyBackend.swift` and selection logic from `AppAccountsManager.swift`), but retained `BlueskyLight` and `BlueskyDark` themes intact in `ColorSet.swift` and `Theme.swift`.
+- **Bug Fix (2026-09-09):** Fixed Exit Code 65 during compilation by ensuring the `FediverseBackend` protocol explicitly required `isIceShrimpWorkaroundsEnabled`, as `FediverseClient` attempts to access it directly. Added the missing implementations for `patch` and removed redundant stub overrides in `IceShrimpBackend` to conform properly to `MastodonBackend`.
