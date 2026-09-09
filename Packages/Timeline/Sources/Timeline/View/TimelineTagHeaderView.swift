@@ -28,23 +28,23 @@ struct TimelineTagHeaderView: View {
           .accessibilityElement(children: .combine)
           Spacer()
           
-          if !client.isIceShrimpWorkaroundsEnabled {
-            Button {
-              Task {
-                isLoading = true
-                if tag.following {
-                  self.tag = await account.unfollowTag(id: tag.name)
-                } else {
-                  self.tag = await account.followTag(id: tag.name)
-                }
-                isLoading = false
+          // Show the Follow/Unfollow button for all backends. The FediverseClient
+          // adapter layer handles any unsupported tag-following endpoints gracefully.
+          Button {
+            Task {
+              isLoading = true
+              if tag.following {
+                self.tag = await account.unfollowTag(id: tag.name)
+              } else {
+                self.tag = await account.followTag(id: tag.name)
               }
-            } label: {
-              Text(tag.following ? "account.follow.following" : "account.follow.follow")
+              isLoading = false
             }
-            .disabled(isLoading)
-            .buttonStyle(.bordered)
+          } label: {
+            Text(tag.following ? "account.follow.following" : "account.follow.follow")
           }
+          .disabled(isLoading)
+          .buttonStyle(.bordered)
         }
       }
     }
