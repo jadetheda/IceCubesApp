@@ -112,19 +112,11 @@ import SwiftUI
     @AppStorage("show_timeline_hide_pinned_toggle") public var showTimelineHidePinnedToggle: Bool = false
     @AppStorage("timeline_pinned_hidden") public var timelinePinnedHidden: Bool = false
     @AppStorage("hide_pinned_items_symbol") public var hidePinnedItemsSymbol: Bool = false
-    @AppStorage("iceshrimp_hide_boosts_button") public var iceShrimpHideBoostsButton: Bool = true
-    @AppStorage("iceshrimp_hide_incompatible_buttons") public var iceShrimpHideIncompatibleButtons: Bool = true
-    @AppStorage("never_load_video") public var neverLoadVideo: Bool = false
     
     @AppStorage("trending_algorithm") public var trendingAlgorithm: TrendingAlgorithm = .mastodon
     @AppStorage("trending_simple_score_search_limit") public var trendingSimpleScoreSearchLimit: Int = 40
 
-    @AppStorage("iceshrimp_trending") public var iceShrimpTrending: Bool = false
-    @AppStorage("iceshrimp_trending_threshold") public var iceShrimpTrendingThreshold: Int = 5
-    @AppStorage("iceshrimp_trending_halflife") public var iceShrimpTrendingHalfLife: Double = 1.0
 
-    @AppStorage("tag_groups_client_side_merge") public var tagGroupsClientSideMergeEnabled: Bool = false
-    @AppStorage("use_iceshrimp_workarounds") public var useIceShrimpWorkarounds: Bool = false
 
     init() {
       prepareTranslationType()
@@ -597,21 +589,6 @@ import SwiftUI
       storage.remoteMediaFallbackOnFail = remoteMediaFallbackOnFail
     }
   }
-  public var iceShrimpShowBoostsButton: Bool {
-    didSet {
-      storage.iceShrimpHideBoostsButton = !iceShrimpShowBoostsButton
-    }
-  }
-  public var iceShrimpShowIncompatibleButtons: Bool {
-    didSet {
-      storage.iceShrimpHideIncompatibleButtons = !iceShrimpShowIncompatibleButtons
-    }
-  }
-  public var neverLoadVideo: Bool {
-    didSet {
-      storage.neverLoadVideo = neverLoadVideo
-    }
-  }
   
   public var trendingAlgorithm: TrendingAlgorithm {
     didSet { storage.trendingAlgorithm = trendingAlgorithm }
@@ -620,11 +597,6 @@ import SwiftUI
     didSet { storage.trendingSimpleScoreSearchLimit = trendingSimpleScoreSearchLimit }
   }
 
-  public var iceShrimpTrending: Bool {
-    didSet {
-      storage.iceShrimpTrending = iceShrimpTrending
-    }
-  }
   public var iceShrimpTrendingThreshold: Int {
     didSet {
       storage.iceShrimpTrendingThreshold = iceShrimpTrendingThreshold
@@ -682,17 +654,7 @@ import SwiftUI
     }
   }
 
-  public var tagGroupsClientSideMergeEnabled: Bool {
-    didSet {
-      storage.tagGroupsClientSideMergeEnabled = tagGroupsClientSideMergeEnabled
-    }
-  }
 
-  public var useIceShrimpWorkarounds: Bool {
-    didSet {
-      storage.useIceShrimpWorkarounds = useIceShrimpWorkarounds
-    }
-  }
 
   public var hideSeenPostsIsToggle: Bool {
     didSet {
@@ -941,22 +903,16 @@ import SwiftUI
     remoteMediaAutoFallback = storage.remoteMediaAutoFallback
     remoteMediaAutoFallbackDelay = storage.remoteMediaAutoFallbackDelay
     remoteMediaFallbackOnFail = storage.remoteMediaFallbackOnFail
-    iceShrimpShowBoostsButton = !storage.iceShrimpHideBoostsButton
-    iceShrimpShowIncompatibleButtons = !storage.iceShrimpHideIncompatibleButtons
-    neverLoadVideo = storage.neverLoadVideo
     
     trendingAlgorithm = storage.trendingAlgorithm
     trendingSimpleScoreSearchLimit = storage.trendingSimpleScoreSearchLimit
 
-    iceShrimpTrending = storage.iceShrimpTrending
     iceShrimpTrendingThreshold = storage.iceShrimpTrendingThreshold
     iceShrimpTrendingHalfLife = storage.iceShrimpTrendingHalfLife
 
     remoteMediaAlwaysForce = storage.remoteMediaAlwaysForce
     showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
     timelinePinnedHidden = storage.timelinePinnedHidden
-    tagGroupsClientSideMergeEnabled = storage.tagGroupsClientSideMergeEnabled
-    useIceShrimpWorkarounds = storage.useIceShrimpWorkarounds
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
   }
 }

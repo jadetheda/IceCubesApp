@@ -107,7 +107,7 @@ public final class NotificationsListDataSource {
   }
 
   public func fetchPolicy(client: FediverseClient) async -> Models.NotificationsPolicy? {
-    if UserPreferences.shared.useIceShrimpWorkarounds && !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
+    if client.isIceShrimpWorkaroundsEnabled {
       return nil
     }
     return try? await client.get(endpoint: Notifications.policy, forceVersion: .v2)

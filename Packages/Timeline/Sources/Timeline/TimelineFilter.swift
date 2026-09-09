@@ -522,7 +522,7 @@ extension TimelineFilter {
       scoredStatuses.sort { $0.1 > $1.1 }
       return scoredStatuses.map { $0.0 }
     }
-    if case let .tagGroup(_, tags, _) = self, UserPreferences.shared.tagGroupsClientSideMergeEnabled, UserPreferences.shared.useIceShrimpWorkarounds {
+    if case let .tagGroup(_, tags, _) = self, client.isIceShrimpWorkaroundsEnabled {
       return try await withThrowingTaskGroup(of: [Status].self) { group in
         for tag in tags {
           let cleanTag = tag.replacingOccurrences(of: "#", with: "")

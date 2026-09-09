@@ -235,12 +235,12 @@ private struct DisplayData: Identifiable, Hashable {
 
   init?(from attachment: MediaAttachment) {
     
-    let noVideo = Env.UserPreferences.shared.neverLoadVideo
+    let noVideo = false
     
     let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce
     let fallback = Env.UserPreferences.shared.remoteMediaFallbackOnFail
     
-    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo, ) else { return nil }
+    guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) else { return nil }
     
     id = attachment.id
     url = info.url

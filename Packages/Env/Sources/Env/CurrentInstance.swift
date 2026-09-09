@@ -36,7 +36,7 @@ import Observation
   }
 
   public var isNotificationsFilterSupported: Bool {
-    if !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
+    if client?.isIceShrimpWorkaroundsEnabled == true {
       return false
     }
     return version >= 4.3
@@ -47,7 +47,7 @@ import Observation
   }
 
   public var isGroupedNotificationsSupported: Bool {
-    if !UserPreferences.shared.iceShrimpShowIncompatibleButtons {
+    if client?.isIceShrimpWorkaroundsEnabled == true {
       return false
     }
     return version >= 4.3

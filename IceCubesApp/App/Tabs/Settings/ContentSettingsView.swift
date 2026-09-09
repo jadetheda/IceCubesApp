@@ -88,14 +88,6 @@ struct ContentSettingsView: View {
       #endif
 
       Section {
-        // Toggle to enable/disable all IceShrimp compatibility workarounds.
-        Toggle("settings.content.iceshrimp.workarounds", isOn: $userPreferences.useIceShrimpWorkarounds)
-        if userPreferences.useIceShrimpWorkarounds {
-          Toggle("Show Boosts button on profiles", isOn: $userPreferences.iceShrimpShowBoostsButton)
-          Toggle("settings.content.iceshrimp.never-load-video", isOn: $userPreferences.neverLoadVideo)
-          Toggle(isOn: $userPreferences.tagGroupsClientSideMergeEnabled) {
-            Label("settings.content.iceshrimp.alternative-tag-fetching", systemImage: "tag")
-          }
           Picker("Algorithm", selection: $userPreferences.trendingAlgorithm) {
             ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
               Text(algorithm.description).tag(algorithm)
@@ -114,7 +106,6 @@ struct ContentSettingsView: View {
               }
             }
           }
-        }
       } header: {
         Text("settings.content.iceshrimp.header")
       } footer: {

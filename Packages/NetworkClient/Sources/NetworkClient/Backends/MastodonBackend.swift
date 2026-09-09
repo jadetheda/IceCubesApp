@@ -36,13 +36,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   }
 
   public var isIceShrimpWorkaroundsEnabled: Bool {
-    get { 
-        if self is IceShrimpBackend {
-             let defaults = UserDefaults(suiteName: "group.com.thomasricouard.IceCubesApp") ?? UserDefaults.standard
-             return defaults.bool(forKey: "use_iceshrimp_workarounds")
-        }
-        return false
-    }
+    get { self is IceShrimpBackend }
     set { }
   }
   

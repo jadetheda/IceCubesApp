@@ -184,6 +184,11 @@ public final class MisskeyBackend: FediverseBackend {
                 let tags: [Tag] = []
                 return tags as! Entity
             } else if path == "trends/statuses" {
+                if let data = try? await makeMisskeyRequest(path: "notes/featured", params: params),
+                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
+                    let statuses = notes.map { $0.toStatus() }
+                    return statuses as! Entity
+                }
                 let statuses: [Status] = []
                 return statuses as! Entity
             } else if path == "trends/links" {

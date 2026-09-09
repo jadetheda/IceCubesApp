@@ -28,7 +28,7 @@ struct TimelineTagHeaderView: View {
           .accessibilityElement(children: .combine)
           Spacer()
           
-          if !preferences.useIceShrimpWorkarounds || preferences.iceShrimpShowIncompatibleButtons {
+          if !client.isIceShrimpWorkaroundsEnabled {
             Button {
               Task {
                 isLoading = true

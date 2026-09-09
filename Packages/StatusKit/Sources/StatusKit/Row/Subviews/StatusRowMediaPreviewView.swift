@@ -138,7 +138,7 @@ public struct StatusRowMediaPreviewView: View {
   private func makeAttachmentView(_ attachement: MediaAttachment) -> some View {
     
     let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = userPreferences.neverLoadVideo
+    let noVideo = false
 
     if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
       MediaPreview(
@@ -546,7 +546,7 @@ private struct FeaturedImagePreView: View {
   var body: some View {
     
     let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = userPreferences.neverLoadVideo
+    let noVideo = false
     let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo)
 
     return Group {
@@ -742,7 +742,7 @@ private struct StatusRowMediaGridView: View {
     let attachment = attachments[index]
     
     let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = userPreferences.neverLoadVideo
+    let noVideo = false
 
     if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
       MediaGridCell(
