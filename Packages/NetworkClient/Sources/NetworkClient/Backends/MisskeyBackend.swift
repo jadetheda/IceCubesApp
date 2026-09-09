@@ -202,6 +202,20 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/in_collections") {
             let resp = AccountCollectionsResponse(collections: [])
             return resp as! Entity
+        } else if path == "accounts/lookup" {
+            let data = try await makeMisskeyRequest(path: "users/show", params: ["username": params["acct"] as? String ?? ""])
+            let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
+            return misskeyUser.toAccount() as! Entity
+        } else if path == "accounts/familiar_followers" {
+            let accs: [FamiliarAccounts] = []
+            return accs as! Entity
+        } else if path == "followed_tags" {
+            let tags: [Tag] = []
+            return tags as! Entity
+        } else if path.hasPrefix("accounts/") && path.hasSuffix("/note") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/note", with: "")
+            let relation = Relationship(id: id, following: false, showingReblogs: false, notifying: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: (params["comment"] as? String) ?? "")
+            return relation as! Entity
         } else if path == "accounts/verify_credentials" {
             let data = try await makeMisskeyRequest(path: "i", params: params)
             let misskeyUser = try JSONDecoder().decode(MisskeyUser.self, from: data)
@@ -396,7 +410,7 @@ public final class MisskeyBackend: FediverseBackend {
             return misskeyNotifs.compactMap { $0.toNotification() } as! Entity
         }
         
-        print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+        throw FediverseClient.ClientError.unexpectedRequest
     }
     public func getWithLink<Entity: Decodable>(endpoint: Endpoint) async throws -> (Entity, LinkHandler?) {
         let entity: Entity = try await get(endpoint: endpoint, forceVersion: nil)
@@ -442,7 +456,7 @@ public final class MisskeyBackend: FediverseBackend {
             if let poll = misskeyNote.poll?.toPoll(id: id) {
                 return poll as! Entity
             }
-            print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+            throw FediverseClient.ClientError.unexpectedRequest
         } else if path.hasPrefix("tags/") && (path.hasSuffix("/follow") || path.hasSuffix("/unfollow")) {
             let id = path.replacingOccurrences(of: "tags/", with: "").replacingOccurrences(of: "/follow", with: "").replacingOccurrences(of: "/unfollow", with: "")
             let tag = Tag(name: id, url: "", urlString: "", history: [], following: path.hasSuffix("/follow"))
@@ -571,7 +585,7 @@ public final class MisskeyBackend: FediverseBackend {
                 let translation = Translation(content: text, detectedSourceLanguage: sourceLang, provider: "Misskey")
                 return translation as! Entity
             }
-            print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+            throw FediverseClient.ClientError.unexpectedRequest
         } else if path.hasSuffix("/unblock") && path.hasPrefix("accounts/") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/unblock", with: "")
             params["userId"] = id
@@ -580,7 +594,7 @@ public final class MisskeyBackend: FediverseBackend {
             return rel as! Entity
         }
 
-        print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+        throw FediverseClient.ClientError.unexpectedRequest
     }
     
     public func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { 
@@ -633,7 +647,7 @@ public final class MisskeyBackend: FediverseBackend {
             return misskeyNote.toStatus() as! Entity
         }
         
-        print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+        throw FediverseClient.ClientError.unexpectedRequest
     }
     
     public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
@@ -666,7 +680,7 @@ public final class MisskeyBackend: FediverseBackend {
     }
     
     public func makeWebSocketTask(endpoint: Endpoint, instanceStreamingURL: URL?) throws -> URLSessionWebSocketTask {
-        print(\"MISSKEY UNHANDLED: \(path)\")\n        throw FediverseClient.ClientError.unexpectedRequest
+        throw FediverseClient.ClientError.unexpectedRequest
     }
     
     public func mediaUpload<Entity: Decodable>(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> Entity {
