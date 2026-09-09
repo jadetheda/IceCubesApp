@@ -6,8 +6,8 @@ extension MisskeyNote {
         let account = self.user.toAccount()
         let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
         
-        let favouritesCount = self.reactions.values.reduce(0, +)
-        let mediaAttachments = self.files.map { $0.toMediaAttachment() }
+        let favouritesCount = self.reactions?.values.reduce(0, +) ?? 0
+        let mediaAttachments = self.files?.map { $0.toMediaAttachment() } ?? []
         let customEmojis = self.emojis?.map {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
@@ -21,11 +21,11 @@ extension MisskeyNote {
                 account: renote.user.toAccount(),
                 createdAt: ServerDate(date: renoteCreatedAt),
                 editedAt: nil,
-                mediaAttachments: renote.files.map { $0.toMediaAttachment() },
+                mediaAttachments: renote.files?.map { $0.toMediaAttachment() } ?? [],
                 mentions: [],
-                repliesCount: renote.repliesCount,
-                reblogsCount: renote.renoteCount,
-                favouritesCount: renote.reactions.values.reduce(0, +),
+                repliesCount: renote.repliesCount ?? 0,
+                reblogsCount: renote.renoteCount ?? 0,
+                favouritesCount: renote.reactions?.values.reduce(0, +) ?? 0,
                 card: nil,
                 favourited: false,
                 reblogged: false,
@@ -40,7 +40,7 @@ extension MisskeyNote {
                 poll: nil,
                 spoilerText: HTMLString(stringValue: renote.cw ?? ""),
                 filtered: [],
-                sensitive: renote.files.contains(where: { $0.isSensitive }),
+                sensitive: renote.files?.contains(where: { $0.isSensitive == true }) ?? false,
                 language: nil,
                 tags: [],
                 quote: nil,
@@ -58,8 +58,8 @@ extension MisskeyNote {
             reblog: reblog,
             mediaAttachments: mediaAttachments,
             mentions: [],
-            repliesCount: self.repliesCount,
-            reblogsCount: self.renoteCount,
+            repliesCount: self.repliesCount ?? 0,
+            reblogsCount: self.renoteCount ?? 0,
             favouritesCount: favouritesCount,
             card: nil,
             favourited: false,
@@ -75,7 +75,7 @@ extension MisskeyNote {
             poll: nil,
             spoilerText: HTMLString(stringValue: self.cw ?? ""),
             filtered: [],
-            sensitive: self.files.contains(where: { $0.isSensitive }),
+            sensitive: self.files?.contains(where: { $0.isSensitive == true }) ?? false,
             language: nil,
             tags: [],
             quote: nil,
@@ -107,8 +107,8 @@ extension MisskeyUser {
             locked: self.isLocked ?? false,
             emojis: [],
             url: URL(string: "https://misskey/\(acct)"),
-            bot: self.isBot,
-            discoverable: true,
+            bot: self.isBot ?? false,
+            discoverable: true
         )
     }
 }
@@ -127,8 +127,8 @@ extension MisskeyFile {
         
         let meta = MediaAttachment.MetaContainer(
             original: MediaAttachment.MetaContainer.Meta(
-                width: self.properties.width,
-                height: self.properties.height,
+                width: self.properties?.width,
+                height: self.properties?.height,
                 aspect: nil,
                 duration: nil,
                 frameRate: nil

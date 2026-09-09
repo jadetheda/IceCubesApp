@@ -4,7 +4,7 @@ import Models
 private struct PleromaEndpoint: Endpoint, @unchecked Sendable {
     let internalPath: String
     let internalQueryItems: [URLQueryItem]?
-    let internalJsonValue: Encodable?
+    let internalJsonValue: (any Encodable & Sendable)?
 
     func path() -> String { internalPath }
     func queryItems() -> [URLQueryItem]? { internalQueryItems }
