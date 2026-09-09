@@ -263,7 +263,7 @@ extension FediverseClient: StatusEditor.MediaUploadService.Client {
     progressHandler: @escaping @Sendable (Double) -> Void
   ) async throws -> MediaAttachment? {
     // Call FediverseClient's own mediaUpload method, dropping progressHandler
-    let attachment: MediaAttachment = try await self.client.mediaUpload(
+    let attachment: MediaAttachment = try await self.mediaUpload(
       endpoint: Media.medias,
       version: FediverseClient.Version.v2,
       method: "POST",
