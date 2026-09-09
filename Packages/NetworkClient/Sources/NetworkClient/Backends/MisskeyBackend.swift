@@ -73,30 +73,47 @@ public final class MisskeyBackend: FediverseBackend {
             throw FediverseClient.OauthError.missingApp
         }
 
-        let requestUrl = URL(string: "https://\(server)/api/miauth/\(sessionId)/check")!
-        var request = URLRequest(url: requestUrl)
-        request.httpMethod = "POST"
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        // MiAuth check returns {"ok": true, "token": "...", "user": {...}} on success,
+        // MiAuth check response: {"ok": true, "token": "...", "user": {...}} on success,
         // or {"ok": false} if the session hasn't been authorized yet.
         struct MiAuthResponse: Decodable {
             let ok: Bool
             let token: String?
         }
 
-        let miAuthResponse = try JSONDecoder().decode(MiAuthResponse.self, from: data)
-        guard miAuthResponse.ok, let token = miAuthResponse.token else {
+        let requestUrl = URL(string: "https://\(server)/api/miauth/\(sessionId)/check")!
+
+        // Retry a few times with a short delay — Misskey's backend may not have
+        // processed the authorization by the time ASWebAuthenticationSession returns.
+        // Also: the check endpoint requires a JSON body (even if empty) on some instances.
+        for attempt in 1...3 {
+            if attempt > 1 {
+                try? await Task.sleep(for: .seconds(1))
+            }
+
+            var request = URLRequest(url: requestUrl)
+            request.httpMethod = "POST"
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = "{}".data(using: .utf8)  // some instances require a body
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 0
+
+            guard let miAuthResponse = try? JSONDecoder().decode(MiAuthResponse.self, from: data) else {
+                let body = String(data: data, encoding: .utf8) ?? ""
+                print("[MisskeyBackend] MiAuth check attempt \(attempt) — bad JSON, http=\(statusCode) body=\(body)")
+                continue
+            }
+
+            if miAuthResponse.ok, let token = miAuthResponse.token {
+                Self.currentSessionId = nil
+                return OauthToken(accessToken: token, tokenType: "Bearer", scope: "", createdAt: Date().timeIntervalSince1970)
+            }
+
             let body = String(data: data, encoding: .utf8) ?? ""
-            print("[MisskeyBackend] MiAuth check failed — ok=\(miAuthResponse.ok) body=\(body) http=\((response as? HTTPURLResponse)?.statusCode ?? 0)")
-            throw FediverseClient.OauthError.missingApp
+            print("[MisskeyBackend] MiAuth check attempt \(attempt) — ok=\(miAuthResponse.ok) http=\(statusCode) body=\(body)")
         }
 
-        // Clear the session ID after a successful exchange so stale IDs don't interfere.
-        Self.currentSessionId = nil
-        return OauthToken(accessToken: token, tokenType: "Bearer", scope: "", createdAt: Date().timeIntervalSince1970)
+        throw FediverseClient.OauthError.missingApp
     }
 
     // MARK: - Misskey request helper
