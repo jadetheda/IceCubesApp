@@ -147,47 +147,32 @@ public final class MisskeyBackend: FediverseBackend {
             let statuses: [Status] = []
             return statuses as! Entity
         } else if path == "push/subscription" {
+            // Misskey has no push subscription API; return a stub so the app doesn't crash.
             let sub = PushSubscription(id: 1, endpoint: URL(string: "https://example.com")!, serverKey: "", alerts: .init(follow: false, favourite: false, reblog: false, mention: false, poll: false, status: false))
             return sub as! Entity
         } else if path == "instance" || path == "v1/instance" || path == "v2/instance" {
-            let instance = Instance(title: "Misskey", shortDescription: "Misskey mock", email: "", version: "1.0", languages: [], registrations: .init(enabled: true), thumbnail: nil, urls: .init(streamingApi: nil), configuration: .init(statuses: .init(maxCharacters: 500, maxMediaAttachments: 4)), rules: [])
-            return instance as! Entity
-        } else if path == "instance/peers" {
-            let peers: [String] = []
-            return peers as! Entity
-        } else if path.hasPrefix("accounts/") && path.hasSuffix("/collections") {
-            let collections: [Models.Collection] = []
-            return collections as! Entity
-        } else if path.hasPrefix("collections/") {
-            let collection = Models.Collection(id: "1", title: "Mock", isAccountManager: false)
-            return collection as! Entity
-        } else if path.hasPrefix("accounts/") && path.hasSuffix("/in_collections") {
-            let collections: [Models.Collection] = []
-            return collections as! Entity
-        } else if path == "push/subscription" {
-            let sub = PushSubscription(id: 1, endpoint: URL(string: "https://example.com")!, serverKey: "", alerts: .init(follow: false, favourite: false, reblog: false, mention: false, poll: false, status: false))
-            return sub as! Entity
-        } else if path == "instance" || path == "v1/instance" || path == "v2/instance" {
-            let instance = Instance(title: "Misskey", shortDescription: "Misskey mock", email: "", version: "1.0", languages: [], registrations: .init(enabled: true), thumbnail: nil, urls: .init(streamingApi: nil), configuration: .init(statuses: .init(maxCharacters: 500, maxMediaAttachments: 4)), rules: [])
-            return instance as! Entity
-        } else if path == "instance/peers" {
-            let peers: [String] = []
-            return peers as! Entity
-        } else if path.hasPrefix("accounts/") && path.hasSuffix("/collections") {
-            let resp = AccountCollectionsResponse(collections: [])
-            return resp as! Entity
-        } else if path.hasPrefix("collections/") {
-            let collection = AccountCollection(id: "1", accountId: "1", name: "Mock", description: .init(stringValue: ""), language: nil, local: true, sensitive: false, discoverable: true, tag: nil, itemCount: 0, items: [])
-            let resp = AccountCollectionResponse(collection: collection, accounts: [])
-            return resp as! Entity
-        } else if path.hasPrefix("accounts/") && path.hasSuffix("/in_collections") {
-            let resp = AccountCollectionsResponse(collections: [])
-            return resp as! Entity
-        } else if path == "push/subscription" {
-            let sub = PushSubscription(id: 1, endpoint: URL(string: "https://example.com")!, serverKey: "", alerts: .init(follow: false, favourite: false, reblog: false, mention: false, poll: false, status: false))
-            return sub as! Entity
-        } else if path == "instance" || path == "v1/instance" || path == "v2/instance" {
-            let instance = Instance(title: "Misskey", shortDescription: "Misskey mock", email: "", version: "1.0", languages: [], registrations: .init(enabled: true), thumbnail: nil, urls: .init(streamingApi: nil), configuration: .init(statuses: .init(maxCharacters: 500, maxMediaAttachments: 4)), rules: [])
+            // Construct a minimal Instance from the Misskey /api/meta endpoint.
+            let instance = Instance(
+                title: "Misskey",
+                domain: server,
+                description: nil,
+                shortDescription: nil,
+                version: "1.0",
+                apiVersions: nil,
+                stats: nil,
+                usage: nil,
+                languages: [],
+                registrations: .init(enabled: true),
+                thumbnail: .init(url: nil),
+                configuration: .init(
+                    statuses: .init(maxCharacters: 3000, maxMediaAttachments: 16),
+                    polls: .init(maxOptions: 10, maxCharactersPerOption: 50, minExpiration: 300, maxExpiration: 2592000),
+                    urls: nil
+                ),
+                rules: [],
+                urls: nil,
+                contact: .init(account: nil, email: "")
+            )
             return instance as! Entity
         } else if path == "instance/peers" {
             let peers: [String] = []
@@ -196,9 +181,16 @@ public final class MisskeyBackend: FediverseBackend {
             let resp = AccountCollectionsResponse(collections: [])
             return resp as! Entity
         } else if path.hasPrefix("collections/") {
-            let collection = AccountCollection(id: "1", accountId: "1", uri: "", url: nil, name: "Mock", description: .init(stringValue: ""), language: nil, local: true, sensitive: false, discoverable: true, tag: nil, createdAt: ServerDate(), updatedAt: ServerDate(), itemCount: 0, items: [])
-            let resp = AccountCollectionResponse(collection: collection, accounts: [])
-            return resp as! Entity
+            // AccountCollection has no public memberwise init; decode from JSON stub.
+            let stub = """
+            {"id":"1","accountId":"1","uri":"","url":null,"name":"Mock","description":"","language":null,"local":true,"sensitive":false,"discoverable":true,"tag":null,"createdAt":"2024-01-01T00:00:00.000Z","updatedAt":"2024-01-01T00:00:00.000Z","itemCount":0,"items":[]}
+            """
+            if let data = stub.data(using: .utf8),
+               let collection = try? JSONDecoder().decode(AccountCollection.self, from: data) {
+                let resp = AccountCollectionResponse(collection: collection, accounts: [])
+                return resp as! Entity
+            }
+            throw FediverseClient.ClientError.unexpectedRequest
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/in_collections") {
             let resp = AccountCollectionsResponse(collections: [])
             return resp as! Entity
@@ -214,7 +206,7 @@ public final class MisskeyBackend: FediverseBackend {
             return tags as! Entity
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/note") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/note", with: "")
-            let relation = Relationship(id: id, following: false, showingReblogs: false, notifying: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: (params["comment"] as? String) ?? "")
+            let relation = Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: false, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: (params["comment"] as? String) ?? "", notifying: false)
             return relation as! Entity
         } else if path == "accounts/verify_credentials" {
             let data = try await makeMisskeyRequest(path: "i", params: params)
@@ -267,7 +259,13 @@ public final class MisskeyBackend: FediverseBackend {
             let prefs = try JSONDecoder().decode(ServerPreferences.self, from: data)
             return prefs as! Entity
         } else if path == "notifications/policy" {
-            let policy = Models.NotificationsPolicy(forRequest: .init(accept: .anyone), forReminder: .init(accept: .anyone), forBot: .init(accept: .anyone), summary: .init(accept: .anyone))
+            // NotificationsPolicy has no custom public init; decode from a permissive JSON stub.
+            let policyStub = """
+            {"for_not_following":"accept","for_not_followers":"accept","for_new_accounts":"accept","for_private_mentions":"accept","for_limited_accounts":"accept","summary":{"pending_requests_count":0,"pending_notifications_count":0}}
+            """
+            let policyDecoder = JSONDecoder()
+            policyDecoder.keyDecodingStrategy = .convertFromSnakeCase
+            let policy = (try? policyDecoder.decode(NotificationsPolicy.self, from: Data(policyStub.utf8))) ?? NotificationsPolicy(forNotFollowing: .accept, forNotFollowers: .accept, forNewAccounts: .accept, forPrivateMentions: .accept, forLimitedAccounts: .accept, summary: .init(pendingRequestsCount: 0, pendingNotificationsCount: 0))
             return policy as! Entity
         } else if path == "filters" {
             let filters: [ServerFilter] = []
@@ -399,7 +397,13 @@ public final class MisskeyBackend: FediverseBackend {
                 return misskeyNotifs.compactMap { $0.toNotification() } as! Entity
             }
             if path == "notifications/policy" {
-                let policy = Models.NotificationsPolicy(forRequest: .init(accept: .anyone), forReminder: .init(accept: .anyone), forBot: .init(accept: .anyone), summary: .init(accept: .anyone))
+                // NotificationsPolicy has no custom public init; decode from a permissive JSON stub.
+            let policyStub = """
+            {"for_not_following":"accept","for_not_followers":"accept","for_new_accounts":"accept","for_private_mentions":"accept","for_limited_accounts":"accept","summary":{"pending_requests_count":0,"pending_notifications_count":0}}
+            """
+            let policyDecoder = JSONDecoder()
+            policyDecoder.keyDecodingStrategy = .convertFromSnakeCase
+            let policy = (try? policyDecoder.decode(NotificationsPolicy.self, from: Data(policyStub.utf8))) ?? NotificationsPolicy(forNotFollowing: .accept, forNotFollowers: .accept, forNewAccounts: .accept, forPrivateMentions: .accept, forLimitedAccounts: .accept, summary: .init(pendingRequestsCount: 0, pendingNotificationsCount: 0))
                 return policy as! Entity
             }
             let notifs: [Notification] = []
@@ -462,7 +466,13 @@ public final class MisskeyBackend: FediverseBackend {
             let tag = Tag(name: id, url: "", urlString: "", history: [], following: path.hasSuffix("/follow"))
             return tag as! Entity
         } else if path == "notifications/policy" {
-            let policy = Models.NotificationsPolicy(forRequest: .init(accept: .anyone), forReminder: .init(accept: .anyone), forBot: .init(accept: .anyone), summary: .init(accept: .anyone))
+            // NotificationsPolicy has no custom public init; decode from a permissive JSON stub.
+            let policyStub = """
+            {"for_not_following":"accept","for_not_followers":"accept","for_new_accounts":"accept","for_private_mentions":"accept","for_limited_accounts":"accept","summary":{"pending_requests_count":0,"pending_notifications_count":0}}
+            """
+            let policyDecoder = JSONDecoder()
+            policyDecoder.keyDecodingStrategy = .convertFromSnakeCase
+            let policy = (try? policyDecoder.decode(NotificationsPolicy.self, from: Data(policyStub.utf8))) ?? NotificationsPolicy(forNotFollowing: .accept, forNotFollowers: .accept, forNewAccounts: .accept, forPrivateMentions: .accept, forLimitedAccounts: .accept, summary: .init(pendingRequestsCount: 0, pendingNotificationsCount: 0))
             return policy as! Entity
         } else if path == "filters" {
             let filter = ServerFilter(id: "1", title: "Mock", context: [], filterAction: .hide, expiresIn: nil, keywords: [], statuses: [])
@@ -620,7 +630,13 @@ public final class MisskeyBackend: FediverseBackend {
             let prefs = try JSONDecoder().decode(ServerPreferences.self, from: data)
             return prefs as! Entity
         } else if path == "notifications/policy" {
-            let policy = Models.NotificationsPolicy(forRequest: .init(accept: .anyone), forReminder: .init(accept: .anyone), forBot: .init(accept: .anyone), summary: .init(accept: .anyone))
+            // NotificationsPolicy has no custom public init; decode from a permissive JSON stub.
+            let policyStub = """
+            {"for_not_following":"accept","for_not_followers":"accept","for_new_accounts":"accept","for_private_mentions":"accept","for_limited_accounts":"accept","summary":{"pending_requests_count":0,"pending_notifications_count":0}}
+            """
+            let policyDecoder = JSONDecoder()
+            policyDecoder.keyDecodingStrategy = .convertFromSnakeCase
+            let policy = (try? policyDecoder.decode(NotificationsPolicy.self, from: Data(policyStub.utf8))) ?? NotificationsPolicy(forNotFollowing: .accept, forNotFollowers: .accept, forNewAccounts: .accept, forPrivateMentions: .accept, forLimitedAccounts: .accept, summary: .init(pendingRequestsCount: 0, pendingNotificationsCount: 0))
             return policy as! Entity
         } else if path == "filters" {
             let filters: [ServerFilter] = []

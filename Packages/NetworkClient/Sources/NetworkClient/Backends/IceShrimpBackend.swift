@@ -42,7 +42,10 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
                 overridingEndpoint = PleromaEndpoint(
                     internalPath: "pleroma/statuses/\(id)/quotes",
                     internalQueryItems: statusesEndpoint.queryItems(),
-                    internalJsonValue: statusesEndpoint.jsonValue
+                    // jsonValue is `Encodable?` on the Endpoint protocol; we need
+                    // `(any Encodable & Sendable)?` to satisfy PleromaEndpoint's stored
+                    // property type under Swift 6 strict concurrency.
+                    internalJsonValue: statusesEndpoint.jsonValue as? (any Encodable & Sendable)
                 )
             default:
                 break
