@@ -103,6 +103,10 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     return try await backend.patch(endpoint: endpoint, forceVersion: forceVersion)
   }
 
+  public func patch(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> HTTPURLResponse? {
+    return try await backend.patch(endpoint: endpoint, forceVersion: forceVersion)
+  }
+
   public func delete(endpoint: Endpoint, forceVersion: Version? = nil) async throws -> HTTPURLResponse? {
     return try await backend.delete(endpoint: endpoint, forceVersion: forceVersion)
   }
