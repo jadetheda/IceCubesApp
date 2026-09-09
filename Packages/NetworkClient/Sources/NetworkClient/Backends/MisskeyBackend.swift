@@ -627,7 +627,12 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path.hasSuffix("/favourite") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/favourite", with: "")
             params["noteId"] = id
-            params["reaction"] = "👍"
+            // Pick the reaction emoji to match the user's favourite-button style.
+            // theme.actionIsLike == true means the button shows a heart, so we send ❤️.
+            // Default (star) sends ⭐. We read directly from AppStorage rather than
+            // importing DesignSystem into the network layer.
+            let actionIsLike = UserDefaults.standard.bool(forKey: "actionIsLike")
+            params["reaction"] = actionIsLike ? "❤" : "⭐"
             let _ = try? await makeMisskeyRequest(path: "notes/reactions/create", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
             return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
