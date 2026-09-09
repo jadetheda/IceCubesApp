@@ -234,24 +234,29 @@ public final class MisskeyBackend: FediverseBackend {
 
         // --- Collections (Mastodon 4.6+) ---
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/collections") {
-            let resp = AccountCollectionsResponse(collections: [])
+            // AccountCollectionsResponse has no public memberwise init (Codable only).
+            let json = "{\"collections\":[]}"
+            let resp = try JSONDecoder().decode(AccountCollectionsResponse.self, from: Data(json.utf8))
             return resp as! Entity
 
         } else if path.hasPrefix("collections/") {
-            // AccountCollection has no public memberwise init; decode from a JSON stub.
-            let stub = """
+            // AccountCollection and AccountCollectionResponse have no public memberwise inits.
+            let collectionStub = """
             {"id":"1","accountId":"1","uri":"","url":null,"name":"Mock","description":"","language":null,"local":true,"sensitive":false,"discoverable":true,"tag":null,"createdAt":"2024-01-01T00:00:00.000Z","updatedAt":"2024-01-01T00:00:00.000Z","itemCount":0,"items":[]}
+            """
+            let responseStub = """
+            {"collection":\(collectionStub),"accounts":[]}
             """
             let dec = JSONDecoder()
             dec.dateDecodingStrategy = .iso8601
-            if let collection = try? dec.decode(AccountCollection.self, from: Data(stub.utf8)) {
-                let resp = AccountCollectionResponse(collection: collection, accounts: [])
+            if let resp = try? dec.decode(AccountCollectionResponse.self, from: Data(responseStub.utf8)) {
                 return resp as! Entity
             }
             throw FediverseClient.ClientError.unexpectedRequest
 
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/in_collections") {
-            let resp = AccountCollectionsResponse(collections: [])
+            let json = "{\"collections\":[]}"
+            let resp = try JSONDecoder().decode(AccountCollectionsResponse.self, from: Data(json.utf8))
             return resp as! Entity
 
         // --- Account lookup ---
