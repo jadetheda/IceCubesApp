@@ -298,13 +298,22 @@ struct AddAccountView: View {
 
   private func signIn() async {
     signInClient = .init(server: sanitizedName, serverSoftware: detectedSoftware)
-    if let oauthURL = try? await signInClient?.oauthURL(),
-      let url = try? await webAuthenticationSession.authenticate(
+    do {
+      guard let oauthURL = try? await signInClient?.oauthURL() else {
+        instanceFetchError = "account.add.error.instance-not-supported"
+        isSigninIn = false
+        return
+      }
+      let url = try await webAuthenticationSession.authenticate(
         using: oauthURL,
         callbackURLScheme: AppInfo.scheme.replacingOccurrences(of: "://", with: ""))
-    {
       await continueSignIn(url: url)
-    } else {
+    } catch {
+      // ASWebAuthenticationSession throws ASWebAuthenticationSessionError.canceledLogin
+      // when the user cancels, and other errors if the callback URL isn't intercepted.
+      if (error as NSError).code != 1 {  // 1 = user cancelled
+        instanceFetchError = "account.add.error.instance-not-supported"
+      }
       isSigninIn = false
     }
   }
@@ -316,7 +325,8 @@ struct AddAccountView: View {
     }
     do {
       let oauthToken = try await client.continueOauthFlow(url: url)
-      let client = FediverseClient(server: client.server, oauthToken: oauthToken)
+      let client = FediverseClient(server: client.server, oauthToken: oauthToken, serverSoftware: detectedSoftware)
+      let account: Account = try await client.get(endpoint: Accounts.verifyCredentials)
       let account: Account = try await client.get(endpoint: Accounts.verifyCredentials)
       Telemetry.signal("account.added")
       appAccountsManager.add(
