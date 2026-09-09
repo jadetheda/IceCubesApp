@@ -165,6 +165,11 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     try await makeEntityRequest(endpoint: endpoint, method: "PATCH", forceVersion: forceVersion)
   }
 
+  public func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
+    try await makeRequest(endpoint: endpoint, method: "PATCH", forceVersion: forceVersion)
+  }
+
+
   public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws
     -> Entity
   {

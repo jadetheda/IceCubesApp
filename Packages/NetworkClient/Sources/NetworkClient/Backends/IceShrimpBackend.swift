@@ -97,7 +97,5 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
         return try await super.post(endpoint: overridingEndpoint, forceVersion: forceVersion)
     }
 
-    public func mediaUpload(endpoint: Endpoint, version: FediverseClient.Version, method: String, mimeType: String, filename: String, data: Data) async throws -> HTTPURLResponse? { nil }
 
-    public func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? { nil }
 }
