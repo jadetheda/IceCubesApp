@@ -115,6 +115,8 @@ import SwiftUI
     
     @AppStorage("trending_algorithm") public var trendingAlgorithm: TrendingAlgorithm = .mastodon
     @AppStorage("trending_simple_score_search_limit") public var trendingSimpleScoreSearchLimit: Int = 40
+    @AppStorage("iceshrimp_trending_threshold") public var iceShrimpTrendingThreshold: Int = 10
+    @AppStorage("iceshrimp_trending_half_life") public var iceShrimpTrendingHalfLife: Double = 24.0
 
 
 
