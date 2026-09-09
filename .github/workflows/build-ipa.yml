@@ -36,7 +36,7 @@ jobs:
       - name: Package into IPA
         run: |
           mkdir -p Payload
-          cp -r build/IceCubesApp.xcarchive/Products/Applications/IceCubesApp.app Payload/
+          cp -r build/IceCubesApp.xcarchive/Products/Applications/*.app Payload/
           zip -qr IceCubesApp.ipa Payload
 
       - name: Upload IPA Artifact
