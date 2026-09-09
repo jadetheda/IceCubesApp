@@ -69,9 +69,6 @@ import SwiftUI
     var isShrimp = account.isIceShrimp == true
     
     do {
-      if account.server.contains("bsky.social") || account.server.contains("bsky.network") {
-         softwareName = "bluesky"
-      } else {
          let client = FediverseClient(server: account.server, oauthToken: account.oauthToken)
          if let instance: Models.Instance = try? await client.get(endpoint: Instances.instance, forceVersion: .v2) {
             let version = instance.version.lowercased()
@@ -96,7 +93,6 @@ import SwiftUI
               }
            }
          }
-      }
     } catch {
         return // Don't save if we just failed to fetch due to network
     }

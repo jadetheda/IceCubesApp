@@ -56,8 +56,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
         self.backend = IceShrimpBackend(server: server, version: version, oauthToken: oauthToken)
     case "misskey":
         self.backend = MisskeyBackend(server: server, version: version, oauthToken: oauthToken)
-    case "bluesky":
-        self.backend = BlueskyBackend(server: server, version: version, oauthToken: oauthToken)
+    
     case "peertube":
         self.backend = PeertubeBackend(server: server, version: version, oauthToken: oauthToken)
     default:
