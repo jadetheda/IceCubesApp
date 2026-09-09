@@ -7,6 +7,7 @@ public final class PeertubeBackend: FediverseBackend {
     public let oauthToken: OauthToken?
     
     public var isAuth: Bool { oauthToken != nil }
+    public var isIceShrimpWorkaroundsEnabled: Bool { false }
     public var capabilities: ServerCapabilities {
         ServerCapabilities(
             supportsAdvancedFilterContexts: false,

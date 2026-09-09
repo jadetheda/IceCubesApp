@@ -32,6 +32,7 @@ public protocol FediverseBackend: Sendable {
     var oauthToken: OauthToken? { get }
     var isAuth: Bool { get }
     var capabilities: ServerCapabilities { get }
+    var isIceShrimpWorkaroundsEnabled: Bool { get }
   func addConnections(_ connections: [String])
   func hasConnection(with url: URL) -> Bool
     

@@ -40,7 +40,7 @@ import SwiftUI
     self.isCompact = isCompact
     self.isInSettings = isInSettings
     self.showBadge = showBadge
-    client = .init(server: appAccount.server, oauthToken: appAccount.oauthToken, serverSoftware: appAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
+    client = .init(server: appAccount.server, oauthToken: appAccount.oauthToken, serverSoftware: appAccount.serverSoftware ?? (appAccount.isIceShrimp == true ? "iceshrimp" : "mastodon"))
   }
 
   func fetchAccount() async {

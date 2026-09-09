@@ -60,36 +60,50 @@ import SwiftUI
     } catch {}
   }
 
-  public func updateIceShrimpStatus(for account: AppAccount) async {
-    if let isShrimp = account.isIceShrimp {
+  public func updateServerSoftware(for account: AppAccount) async {
+    if account.serverSoftware != nil {
       return
     }
     
-    var isShrimp = false
+    var softwareName = "mastodon"
+    var isShrimp = account.isIceShrimp == true
+    
     do {
-      let client = FediverseClient(server: account.server, oauthToken: account.oauthToken)
-      if let instance: Models.Instance = try? await client.get(endpoint: Instances.instance, forceVersion: .v2) {
-         if instance.version.lowercased().contains("iceshrimp") {
-           isShrimp = true
+      if account.server.contains("bsky.social") || account.server.contains("bsky.network") {
+         softwareName = "bluesky"
+      } else {
+         let client = FediverseClient(server: account.server, oauthToken: account.oauthToken)
+         if let instance: Models.Instance = try? await client.get(endpoint: Instances.instance, forceVersion: .v2) {
+            let version = instance.version.lowercased()
+            if version.contains("iceshrimp") {
+              softwareName = "iceshrimp"
+              isShrimp = true
+            } else if version.contains("misskey") {
+              softwareName = "misskey"
+            } else if version.contains("peertube") {
+              softwareName = "peertube"
+            }
+         }
+         
+         if softwareName == "mastodon", let url = URL(string: "https://\(account.server)/nodeinfo/2.0") {
+           let (data, _) = try await URLSession.shared.data(from: url)
+           if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let software = json["software"] as? [String: Any],
+              let name = software["name"] as? String {
+              softwareName = name.lowercased()
+              if softwareName.contains("iceshrimp") {
+                 isShrimp = true
+              }
+           }
          }
       }
-      
-      if !isShrimp, let url = URL(string: "https://\(account.server)/nodeinfo/2.0") {
-        let (data, _) = try await URLSession.shared.data(from: url)
-        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-           let software = json["software"] as? [String: Any],
-           let name = software["name"] as? String {
-           if name.lowercased().contains("iceshrimp") {
-             isShrimp = true
-           }
-        }
-      }
-    } catch { 
-       return // Don't save false if we just failed to fetch due to network
+    } catch {
+        return // Don't save if we just failed to fetch due to network
     }
     
     if let index = availableAccounts.firstIndex(where: { $0.id == account.id }) {
       var updatedAccount = availableAccounts[index]
+      updatedAccount.serverSoftware = softwareName
       updatedAccount.isIceShrimp = isShrimp
       try? updatedAccount.save()
       availableAccounts[index] = updatedAccount
