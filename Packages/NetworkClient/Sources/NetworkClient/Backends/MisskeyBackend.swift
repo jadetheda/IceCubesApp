@@ -228,9 +228,17 @@ public final class MisskeyBackend: FediverseBackend {
 
         // --- Push subscriptions ---
         } else if path == "push/subscription" {
-            // Misskey has no push subscription API; stub so the app doesn't crash.
-            let sub = PushSubscription(id: 1, endpoint: URL(string: "https://example.com")!, serverKey: "", alerts: .init(follow: false, favourite: false, reblog: false, mention: false, poll: false, status: false))
-            return sub as! Entity
+            // Misskey has no push subscription API. PushSubscription is Decodable-only (no
+            // public memberwise init), so we decode from a minimal JSON stub.
+            let json = """
+            {"id":1,"endpoint":"https://example.com","server_key":"","alerts":{"follow":false,"favourite":false,"reblog":false,"mention":false,"poll":false,"status":false}}
+            """
+            let dec = JSONDecoder()
+            dec.keyDecodingStrategy = .convertFromSnakeCase
+            if let sub = try? dec.decode(PushSubscription.self, from: Data(json.utf8)) {
+                return sub as! Entity
+            }
+            throw FediverseClient.ClientError.unexpectedRequest
 
         // --- Collections (Mastodon 4.6+) ---
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/collections") {
@@ -351,7 +359,12 @@ public final class MisskeyBackend: FediverseBackend {
             return ([Status]() as! Entity)
 
         } else if path == "markers" {
-            return Marker(notifications: nil, home: nil) as! Entity
+            // Marker is Codable-only (no public memberwise init). Decode from a null stub.
+            let json = "{\"notifications\":null,\"home\":null}"
+            if let marker = try? JSONDecoder().decode(Marker.self, from: Data(json.utf8)) {
+                return marker as! Entity
+            }
+            return ([Models.Notification]() as! Entity)
 
         } else if path == "blocks" || path == "mutes" {
             return ([Account]() as! Entity)
