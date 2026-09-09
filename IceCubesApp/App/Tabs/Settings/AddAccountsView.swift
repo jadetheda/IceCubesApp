@@ -327,7 +327,6 @@ struct AddAccountView: View {
       let oauthToken = try await client.continueOauthFlow(url: url)
       let client = FediverseClient(server: client.server, oauthToken: oauthToken, serverSoftware: detectedSoftware)
       let account: Account = try await client.get(endpoint: Accounts.verifyCredentials)
-      let account: Account = try await client.get(endpoint: Accounts.verifyCredentials)
       Telemetry.signal("account.added")
       appAccountsManager.add(
         account: AppAccount(
