@@ -28,6 +28,7 @@ struct AddAccountView: View {
   @State private var signInClient: FediverseClient?
   @State private var instances: [InstanceSocial] = []
   @State private var instanceFetchError: LocalizedStringKey?
+  @State private var signInErrorMessage: String?
   @State private var instanceSocialClient = InstanceSocialClient()
   @State private var searchingTask = Task<Void, Never> {}
   @State private var getInstanceDetailTask = Task<Void, Never> {}
@@ -71,6 +72,11 @@ struct AddAccountView: View {
           }
         if let instanceFetchError {
           Text(instanceFetchError)
+        }
+        if let signInErrorMessage {
+          Text(signInErrorMessage)
+            .foregroundStyle(.red)
+            .font(.caption)
         }
         if instance != nil || !instanceName.isEmpty {
           signInSection
@@ -312,6 +318,7 @@ struct AddAccountView: View {
       // ASWebAuthenticationSession throws ASWebAuthenticationSessionError.canceledLogin
       // when the user cancels, and other errors if the callback URL isn't intercepted.
       if (error as NSError).code != 1 {  // 1 = user cancelled
+        signInErrorMessage = "Auth session error (\((error as NSError).code)): \(error.localizedDescription)"
         instanceFetchError = "account.add.error.instance-not-supported"
       }
       isSigninIn = false
@@ -341,6 +348,7 @@ struct AddAccountView: View {
       isSigninIn = false
       dismiss()
     } catch {
+      signInErrorMessage = "Sign-in error: \(error)"
       isSigninIn = false
     }
   }
