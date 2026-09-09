@@ -25,7 +25,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     var oauthApp: InstanceApp?
     var oauthToken: OauthToken?
     var connections: Set<String> = []
-    var isIceShrimpWorkaroundsEnabled: Bool = false
+    
     var isFetchingFilters: Bool = false
     var iceShrimpFiltersCache: [ServerFilter]? = nil
     var iceShrimpFiltersLastFetched: Date? = nil
@@ -36,8 +36,14 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   }
 
   public var isIceShrimpWorkaroundsEnabled: Bool {
-    get { critical.withLock { $0.isIceShrimpWorkaroundsEnabled } }
-    set { critical.withLock { $0.isIceShrimpWorkaroundsEnabled = newValue } }
+    get { 
+        if self is IceShrimpBackend {
+             let defaults = UserDefaults(suiteName: "group.com.thomasricouard.IceCubesApp") ?? UserDefaults.standard
+             return defaults.bool(forKey: "use_iceshrimp_workarounds")
+        }
+        return false
+    }
+    set { }
   }
   
   public var connections: Set<String> {
@@ -138,7 +144,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     logResponseOnError(httpResponse: httpResponse, data: data)
     logger.log(level: .info, "\(request)")
     var entity = try decoder.decode(Entity.self, from: data)
-    if critical.withLock({ $0.isIceShrimpWorkaroundsEnabled }) {
+    if self.isIceShrimpWorkaroundsEnabled {
        if let statuses = entity as? [Status] {
           entity = await applyIceShrimpFilters(statuses) as! Entity
        } else if let status = entity as? Status {
@@ -266,7 +272,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     logResponseOnError(httpResponse: httpResponse, data: data)
     do {
       var entity = try decoder.decode(Entity.self, from: data)
-      if critical.withLock({ $0.isIceShrimpWorkaroundsEnabled }) {
+      if self.isIceShrimpWorkaroundsEnabled {
          if let statuses = entity as? [Status] {
             entity = await applyIceShrimpFilters(statuses) as! Entity
          } else if let status = entity as? Status {
