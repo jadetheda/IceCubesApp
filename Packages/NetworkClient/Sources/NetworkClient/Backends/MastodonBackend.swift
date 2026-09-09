@@ -166,7 +166,10 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   }
 
   public func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
-    try await makeRequest(endpoint: endpoint, method: "PATCH", forceVersion: forceVersion)
+    let url = try makeURL(endpoint: endpoint, forceVersion: forceVersion)
+    let request = makeURLRequest(url: url, endpoint: endpoint, httpMethod: "PATCH")
+    let (_, httpResponse) = try await urlSession.data(for: request)
+    return httpResponse as? HTTPURLResponse
   }
 
 
