@@ -54,7 +54,12 @@ public final class MisskeyBackend: FediverseBackend {
 
         let permissions = "read:account,write:account,read:blocks,write:blocks,read:drive,write:drive,read:favorites,write:favorites,read:following,write:following,read:mutes,write:mutes,write:notes,read:notifications,write:notifications,read:reactions,write:reactions,write:votes"
         let appName = "IceCubesApp".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "IceCubesApp"
-        let callback = AppInfo.scheme.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? AppInfo.scheme
+
+        // Use a callback URL with a path so ASWebAuthenticationSession can intercept the
+        // redirect reliably. A bare scheme ("icecubesapp://") can be missed; adding a
+        // path segment ("icecubesapp://misskey-auth") makes the match unambiguous.
+        let callbackUrl = "icecubesapp://misskey-auth"
+        let callback = callbackUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? callbackUrl
 
         let urlString = "https://\(server)/miauth/\(sessionId)?name=\(appName)&callback=\(callback)&permission=\(permissions)"
         if let url = URL(string: urlString) {
@@ -73,14 +78,25 @@ public final class MisskeyBackend: FediverseBackend {
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
 
+        // MiAuth check returns {"ok": true, "token": "...", "user": {...}} on success,
+        // or {"ok": false} if the session hasn't been authorized yet.
         struct MiAuthResponse: Decodable {
-            let token: String
+            let ok: Bool
+            let token: String?
         }
 
-        let response = try JSONDecoder().decode(MiAuthResponse.self, from: data)
-        return OauthToken(accessToken: response.token, tokenType: "Bearer", scope: "", createdAt: Date().timeIntervalSince1970)
+        let miAuthResponse = try JSONDecoder().decode(MiAuthResponse.self, from: data)
+        guard miAuthResponse.ok, let token = miAuthResponse.token else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            print("[MisskeyBackend] MiAuth check failed — ok=\(miAuthResponse.ok) body=\(body) http=\((response as? HTTPURLResponse)?.statusCode ?? 0)")
+            throw FediverseClient.OauthError.missingApp
+        }
+
+        // Clear the session ID after a successful exchange so stale IDs don't interfere.
+        Self.currentSessionId = nil
+        return OauthToken(accessToken: token, tokenType: "Bearer", scope: "", createdAt: Date().timeIntervalSince1970)
     }
 
     // MARK: - Misskey request helper
