@@ -19,8 +19,12 @@ extension MisskeyNote {
         let noteUrl = self.url ?? self.uri ?? "https://misskey/\(self.id)"
 
         // Renote without text = boost (reblog). Renote with text = quote post.
+        // Misskey-compatible servers do not all agree on whether an empty
+        // renote text is encoded as null or an empty string.
         var reblog: ReblogStatus? = nil
-        if let renote = self.renote, self.text == nil {
+        if let renote = self.renote,
+           self.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
+        {
             let renoteUrl = renote.url ?? renote.uri ?? "https://misskey/\(renote.id)"
             let renoteCreatedAt = ISO8601DateFormatter().date(from: renote.createdAt) ?? Date()
             reblog = ReblogStatus(
