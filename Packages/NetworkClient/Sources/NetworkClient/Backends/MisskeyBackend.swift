@@ -478,14 +478,16 @@ public final class MisskeyBackend: FediverseBackend {
 
         } else if path == "bookmarks" {
             // Misskey uses i/favorites for bookmarked notes.
-            if let data = try? await makeMisskeyRequest(path: "i/favorites", params: params),
-               let favorites = try? JSONDecoder().decode([MisskeyFavorite].self, from: data) {
-                return favorites.map { $0.note.toStatus() } as! Entity
-            }
-            return ([Status]() as! Entity)
+            let data = try await makeMisskeyRequest(path: "i/favorites", params: params)
+            let favorites = try JSONDecoder().decode([MisskeyFavorite].self, from: data)
+            return favorites.map { $0.note.toStatus() } as! Entity
 
         } else if path == "favourites" {
-            return ([Status]() as! Entity)
+            // Misskey's likes endpoint returns the same note wrapper shape as
+            // i/favorites, but represents reactions rather than bookmarks.
+            let data = try await makeMisskeyRequest(path: "i/likes", params: params)
+            let likes = try JSONDecoder().decode([MisskeyFavorite].self, from: data)
+            return likes.map { $0.note.toStatus() } as! Entity
 
         } else if path == "markers" {
             // Marker is Codable-only (no public memberwise init). Decode from a null stub.
@@ -1007,15 +1009,25 @@ public final class MisskeyBackend: FediverseBackend {
         if path == "accounts/update_credentials" {
             // Proxy profile updates to Misskey's i/update endpoint.
             var misskeyParams: [String: Any] = [:]
-            if let name = params["display_name"] as? String { misskeyParams["name"] = name }
+            if let name = params["displayName"] as? String { misskeyParams["name"] = name }
             if let note = params["note"] as? String { misskeyParams["description"] = note }
-            if let locked = params["locked"] as? String { misskeyParams["isLocked"] = locked == "true" }
-            let _ = try? await makeMisskeyRequest(path: "i/update", params: misskeyParams)
-            // Return the updated account.
+            if let locked = params["locked"] as? Bool { misskeyParams["isLocked"] = locked }
+            if let fields = params["fieldsAttributes"] as? [String: Any] {
+                misskeyParams["fields"] = fields
+                    .keys
+                    .sorted { (Int($0) ?? 0) < (Int($1) ?? 0) }
+                    .compactMap { key -> [String: String]? in
+                        guard let field = fields[key] as? [String: Any] else { return nil }
+                        return [
+                            "name": field["name"] as? String ?? "",
+                            "value": field["value"] as? String ?? ""
+                        ]
+                    }
+            }
+            let _ = try await makeMisskeyRequest(path: "i/update", params: misskeyParams)
             let data = try await makeMisskeyRequest(path: "i", params: [:])
             let user = try JSONDecoder().decode(MisskeyUser.self, from: data)
             return user.toAccount() as! Entity
-
         } else if path == "notifications/policy" {
             guard let policy = stubNotificationsPolicy() else {
                 throw FediverseClient.ClientError.unexpectedRequest
@@ -1027,7 +1039,31 @@ public final class MisskeyBackend: FediverseBackend {
     }
 
     public func patch(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
-        nil
+        guard endpoint.path() == "accounts/update_credentials" else { return nil }
+
+        var params = extractParams(from: endpoint)
+        var misskeyParams: [String: Any] = [:]
+        if let name = params["displayName"] as? String { misskeyParams["name"] = name }
+        if let note = params["note"] as? String { misskeyParams["description"] = note }
+        if let locked = params["locked"] as? Bool { misskeyParams["isLocked"] = locked }
+        if let fields = params["fieldsAttributes"] as? [String: Any] {
+            misskeyParams["fields"] = fields
+                .keys
+                .sorted { (Int($0) ?? 0) < (Int($1) ?? 0) }
+                .compactMap { key -> [String: String]? in
+                    guard let field = fields[key] as? [String: Any] else { return nil }
+                    return [
+                        "name": field["name"] as? String ?? "",
+                        "value": field["value"] as? String ?? ""
+                    ]
+                }
+        }
+        _ = try await makeMisskeyRequest(path: "i/update", params: misskeyParams)
+        return HTTPURLResponse(
+            url: URL(string: "https://\(server)/api/i/update")!,
+            statusCode: 200,
+            httpVersion: nil,
+            headerFields: nil)
     }
 
     // MARK: - DELETE
