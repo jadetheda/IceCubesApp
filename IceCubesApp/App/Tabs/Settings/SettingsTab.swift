@@ -492,25 +492,25 @@ struct SettingsTabs: View {
     }
   }
 
-  struct AppExport: Codable, Sendable {
+  nonisolated struct AppExport: Codable, Sendable {
     let userDefaults: [String: AnyCodable]
     let tagGroups: [ExportedTagGroup]?
     let localTimelines: [ExportedLocalTimeline]?
   }
 
-  struct ExportedTagGroup: Codable, Sendable {
+  nonisolated struct ExportedTagGroup: Codable, Sendable {
     let title: String
     let symbolName: String
     let tags: [String]
     let creationDate: Date
   }
 
-  struct ExportedLocalTimeline: Codable, Sendable {
+  nonisolated struct ExportedLocalTimeline: Codable, Sendable {
     let instance: String
     let creationDate: Date
   }
 
-  enum AnyCodable: Codable, Sendable {
+  nonisolated enum AnyCodable: Codable, Sendable {
     case string(String)
     case integer(Int)
     case double(Double)
@@ -573,7 +573,7 @@ struct SettingsTabs: View {
     }
   }
 
-  struct IceCubesDocument: FileDocument, Sendable {
+  nonisolated struct IceCubesDocument: FileDocument, Sendable {
     static var readableContentTypes: [UTType] { [.json] }
     var export: AppExport
 

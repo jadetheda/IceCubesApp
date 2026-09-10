@@ -83,6 +83,15 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.useInstanceContentSettings) {
           Text("settings.content.use-instance-settings")
         }
+        .onChange(of: userPreferences.useInstanceContentSettings) { _, newVal in
+          if newVal {
+            userPreferences.appAutoExpandSpoilers = userPreferences.autoExpandSpoilers
+            userPreferences.appAutoExpandMedia = userPreferences.autoExpandMedia
+            userPreferences.appDefaultPostsSensitive = userPreferences.postIsSensitive
+            userPreferences.appDefaultPostVisibility = userPreferences.postVisibility
+            userPreferences.appRequireAltText = userPreferences.appRequireAltText
+          }
+        }
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
@@ -122,16 +131,6 @@ struct ContentSettingsView: View {
           .onAppear {
             userPreferences.trendingAlgorithm = .mastodon
           }
-      }
-
-      .onChange(of: userPreferences.useInstanceContentSettings) { _, newVal in
-        if newVal {
-          userPreferences.appAutoExpandSpoilers = userPreferences.autoExpandSpoilers
-          userPreferences.appAutoExpandMedia = userPreferences.autoExpandMedia
-          userPreferences.appDefaultPostsSensitive = userPreferences.postIsSensitive
-          userPreferences.appDefaultPostVisibility = userPreferences.postVisibility
-          userPreferences.appRequireAltText = userPreferences.appRequireAltText
-        }
       }
 
       Section {
