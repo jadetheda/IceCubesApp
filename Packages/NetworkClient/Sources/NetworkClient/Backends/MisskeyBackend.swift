@@ -607,8 +607,15 @@ public final class MisskeyBackend: FediverseBackend {
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
             return note.toStatus() as! Entity
 
-        } else if path == "markers" || (path.hasPrefix("conversations/") && path.hasSuffix("/read")) {
-            // Stub a minimal conversation — lastStatus defaults to nil.
+        } else if path == "markers" {
+            // Marker is Codable-only. Decode a null stub so the caller gets the right type.
+            let json = "{\"notifications\":null,\"home\":null}"
+            if let marker = try? JSONDecoder().decode(Marker.self, from: Data(json.utf8)) {
+                return marker as! Entity
+            }
+            throw FediverseClient.ClientError.unexpectedRequest
+
+        } else if path.hasPrefix("conversations/") && path.hasSuffix("/read") {
             return Conversation(id: "1", unread: false, lastStatus: nil, accounts: []) as! Entity
 
         } else if path.hasPrefix("polls/") && path.hasSuffix("/votes") {
@@ -673,10 +680,11 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path.hasSuffix("/reblog") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/reblog", with: "")
             params["renoteId"] = id
-            let data = try await makeMisskeyRequest(path: "notes/create", params: params)
-            if let response = try? JSONDecoder().decode(NoteCreateResponse.self, from: data) {
-                return response.createdNote.toStatus() as! Entity
-            }
+            let _ = try? await makeMisskeyRequest(path: "notes/create", params: params)
+            // Return the original note with reblogged=true so StatusDataController
+            // keeps the boost button highlighted after the action.
+            let originalData = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
+            return try JSONDecoder().decode(MisskeyNote.self, from: originalData).toStatus(reblogged: true) as! Entity
 
         } else if path.hasSuffix("/unreblog") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unreblog", with: "")

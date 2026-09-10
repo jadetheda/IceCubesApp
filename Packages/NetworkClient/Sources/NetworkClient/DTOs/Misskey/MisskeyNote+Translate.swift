@@ -4,7 +4,7 @@ import Models
 // MARK: - MisskeyNote → Status
 
 extension MisskeyNote {
-    public func toStatus() -> Status {
+    public func toStatus(reblogged: Bool = false) -> Status {
         let account = self.user.toAccount()
         let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
 
@@ -76,11 +76,7 @@ extension MisskeyNote {
             favouritesCount: favouritesCount,
             card: nil,
             favourited: favourited,
-            reblogged: false,
-            pinned: false,
-            bookmarked: false,
-            emojis: customEmojis,
-            url: noteUrl,
+            reblogged: reblogged,
             application: nil,
             inReplyToId: self.replyId,
             inReplyToAccountId: nil,
