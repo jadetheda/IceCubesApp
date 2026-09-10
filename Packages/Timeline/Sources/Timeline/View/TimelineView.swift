@@ -210,7 +210,12 @@ public struct TimelineView: View {
       if viewModel.client == nil {
         switch timeline {
         case .remoteLocal(let server, _):
-          viewModel.client = FediverseClient(server: server)
+          Task {
+            let software = await FediverseClient.detectServerSoftware(for: server)
+            viewModel.client = FediverseClient(server: server, serverSoftware: software)
+            viewModel.timeline = timeline
+          }
+          return
         default:
           viewModel.client = client
         }
@@ -253,7 +258,12 @@ public struct TimelineView: View {
       guard oldValue != newValue else { return }
       switch newValue {
       case .remoteLocal(let server, _):
-        viewModel.client = FediverseClient(server: server)
+        Task {
+          let software = await FediverseClient.detectServerSoftware(for: server)
+          viewModel.client = FediverseClient(server: server, serverSoftware: software)
+          viewModel.timeline = newValue
+        }
+        return
       default:
         switch oldValue {
         case .remoteLocal(let server, _):

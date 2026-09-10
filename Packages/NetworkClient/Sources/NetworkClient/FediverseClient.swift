@@ -65,6 +65,28 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     }
   }
 
+  public static func detectServerSoftware(for server: String) async -> String {
+    guard let url = URL(string: "https://\(server)/nodeinfo/2.0"),
+      let (data, _) = try? await URLSession.shared.data(from: url),
+      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let software = (json["software"] as? [String: Any])?["name"] as? String
+    else {
+      return "mastodon"
+    }
+
+    let name = software.lowercased()
+    if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
+      return "misskey"
+    }
+    if name.contains("iceshrimp") {
+      return "iceshrimp"
+    }
+    if name.contains("peertube") {
+      return "peertube"
+    }
+    return "mastodon"
+  }
+
   public func oauthURL() async throws -> URL {
     return try await backend.oauthURL()
   }
