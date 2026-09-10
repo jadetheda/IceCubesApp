@@ -811,12 +811,10 @@ public final class MisskeyBackend: FediverseBackend {
             return Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: true, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "", notifying: false) as! Entity
 
         } else if path.hasSuffix("/translate") && path.hasPrefix("statuses/") {
-            let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/translate", with: "")
-            params["noteId"] = id
-            if let lang = params["lang"] as? String { params["targetLang"] = lang }
-            // Misskey has no translation API; return a stub translation.
-            let translation = Translation(content: "", detectedSourceLanguage: "", provider: "")
-            return translation as! Entity
+            // Misskey has no Mastodon-compatible translation endpoint. Throw
+            // instead of returning an empty success response so StatusRowViewModel
+            // can continue to its DeepL or Apple Translation fallback.
+            throw FediverseClient.ClientError.unexpectedRequest
         }
 
         throw FediverseClient.ClientError.unexpectedRequest
