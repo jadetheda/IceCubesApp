@@ -22,6 +22,7 @@ struct StatusRowContextMenu: View {
   @Binding var showTextForSelection: Bool
   @Binding var isBlockConfirmationPresented: Bool
   @Binding var isShareAsImageSheetPresented: Bool
+  @State private var isRedraftConfirmationPresented = false
 
   var boostLabel: some View {
     if viewModel.status.visibility == .priv, viewModel.status.account.id == account.account?.id {
@@ -216,7 +217,7 @@ Button {
             viewModel.isPinned ? "status.action.unpin" : "status.action.pin",
             systemImage: viewModel.isPinned ? "pin.fill" : "pin")
         }
-        if currentInstance.isEditSupported {
+        if client.capabilities.supportsStatusEditing && currentInstance.isEditSupported {
           Button {
             #if targetEnvironment(macCatalyst) || os(visionOS)
               openWindow(
@@ -228,6 +229,12 @@ Button {
             #endif
           } label: {
             Label("status.action.edit", systemImage: "pencil")
+          }
+        } else if !client.capabilities.supportsStatusEditing {
+          Button {
+            isRedraftConfirmationPresented = true
+          } label: {
+            Label("Delete and redraft", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
           }
         }
         Button(
@@ -267,6 +274,24 @@ Button {
                           id: operationAccount.id, json: MuteData(duration: duration.rawValue)))
                     } catch {}
                   }
+                }
+                .confirmationDialog(
+                  "Delete and redraft this post?",
+                  isPresented: $isRedraftConfirmationPresented,
+                  titleVisibility: .visible
+                ) {
+                  Button("Delete and redraft", role: .destructive) {
+                    let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
+                    Task {
+                      do {
+                        try await viewModel.delete()
+                        viewModel.routerPath.presentedSheet = .prefilledStatusEditor(
+                          text: status.content.asRawText,
+                          visibility: status.visibility)
+                      } catch {}
+                    }
+                  }
+                  Button("Cancel", role: .cancel) {}
                 }
               }
             } label: {
