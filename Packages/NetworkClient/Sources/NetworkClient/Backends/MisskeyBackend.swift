@@ -32,7 +32,8 @@ public final class MisskeyBackend: FediverseBackend {
             supportsFollowRequests: true,
             supportsCustomEmojis: true,
             supportsAccountMetrics: false,
-            supportsStatusEditing: false
+            supportsStatusEditing: false,
+            supportsTrendingLinks: false
         )
     }
 

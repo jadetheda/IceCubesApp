@@ -12,6 +12,7 @@ public struct ServerCapabilities: Sendable {
     public var supportsFollowedTags: Bool = true
     public var supportsAccountMetrics: Bool = true
     public var supportsStatusEditing: Bool = true
+    public var supportsTrendingLinks: Bool = true
     
     public init(
         supportsAdvancedFilterContexts: Bool = true,
@@ -23,7 +24,8 @@ public struct ServerCapabilities: Sendable {
         supportsFollowNotifications: Bool = true,
         supportsFollowedTags: Bool = true,
         supportsAccountMetrics: Bool = true,
-        supportsStatusEditing: Bool = true
+        supportsStatusEditing: Bool = true,
+        supportsTrendingLinks: Bool = true
     ) {
         self.supportsAdvancedFilterContexts = supportsAdvancedFilterContexts
         self.supportsEndorsements = supportsEndorsements
@@ -35,6 +37,7 @@ public struct ServerCapabilities: Sendable {
         self.supportsFollowedTags = supportsFollowedTags
         self.supportsAccountMetrics = supportsAccountMetrics
         self.supportsStatusEditing = supportsStatusEditing
+        self.supportsTrendingLinks = supportsTrendingLinks
     }
 }
 

@@ -112,7 +112,9 @@ struct AppView: View {
               .tabPlacement(tab.tabPlacement)
             }
           } else {
-            ForEach(section.tabs) { tab in
+            ForEach(section.tabs.filter { tab in
+              tab != .links || appAccountsManager.currentClient.capabilities.supportsTrendingLinks
+            }) { tab in
               Tab(value: tab, role: tab == .explore ? .search : .none) {
                 makeTabContent(for: tab)
               } label: {
