@@ -10,6 +10,7 @@ public struct ServerCapabilities: Sendable {
     public var supportsCustomEmojis: Bool = true
     public var supportsFollowNotifications: Bool = true
     public var supportsFollowedTags: Bool = true
+    public var supportsAccountMetrics: Bool = true
     
     public init(
         supportsAdvancedFilterContexts: Bool = true,
@@ -19,7 +20,8 @@ public struct ServerCapabilities: Sendable {
         supportsFollowRequests: Bool = true,
         supportsCustomEmojis: Bool = true,
         supportsFollowNotifications: Bool = true,
-        supportsFollowedTags: Bool = true
+        supportsFollowedTags: Bool = true,
+        supportsAccountMetrics: Bool = true
     ) {
         self.supportsAdvancedFilterContexts = supportsAdvancedFilterContexts
         self.supportsEndorsements = supportsEndorsements
@@ -29,6 +31,7 @@ public struct ServerCapabilities: Sendable {
         self.supportsCustomEmojis = supportsCustomEmojis
         self.supportsFollowNotifications = supportsFollowNotifications
         self.supportsFollowedTags = supportsFollowedTags
+        self.supportsAccountMetrics = supportsAccountMetrics
     }
 }
 

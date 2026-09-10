@@ -152,10 +152,12 @@ private struct CurrentUserMenuItems: View {
     if account != nil {
       Divider()
 
-      Button {
-        routerPath.navigate(to: .metrics)
-      } label: {
-        Label("Metrics", systemImage: "chart.bar")
+      if client.capabilities.supportsAccountMetrics {
+        Button {
+          routerPath.navigate(to: .metrics)
+        } label: {
+          Label("Metrics", systemImage: "chart.bar")
+        }
       }
 
       Divider()

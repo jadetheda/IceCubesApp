@@ -30,7 +30,8 @@ public final class MisskeyBackend: FediverseBackend {
             supportsLocalTimeline: true,
             supportsPolls: true,
             supportsFollowRequests: true,
-            supportsCustomEmojis: true
+            supportsCustomEmojis: true,
+            supportsAccountMetrics: false
         )
     }
 
