@@ -420,6 +420,179 @@ struct SettingsTabs: View {
     }
   }
 
+  private var settingsBackupSection: some View {
+    Section {
+      Button("settings.export.title") {
+        prepareExport()
+      }
+      Button("settings.import.title") {
+        isImportingSettings = true
+      }
+    } header: {
+      Text("settings.experimental.header")
+    } footer: {
+      Text("Export preferences, tag groups, and remote timeline configurations to a JSON file.")
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
+  }
+
+  private func prepareExport() {
+    var values: [String: AnyCodable] = [:]
+    let defaults = UserDefaults.standard.dictionaryRepresentation()
+      .merging(UserPreferences.sharedDefault?.dictionaryRepresentation() ?? [:]) { first, _ in first }
+    for (key, value) in defaults {
+      guard !key.hasPrefix("Apple"), !key.hasPrefix("NS"), !key.hasPrefix("WebKit"),
+        !key.hasPrefix("UI"), !key.hasPrefix("Metal"), !key.hasPrefix("com.apple"),
+        let codableValue = AnyCodable.parse(value)
+      else { continue }
+      values[key] = codableValue
+    }
+    let tagGroups = try? context.fetch(FetchDescriptor<TagGroup>()).map {
+      ExportedTagGroup(title: $0.title, symbolName: $0.symbolName, tags: $0.tags, creationDate: $0.creationDate)
+    }
+    let localTimelines = try? context.fetch(FetchDescriptor<LocalTimeline>()).map {
+      ExportedLocalTimeline(instance: $0.instance, creationDate: $0.creationDate)
+    }
+    settingsDocument = IceCubesDocument(
+      export: AppExport(userDefaults: values, tagGroups: tagGroups, localTimelines: localTimelines))
+    isExportingSettings = true
+  }
+
+  private func applyExport(_ export: AppExport) {
+    for (key, value) in export.userDefaults {
+      UserDefaults.standard.set(value.value, forKey: key)
+      UserPreferences.sharedDefault?.set(value.value, forKey: key)
+    }
+    if let tagGroups = export.tagGroups {
+      for tagGroup in (try? context.fetch(FetchDescriptor<TagGroup>())) ?? [] {
+        context.delete(tagGroup)
+      }
+      for tagGroup in tagGroups {
+        let model = TagGroup(title: tagGroup.title, symbolName: tagGroup.symbolName, tags: tagGroup.tags)
+        model.creationDate = tagGroup.creationDate
+        context.insert(model)
+      }
+    }
+    if let localTimelines = export.localTimelines {
+      for timeline in (try? context.fetch(FetchDescriptor<LocalTimeline>())) ?? [] {
+        context.delete(timeline)
+      }
+      for timeline in localTimelines {
+        let model = LocalTimeline(instance: timeline.instance)
+        model.creationDate = timeline.creationDate
+        context.insert(model)
+      }
+    }
+    do {
+      try context.save()
+    } catch {
+      print("Settings import save failed: \(error.localizedDescription)")
+    }
+  }
+
+  struct AppExport: Codable, Sendable {
+    let userDefaults: [String: AnyCodable]
+    let tagGroups: [ExportedTagGroup]?
+    let localTimelines: [ExportedLocalTimeline]?
+  }
+
+  struct ExportedTagGroup: Codable, Sendable {
+    let title: String
+    let symbolName: String
+    let tags: [String]
+    let creationDate: Date
+  }
+
+  struct ExportedLocalTimeline: Codable, Sendable {
+    let instance: String
+    let creationDate: Date
+  }
+
+  enum AnyCodable: Codable, Sendable {
+    case string(String)
+    case integer(Int)
+    case double(Double)
+    case boolean(Bool)
+    case data(Data)
+    case date(Date)
+    case array([AnyCodable])
+    case dict([String: AnyCodable])
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.singleValueContainer()
+      if let value = try? container.decode(Bool.self) { self = .boolean(value) }
+      else if let value = try? container.decode(Int.self) { self = .integer(value) }
+      else if let value = try? container.decode(Double.self) { self = .double(value) }
+      else if let value = try? container.decode(String.self) { self = .string(value) }
+      else if let value = try? container.decode(Data.self) { self = .data(value) }
+      else if let value = try? container.decode(Date.self) { self = .date(value) }
+      else if let value = try? container.decode([AnyCodable].self) { self = .array(value) }
+      else if let value = try? container.decode([String: AnyCodable].self) { self = .dict(value) }
+      else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid settings value") }
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.singleValueContainer()
+      switch self {
+      case .string(let value): try container.encode(value)
+      case .integer(let value): try container.encode(value)
+      case .double(let value): try container.encode(value)
+      case .boolean(let value): try container.encode(value)
+      case .data(let value): try container.encode(value)
+      case .date(let value): try container.encode(value)
+      case .array(let value): try container.encode(value)
+      case .dict(let value): try container.encode(value)
+      }
+    }
+
+    var value: Any {
+      switch self {
+      case .string(let value): value
+      case .integer(let value): value
+      case .double(let value): value
+      case .boolean(let value): value
+      case .data(let value): value
+      case .date(let value): value
+      case .array(let value): value.map(\.value)
+      case .dict(let value): value.mapValues(\.value)
+      }
+    }
+
+    static func parse(_ value: Any) -> AnyCodable? {
+      if let value = value as? String { return .string(value) }
+      if let value = value as? Bool { return .boolean(value) }
+      if let value = value as? Int { return .integer(value) }
+      if let value = value as? Double { return .double(value) }
+      if let value = value as? Data { return .data(value) }
+      if let value = value as? Date { return .date(value) }
+      if let value = value as? [Any] { return .array(value.compactMap(parse)) }
+      if let value = value as? [String: Any] { return .dict(value.compactMapValues(parse)) }
+      return nil
+    }
+  }
+
+  struct IceCubesDocument: FileDocument, Sendable {
+    static var readableContentTypes: [UTType] { [.json] }
+    var export: AppExport
+
+    init(export: AppExport) {
+      self.export = export
+    }
+
+    init(configuration: ReadConfiguration) throws {
+      guard let data = configuration.file.regularFileContents else {
+        throw CocoaError(.fileReadCorruptFile)
+      }
+      export = try JSONDecoder().decode(AppExport.self, from: data)
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+      .init(regularFileWithContents: try JSONEncoder().encode(export))
+    }
+  }
+
   private var cacheSection: some View {
     Section {
       if cachedRemoved {
@@ -432,6 +605,7 @@ struct SettingsTabs: View {
             cachedRemoved = true
           }
 
+          #if false
           private var settingsBackupSection: some View {
             Section {
               Button("settings.export.title") {
@@ -518,7 +692,6 @@ struct SettingsTabs: View {
             }
           }
         }
-
         public struct AppExport: Codable, Sendable {
           public let userDefaults: [String: AnyCodable]
           public let tagGroups: [ExportedTagGroup]?
@@ -649,6 +822,7 @@ struct SettingsTabs: View {
             .init(regularFileWithContents: try JSONEncoder().encode(export))
           }
         }
+          #endif
       }
     } header: {
       Text("settings.section.cache")
