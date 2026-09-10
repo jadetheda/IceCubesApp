@@ -77,6 +77,10 @@ public final class MisskeyNote: Codable {
     public let isHidden: Bool?
 }
 
+public struct MisskeyNoteReaction: Codable {
+    public let user: MisskeyUser
+}
+
 // MARK: - MisskeyEmojiContainer
 // Misskey returns emojis in two incompatible shapes:
 //   - Old API: {"shortcode": "url", ...}  (a dictionary)

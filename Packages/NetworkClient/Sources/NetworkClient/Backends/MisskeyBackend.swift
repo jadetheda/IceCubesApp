@@ -586,10 +586,22 @@ public final class MisskeyBackend: FediverseBackend {
             return ([StatusHistory]() as! Entity)
 
         } else if path.hasSuffix("/favourited_by") && path.hasPrefix("statuses/") {
-            return ([Account]() as! Entity)
+            let id = path.replacingOccurrences(of: "statuses/", with: "")
+                .replacingOccurrences(of: "/favourited_by", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "notes/reactions",
+                params: ["noteId": id, "limit": 100])
+            let reactions = try JSONDecoder().decode([MisskeyNoteReaction].self, from: data)
+            return reactions.map { $0.user.toAccount() } as! Entity
 
         } else if path.hasSuffix("/reblogged_by") && path.hasPrefix("statuses/") {
-            return ([Account]() as! Entity)
+            let id = path.replacingOccurrences(of: "statuses/", with: "")
+                .replacingOccurrences(of: "/reblogged_by", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "notes/renotes",
+                params: ["noteId": id, "limit": 100])
+            let users = try JSONDecoder().decode([MisskeyUser].self, from: data)
+            return users.map { $0.toAccount() } as! Entity
 
         } else if path.hasSuffix("/quotes") && path.hasPrefix("statuses/") {
             return ([Status]() as! Entity)
