@@ -109,13 +109,15 @@ extension MisskeyNote {
     }
 
     // Converts plain Misskey text to basic HTML matching what Mastodon sends.
-    // Wraps linebreaks, linkifies URLs, and marks @mentions and #hashtags.
+    // Uses <br> for linebreaks. Does NOT wrap in <p> — the app's HTML renderer
+    // handles paragraph spacing and wrapping in <p> causes literal tag text.
     private func formatContent(_ text: String?) -> String {
         guard let text, !text.isEmpty else { return "" }
         var content = text
+        // Convert newlines to HTML line breaks.
         content = content.replacingOccurrences(of: "\n", with: "<br>")
-        // Very basic linkification — a proper MFM parser would go here.
-        let urlPattern = "(https?://[^\\s<]+)"
+        // Basic URL linkification.
+        let urlPattern = "(https?://[^\\s<>\"]+)"
         if let regex = try? NSRegularExpression(pattern: urlPattern) {
             content = regex.stringByReplacingMatches(
                 in: content,
@@ -123,7 +125,7 @@ extension MisskeyNote {
                 withTemplate: "<a href=\"$1\">$1</a>"
             )
         }
-        return "<p>\(content)</p>"
+        return content
     }
 }
 
@@ -187,9 +189,11 @@ extension MisskeyPoll {
 // MARK: - MisskeyUser → Account
 extension MisskeyUser {
     public func toAccount() -> Account {
-        let avatarURL = URL(string: self.avatarUrl ?? "") ?? URL(string: "https://placeholder")!
+        let avatarURL = URL(string: self.avatarUrl ?? "https://\(host ?? "example.com")/placeholder.png")
+            ?? URL(string: "https://example.com/placeholder.png")!
         let headerURL = URL(string: self.bannerUrl ?? "") ?? avatarURL
         let acct = self.host != nil ? "\(self.username)@\(self.host!)" : self.username
+        let profileURL = URL(string: "https://\(self.host ?? "misskey")/\(self.username)")
 
         // Account.Field is Codable-only; build JSON and decode.
         var accountFields: [Account.Field] = []
@@ -206,7 +210,6 @@ extension MisskeyUser {
             }
         }
 
-        // Emoji map can be either a dict or array depending on the server version.
         let emojiList = self.emojis?.emojis.map {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
@@ -227,7 +230,7 @@ extension MisskeyUser {
             fields: accountFields,
             locked: self.isLocked ?? false,
             emojis: emojiList,
-            url: URL(string: "https://misskey/\(acct)"),
+            url: profileURL,
             bot: self.isBot ?? false,
             discoverable: true
         )
