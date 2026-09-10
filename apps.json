@@ -1,0 +1,19 @@
+{
+  "name": "Ice Cubes: Community Edition",
+  "identifier": "com.jadetheda.icecubes.repo",
+  "apps": [
+    {
+      "name": "Ice Cubes",
+      "bundleIdentifier": "com.thomasricouard.IceCubesApp",
+      "developerName": "Jade",
+      "version": "2.1.4.8",
+      "versionDate": "2026-09-10T08:18:34Z",
+      "versionDescription": "This is gonna be the last release before the multi-spec-support branch takes over I think. When that happens, Misskey and other fediverse platforms will be usable with this app. This release uses more tried-and-tested code though.\r\n\r\n# v2.1.4.8 Release Notes\r\n\r\n## New Features\r\n\r\n- **Copy text from image**: Tap \"Copy text from image\" in the media description editor to automatically extract text from images using VisionKit OCR.\r\n- **Always Gallery Mode for Lists**: Toggle \"Always Gallery Mode\" in the List editor to persistently view that list in Gallery Mode.\r\n\r\n## Bug Fixes\r\n\r\n- I think we fixed the bug where scroll position wasn't retained when opening updated timelines and switching to the ol' GM.\r\n- Gallery Mode now correctly applies the \"Hide Seen Posts\" filter instead of bypassing it with legacy code.\r\n- Long-pressing gallery thumbnails no longer visually selects the entire grid.\r\n- Gallery Mode applies to all profile tabs again.\r\n- Tag groups that vanished from your saved timeline filters are now recovered from AppStorage if SwiftData loses them.\r\n- The warning for hidden posts now correctly displays across a single line.\r\n- Tapping tags on IceShrimp servers now loads a search view instead of hitting their broken tag API endpoint.\r\n- \"Open in Browser\" in posts and profiles now respects your `preferredBrowser` setting, instead of forcing Safari.\r\n\r\n## Known Issues\r\n\r\n- Gallery Mode layout bugs may still occur in edge cases.\r\n- Remote Media Fallbacks are still broken, so videos aren't loading under IceShrimp.Net still.\r\n- The **Inter (Bluesky)** font file is broken in this build. Easy fix, just download the file yourself and select it with the font picker.\r\n\r\nsorry this post kinda sucks, im tired.",
+      "downloadURL": "https://github.com/jadetheda/IceCubesApp/releases/download/v2.1.4.8/IceCubesApp-Unsigned.ipa",
+      "localizedDescription": "IceCubesApp is an open-source application for accessing the decentralized social network Mastodon! It's built entirely in SwiftUI, making it fast, lightweight, and easy to use.\n\nCommunity Edition takes this app to the next-level, implementing feature requests & bug fixes as suggested by the community.",
+      "iconURL": "https://raw.githubusercontent.com/jadetheda/IceCubesApp/main/IceCubesApp/Assets.xcassets/Icon.appiconset/AppIcon.png",
+      "tintColor": "FF0000",
+      "size": 115370023
+    }
+  ]
+}
