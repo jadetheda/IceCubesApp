@@ -1,7 +1,6 @@
 import DesignSystem
 import Env
 import Models
-import NetworkClient
 import SwiftUI
 
 @MainActor
@@ -10,7 +9,6 @@ struct StatusRowTranslateView: View {
   @Environment(\.isCompact) private var isCompact: Bool
 
   @Environment(UserPreferences.self) private var preferences
-  @Environment(FediverseClient.self) private var client
 
   var viewModel: StatusRowViewModel
 
