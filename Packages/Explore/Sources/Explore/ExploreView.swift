@@ -140,7 +140,7 @@ public struct ExploreView: View {
           if !trendingStatuses.isEmpty {
             TrendingPostsSection(trendingStatuses: trendingStatuses)
           }
-          if !trendingLinks.isEmpty {
+          if client.capabilities.supportsTrendingLinks, !trendingLinks.isEmpty {
             TrendingLinksSection(trendingLinks: trendingLinks)
           }
         }
@@ -362,6 +362,7 @@ extension ExploreView {
 
   /// Fetches trending links with a safe fallback on network or API failure (e.g. on Iceshrimp.NET instances where trends endpoints are not implemented)
   private func fetchTrendingLinksSafe() async -> [Card] {
+    guard client.capabilities.supportsTrendingLinks else { return [] }
     do {
       return try await client.get(endpoint: Trends.links(offset: nil))
     } catch {

@@ -282,6 +282,9 @@ public final class MisskeyBackend: FediverseBackend {
             // Sending it to notes/global-timeline makes some Misskey servers
             // reject the federated request instead of returning notes.
             params.removeValue(forKey: "local")
+            params["withFiles"] = true
+            params["withRenotes"] = true
+            params["withReplies"] = false
             let data = try await makeMisskeyRequest(path: apiPath, params: params)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return notes.map { $0.toStatus() } as! Entity

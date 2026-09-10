@@ -1,11 +1,13 @@
 import DesignSystem
 import Env
 import Models
+import NetworkClient
 import SwiftUI
 
 struct QuickAccessView: View {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
+  @Environment(FediverseClient.self) private var client
 
   let trendingLinks: [Card]
   let suggestedAccounts: [Account]
@@ -14,10 +16,12 @@ struct QuickAccessView: View {
   var body: some View {
     ScrollView(.horizontal) {
       HStack {
-        Button("explore.section.trending.links") {
-          routerPath.navigate(to: RouterDestination.trendingLinks(cards: trendingLinks))
+        if client.capabilities.supportsTrendingLinks {
+          Button("explore.section.trending.links") {
+            routerPath.navigate(to: RouterDestination.trendingLinks(cards: trendingLinks))
+          }
+          .buttonStyle(.bordered)
         }
-        .buttonStyle(.bordered)
         Button("explore.section.trending.posts") {
           routerPath.navigate(to: RouterDestination.trendingTimeline)
         }
