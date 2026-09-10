@@ -508,7 +508,9 @@ public final class MisskeyBackend: FediverseBackend {
             return ([ServerFilter]() as! Entity)
 
         } else if path == "suggestions" {
-            return ([Account]() as! Entity)
+            let data = try await makeMisskeyRequest(path: "users/recommendation", params: [:])
+            let users = try JSONDecoder().decode([MisskeyUser].self, from: data)
+            return users.map { $0.toAccount() } as! Entity
 
         } else if path == "conversations" {
             return ([Conversation]() as! Entity)
@@ -581,7 +583,11 @@ public final class MisskeyBackend: FediverseBackend {
                 }
                 return ([Status]() as! Entity)
             } else if path == "trends/tags" {
-                return ([Tag]() as! Entity)
+                let data = try await makeMisskeyRequest(path: "hashtags/trend", params: [:])
+                let hashtags = try JSONDecoder().decode([MisskeyTrendingHashtag].self, from: data)
+                return hashtags.map {
+                    Tag(name: $0.tag, url: "\(server)/tags/\($0.tag)")
+                } as! Entity
             } else if path == "trends/links" {
                 return ([Card]() as! Entity)
             }

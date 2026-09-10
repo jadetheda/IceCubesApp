@@ -81,6 +81,10 @@ public struct MisskeyNoteReaction: Codable {
     public let user: MisskeyUser
 }
 
+public struct MisskeyTrendingHashtag: Codable {
+    public let tag: String
+}
+
 // MARK: - MisskeyEmojiContainer
 // Misskey returns emojis in two incompatible shapes:
 //   - Old API: {"shortcode": "url", ...}  (a dictionary)

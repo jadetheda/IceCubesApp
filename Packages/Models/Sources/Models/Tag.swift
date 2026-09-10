@@ -18,6 +18,13 @@ public struct Tag: Codable, Identifiable, Equatable, Hashable {
   public let following: Bool
   public let history: [History]
 
+  public init(name: String, url: String, following: Bool = false, history: [History] = []) {
+    self.name = name
+    self.url = url
+    self.following = following
+    self.history = history
+  }
+
   public var totalUses: Int {
     return history.compactMap { Int($0.uses) }.reduce(0, +)
   }
