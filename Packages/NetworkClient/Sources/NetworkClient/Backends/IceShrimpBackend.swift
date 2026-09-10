@@ -29,7 +29,10 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
             supportsLocalTimeline: true,
             supportsPolls: true,
             supportsFollowRequests: true,
-            supportsCustomEmojis: true
+            supportsCustomEmojis: true,
+            supportsFollowNotifications: false,
+            supportsStatusTranslation: false,
+            supportsFollowedTags: false
         )
     }
 

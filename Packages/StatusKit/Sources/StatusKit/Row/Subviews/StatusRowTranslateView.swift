@@ -1,6 +1,7 @@
 import DesignSystem
 import Env
 import Models
+import NetworkClient
 import SwiftUI
 
 @MainActor
@@ -9,6 +10,7 @@ struct StatusRowTranslateView: View {
   @Environment(\.isCompact) private var isCompact: Bool
 
   @Environment(UserPreferences.self) private var preferences
+  @Environment(FediverseClient.self) private var client
 
   var viewModel: StatusRowViewModel
 
@@ -17,6 +19,7 @@ struct StatusRowTranslateView: View {
 
     if let userLang = preferences.serverPreferences?.postLanguage,
       preferences.showTranslateButton,
+      client.capabilities.supportsStatusTranslation,
       !viewModel.finalStatus.content.asRawText.isEmpty,
       viewModel.translation == nil
     {

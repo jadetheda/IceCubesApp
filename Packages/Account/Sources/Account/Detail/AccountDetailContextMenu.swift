@@ -110,7 +110,7 @@ public struct AccountDetailContextMenu: View {
           if let relationshipValue = relationship,
             relationshipValue.following
           {
-            if !client.isIceShrimpWorkaroundsEnabled {
+            if client.capabilities.supportsFollowNotifications {
               if relationshipValue.notifying {
                 Button {
                   Task {
@@ -142,7 +142,7 @@ public struct AccountDetailContextMenu: View {
               }
             }
 
-            if !client.isIceShrimpWorkaroundsEnabled {
+            if client.capabilities.supportsFollowNotifications {
               if relationshipValue.showingReblogs {
                 Button {
                   Task {

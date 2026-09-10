@@ -8,6 +8,9 @@ public struct ServerCapabilities: Sendable {
     public var supportsPolls: Bool = true
     public var supportsFollowRequests: Bool = true
     public var supportsCustomEmojis: Bool = true
+    public var supportsFollowNotifications: Bool = true
+    public var supportsStatusTranslation: Bool = true
+    public var supportsFollowedTags: Bool = true
     
     public init(
         supportsAdvancedFilterContexts: Bool = true,
@@ -15,7 +18,10 @@ public struct ServerCapabilities: Sendable {
         supportsLocalTimeline: Bool = true,
         supportsPolls: Bool = true,
         supportsFollowRequests: Bool = true,
-        supportsCustomEmojis: Bool = true
+        supportsCustomEmojis: Bool = true,
+        supportsFollowNotifications: Bool = true,
+        supportsStatusTranslation: Bool = true,
+        supportsFollowedTags: Bool = true
     ) {
         self.supportsAdvancedFilterContexts = supportsAdvancedFilterContexts
         self.supportsEndorsements = supportsEndorsements
@@ -23,6 +29,9 @@ public struct ServerCapabilities: Sendable {
         self.supportsPolls = supportsPolls
         self.supportsFollowRequests = supportsFollowRequests
         self.supportsCustomEmojis = supportsCustomEmojis
+        self.supportsFollowNotifications = supportsFollowNotifications
+        self.supportsStatusTranslation = supportsStatusTranslation
+        self.supportsFollowedTags = supportsFollowedTags
     }
 }
 

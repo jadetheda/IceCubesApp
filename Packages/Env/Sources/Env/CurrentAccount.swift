@@ -81,6 +81,10 @@ import Observation
 
   public func fetchFollowedTags() async {
     guard let client, client.isAuth else { return }
+    guard client.capabilities.supportsFollowedTags else {
+      tags = []
+      return
+    }
     do {
       tags = try await client.get(endpoint: Accounts.followedTags)
     } catch {

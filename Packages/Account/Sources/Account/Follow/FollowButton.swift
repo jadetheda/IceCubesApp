@@ -132,7 +132,7 @@ public struct FollowButton: View {
             viewModel.shouldDisplayNotify
           {
             HStack {
-              if !client.isIceShrimpWorkaroundsEnabled {
+              if client.capabilities.supportsFollowNotifications {
                 AsyncButton {
                   try await viewModel.toggleNotify()
                 } label: {
@@ -145,7 +145,7 @@ public struct FollowButton: View {
                 )
                 .glassEffect(.regular.interactive())
               }
-              if !client.isIceShrimpWorkaroundsEnabled {
+              if client.capabilities.supportsFollowNotifications {
                 AsyncButton {
                   try await viewModel.toggleReboosts()
                 } label: {
@@ -193,7 +193,7 @@ public struct FollowButton: View {
           viewModel.shouldDisplayNotify
         {
           HStack {
-            if !client.isIceShrimpWorkaroundsEnabled {
+            if client.capabilities.supportsFollowNotifications {
               AsyncButton {
                 try await viewModel.toggleNotify()
               } label: {
@@ -204,7 +204,7 @@ public struct FollowButton: View {
                 viewModel.relationship.notifying
                   ? "accessibility.general.toggle.on" : "accessibility.general.toggle.off")
             }
-            if !client.isIceShrimpWorkaroundsEnabled {
+            if client.capabilities.supportsFollowNotifications {
               AsyncButton {
                 try await viewModel.toggleReboosts()
               } label: {
