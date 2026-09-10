@@ -8,6 +8,20 @@ import os
 
 @Observable
 public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable {
+  private actor ServerSoftwareCache {
+    private var values: [String: String] = [:]
+
+    func value(for server: String) -> String? {
+      values[server]
+    }
+
+    func set(_ software: String, for server: String) {
+      values[server] = software
+    }
+  }
+
+  private static let serverSoftwareCache = ServerSoftwareCache()
+
   public static func == (lhs: FediverseClient, rhs: FediverseClient) -> Bool {
     return lhs.id == rhs.id
   }
@@ -66,24 +80,34 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   }
 
   public static func detectServerSoftware(for server: String) async -> String {
+    let cacheKey = server.lowercased()
+    if let cached = await serverSoftwareCache.value(for: cacheKey) {
+      return cached
+    }
+
     guard let url = URL(string: "https://\(server)/nodeinfo/2.0"),
       let (data, _) = try? await URLSession.shared.data(from: url),
       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
       let software = (json["software"] as? [String: Any])?["name"] as? String
     else {
+      await serverSoftwareCache.set("mastodon", for: cacheKey)
       return "mastodon"
     }
 
     let name = software.lowercased()
     if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
+      await serverSoftwareCache.set("misskey", for: cacheKey)
       return "misskey"
     }
     if name.contains("iceshrimp") {
+      await serverSoftwareCache.set("iceshrimp", for: cacheKey)
       return "iceshrimp"
     }
     if name.contains("peertube") {
+      await serverSoftwareCache.set("peertube", for: cacheKey)
       return "peertube"
     }
+    await serverSoftwareCache.set("mastodon", for: cacheKey)
     return "mastodon"
   }
 
