@@ -259,6 +259,10 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path == "timelines/public" {
             let isLocal = (params["local"] as? String) == "true"
             let apiPath = isLocal ? "notes/local-timeline" : "notes/global-timeline"
+            // `local` is a Mastodon routing flag, not a Misskey API parameter.
+            // Sending it to notes/global-timeline makes some Misskey servers
+            // reject the federated request instead of returning notes.
+            params.removeValue(forKey: "local")
             let data = try await makeMisskeyRequest(path: apiPath, params: params)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return notes.map { $0.toStatus() } as! Entity
