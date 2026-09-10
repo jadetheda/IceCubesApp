@@ -465,6 +465,21 @@ extension TimelineFilter {
     limit: Int?
   ) async throws -> [Status] {
 
+    if case let .hashtag(tag, accountId) = self,
+      accountId == nil,
+      client.isIceShrimpWorkaroundsEnabled
+    {
+      let results: SearchResults = try await client.get(
+        endpoint: Search.search(
+          query: "#\(tag)",
+          type: .statuses,
+          offset: offset,
+          following: nil
+        )
+      )
+      return results.statuses
+    }
+
     if self == .trending, client.isIceShrimpWorkaroundsEnabled,
       UserPreferences.shared.trendingAlgorithm == .simpleScore {
       var statuses: [Status] = []
