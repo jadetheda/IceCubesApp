@@ -694,6 +694,10 @@ import SwiftUI
     case decayingScore
     
     public var id: String { rawValue }
+
+    public static var localCases: [Self] {
+      [.mastodon, .simpleScore, .decayingScore]
+    }
     
     public var description: String {
       switch self {

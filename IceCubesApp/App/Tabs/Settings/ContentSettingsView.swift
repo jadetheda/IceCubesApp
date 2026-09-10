@@ -12,6 +12,7 @@ import UserNotifications
 struct ContentSettingsView: View {
   @Environment(UserPreferences.self) private var userPreferences
   @Environment(Theme.self) private var theme
+  @Environment(FediverseClient.self) private var client
 
   @State private var contentFilter = TimelineContentFilter.shared
 
@@ -87,9 +88,10 @@ struct ContentSettingsView: View {
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
 
-      Section {
+      if client.isIceShrimpWorkaroundsEnabled {
+        Section {
           Picker("Algorithm", selection: $userPreferences.trendingAlgorithm) {
-            ForEach(UserPreferences.TrendingAlgorithm.allCases) { algorithm in
+            ForEach(UserPreferences.TrendingAlgorithm.localCases) { algorithm in
               Text(algorithm.description).tag(algorithm)
             }
           }
@@ -106,14 +108,21 @@ struct ContentSettingsView: View {
               }
             }
           }
-      } header: {
-        Text("settings.content.iceshrimp.header")
-      } footer: {
-        Text("settings.content.iceshrimp.footer")
+        } header: {
+          Text("settings.content.iceshrimp.header")
+        } footer: {
+          Text("settings.content.iceshrimp.footer")
+        }
+        #if !os(visionOS)
+          .listRowBackground(theme.primaryBackgroundColor)
+        #endif
+      } else if userPreferences.trendingAlgorithm != .mastodon {
+        Color.clear
+          .frame(height: 0)
+          .onAppear {
+            userPreferences.trendingAlgorithm = .mastodon
+          }
       }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
 
       .onChange(of: userPreferences.useInstanceContentSettings) { _, newVal in
         if newVal {

@@ -272,7 +272,7 @@ extension ExploreView {
     let algorithm =
       usesIceShrimpFallback && preferences.trendingAlgorithm == .mastodon
         ? .decayingScore
-        : preferences.trendingAlgorithm
+        : (usesIceShrimpFallback ? preferences.trendingAlgorithm : .mastodon)
 
     if algorithm == .simpleScore {
       var statuses: [Status] = []
