@@ -218,6 +218,7 @@ extension MisskeyUser {
                let decoded = try? JSONDecoder().decode([Account.Field].self, from: data) {
                 accountFields = decoded
             }
+
         }
 
         let emojiList = self.emojis?.emojis.map {
@@ -342,6 +343,44 @@ extension MisskeyNotification {
             account: user.toAccount(),
             status: self.note?.toStatus(),
             groupKey: nil
+        )
+    }
+}
+
+extension MisskeyMessagingMessage {
+    func toStatus() -> Status {
+        Status(
+            id: id,
+            content: HTMLString(stringValue: text ?? ""),
+            account: user.toAccount(),
+            createdAt: ServerDate(date: ISO8601DateFormatter().date(from: createdAt) ?? Date()),
+            editedAt: nil,
+            reblog: nil,
+            mediaAttachments: [],
+            mentions: [],
+            repliesCount: 0,
+            reblogsCount: 0,
+            favouritesCount: 0,
+            card: nil,
+            favourited: false,
+            reblogged: false,
+            pinned: false,
+            bookmarked: false,
+            emojis: [],
+            url: nil,
+            application: nil,
+            inReplyToId: nil,
+            inReplyToAccountId: nil,
+            visibility: .direct,
+            poll: nil,
+            spoilerText: HTMLString(stringValue: ""),
+            filtered: [],
+            sensitive: false,
+            language: nil,
+            tags: [],
+            quote: nil,
+            quotesCount: nil,
+            quoteApproval: nil
         )
     }
 }

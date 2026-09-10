@@ -33,7 +33,8 @@ public final class MisskeyBackend: FediverseBackend {
             supportsCustomEmojis: true,
             supportsAccountMetrics: false,
             supportsStatusEditing: false,
-            supportsTrendingLinks: false
+            supportsTrendingLinks: false,
+            supportsNativeMessaging: true
         )
     }
 
@@ -133,14 +134,24 @@ public final class MisskeyBackend: FediverseBackend {
             bodyParams["i"] = token
         }
 
-        request.httpBody = try? JSONSerialization.data(withJSONObject: bodyParams)
+        request.httpBody = try JSONSerialization.data(withJSONObject: bodyParams)
         let (data, response) = try await URLSession.shared.data(for: request)
 
         if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
-            print("[MisskeyBackend] API error \(httpResponse.statusCode): \(String(data: data, encoding: .utf8) ?? "")")
+            let apiError = try? JSONDecoder().decode(MisskeyAPIError.self, from: data)
+            let fallback = String(data: data, encoding: .utf8) ?? "HTTP \(httpResponse.statusCode)"
+            throw FediverseClient.ClientError.serverError(
+                statusCode: httpResponse.statusCode,
+                code: apiError?.code,
+                message: apiError?.message ?? fallback)
         }
 
         return data
+    }
+
+    private struct MisskeyAPIError: Decodable {
+        let message: String?
+        let code: String?
     }
 
     // MARK: - Param extraction
@@ -243,6 +254,13 @@ public final class MisskeyBackend: FediverseBackend {
             muting: false, mutingNotifications: false, requested: false,
             domainBlocking: false, endorsed: false, note: "", notifying: false
         )
+    }
+
+    private func currentUserId() async -> String {
+        guard let data = try? await makeMisskeyRequest(path: "i", params: [:]),
+              let user = try? JSONDecoder().decode(MisskeyUser.self, from: data)
+        else { return "" }
+        return user.id
     }
 
     // MARK: - GET
@@ -514,7 +532,40 @@ public final class MisskeyBackend: FediverseBackend {
             return users.map { $0.toAccount() } as! Entity
 
         } else if path == "conversations" {
-            return ([Conversation]() as! Entity)
+            let data = try await makeMisskeyRequest(path: "messaging/history", params: ["limit": 100])
+            let messages = try JSONDecoder().decode([MisskeyMessagingMessage].self, from: data)
+            let currentUserID = await currentUserId()
+            var latestByUser: [String: MisskeyMessagingMessage] = [:]
+            for message in messages {
+                let other = message.userId == currentUserID
+                    ? (message.recipient ?? message.user)
+                    : message.user
+                if latestByUser[other.id] == nil {
+                    latestByUser[other.id] = message
+                }
+            }
+            let conversations = latestByUser.values.map { message in
+                let other = message.userId == currentUserID
+                    ? (message.recipient ?? message.user)
+                    : message.user
+                return Conversation(
+                    id: other.id,
+                    unread: message.isRead == false,
+                    lastStatus: message.toStatus(),
+                    accounts: [other.toAccount()]
+                )
+            }
+            return conversations as! Entity
+
+        } else if path.hasPrefix("conversations/") && path.hasSuffix("/messages") {
+            let userId = path
+                .replacingOccurrences(of: "conversations/", with: "")
+                .replacingOccurrences(of: "/messages", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "messaging/messages",
+                params: ["userId": userId, "limit": 100, "markAsRead": true])
+            let messages = try JSONDecoder().decode([MisskeyMessagingMessage].self, from: data)
+            return messages.reversed().map { $0.toStatus() } as! Entity
 
         } else if path == "lists" {
             let data = try await makeMisskeyRequest(path: "users/lists/list", params: [:])
@@ -701,8 +752,32 @@ public final class MisskeyBackend: FediverseBackend {
             }
             throw FediverseClient.ClientError.unexpectedRequest
 
+        } else if path == "conversations/send" {
+            let data = try await makeMisskeyRequest(
+                path: "messaging/messages/create",
+                params: params)
+            let message = try JSONDecoder().decode(MisskeyMessagingMessage.self, from: data)
+            return message.toStatus() as! Entity
+
         } else if path.hasPrefix("conversations/") && path.hasSuffix("/read") {
-            return Conversation(id: "1", unread: false, lastStatus: nil, accounts: []) as! Entity
+            let id = path
+                .replacingOccurrences(of: "conversations/", with: "")
+                .replacingOccurrences(of: "/read", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "messaging/messages",
+                params: ["userId": id, "limit": 1])
+            let message = try JSONDecoder().decode([MisskeyMessagingMessage].self, from: data).first
+            if let message {
+                _ = try await makeMisskeyRequest(
+                    path: "messaging/messages/read",
+                    params: ["messageId": message.id])
+            }
+            return Conversation(
+                id: id,
+                unread: false,
+                lastStatus: message?.toStatus(),
+                accounts: message.map { [$0.user.toAccount()] } ?? []
+            ) as! Entity
 
         } else if path.hasPrefix("polls/") && path.hasSuffix("/votes") {
             let id = path.replacingOccurrences(of: "polls/", with: "").replacingOccurrences(of: "/votes", with: "")
@@ -874,7 +949,7 @@ public final class MisskeyBackend: FediverseBackend {
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
         } else if path.hasPrefix("conversations/") {
-            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+            throw FediverseClient.ClientError.unexpectedRequest
 
         } else if path.hasPrefix("lists/") && path.hasSuffix("/accounts") {
             let listId = path
@@ -963,6 +1038,19 @@ public final class MisskeyBackend: FediverseBackend {
             let _ = try? await makeMisskeyRequest(path: "notes/delete", params: ["noteId": id])
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
+        } else if path.hasPrefix("conversations/") {
+            let userId = path.replacingOccurrences(of: "conversations/", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "messaging/messages",
+                params: ["userId": userId, "limit": 1])
+            let message = try JSONDecoder().decode([MisskeyMessagingMessage].self, from: data).first
+            if let message {
+                _ = try await makeMisskeyRequest(
+                    path: "messaging/messages/delete",
+                    params: ["messageId": message.id])
+            }
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
         } else if path.hasPrefix("accounts/") && path.hasSuffix("/unblock") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/unblock", with: "")
             params["userId"] = id
@@ -978,6 +1066,7 @@ public final class MisskeyBackend: FediverseBackend {
                     path: "users/lists/pull",
                     params: ["listId": listId, "userId": accountId])
             }
+
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
         } else if path.hasPrefix("lists/") {

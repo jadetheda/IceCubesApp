@@ -18,6 +18,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     func set(_ software: String, for server: String) {
       values[server] = software
     }
+
   }
 
   private static let serverSoftwareCache = ServerSoftwareCache()
@@ -32,6 +33,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
 
   public enum ClientError: Error {
     case unexpectedRequest
+    case serverError(statusCode: Int, code: String?, message: String)
   }
 
   public enum OauthError: Error {
@@ -183,5 +185,20 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     data: Data
   ) async throws -> Entity {
     return try await backend.mediaUpload(endpoint: endpoint, version: version, method: method, mimeType: mimeType, filename: filename, data: data)
+  }
+}
+
+extension FediverseClient.ClientError: LocalizedError {
+  public var errorDescription: String? {
+    switch self {
+    case .unexpectedRequest:
+      "The server does not support this request."
+    case let .serverError(statusCode, code, message):
+      if let code {
+        "Misskey error \(code) (HTTP \(statusCode)): \(message)"
+      } else {
+        "Misskey error (HTTP \(statusCode)): \(message)"
+      }
+    }
   }
 }

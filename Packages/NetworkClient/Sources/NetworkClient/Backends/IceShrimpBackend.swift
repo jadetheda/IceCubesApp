@@ -20,6 +20,45 @@ private struct PleromaEndpoint: Endpoint, @unchecked Sendable {
     var jsonValue: Encodable? { internalJsonValue }
 }
 
+private struct PleromaStatusData: Encodable {
+    let status: String
+    let visibility: Visibility
+    let inReplyToId: String?
+    let spoilerText: String?
+    let mediaIds: [String]?
+    let poll: StatusData.PollData?
+    let language: String?
+    let mediaAttributes: [StatusData.MediaAttribute]?
+    let quotedStatusId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case visibility
+        case inReplyToId = "in_reply_to_id"
+        case spoilerText = "spoiler_text"
+        case mediaIds = "media_ids"
+        case poll
+        case language
+        case mediaAttributes = "media_attributes"
+        case quotedStatusId = "quoted_status_id"
+        case quoteId = "quote_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(status, forKey: .status)
+        try container.encode(visibility, forKey: .visibility)
+        try container.encodeIfPresent(inReplyToId, forKey: .inReplyToId)
+        try container.encodeIfPresent(spoilerText, forKey: .spoilerText)
+        try container.encodeIfPresent(mediaIds, forKey: .mediaIds)
+        try container.encodeIfPresent(poll, forKey: .poll)
+        try container.encodeIfPresent(language, forKey: .language)
+        try container.encodeIfPresent(mediaAttributes, forKey: .mediaAttributes)
+        try container.encodeIfPresent(quotedStatusId, forKey: .quotedStatusId)
+        try container.encodeIfPresent(quotedStatusId, forKey: .quoteId)
+    }
+}
+
 open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
     
     override public var capabilities: ServerCapabilities {
@@ -84,6 +123,26 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
     
     open override func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         var overridingEndpoint = endpoint
+        if let statusesEndpoint = endpoint as? Statuses,
+           case let .postStatus(data) = statusesEndpoint,
+           data.quotedStatusId != nil
+        {
+            overridingEndpoint = PleromaEndpoint(
+                internalPath: endpoint.path(),
+                internalQueryItems: endpoint.queryItems(),
+                internalJsonValue: PleromaStatusData(
+                    status: data.status,
+                    visibility: data.visibility,
+                    inReplyToId: data.inReplyToId,
+                    spoilerText: data.spoilerText,
+                    mediaIds: data.mediaIds,
+                    poll: data.poll,
+                    language: data.language,
+                    mediaAttributes: data.mediaAttributes,
+                    quotedStatusId: data.quotedStatusId
+                )
+            )
+        }
         if let notificationsEndpoint = endpoint as? Notifications {
             switch notificationsEndpoint {
             case .clear:

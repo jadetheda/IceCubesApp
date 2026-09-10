@@ -40,6 +40,10 @@ import SwiftUI
       isLoadingAccounts = false
     } catch {
       isLoadingAccounts = false
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to load list accounts",
+        showPopup: true)
     }
   }
 
@@ -62,6 +66,10 @@ import SwiftUI
       await CurrentAccount.shared.fetchLists()
     } catch {
       isUpdating = false
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to update list",
+        showPopup: true)
     }
   }
 
@@ -77,6 +85,10 @@ import SwiftUI
       isUpdating = false
     } catch {
       isUpdating = false
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to add account to list",
+        showPopup: true)
     }
   }
 
@@ -92,6 +104,10 @@ import SwiftUI
       isUpdating = false
     } catch {
       isUpdating = false
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to remove account from list",
+        showPopup: true)
     }
   }
 

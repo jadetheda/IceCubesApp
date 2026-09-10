@@ -175,6 +175,17 @@ public struct MisskeyList: Codable {
     public let userIds: [String]?
 }
 
+public struct MisskeyMessagingMessage: Codable {
+    public let id: String
+    public let createdAt: String
+    public let userId: String
+    public let user: MisskeyUser
+    public let text: String?
+    public let recipientId: String?
+    public let recipient: MisskeyUser?
+    public let isRead: Bool?
+}
+
 // MARK: - MisskeyNotification
 public struct MisskeyNotification: Codable {
     public let id: String

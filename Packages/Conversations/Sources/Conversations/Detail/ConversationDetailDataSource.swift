@@ -26,9 +26,15 @@ public final class ConversationDetailDataSource {
       return FetchResult(messages: messages, conversation: conversation)
     }
 
-    let context: StatusContext = try await client.get(
-      endpoint: Statuses.context(id: lastMessageId)
-    )
+    if client.capabilities.supportsNativeMessaging {
+      let nativeMessages: [Status] = try await client.get(
+        endpoint: Conversations.messages(id: conversation.id)
+      )
+      messages = nativeMessages
+      return FetchResult(messages: messages, conversation: conversation)
+    }
+
+    let context: StatusContext = try await client.get(endpoint: Statuses.context(id: lastMessageId))
 
     // Build the complete message list
     var allMessages: [Status] = []
@@ -59,6 +65,16 @@ public final class ConversationDetailDataSource {
     client: FediverseClient,
     messageText: String
   ) async throws -> PostMessageResult {
+    if client.capabilities.supportsNativeMessaging,
+       let recipient = conversation.accounts.first
+    {
+      let status: Status = try await client.post(
+        endpoint: Conversations.send(userId: recipient.id, text: messageText)
+      )
+      appendNewStatus(status: status)
+      return PostMessageResult(messages: messages, conversation: conversation, success: true)
+    }
+
     var finalText = conversation.accounts.map { "@\($0.acct)" }.joined(separator: " ")
     finalText += " "
     finalText += messageText

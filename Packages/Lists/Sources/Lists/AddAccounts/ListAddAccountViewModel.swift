@@ -70,21 +70,35 @@ struct IceShrimpListCache {
 
   func addToList(list: Models.List) async {
     guard let client else { return }
-    let response = try? await client.post(
-      endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
-    if response?.statusCode == 200 {
-      inLists.append(list)
-      IceShrimpListCache.accountLists[account.id, default: []].append(list)
+    do {
+      let response = try await client.post(
+        endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
+      if response?.statusCode == 200 {
+        inLists.append(list)
+        IceShrimpListCache.accountLists[account.id, default: []].append(list)
+      }
+    } catch {
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to add account to list",
+        showPopup: true)
     }
   }
 
   func removeFromList(list: Models.List) async {
     guard let client else { return }
-    let response = try? await client.delete(
-      endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
-    if response?.statusCode == 200 {
-      inLists.removeAll(where: { $0.id == list.id })
-      IceShrimpListCache.accountLists[account.id]?.removeAll(where: { $0.id == list.id })
+    do {
+      let response = try await client.delete(
+        endpoint: Lists.updateAccounts(listId: list.id, accounts: [account.id]))
+      if response?.statusCode == 200 {
+        inLists.removeAll(where: { $0.id == list.id })
+        IceShrimpListCache.accountLists[account.id]?.removeAll(where: { $0.id == list.id })
+      }
+    } catch {
+      ErrorService.shared.handle(
+        error,
+        message: "Unable to remove account from list",
+        showPopup: true)
     }
   }
 }
