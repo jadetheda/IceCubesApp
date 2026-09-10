@@ -265,13 +265,10 @@ extension ExploreView {
 
 
   private func fetchTrendingStatusesHelper() async throws -> [Status] {
-    // IceShrimp does not expose Mastodon's trends/statuses endpoint. Preserve
-    // the normal preference for other servers, but transparently use the
-    // historical local scoring fallback when Mastodon trends are unavailable.
-    let legacyIceShrimpTrending = UserDefaults.standard.bool(forKey: "iceshrimp_trending")
-    let usesIceShrimpFallback =
-      client.isIceShrimpWorkaroundsEnabled
-      && (legacyIceShrimpTrending || preferences.trendingAlgorithm == .decayingScore)
+    // IceShrimp does not expose Mastodon's trends/statuses endpoint. Treat the
+    // default Mastodon choice as the historical local scoring fallback so new
+    // IceShrimp accounts receive a working Trending tab without migration state.
+    let usesIceShrimpFallback = client.isIceShrimpWorkaroundsEnabled
     let algorithm =
       usesIceShrimpFallback && preferences.trendingAlgorithm == .mastodon
         ? .decayingScore
