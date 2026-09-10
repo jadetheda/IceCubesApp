@@ -18,6 +18,13 @@ public struct Quote: Codable, Sendable {
     quotedStatus = try? container.decode(Status.self, forKey: .quotedStatus)
   }
 
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encodeIfPresent(state, forKey: .state)
+    try container.encodeIfPresent(quotedStatus, forKey: .quotedStatus)
+    try container.encodeIfPresent(quotedStatusId, forKey: .quotedStatusId)
+  }
+
   private enum CodingKeys: String, CodingKey {
     case state
     case quotedStatus = "quoted_status"
