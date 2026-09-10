@@ -168,9 +168,9 @@ extension StatusEditor {
     var allMediaHasDescription: Bool {
       var everyMediaHasAltText = true
       for mediaContainer in mediaContainers {
-        if ((mediaContainer.mediaAttachment?.description) == nil)
-          || mediaContainer.mediaAttachment?.description?.count == 0
-        {
+        let description = pendingMediaDescriptions.altTextByContainerId[mediaContainer.id]
+          ?? mediaContainer.mediaAttachment?.description
+        if description?.isEmpty != false {
           everyMediaHasAltText = false
         }
       }
@@ -254,7 +254,7 @@ extension StatusEditor {
 
     func setInitialLanguageSelection(preference: String?) {
       switch mode {
-      case .edit(let status), .quote(let status):
+      case .edit(let status), .redraft(let status), .quote(let status):
         selectedLanguage = status.language
       default:
         break
@@ -412,6 +412,18 @@ extension StatusEditor {
             attachment: $0,
             originalImage: nil
           )
+        }
+      case .redraft(let status):
+        mediaContainers = status.mediaAttachments.map { attachment in
+          let container = MediaContainer.uploaded(
+            id: UUID().uuidString,
+            attachment: attachment,
+            originalImage: nil
+          )
+          if let description = attachment.description, !description.isEmpty {
+            pendingMediaDescriptions.altTextByContainerId[container.id] = description
+          }
+          return container
         }
       default:
         break
@@ -928,6 +940,7 @@ extension StatusEditor {
     func editDescription(container: MediaContainer, description: String) async {
       guard let attachment = container.mediaAttachment else { return }
       if indexOf(container: container) != nil {
+        pendingMediaDescriptions.altTextByContainerId[container.id] = description
         mediaDescriptionService.buildMediaAttribute(
           attachment: attachment,
           description: description,

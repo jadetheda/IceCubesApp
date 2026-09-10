@@ -144,6 +144,18 @@ extension StatusEditor {
           replyToStatus: nil,
           embeddedStatus: nil
         )
+      case .redraft(let status):
+        let normalizedText = editText(for: status)
+        return InitialTextChanges(
+          statusText: .init(string: normalizedText),
+          selectedRange: trailingSelection(for: normalizedText),
+          mentionString: nil,
+          spoilerOn: !status.spoilerText.asRawText.isEmpty,
+          spoilerText: status.spoilerText.asRawText,
+          visibility: status.visibility,
+          replyToStatus: nil,
+          embeddedStatus: nil
+        )
       case .quote(let status):
         if currentInstance?.isQuoteSupported == true {
           return InitialTextChanges(

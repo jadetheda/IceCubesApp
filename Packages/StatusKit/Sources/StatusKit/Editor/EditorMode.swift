@@ -7,6 +7,7 @@ extension StatusEditor.EditorStore {
     case replyTo(status: Status)
     case new(text: String?, visibility: Models.Visibility)
     case edit(status: Status)
+    case redraft(status: Status)
     case quote(status: Status)
     case quoteLink(link: URL)
     case mention(account: Account, visibility: Models.Visibility)
@@ -31,6 +32,15 @@ extension StatusEditor.EditorStore {
       }
     }
 
+    var isRedrafting: Bool {
+      switch self {
+      case .redraft:
+        true
+      default:
+        false
+      }
+    }
+
     var replyToStatus: Status? {
       switch self {
       case let .replyTo(status):
@@ -40,9 +50,29 @@ extension StatusEditor.EditorStore {
       }
     }
 
+    var redraftStatus: Status? {
+      switch self {
+      case let .redraft(status):
+        status
+      default:
+        nil
+      }
+    }
+
+    var inReplyToStatusId: String? {
+      switch self {
+      case let .replyTo(status):
+        status.id
+      case let .redraft(status):
+        status.inReplyToId
+      default:
+        nil
+      }
+    }
+
     var title: LocalizedStringKey {
       switch self {
-      case .new, .mention, .shareExtension, .quoteLink, .imageURL:
+      case .new, .mention, .shareExtension, .quoteLink, .imageURL, .redraft:
         "status.editor.mode.new"
       case .edit:
         "status.editor.mode.edit"

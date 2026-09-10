@@ -230,7 +230,7 @@ Button {
           } label: {
             Label("status.action.edit", systemImage: "pencil")
           }
-        } else if !client.capabilities.supportsStatusEditing {
+        } else if client.isMisskey {
           Button {
             isRedraftConfirmationPresented = true
           } label: {
@@ -282,14 +282,7 @@ Button {
                 ) {
                   Button("Delete and redraft", role: .destructive) {
                     let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
-                    Task {
-                      do {
-                        try await viewModel.delete()
-                        viewModel.routerPath.presentedSheet = .prefilledStatusEditor(
-                          text: status.content.asRawText,
-                          visibility: status.visibility)
-                      } catch {}
-                    }
+                    viewModel.routerPath.presentedSheet = .redraftStatusEditor(status: status)
                   }
                   Button("Cancel", role: .cancel) {}
                 }

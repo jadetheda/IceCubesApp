@@ -41,6 +41,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   public let backend: any FediverseBackend
   
   public var isAuth: Bool { backend.isAuth }
+  public var isMisskey: Bool { backend is MisskeyBackend }
   public var isIceShrimpWorkaroundsEnabled: Bool { backend.isIceShrimpWorkaroundsEnabled }
   public var oauthToken: OauthToken? { backend.oauthToken }
   public var capabilities: ServerCapabilities { backend.capabilities }

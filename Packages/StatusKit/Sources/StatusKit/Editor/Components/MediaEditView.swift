@@ -85,7 +85,9 @@ extension StatusEditor {
             Button {
               if !imageDescription.isEmpty {
                 isUpdating = true
-                if currentInstance.isEditAltTextSupported, store.mode.isEditing {
+                if store.mode.isRedrafting
+                  || (currentInstance.isEditAltTextSupported && store.mode.isEditing)
+                {
                   Task {
                     await store.editDescription(
                       container: container, description: imageDescription)

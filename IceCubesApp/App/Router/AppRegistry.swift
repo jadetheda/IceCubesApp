@@ -182,6 +182,9 @@ extension View {
         case .editStatusEditor(let status):
           StatusEditor.MainView(mode: .edit(status: status))
             .withEnvironments()
+        case .redraftStatusEditor(let status):
+          StatusEditor.MainView(mode: .redraft(status: status))
+            .withEnvironments()
         case .quoteStatusEditor(let status):
           StatusEditor.MainView(mode: .quote(status: status))
             .withEnvironments()

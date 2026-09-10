@@ -90,6 +90,8 @@ extension IceCubesApp {
           StatusEditor.MainView(mode: .new(text: text, visibility: visibility))
         case let .editStatusEditor(status):
           StatusEditor.MainView(mode: .edit(status: status))
+        case let .redraftStatusEditor(status):
+          StatusEditor.MainView(mode: .redraft(status: status))
         case let .quoteStatusEditor(status):
           StatusEditor.MainView(mode: .quote(status: status))
         case let .replyToStatusEditor(status):

@@ -42,6 +42,7 @@ public enum WindowDestinationEditor: Hashable, Codable {
   case newStatusEditor(visibility: Models.Visibility)
   case prefilledStatusEditor(text: String, visibility: Models.Visibility)
   case editStatusEditor(status: Status)
+  case redraftStatusEditor(status: Status)
   case replyToStatusEditor(status: Status)
   case quoteStatusEditor(status: Status)
   case mentionStatusEditor(account: Account, visibility: Models.Visibility)
@@ -65,6 +66,7 @@ public enum SheetDestination: Identifiable, Hashable {
   case prefilledStatusEditor(text: String, visibility: Models.Visibility)
   case imageURL(urls: [URL], caption: String?, altTexts: [String]?, visibility: Models.Visibility)
   case editStatusEditor(status: Status)
+  case redraftStatusEditor(status: Status)
   case replyToStatusEditor(status: Status)
   case quoteStatusEditor(status: Status)
   case quoteLinkStatusEditor(link: URL)
@@ -90,7 +92,8 @@ public enum SheetDestination: Identifiable, Hashable {
   public var id: String {
     switch self {
     case .editStatusEditor, .newStatusEditor, .replyToStatusEditor, .quoteStatusEditor,
-      .mentionStatusEditor, .quoteLinkStatusEditor, .prefilledStatusEditor, .imageURL:
+      .mentionStatusEditor, .quoteLinkStatusEditor, .prefilledStatusEditor, .imageURL,
+      .redraftStatusEditor:
       "statusEditor"
     case .listCreate:
       "listCreate"

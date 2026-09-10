@@ -92,21 +92,58 @@ final class PostingServiceTests: XCTestCase {
     XCTAssertEqual(client.postCalls, 0)
     XCTAssertEqual(client.editCalls, 1)
   }
+
+  func testSubmitPostsBeforeDeletingForRedraftMode() async throws {
+    let service = StatusEditor.PostingService()
+    let client = FakePostingClient()
+    let status = makeStatus(id: "original")
+    let input = StatusEditor.PostingService.Input(
+      mode: .redraft(status: status),
+      statusText: "Replacement",
+      visibility: .unlisted,
+      spoilerOn: false,
+      spoilerText: "",
+      mediaAttachments: [],
+      pollOptions: nil,
+      pollVotingFrequency: .oneVote,
+      pollDuration: .oneDay,
+      selectedLanguage: nil,
+      pendingMediaAttributes: [],
+      embeddedStatusId: nil,
+      allMediaHasDescription: true,
+      requiresAltText: false
+    )
+
+    let result = try await service.submit(input: input, client: client)
+
+    XCTAssertEqual(result.id, "posted")
+    XCTAssertEqual(client.postCalls, 1)
+    XCTAssertEqual(client.deleteCalls, 1)
+    XCTAssertEqual(client.callOrder, ["post", "delete"])
+  }
 }
 
 @MainActor
 private final class FakePostingClient: StatusEditor.PostingService.Client {
   var postCalls = 0
   var editCalls = 0
+  var deleteCalls = 0
+  var callOrder: [String] = []
 
   func postStatus(data _: StatusData) async throws -> Status {
     postCalls += 1
+    callOrder.append("post")
     return makeStatus(id: "posted")
   }
 
   func editStatus(id _: String, data _: StatusData) async throws -> Status {
     editCalls += 1
     return makeStatus(id: "edited")
+  }
+
+  func deleteStatus(id _: String) async throws {
+    deleteCalls += 1
+    callOrder.append("delete")
   }
 }
 

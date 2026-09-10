@@ -9,6 +9,7 @@ extension StatusEditor {
     protocol Client {
       func postStatus(data: StatusData) async throws -> Status
       func editStatus(id: String, data: StatusData) async throws -> Status
+      func deleteStatus(id: String) async throws
     }
 
     struct Input {
@@ -45,7 +46,7 @@ extension StatusEditor {
       return StatusData(
         status: input.statusText,
         visibility: input.visibility,
-        inReplyToId: input.mode.replyToStatus?.id,
+        inReplyToId: input.mode.inReplyToStatusId,
         spoilerText: input.spoilerOn ? input.spoilerText : nil,
         mediaIds: input.mediaAttachments.map(\.id),
         poll: pollData,
@@ -69,6 +70,17 @@ extension StatusEditor {
         let updated = try await client.editStatus(id: status.id, data: data)
         StreamWatcher.shared.emmitEditEvent(for: updated)
         return updated
+      case .redraft(let status):
+        let replacement = try await client.postStatus(data: data)
+        StreamWatcher.shared.emmitPostEvent(for: replacement)
+        do {
+          try await client.deleteStatus(id: status.id)
+          StreamWatcher.shared.emmitDeleteEvent(for: status.id)
+        } catch {
+          // The replacement is already live. Keep it visible if cleanup of the
+          // original fails, rather than reporting a failed post.
+        }
+        return replacement
       }
     }
   }
@@ -82,5 +94,9 @@ extension FediverseClient: StatusEditor.PostingService.Client {
 
   public func editStatus(id: String, data: StatusData) async throws -> Status {
     try await put(endpoint: Statuses.editStatus(id: id, json: data))
+  }
+
+  public func deleteStatus(id: String) async throws {
+    _ = try await delete(endpoint: Statuses.status(id: id))
   }
 }
