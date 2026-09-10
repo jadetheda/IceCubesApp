@@ -15,7 +15,7 @@ extension MisskeyNote {
         let favourited = self.myReaction != nil
 
         let mediaAttachments = self.files?.map { $0.toMediaAttachment() } ?? []
-        let customEmojis = self.emojis?.map {
+        let customEmojis = self.emojis?.emojis.map {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
 
@@ -207,7 +207,7 @@ extension MisskeyUser {
         }
 
         // Emoji map can be either a dict or array depending on the server version.
-        let emojiList = self.emojis?.map {
+        let emojiList = self.emojis?.emojis.map {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
 

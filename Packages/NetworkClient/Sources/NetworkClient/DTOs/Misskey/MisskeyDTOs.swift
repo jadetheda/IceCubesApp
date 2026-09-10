@@ -1,41 +1,5 @@
 import Foundation
 
-// MARK: - MisskeyNote
-// Mirrors the Misskey note object. All fields that are absent on some servers
-// or forks (Firefish, Calckey) are marked optional so decoding never throws.
-public final class MisskeyNote: Codable {
-    public let id: String
-    public let createdAt: String
-    public let userId: String
-    public let user: MisskeyUser
-    public let text: String?
-    public let cw: String?
-    public let visibility: String
-    public let uri: String?         // federation URI (present on remote notes)
-    public let url: String?         // web URL for the note
-    public let localOnly: Bool?
-    public let renoteCount: Int?
-    public let repliesCount: Int?
-    // reactions is a map of emoji-key → count, e.g. {"👍": 3, ":neocat@.:": 1}
-    public let reactions: [String: Int]?
-    // reactionEmojis resolves custom emoji shortcodes to image URLs
-    public let reactionEmojis: [String: String]?
-    // myReaction is set when the authenticated user has reacted to this note
-    public let myReaction: String?
-    public let emojis: [MisskeyEmoji]?
-    public let fileIds: [String]?
-    public let files: [MisskeyFile]?
-    public let poll: MisskeyPoll?
-    public let replyId: String?
-    public let renoteId: String?
-    public let renote: MisskeyNote?
-    // tags is a flat list of hashtag names without the # prefix
-    public let tags: [String]?
-    // mentions is a list of user IDs mentioned in the note
-    public let mentions: [String]?
-    public let isHidden: Bool?
-}
-
 // MARK: - MisskeyPoll
 // Misskey embeds polls directly in the note object.
 public struct MisskeyPoll: Codable {
@@ -64,15 +28,14 @@ public struct MisskeyUser: Codable {
     public let isCat: Bool?
     public let isSuspended: Bool?
     public let isLocked: Bool?
-    public let emojis: [MisskeyEmoji]?
+    // emojis can be an array OR a dict depending on server version — use AnyCodable shim.
+    public let emojis: MisskeyEmojiContainer?
     public let onlineStatus: String?
     public let followersCount: Int?
     public let followingCount: Int?
     public let notesCount: Int?
     public let description: String?
     public let fields: [MisskeyField]?
-    // Relationship state — present when fetching the authed user's own profile
-    // or when using users/relation endpoint
     public let isFollowing: Bool?
     public let isFollowed: Bool?
     public let hasPendingFollowRequestFromYou: Bool?
@@ -80,6 +43,68 @@ public struct MisskeyUser: Codable {
     public let isBlocking: Bool?
     public let isBlocked: Bool?
     public let isMuted: Bool?
+}
+
+// MARK: - MisskeyNote
+// Mirrors the Misskey note object. All fields that are absent on some servers
+// or forks (Firefish, Calckey) are marked optional so decoding never throws.
+public final class MisskeyNote: Codable {
+    public let id: String
+    public let createdAt: String
+    public let userId: String
+    public let user: MisskeyUser
+    public let text: String?
+    public let cw: String?
+    public let visibility: String
+    public let uri: String?
+    public let url: String?
+    public let localOnly: Bool?
+    public let renoteCount: Int?
+    public let repliesCount: Int?
+    public let reactions: [String: Int]?
+    public let reactionEmojis: [String: String]?
+    public let myReaction: String?
+    // emojis can be array or dict — same handling as MisskeyUser
+    public let emojis: MisskeyEmojiContainer?
+    public let fileIds: [String]?
+    public let files: [MisskeyFile]?
+    public let poll: MisskeyPoll?
+    public let replyId: String?
+    public let renoteId: String?
+    public let renote: MisskeyNote?
+    public let tags: [String]?
+    public let mentions: [String]?
+    public let isHidden: Bool?
+}
+
+// MARK: - MisskeyEmojiContainer
+// Misskey returns emojis in two incompatible shapes:
+//   - Old API: {"shortcode": "url", ...}  (a dictionary)
+//   - New API: [{"name": "shortcode", "url": "..."}, ...]  (an array)
+// This container decodes both into a flat [MisskeyEmoji] list.
+public struct MisskeyEmojiContainer: Codable {
+    public let emojis: [MisskeyEmoji]
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        // Try array first (new format).
+        if let arr = try? container.decode([MisskeyEmoji].self) {
+            emojis = arr
+            return
+        }
+        // Fall back to dictionary format (old format): {"name": "url"}.
+        if let dict = try? container.decode([String: String].self) {
+            emojis = dict.map { MisskeyEmoji(name: $0.key, url: $0.value) }
+            return
+        }
+        // Unknown format — treat as empty rather than throwing.
+        emojis = []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(emojis)
+    }
 }
 
 // MARK: - MisskeyField (profile metadata)
