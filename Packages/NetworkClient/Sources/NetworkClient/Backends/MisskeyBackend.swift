@@ -406,8 +406,22 @@ public final class MisskeyBackend: FediverseBackend {
 
         } else if path.hasSuffix("/statuses") && path.hasPrefix("accounts/") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/statuses", with: "")
-            params["userId"] = id
-            let data = try await makeMisskeyRequest(path: "users/notes", params: params)
+            var noteParams = params
+            noteParams["userId"] = id
+
+            // `users/notes` uses different names for the account-status filters.
+            // In particular, boosts are only returned when withRenotes is true.
+            if let excludeReplies = noteParams.removeValue(forKey: "exclude_replies") as? String {
+                noteParams["withReplies"] = excludeReplies != "true"
+            }
+            if let excludeReblogs = noteParams.removeValue(forKey: "exclude_reblogs") as? String {
+                noteParams["withRenotes"] = excludeReblogs != "true"
+            }
+            if let onlyMedia = noteParams.removeValue(forKey: "only_media") as? String {
+                noteParams["withFiles"] = onlyMedia == "true"
+            }
+
+            let data = try await makeMisskeyRequest(path: "users/notes", params: noteParams)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return notes.map { $0.toStatus() } as! Entity
 
