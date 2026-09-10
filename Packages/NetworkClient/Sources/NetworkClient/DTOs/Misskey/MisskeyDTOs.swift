@@ -160,6 +160,13 @@ public struct MisskeyFavorite: Codable {
     public let note: MisskeyNote
 }
 
+// Returned by users/lists/list and users/lists/show.
+public struct MisskeyList: Codable {
+    public let id: String
+    public let name: String
+    public let userIds: [String]?
+}
+
 // MARK: - MisskeyNotification
 public struct MisskeyNotification: Codable {
     public let id: String

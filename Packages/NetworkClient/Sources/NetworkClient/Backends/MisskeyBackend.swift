@@ -173,6 +173,19 @@ public final class MisskeyBackend: FediverseBackend {
             if let cw = dict["spoilerText"] as? String, !cw.isEmpty { params["cw"] = cw }
             if let renoteId = dict["quotedStatusId"] as? String { params["renoteId"] = renoteId }
         }
+
+        if let title = params["title"] {
+            params["name"] = title
+            params.removeValue(forKey: "title")
+        }
+        if let repliesPolicy = params["replies_policy"] {
+            params["replyCw"] = repliesPolicy
+            params.removeValue(forKey: "replies_policy")
+        }
+        if let exclusive = params["exclusive"] as? String {
+            params["isPublic"] = exclusive != "true"
+            params.removeValue(forKey: "exclusive")
+        }
         return params
     }
 
@@ -245,6 +258,16 @@ public final class MisskeyBackend: FediverseBackend {
             let isLocal = (params["local"] as? String) == "true"
             let apiPath = isLocal ? "notes/local-timeline" : "notes/global-timeline"
             let data = try await makeMisskeyRequest(path: apiPath, params: params)
+            let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
+            return notes.map { $0.toStatus() } as! Entity
+
+        } else if path.hasPrefix("timelines/list/") {
+            let listId = path.replacingOccurrences(of: "timelines/list/", with: "")
+            var timelineParams = params
+            timelineParams["listId"] = listId
+            let data = try await makeMisskeyRequest(
+                path: "notes/user-list-timeline",
+                params: timelineParams)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
             return notes.map { $0.toStatus() } as! Entity
 
@@ -471,7 +494,36 @@ public final class MisskeyBackend: FediverseBackend {
             return ([Conversation]() as! Entity)
 
         } else if path == "lists" {
-            return ([Models.List]() as! Entity)
+            let data = try await makeMisskeyRequest(path: "users/lists/list", params: [:])
+            let lists = try JSONDecoder().decode([MisskeyList].self, from: data)
+            return lists.map {
+                Models.List(id: $0.id, title: $0.name, repliesPolicy: .list)
+            } as! Entity
+
+        } else if path.hasPrefix("lists/") && path.hasSuffix("/accounts") {
+            let listId = path
+                .replacingOccurrences(of: "lists/", with: "")
+                .replacingOccurrences(of: "/accounts", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "users/lists/show",
+                params: ["listId": listId])
+            let list = try JSONDecoder().decode(MisskeyList.self, from: data)
+            var accounts: [Account] = []
+            for userId in list.userIds ?? [] {
+                if let userData = try? await makeMisskeyRequest(
+                    path: "users/show", params: ["userId": userId]),
+                   let user = try? JSONDecoder().decode(MisskeyUser.self, from: userData) {
+                    accounts.append(user.toAccount())
+                }
+            }
+            return accounts as! Entity
+
+        } else if path.hasPrefix("lists/") {
+            let listId = path.replacingOccurrences(of: "lists/", with: "")
+            let data = try await makeMisskeyRequest(
+                path: "users/lists/show", params: ["listId": listId])
+            let list = try JSONDecoder().decode(MisskeyList.self, from: data)
+            return Models.List(id: list.id, title: list.name, repliesPolicy: .list) as! Entity
 
         // --- Polls ---
         } else if path.hasPrefix("polls/") {
@@ -513,11 +565,6 @@ public final class MisskeyBackend: FediverseBackend {
             } else if path == "trends/links" {
                 return ([Card]() as! Entity)
             }
-
-        // --- Lists ---
-        } else if path.hasPrefix("lists/") {
-            let list = Models.List(id: "1", title: "Mock List", repliesPolicy: .followed)
-            return list as! Entity
 
         // --- Media ---
         } else if path.hasPrefix("media/") && path.components(separatedBy: "/").count == 2 {
@@ -648,8 +695,20 @@ public final class MisskeyBackend: FediverseBackend {
             return ([ServerFilter]() as! Entity)
 
         } else if path == "lists" {
-            let list = Models.List(id: "1", title: "Mock List", repliesPolicy: .followed)
-            return list as! Entity
+            let data = try await makeMisskeyRequest(path: "users/lists/create", params: params)
+            let list = try JSONDecoder().decode(MisskeyList.self, from: data)
+            return Models.List(id: list.id, title: list.name, repliesPolicy: .list) as! Entity
+
+        } else if path.hasPrefix("lists/") && path.hasSuffix("/accounts") {
+            let listId = path
+                .replacingOccurrences(of: "lists/", with: "")
+                .replacingOccurrences(of: "/accounts", with: "")
+            for accountId in params["account_ids[]"] as? [String] ?? [] {
+                let _ = try await makeMisskeyRequest(
+                    path: "users/lists/push",
+                    params: ["listId": listId, "userId": accountId])
+            }
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil) as! Entity
 
         } else if path.hasPrefix("follow_requests") {
             return emptyRelationship(id: "") as! Entity
@@ -780,6 +839,17 @@ public final class MisskeyBackend: FediverseBackend {
         } else if path.hasPrefix("conversations/") {
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
+        } else if path.hasPrefix("lists/") && path.hasSuffix("/accounts") {
+            let listId = path
+                .replacingOccurrences(of: "lists/", with: "")
+                .replacingOccurrences(of: "/accounts", with: "")
+            for accountId in params["account_ids[]"] as? [String] ?? [] {
+                let _ = try await makeMisskeyRequest(
+                    path: "users/lists/push",
+                    params: ["listId": listId, "userId": accountId])
+            }
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
         } else if path.hasPrefix("statuses/") && path.components(separatedBy: "/").count == 2 {
             // Note deletion
             let id = path.replacingOccurrences(of: "statuses/", with: "")
@@ -797,7 +867,16 @@ public final class MisskeyBackend: FediverseBackend {
     // MARK: - PUT
 
     public func put<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
-        throw FediverseClient.ClientError.unexpectedRequest
+        let path = endpoint.path()
+        guard path.hasPrefix("lists/") else {
+            throw FediverseClient.ClientError.unexpectedRequest
+        }
+        let listId = path.replacingOccurrences(of: "lists/", with: "")
+        let data = try await makeMisskeyRequest(
+            path: "users/lists/update",
+            params: ["listId": listId] .merging(extractParams(from: endpoint)) { _, new in new })
+        let list = try JSONDecoder().decode(MisskeyList.self, from: data)
+        return Models.List(id: list.id, title: list.name, repliesPolicy: .list) as! Entity
     }
 
     public func put(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
@@ -851,6 +930,23 @@ public final class MisskeyBackend: FediverseBackend {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/unblock", with: "")
             params["userId"] = id
             let _ = try? await makeMisskeyRequest(path: "blocking/delete", params: params)
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+        } else if path.hasPrefix("lists/") && path.hasSuffix("/accounts") {
+            let listId = path
+                .replacingOccurrences(of: "lists/", with: "")
+                .replacingOccurrences(of: "/accounts", with: "")
+            for accountId in params["account_ids[]"] as? [String] ?? [] {
+                let _ = try? await makeMisskeyRequest(
+                    path: "users/lists/pull",
+                    params: ["listId": listId, "userId": accountId])
+            }
+            return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
+
+        } else if path.hasPrefix("lists/") {
+            let listId = path.replacingOccurrences(of: "lists/", with: "")
+            let _ = try? await makeMisskeyRequest(
+                path: "users/lists/delete", params: ["listId": listId])
             return HTTPURLResponse(url: URL(string: "https://\(server)")!, statusCode: 200, httpVersion: nil, headerFields: nil)
 
         } else if path.hasPrefix("filters/") {

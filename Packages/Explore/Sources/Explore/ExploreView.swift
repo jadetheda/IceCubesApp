@@ -265,8 +265,19 @@ extension ExploreView {
 
 
   private func fetchTrendingStatusesHelper() async throws -> [Status] {
-    
-    if preferences.trendingAlgorithm == .simpleScore {
+    // IceShrimp does not expose Mastodon's trends/statuses endpoint. Preserve
+    // the normal preference for other servers, but transparently use the
+    // historical local scoring fallback when Mastodon trends are unavailable.
+    let legacyIceShrimpTrending = UserDefaults.standard.bool(forKey: "iceshrimp_trending")
+    let usesIceShrimpFallback =
+      client.isIceShrimpWorkaroundsEnabled
+      && (legacyIceShrimpTrending || preferences.trendingAlgorithm == .decayingScore)
+    let algorithm =
+      usesIceShrimpFallback && preferences.trendingAlgorithm == .mastodon
+        ? .decayingScore
+        : preferences.trendingAlgorithm
+
+    if algorithm == .simpleScore {
       var statuses: [Status] = []
       do {
         statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: true, limit: preferences.trendingSimpleScoreSearchLimit))
@@ -285,7 +296,7 @@ extension ExploreView {
       return scoredStatuses.map { $0.0 }
     }
 
-    if preferences.trendingAlgorithm == .decayingScore {
+    if algorithm == .decayingScore {
       var statuses: [Status] = []
       do {
         statuses = try await client.get(endpoint: Timelines.pub(sinceId: nil, maxId: nil, minId: nil, local: true, limit: 40))

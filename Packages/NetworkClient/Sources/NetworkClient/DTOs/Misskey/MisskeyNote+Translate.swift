@@ -8,10 +8,7 @@ extension MisskeyNote {
         let account = self.user.toAccount()
         let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
 
-        // Sum all reaction counts for the favourites counter.
         let favouritesCount = self.reactions?.values.reduce(0, +) ?? 0
-
-        // favourited is true when the authenticated user has placed any reaction.
         let favourited = self.myReaction != nil
 
         let mediaAttachments = self.files?.map { $0.toMediaAttachment() } ?? []
@@ -19,8 +16,6 @@ extension MisskeyNote {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
 
-        // Build the canonical URL for this note. Prefer the explicit url field, then uri,
-        // then construct a fallback from the note ID.
         let noteUrl = self.url ?? self.uri ?? "https://misskey/\(self.id)"
 
         // Renote without text = boost (reblog). Renote with text = quote post.
@@ -30,7 +25,7 @@ extension MisskeyNote {
             let renoteCreatedAt = ISO8601DateFormatter().date(from: renote.createdAt) ?? Date()
             reblog = ReblogStatus(
                 id: renote.id,
-                content: HTMLString(stringValue: renote.text ?? ""),
+                content: htmlString(from: renote.text),
                 account: renote.user.toAccount(),
                 createdAt: ServerDate(date: renoteCreatedAt),
                 editedAt: nil,
@@ -64,7 +59,7 @@ extension MisskeyNote {
 
         return Status(
             id: self.id,
-            content: HTMLString(stringValue: formatContent(self.text)),
+            content: htmlString(from: self.text),
             account: account,
             createdAt: ServerDate(date: createdAtDate),
             editedAt: nil,
@@ -108,25 +103,36 @@ extension MisskeyNote {
         }
     }
 
-    // Converts plain Misskey text to basic HTML matching what Mastodon sends.
-    // Uses <br> for linebreaks. Does NOT wrap in <p> — the app's HTML renderer
-    // handles paragraph spacing and wrapping in <p> causes literal tag text.
-    private func formatContent(_ text: String?) -> String {
-        guard let text, !text.isEmpty else { return "" }
-        var content = text
-        // Convert newlines to HTML line breaks.
-        content = content.replacingOccurrences(of: "\n", with: "<br>")
-        // Basic URL linkification.
+    // Converts plain Misskey text to HTML and routes it through HTMLString's
+    // Codable init(from:), which runs SwiftSoup to convert <br> to real newlines,
+    // linkify URLs, and build the markdown string the UI uses for rendering.
+    // HTMLString(stringValue:) treats input as plain text — it does NOT parse HTML.
+    // Only init(from: Decoder) triggers the SwiftSoup pipeline, so we JSON-decode.
+    private func htmlString(from text: String?) -> HTMLString {
+        guard let text, !text.isEmpty else { return HTMLString(stringValue: "") }
+
+        // Convert bare newlines to <br> for the HTML parser.
+        var html = text.replacingOccurrences(of: "\n", with: "<br>")
+
+        // Basic URL linkification so links render as tappable.
         let urlPattern = "(https?://[^\\s<>\"]+)"
         if let regex = try? NSRegularExpression(pattern: urlPattern) {
-            content = regex.stringByReplacingMatches(
-                in: content,
-                range: NSRange(content.startIndex..., in: content),
+            html = regex.stringByReplacingMatches(
+                in: html,
+                range: NSRange(html.startIndex..., in: html),
                 withTemplate: "<a href=\"$1\">$1</a>"
             )
         }
-        return content
+
+        // Encode the generated HTML as a JSON string so all control characters
+        // in user content are escaped before HTMLString's decoder parses it.
+        if let data = try? JSONEncoder().encode(html),
+           let parsed = try? JSONDecoder().decode(HTMLString.self, from: data) {
+            return parsed
+        }
+        return HTMLString(stringValue: text)
     }
+
 }
 
 // MARK: - MisskeyPoll → Poll
