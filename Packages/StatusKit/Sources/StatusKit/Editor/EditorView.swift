@@ -230,7 +230,9 @@ extension StatusEditor {
       .padding(.trailing, .layoutPadding)
     }
 
+    @ViewBuilder
     private var pollButton: some View {
+      if client.capabilities.supportsPolls {
       Button {
         withAnimation {
           store.showPoll.toggle()
@@ -242,6 +244,7 @@ extension StatusEditor {
       .buttonStyle(.bordered)
       .accessibilityLabel("accessibility.editor.button.poll")
       .disabled(store.shouldDisablePollButton)
+      }
     }
 
     private var spoilerButton: some View {

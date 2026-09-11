@@ -37,12 +37,19 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
             }
             let (data, _) = try await URLSession.shared.data(for: request)
             return try JSONDecoder().decode(Entity.self, from: data)
-        } else if path.hasSuffix("/translate") && path.hasPrefix("statuses/") {
+        
+        
+        return try await super.get(endpoint: endpoint, forceVersion: forceVersion)
+    }
+
+    public override func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
+        let path = endpoint.path()
+        if path.hasSuffix("/translate") && path.hasPrefix("statuses/") {
             // Pixelfed doesn't support Mastodon's translation endpoint. 
             // Throw so StatusRowViewModel falls back to DeepL/Apple Translation.
             throw FediverseClient.ClientError.unexpectedRequest
         }
-        
-        return try await super.get(endpoint: endpoint, forceVersion: forceVersion)
+        return try await super.post(endpoint: endpoint, forceVersion: forceVersion)
     }
+
 }

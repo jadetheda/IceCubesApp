@@ -782,3 +782,13 @@
   - **Enhancement (Gallery Mode Toggle Default)**: Changed the default value of the `showHidePostsWithoutMediaToggle` user preference to `true`. This ensures the "Gallery Mode" quick-access toggle is visible in the timeline menu by default, making it easier for users to discover and switch to Gallery Mode from their primary timelines.
   - **Documentation (Privacy Mandate)**: Added a strict 'Privacy & Anti-Doxxing Mandate' to `AGENTS.md`. This ensures the AI never hardcodes or leaks the user's personal information (email, name, location, etc.) into the codebase, documentation, logs, or commit messages.
 - 2026-09-11 13:56 UTC: Implemented initial Pixelfed backend support. Cloned Fedilab to reverse engineer endpoints. Created `PixelfedBackend.swift` inheriting from `MastodonBackend`, explicitly defining capabilities (disabled endorsements, polls, followed tags, account metrics, status editing, and trending links) suitable for Pixelfed's image-first Mastodon-compatible APIs. Mapped `trends/statuses` to Pixelfed's `/api/pixelfed/v2/discover/posts/trending`, safely returned empty JSON array for unsupported tags/links trends to prevent UI breaking, and ensured `/translate` throws an expected error to fallback to client-side Apple/DeepL translation. Patched `StatusRowContextMenu` to allow Misskey and Pixelfed to utilize the fallback "Delete and redraft" option. Pushed to remote and triggered Codemagic to verify Swift compilation.
+
+## 🪵 Activity Log
+- **2026-09-11 (UTC)**
+  - Checked modified files for potential Exit Code 65 (compilation) issues after recent Pixelfed compatibility fixes. Fixed no immediate problems as `@Environment(FediverseClient.self)` was fully accessible where capability queries were implemented.
+  - Investigated and resolved a Misskey posting bug where it threw a generic error "seemingly every time".
+  - Identified `MisskeyBackend` was improperly sending Mastodon-specific visibility values (`unlisted`, `private`, `direct`) which Misskey rejects, resulting in a 400 Bad Request.
+  - Mapped Mastodon visibility types to their Misskey equivalents (`home`, `followers`, `specified`).
+  - Addressed an issue in `MisskeyBackend.swift` where API error messages were parsed incorrectly due to a nested `"error"` root key in Misskey's error format, causing error surfacing to fail gracefully into a generic string.
+  - Enhanced `EditorStore.swift` to catch and expose `FediverseClient.ClientError` and `DecodingError` properly via the UI's `showPostingErrorAlert` instead of swallowing them silently.
+  - Filtered out empty strings for Misskey's `text` property, preventing arbitrary submission failures.

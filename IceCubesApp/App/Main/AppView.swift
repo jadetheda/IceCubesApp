@@ -113,7 +113,11 @@ struct AppView: View {
             }
           } else {
             ForEach(section.tabs.filter { tab in
-              tab != .links || appAccountsManager.currentClient.capabilities.supportsTrendingLinks
+              if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
+              if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
+              if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
+              if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
+              return true
             }) { tab in
               Tab(value: tab, role: tab == .explore ? .search : .none) {
                 makeTabContent(for: tab)
