@@ -1,5 +1,6 @@
 import DesignSystem
 import Env
+import AppAccount
 import SwiftUI
 
 @MainActor
@@ -10,70 +11,50 @@ struct TabbarEntriesSettingsView: View {
 
   @State private var tabs = iOSTabs.shared
 
+  private var availableTabs: [AppTab] {
+    AppTab.allCases.filter { tab in
+      if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
+      if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
+      if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
+      if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
+      return true
+    }
+  }
+  
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
       Section {
         Picker("settings.tabs.first-tab", selection: $tabs.firstTab) {
-          ForEach(AppTab.allCases.filter { tab in
-            if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-            if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-            if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-            if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-            return true
-          }) { tab in
+          ForEach(availableTabs) { tab in
             if tab == tabs.firstTab || !tabs.tabs.contains(tab) {
               tab.label.tag(tab)
             }
           }
         }
         Picker("settings.tabs.second-tab", selection: $tabs.secondTab) {
-          ForEach(AppTab.allCases.filter { tab in
-            if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-            if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-            if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-            if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-            return true
-          }) { tab in
+          ForEach(availableTabs) { tab in
             if tab == tabs.secondTab || !tabs.tabs.contains(tab) {
               tab.label.tag(tab)
             }
           }
         }
         Picker("settings.tabs.third-tab", selection: $tabs.thirdTab) {
-          ForEach(AppTab.allCases.filter { tab in
-            if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-            if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-            if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-            if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-            return true
-          }) { tab in
+          ForEach(availableTabs) { tab in
             if tab == tabs.thirdTab || !tabs.tabs.contains(tab) {
               tab.label.tag(tab)
             }
           }
         }
         Picker("settings.tabs.fourth-tab", selection: $tabs.fourthTab) {
-          ForEach(AppTab.allCases.filter { tab in
-            if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-            if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-            if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-            if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-            return true
-          }) { tab in
+          ForEach(availableTabs) { tab in
             if tab == tabs.fourthTab || !tabs.tabs.contains(tab) {
               tab.label.tag(tab)
             }
           }
         }
         Picker("settings.tabs.fifth-tab", selection: $tabs.fifthTab) {
-          ForEach(AppTab.allCases.filter { tab in
-            if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-            if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-            if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-            if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-            return true
-          }) { tab in
+          ForEach(availableTabs) { tab in
             if tab == tabs.fifthTab || !tabs.tabs.contains(tab) {
               tab.label.tag(tab)
             }

@@ -37,6 +37,16 @@ struct AppView: View {
   @Query(sort: \LocalTimeline.creationDate, order: .reverse) var localTimelines: [LocalTimeline]
   @Query(sort: \TagGroup.creationDate, order: .reverse) var tagGroups: [TagGroup]
 
+  private func availableTabs(for tabs: [AppTab]) -> [AppTab] {
+    tabs.filter { tab in
+      if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
+      if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
+      if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
+      if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
+      return true
+    }
+  }
+  
   var body: some View {
     HStack(spacing: 0) {
       tabBarView
@@ -112,13 +122,7 @@ struct AppView: View {
               .tabPlacement(tab.tabPlacement)
             }
           } else {
-            ForEach(section.tabs.filter { tab in
-              if tab == .links { return appAccountsManager.currentClient.capabilities.supportsTrendingLinks }
-              if tab == .metrics { return appAccountsManager.currentClient.capabilities.supportsAccountMetrics }
-              if tab == .followedTags { return appAccountsManager.currentClient.capabilities.supportsFollowedTags }
-              if tab == .lists { return !appAccountsManager.currentClient.isPixelfed }
-              return true
-            }) { tab in
+            ForEach(availableTabs(for: section.tabs)) { tab in
               Tab(value: tab, role: tab == .explore ? .search : .none) {
                 makeTabContent(for: tab)
               } label: {
