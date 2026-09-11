@@ -792,3 +792,4 @@
   - Addressed an issue in `MisskeyBackend.swift` where API error messages were parsed incorrectly due to a nested `"error"` root key in Misskey's error format, causing error surfacing to fail gracefully into a generic string.
   - Enhanced `EditorStore.swift` to catch and expose `FediverseClient.ClientError` and `DecodingError` properly via the UI's `showPostingErrorAlert` instead of swallowing them silently.
   - Filtered out empty strings for Misskey's `text` property, preventing arbitrary submission failures.
+- 2026-09-11 20:40 UTC: Fixed the final Pixelfed silent login failure where the app kicked the user back to the Add Account screen. Root cause was `Accounts.verifyCredentials` failing to decode because Pixelfed omits Mastodon-specific fields (`bot`, `emojis`, `fields`, `locked`) and can return empty strings for `header`. Made `Account` decoding highly resilient using `decodeIfPresent` with safe fallback defaults.
