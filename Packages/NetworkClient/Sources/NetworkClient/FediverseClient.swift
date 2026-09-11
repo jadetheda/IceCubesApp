@@ -86,15 +86,44 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     if let cached = await serverSoftwareCache.value(for: cacheKey) {
       return cached
     }
-
-    guard let url = URL(string: "https://\(server)/nodeinfo/2.0"),
-      let (data, _) = try? await URLSession.shared.data(from: url),
-      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let software = (json["software"] as? [String: Any])?["name"] as? String
-    else {
+    
+    guard let url = URL(string: "https://\(server)/nodeinfo/2.0") else { return "mastodon" }
+    
+    do {
+      let (data, response) = try await URLSession.shared.data(from: url)
+      if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
+        await serverSoftwareCache.set("mastodon", for: cacheKey)
+        return "mastodon"
+      }
+      
+      guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let software = (json["software"] as? [String: Any])?["name"] as? String else {
+        await serverSoftwareCache.set("mastodon", for: cacheKey)
+        return "mastodon"
+      }
+      
+      let name = software.lowercased()
+      if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
+        await serverSoftwareCache.set("misskey", for: cacheKey)
+        return "misskey"
+      }
+      if name.contains("iceshrimp") {
+        await serverSoftwareCache.set("iceshrimp", for: cacheKey)
+        return "iceshrimp"
+      }
+      if name.contains("peertube") {
+        await serverSoftwareCache.set("peertube", for: cacheKey)
+        return "peertube"
+      }
+      
       await serverSoftwareCache.set("mastodon", for: cacheKey)
       return "mastodon"
+      
+    } catch {
+      // Don't permanently cache a network timeout/failure in memory
+      return "mastodon"
     }
+  }
 
     let name = software.lowercased()
     if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
