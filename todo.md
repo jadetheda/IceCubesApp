@@ -103,3 +103,4 @@
 - [x] **Enhancement:** Added a **…** menu to the **Lists** tab (next to the compose button) containing the **Gallery Mode** toggle and the **Content Filter** popup, matching the Timeline tab.
 - [x] Removed the option to disable **"Require media to be loaded [to be detected as Seen]"**, since this should always remain enabled.
 - [x] Updated the app version to **2.1.4.4** in both the app metadata and the in-app **Settings** menu.
+- [ ] **Secret Feature:** Hide an optional menu called "Ice Tray" in the timeline menu that reveals a hidden list of secret items (lists, pinned statuses, etc.).
