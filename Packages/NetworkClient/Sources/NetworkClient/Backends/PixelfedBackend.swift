@@ -19,7 +19,7 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
             supportsNativeMessaging: false
         )
     }
-
+    
     public override func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity {
         let path = endpoint.path()
         if path == "trends/tags" || path == "trends/links" {
@@ -37,7 +37,7 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
             }
             let (data, _) = try await URLSession.shared.data(for: request)
             return try JSONDecoder().decode(Entity.self, from: data)
-        
+        }
         
         return try await super.get(endpoint: endpoint, forceVersion: forceVersion)
     }
@@ -51,5 +51,4 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
         }
         return try await super.post(endpoint: endpoint, forceVersion: forceVersion)
     }
-
 }

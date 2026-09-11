@@ -370,7 +370,6 @@ extension StatusEditor {
           postingError = "Error: \(error.localizedDescription)"
           showPostingErrorAlert = true
         }
-        }
         if let postError = error as? PostError {
           postingError = postError.description
           showPostingErrorAlert = true
