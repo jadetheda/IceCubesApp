@@ -97,8 +97,8 @@ extension MisskeyNote {
     }
 
     // Maps Misskey visibility strings to Mastodon-compatible Visibility enum values.
-    private func mapVisibility(_ raw: String) -> Visibility {
-        switch raw {
+    private func mapVisibility(_ raw: String?) -> Visibility {
+        switch raw ?? "public" {
         case "public":    return .pub
         case "home":      return .unlisted
         case "followers": return .priv
@@ -199,18 +199,19 @@ extension MisskeyPoll {
 // MARK: - MisskeyUser → Account
 extension MisskeyUser {
     public func toAccount() -> Account {
+        let safeUsername = self.username ?? "unknown"
         let avatarURL = URL(string: self.avatarUrl ?? "https://\(host ?? "example.com")/placeholder.png")
             ?? URL(string: "https://example.com/placeholder.png")!
         let headerURL = URL(string: self.bannerUrl ?? "") ?? avatarURL
-        let acct = self.host != nil ? "\(self.username)@\(self.host!)" : self.username
-        let profileURL = URL(string: "https://\(self.host ?? "misskey")/\(self.username)")
+        let acct = self.host != nil ? "\(safeUsername)@\(self.host!)" : safeUsername
+        let profileURL = URL(string: "https://\(self.host ?? "misskey")/\(safeUsername)")
 
         // Account.Field is Codable-only; build JSON and decode.
         var accountFields: [Account.Field] = []
         if let fields = self.fields, !fields.isEmpty {
             let fieldsJson = fields.map { f in
                 """
-                {"name":\(jsonString(f.name)),"value":\(jsonString(f.value)),"verifiedAt":null}
+                {"name":\(jsonString(f.name ?? "")),"value":\(jsonString(f.value ?? "")),"verifiedAt":null}
                 """
             }.joined(separator: ",")
             let json = "[\(fieldsJson)]"
@@ -227,7 +228,7 @@ extension MisskeyUser {
 
         return Account(
             id: self.id,
-            username: self.username,
+            username: safeUsername,
             displayName: self.name,
             avatar: avatarURL,
             header: headerURL,
@@ -280,15 +281,17 @@ extension MisskeyRelation {
 // MARK: - MisskeyFile → MediaAttachment
 extension MisskeyFile {
     public func toMediaAttachment() -> MediaAttachment {
-        let url = URL(string: self.url)!
+        let safeUrlStr = self.url ?? "https://example.com/missing.png"
+        let url = URL(string: safeUrlStr) ?? URL(string: "https://example.com/missing.png")!
         let preview = self.thumbnailUrl.flatMap { URL(string: $0) } ?? url
 
         var type = "image"
-        if self.type.contains("video") || self.type.contains("mp4") || self.type.contains("webm") {
+        let safeType = self.type ?? "image"
+        if safeType.contains("video") || safeType.contains("mp4") || safeType.contains("webm") {
             type = "video"
-        } else if self.type.contains("audio") {
+        } else if safeType.contains("audio") {
             type = "audio"
-        } else if self.type.contains("gifv") || self.type.contains("gif") {
+        } else if safeType.contains("gifv") || safeType.contains("gif") {
             type = "gifv"
         }
 
@@ -322,7 +325,7 @@ extension MisskeyNotification {
 
         // Map Misskey notification types to their Mastodon equivalents.
         let mappedType: String
-        switch self.type {
+        switch self.type ?? "" {
         case "follow":                   mappedType = "follow"
         case "receiveFollowRequest":     mappedType = "follow_request"
         case "followRequestAccepted":    return nil  // no Mastodon equivalent

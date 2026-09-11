@@ -18,7 +18,7 @@ public struct MisskeyPollChoice: Codable {
 public struct MisskeyUser: Codable {
     public let id: String
     public let name: String?
-    public let username: String
+    public let username: String?
     public let host: String?
     public let avatarUrl: String?
     public let avatarBlurhash: String?
@@ -55,7 +55,7 @@ public final class MisskeyNote: Codable {
     public let user: MisskeyUser
     public let text: String?
     public let cw: String?
-    public let visibility: String
+    public let visibility: String?
     public let uri: String?
     public let url: String?
     public let localOnly: Bool?
@@ -117,8 +117,8 @@ public struct MisskeyEmojiContainer: Codable {
 
 // MARK: - MisskeyField (profile metadata)
 public struct MisskeyField: Codable {
-    public let name: String
-    public let value: String
+    public let name: String?
+    public let value: String?
 }
 
 // MARK: - MisskeyRelation
@@ -137,15 +137,15 @@ public struct MisskeyRelation: Codable {
 // MARK: - MisskeyFile
 public struct MisskeyFile: Codable {
     public let id: String
-    public let createdAt: String
+    public let createdAt: String?
     public let name: String?
-    public let type: String
+    public let type: String?
     public let md5: String?
     public let size: Int?
     public let isSensitive: Bool?
     public let blurhash: String?
     public let properties: MisskeyFileProperties?
-    public let url: String
+    public let url: String?
     public let thumbnailUrl: String?
     public let comment: String?  // alt text / description
 }
@@ -190,7 +190,7 @@ public struct MisskeyMessagingMessage: Codable {
 public struct MisskeyNotification: Codable {
     public let id: String
     public let createdAt: String
-    public let type: String
+    public let type: String?
     public let user: MisskeyUser?
     public let note: MisskeyNote?
     public let reaction: String?
