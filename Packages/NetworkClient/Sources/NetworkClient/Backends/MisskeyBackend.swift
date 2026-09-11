@@ -459,16 +459,35 @@ public final class MisskeyBackend: FediverseBackend {
 
             var accounts: [Account] = []
             var statuses: [Status] = []
-
-            if type == "statuses" || type == nil,
-               let data = try? await makeMisskeyRequest(path: "notes/search", params: ["query": query]),
-               let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
-                statuses = notes.map { $0.toStatus() }
-            }
-            if type == "accounts" || type == nil,
-               let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
-               let users = try? JSONDecoder().decode([MisskeyUser].self, from: data) {
-                accounts = users.map { $0.toAccount() }
+            
+            if query.hasPrefix("http://") || query.hasPrefix("https://") {
+                if let data = try? await makeMisskeyRequest(path: "ap/show", params: ["uri": query]),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let apType = json["type"] as? String,
+                   let object = json["object"] {
+                    if apType == "Note" {
+                        let objData = try JSONSerialization.data(withJSONObject: object)
+                        if let note = try? JSONDecoder().decode(MisskeyNote.self, from: objData) {
+                            statuses = [note.toStatus()]
+                        }
+                    } else if apType == "User" {
+                        let objData = try JSONSerialization.data(withJSONObject: object)
+                        if let user = try? JSONDecoder().decode(MisskeyUser.self, from: objData) {
+                            accounts = [user.toAccount()]
+                        }
+                    }
+                }
+            } else {
+                if type == "statuses" || type == nil,
+                   let data = try? await makeMisskeyRequest(path: "notes/search", params: ["query": query]),
+                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
+                    statuses = notes.map { $0.toStatus() }
+                }
+                if type == "accounts" || type == nil,
+                   let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
+                   let users = try? JSONDecoder().decode([MisskeyUser].self, from: data) {
+                    accounts = users.map { $0.toAccount() }
+                }
             }
             return SearchResults(accounts: accounts, relationships: [], statuses: statuses, hashtags: []) as! Entity
 
