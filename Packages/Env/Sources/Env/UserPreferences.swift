@@ -103,7 +103,7 @@ import SwiftUI
     @AppStorage("hide_seen_posts_include_boosts") public var hideSeenPostsIncludeBoosts: Bool = true
     @AppStorage("hide_seen_posts_is_toggle") public var hideSeenPostsIsToggle: Bool = true
 
-    @AppStorage("show_hide_posts_without_media_toggle") public var showHidePostsWithoutMediaToggle: Bool = false
+    @AppStorage("show_hide_posts_without_media_toggle") public var showHidePostsWithoutMediaToggle: Bool = true
 
     @AppStorage("remote_media_auto_fallback") public var remoteMediaAutoFallback: Bool = true
     @AppStorage("remote_media_auto_fallback_delay") public var remoteMediaAutoFallbackDelay: Double = 10.0
