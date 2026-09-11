@@ -23,12 +23,28 @@ import Observation
     return 0
   }
 
+  public var pixelfedVersion: Float {
+    guard let stringVersion = instance?.version, stringVersion.contains("Pixelfed") else { return 0 }
+    if let range = stringVersion.range(of: "Pixelfed ") {
+        let substr = stringVersion[range.upperBound...]
+        let components = substr.split(separator: ".")
+        if components.count >= 2 {
+            let majorMinor = "\(components[0]).\(components[1])"
+            return Float(majorMinor) ?? 0
+        }
+    }
+    return 0
+  }
+
   public var isFiltersSupported: Bool {
     version >= 4
   }
 
   public var isEditSupported: Bool {
-    version >= 3.5
+    if client?.isPixelfed == true {
+      return pixelfedVersion >= 0.11
+    }
+    return version >= 3.5
   }
 
   public var isEditAltTextSupported: Bool {

@@ -14,7 +14,7 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
             supportsFollowNotifications: true,
             supportsFollowedTags: false, // Pixelfed probably doesn't have followed tags?
             supportsAccountMetrics: false, // Account metrics are Mastodon specific
-            supportsStatusEditing: false, // Pixelfed doesn't support edit?
+            supportsStatusEditing: true, // Pixelfed 0.11+ supports edit (gated by CurrentInstance)
             supportsTrendingLinks: false, // Pixelfed is images only
             supportsNativeMessaging: false
         )
