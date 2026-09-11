@@ -782,11 +782,19 @@ public final class MisskeyBackend: FediverseBackend {
         if path == "statuses" {
             let data = try await makeMisskeyRequest(path: "notes/create", params: params)
             // notes/create returns { "createdNote": { ... } }
-            if let response = try? JSONDecoder().decode(NoteCreateResponse.self, from: data) {
+            // If decoding fails, surface the raw response as a server error so the
+            // user sees something useful instead of a generic "Decoding Error".
+            do {
+                let response = try JSONDecoder().decode(NoteCreateResponse.self, from: data)
                 return response.createdNote.toStatus() as! Entity
+            } catch {
+                let body = String(data: data, encoding: .utf8) ?? "no body"
+                print("[MisskeyBackend] notes/create decode failed: \(error)\nRaw response: \(body)")
+                throw FediverseClient.ClientError.serverError(
+                    statusCode: 0,
+                    code: nil,
+                    message: "Post failed. Server response: \(body.prefix(200))")
             }
-            let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus() as! Entity
 
         } else if path == "markers" {
             // Marker is Codable-only. Decode a null stub so the caller gets the right type.
