@@ -6,6 +6,12 @@
   - Change description (e.g., optimizations, UX tweaks, fixing connection/polling freezes)
   - Impact on the app's offline/production readiness.
 
+## 📝 Git Commit Guidelines
+- **DETAILED COMMIT MESSAGES ARE MANDATORY**: When executing `git commit`, you MUST always provide detailed, descriptive commit messages. Do not use generic messages like "Update file" or "Fix bug".
+  - Summarize the high-level functional change.
+  - Briefly list what was added, modified, or fixed.
+  - Explain *why* the change was made if it's not immediately obvious.
+
 ## 📚 Documentation & README Guideline
 - You MUST maintain the following core documentation files for this project:
   1. `/README.md` (Update after modifying compiling flows, APIs, local scripts, or offline setups)
