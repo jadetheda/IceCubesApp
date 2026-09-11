@@ -234,7 +234,7 @@ Button {
           } label: {
             Label("status.action.edit", systemImage: "pencil")
           }
-        } else if client.isMisskey {
+        } else if client.isMisskey || client.isPixelfed {
           Button {
             isRedraftConfirmationPresented = true
           } label: {

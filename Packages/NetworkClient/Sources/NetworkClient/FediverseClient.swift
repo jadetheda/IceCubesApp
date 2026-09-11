@@ -64,6 +64,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   
   public var isAuth: Bool { backend.isAuth }
   public var isMisskey: Bool { backend is MisskeyBackend }
+  public var isPixelfed: Bool { backend is PixelfedBackend }
   public var isIceShrimpWorkaroundsEnabled: Bool { backend.isIceShrimpWorkaroundsEnabled }
   public var oauthToken: OauthToken? { backend.oauthToken }
   public var capabilities: ServerCapabilities { backend.capabilities }
@@ -75,6 +76,8 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     self.version = version
     
     switch serverSoftware.lowercased() {
+    case "pixelfed":
+        self.backend = PixelfedBackend(server: server, version: version, oauthToken: oauthToken)
     case "iceshrimp":
         self.backend = IceShrimpBackend(server: server, version: version, oauthToken: oauthToken)
     case "misskey":
@@ -114,6 +117,10 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
       }
       
       let name = software.lowercased()
+      if name.contains("pixelfed") {
+        await serverSoftwareCache.set("pixelfed", for: cacheKey)
+        return "pixelfed"
+      }
       if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
         await serverSoftwareCache.set("misskey", for: cacheKey)
         return "misskey"
