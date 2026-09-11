@@ -12,6 +12,11 @@
   - Briefly list what was added, modified, or fixed.
   - Explain *why* the change was made if it's not immediately obvious.
 
+## 🛑 Privacy & Anti-Doxxing Mandate
+- **NEVER LEAK PERSONAL INFORMATION**: You MUST NEVER reveal, hardcode, or leak the user's personal information (such as real name, email address, physical location, usernames, or private credentials) in any generated code, documentation, logs, or commit messages. 
+- Always use generic placeholders (e.g., `user@example.com`, `John Doe`) if sample data is required. 
+- Protect the user's identity and privacy at all times.
+
 ## 📚 Documentation & README Guideline
 - You MUST maintain the following core documentation files for this project:
   1. `/README.md` (Update after modifying compiling flows, APIs, local scripts, or offline setups)
