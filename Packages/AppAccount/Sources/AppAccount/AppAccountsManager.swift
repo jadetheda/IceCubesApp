@@ -83,13 +83,21 @@ import SwiftUI
          }
          
          if softwareName == "mastodon", let url = URL(string: "https://\(account.server)/nodeinfo/2.0") {
-           let (data, _) = try await URLSession.shared.data(from: url)
+           let (data, response) = try await URLSession.shared.data(from: url)
+           if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 500 {
+              throw URLError(.badServerResponse)
+           }
            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let software = json["software"] as? [String: Any],
               let name = software["name"] as? String {
-              softwareName = name.lowercased()
-              if softwareName.contains("iceshrimp") {
+              let lowerName = name.lowercased()
+              if lowerName.contains("iceshrimp") {
+                 softwareName = "iceshrimp"
                  isShrimp = true
+              } else if lowerName.contains("misskey") || lowerName.contains("firefish") || lowerName.contains("calckey") || lowerName.contains("sharkey") {
+                 softwareName = "misskey"
+              } else {
+                 softwareName = lowerName
               }
            }
          }

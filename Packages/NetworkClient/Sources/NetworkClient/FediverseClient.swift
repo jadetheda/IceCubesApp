@@ -8,17 +8,23 @@ import os
 
 @Observable
 public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable {
-  private actor ServerSoftwareCache {
+    private actor ServerSoftwareCache {
     private var values: [String: String] = [:]
-
+    init() {
+      if let data = UserDefaults.standard.data(forKey: "serverSoftwareCache"),
+         let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
+         self.values = decoded
+      }
+    }
     func value(for server: String) -> String? {
       values[server]
     }
-
     func set(_ software: String, for server: String) {
       values[server] = software
+      if let data = try? JSONEncoder().encode(values) {
+        UserDefaults.standard.set(data, forKey: "serverSoftwareCache")
+      }
     }
-
   }
 
   private static let serverSoftwareCache = ServerSoftwareCache()
@@ -91,9 +97,14 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     
     do {
       let (data, response) = try await URLSession.shared.data(from: url)
-      if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
-        await serverSoftwareCache.set("mastodon", for: cacheKey)
-        return "mastodon"
+      if let httpResponse = response as? HTTPURLResponse {
+        if httpResponse.statusCode >= 500 {
+            // Server error, do not permanently cache
+            return "mastodon"
+        } else if httpResponse.statusCode >= 400 {
+            await serverSoftwareCache.set("mastodon", for: cacheKey)
+            return "mastodon"
+        }
       }
       
       guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
