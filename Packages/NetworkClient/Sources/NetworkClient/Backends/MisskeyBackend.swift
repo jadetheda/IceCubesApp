@@ -142,14 +142,19 @@ public final class MisskeyBackend: FediverseBackend {
             let fallback = String(data: data, encoding: .utf8) ?? "HTTP \(httpResponse.statusCode)"
             throw FediverseClient.ClientError.serverError(
                 statusCode: httpResponse.statusCode,
-                code: apiError?.code,
-                message: apiError?.message ?? fallback)
+                code: apiError?.error?.code ?? apiError?.code,
+                message: apiError?.error?.message ?? apiError?.message ?? fallback)
         }
 
         return data
     }
 
     private struct MisskeyAPIError: Decodable {
+        struct ErrorDetails: Decodable {
+            let message: String?
+            let code: String?
+        }
+        let error: ErrorDetails?
         let message: String?
         let code: String?
     }
@@ -180,8 +185,23 @@ public final class MisskeyBackend: FediverseBackend {
            let data = try? JSONEncoder().encode(jsonValue),
            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             // Map common Mastodon post fields to their Misskey equivalents.
-            if let status = dict["status"] as? String { params["text"] = status }
-            if let visibility = dict["visibility"] as? String { params["visibility"] = visibility }
+            if let status = dict["status"] as? String {
+                if !status.isEmpty { params["text"] = status }
+            }
+            if let visibility = dict["visibility"] as? String {
+                var misskeyVis = visibility
+                if visibility == "unlisted" { misskeyVis = "home" }
+                else if visibility == "private" { misskeyVis = "followers" }
+                else if visibility == "direct" { misskeyVis = "specified" }
+                params["visibility"] = misskeyVis
+            }
+            if let poll = dict["poll"] as? [String: Any] {
+                var misskeyPoll: [String: Any] = [:]
+                if let options = poll["options"] as? [String] { misskeyPoll["choices"] = options }
+                if let multiple = poll["multiple"] as? Bool { misskeyPoll["multiple"] = multiple }
+                if let expiresIn = poll["expires_in"] as? Int { misskeyPoll["expiredAfter"] = expiresIn * 1000 }
+                params["poll"] = misskeyPoll
+            }
             if let inReplyToId = dict["inReplyToId"] as? String { params["replyId"] = inReplyToId }
             if let mediaIds = dict["mediaIds"] as? [String] { params["fileIds"] = mediaIds }
             if let cw = dict["spoilerText"] as? String, !cw.isEmpty { params["cw"] = cw }

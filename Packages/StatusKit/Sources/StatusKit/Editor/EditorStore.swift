@@ -354,6 +354,22 @@ extension StatusEditor {
         if let error = error as? Models.ServerError {
           postingError = error.error
           showPostingErrorAlert = true
+        } else if let error = error as? FediverseClient.ClientError {
+          switch error {
+          case .serverError(_, _, let message):
+            postingError = message
+            showPostingErrorAlert = true
+          case .unexpectedRequest:
+            postingError = "Unexpected request"
+            showPostingErrorAlert = true
+          }
+        } else if let error = error as? DecodingError {
+          postingError = "Decoding Error: \(error.localizedDescription)"
+          showPostingErrorAlert = true
+        } else {
+          postingError = "Error: \(error.localizedDescription)"
+          showPostingErrorAlert = true
+        }
         }
         if let postError = error as? PostError {
           postingError = postError.description
