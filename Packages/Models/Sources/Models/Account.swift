@@ -130,21 +130,24 @@ public final class Account: Codable, Identifiable, Hashable, Sendable, Equatable
     id = try container.decode(String.self, forKey: .id)
     username = try container.decode(String.self, forKey: .username)
     displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
-    avatar = try container.decode(URL.self, forKey: .avatar)
-    header = try container.decode(URL.self, forKey: .header)
-    acct = try container.decode(String.self, forKey: .acct)
-    note = try container.decode(HTMLString.self, forKey: .note)
-    createdAt = try container.decode(ServerDate.self, forKey: .createdAt)
+    let avatarStr = try? container.decodeIfPresent(String.self, forKey: .avatar)
+    avatar = URL(string: avatarStr ?? "") ?? URL(string: "https://placeholder")!
+    
+    let headerStr = try? container.decodeIfPresent(String.self, forKey: .header)
+    header = URL(string: headerStr ?? "") ?? URL(string: "https://placeholder")!
+    acct = (try? container.decode(String.self, forKey: .acct)) ?? username
+    note = (try? container.decode(HTMLString.self, forKey: .note)) ?? .init(stringValue: "")
+    createdAt = (try? container.decode(ServerDate.self, forKey: .createdAt)) ?? ServerDate()
     followersCount = try container.decodeIfPresent(Int.self, forKey: .followersCount)
     followingCount = try container.decodeIfPresent(Int.self, forKey: .followingCount)
     statusesCount = try container.decodeIfPresent(Int.self, forKey: .statusesCount)
     lastStatusAt = try container.decodeIfPresent(String.self, forKey: .lastStatusAt)
-    fields = try container.decode([Account.Field].self, forKey: .fields)
-    locked = try container.decode(Bool.self, forKey: .locked)
-    emojis = try container.decode([Emoji].self, forKey: .emojis)
+    fields = (try? container.decode([Account.Field].self, forKey: .fields)) ?? []
+    locked = (try? container.decodeIfPresent(Bool.self, forKey: .locked)) ?? false
+    emojis = (try? container.decode([Emoji].self, forKey: .emojis)) ?? []
     url = try container.decodeIfPresent(URL.self, forKey: .url)
     source = try container.decodeIfPresent(Account.Source.self, forKey: .source)
-    bot = try container.decode(Bool.self, forKey: .bot)
+    bot = (try? container.decodeIfPresent(Bool.self, forKey: .bot)) ?? false
     discoverable = try container.decodeIfPresent(Bool.self, forKey: .discoverable)
     moved = try container.decodeIfPresent(Account.self, forKey: .moved)
 
