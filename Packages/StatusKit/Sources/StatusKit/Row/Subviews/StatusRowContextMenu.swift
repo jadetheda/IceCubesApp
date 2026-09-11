@@ -240,6 +240,17 @@ Button {
           } label: {
             Label("Delete and redraft", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
           }
+          .confirmationDialog(
+            "Delete and redraft this post?",
+            isPresented: $isRedraftConfirmationPresented,
+            titleVisibility: .visible
+          ) {
+            Button("Delete and redraft", role: .destructive) {
+              let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
+              viewModel.routerPath.presentedSheet = .redraftStatusEditor(status: status)
+            }
+            Button("Cancel", role: .cancel) {}
+          }
         }
         Button(
           role: .destructive,
@@ -278,17 +289,6 @@ Button {
                           id: operationAccount.id, json: MuteData(duration: duration.rawValue)))
                     } catch {}
                   }
-                }
-                .confirmationDialog(
-                  "Delete and redraft this post?",
-                  isPresented: $isRedraftConfirmationPresented,
-                  titleVisibility: .visible
-                ) {
-                  Button("Delete and redraft", role: .destructive) {
-                    let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
-                    viewModel.routerPath.presentedSheet = .redraftStatusEditor(status: status)
-                  }
-                  Button("Cancel", role: .cancel) {}
                 }
               }
             } label: {

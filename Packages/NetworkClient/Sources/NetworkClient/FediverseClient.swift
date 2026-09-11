@@ -136,22 +136,6 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     }
   }
 
-    let name = software.lowercased()
-    if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
-      await serverSoftwareCache.set("misskey", for: cacheKey)
-      return "misskey"
-    }
-    if name.contains("iceshrimp") {
-      await serverSoftwareCache.set("iceshrimp", for: cacheKey)
-      return "iceshrimp"
-    }
-    if name.contains("peertube") {
-      await serverSoftwareCache.set("peertube", for: cacheKey)
-      return "peertube"
-    }
-    await serverSoftwareCache.set("mastodon", for: cacheKey)
-    return "mastodon"
-  }
 
   public func oauthURL() async throws -> URL {
     return try await backend.oauthURL()
