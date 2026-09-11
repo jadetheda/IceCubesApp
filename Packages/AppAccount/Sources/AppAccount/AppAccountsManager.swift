@@ -94,6 +94,10 @@ import SwiftUI
            }
          }
     } catch {
+        Task {
+            try? await Task.sleep(for: .seconds(10))
+            await self.updateServerSoftware(for: account)
+        }
         return // Don't save if we just failed to fetch due to network
     }
     

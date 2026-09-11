@@ -84,9 +84,13 @@ struct StatusRowContextMenu: View {
           }
         } label: {
           Label(
-            statusDataController.isFavorited
-              ? "status.action.unfavorite" : "status.action.favorite",
-            systemImage: statusDataController.isFavorited ? "star.fill" : "star")
+            theme.actionIsLike
+                ? (statusDataController.isFavorited ? "Unlike" : "Like")
+                : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite"),
+            systemImage: theme.actionIsLike
+                ? (statusDataController.isFavorited ? "heart.fill" : "heart")
+                : (statusDataController.isFavorited ? "star.fill" : "star")
+          )
         }
 
         Button {
