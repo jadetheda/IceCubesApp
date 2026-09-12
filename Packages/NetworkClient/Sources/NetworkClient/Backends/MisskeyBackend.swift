@@ -538,8 +538,10 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                     var resolved = false
                     if parts.count == 2 {
                         var userParams: [String: Any] = ["username": parts[0]]
-                        if parts[1] != self.server {
+                        if parts[1].lowercased() != self.server.lowercased() {
                             userParams["host"] = parts[1]
+                        } else {
+                            userParams["host"] = NSNull()
                         }
                         if let data = try? await makeMisskeyRequest(path: "users/show", params: userParams),
                            let user = try? JSONDecoder().decode(MisskeyUser.self, from: data) {
@@ -547,7 +549,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                             resolved = true
                         }
                     } else if parts.count == 1 {
-                        if let data = try? await makeMisskeyRequest(path: "users/show", params: ["username": parts[0]]),
+                        if let data = try? await makeMisskeyRequest(path: "users/show", params: ["username": parts[0], "host": NSNull()]),
                            let user = try? JSONDecoder().decode(MisskeyUser.self, from: data) {
                             accounts = [user.toAccount(server: self.server)]
                             resolved = true
@@ -555,7 +557,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                     }
                     
                     if !resolved,
-                       let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
+                       let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": parts[0]]),
                        let users = try? JSONDecoder().decode([MisskeyUser].self, from: data) {
                         accounts = users.map { $0.toAccount(server: self.server) }
                     }
