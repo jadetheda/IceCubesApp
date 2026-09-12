@@ -341,6 +341,9 @@ public struct GalleryMediaCell: View {
   @State private var isShareAsImageSheetPresented = false
   @State private var autoFallbackTriggered = false
   @State private var imageLoaded = false
+  @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
+  @Environment(CurrentAccount.self) private var currentAccount
   @State private var loadTask: Task<Void, Never>? = nil
 
   public var body: some View {
