@@ -11,7 +11,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     private actor ServerSoftwareCache {
     private var values: [String: String] = [:]
     init() {
-      if let data = UserDefaults.standard.data(forKey: "serverSoftwareCache"),
+      if let data = UserDefaults.standard.data(forKey: "serverSoftwareCacheV2"),
          let decoded = try? JSONDecoder().decode([String: String].self, from: data) {
          self.values = decoded
       }
@@ -22,7 +22,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     func set(_ software: String, for server: String) {
       values[server] = software
       if let data = try? JSONEncoder().encode(values) {
-        UserDefaults.standard.set(data, forKey: "serverSoftwareCache")
+        UserDefaults.standard.set(data, forKey: "serverSoftwareCacheV2")
       }
     }
   }
@@ -99,7 +99,9 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
     guard let url = URL(string: "https://\(server)/nodeinfo/2.0") else { return "mastodon" }
     
     do {
-      let (data, response) = try await URLSession.shared.data(from: url)
+      var request = URLRequest(url: url)
+      request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
+      let (data, response) = try await URLSession.shared.data(for: request)
       if let httpResponse = response as? HTTPURLResponse {
         if httpResponse.statusCode >= 500 {
             // Server error, do not permanently cache

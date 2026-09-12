@@ -95,6 +95,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   private func makeURLRequest(url: URL, endpoint: Endpoint, httpMethod: String) -> URLRequest {
     var request = URLRequest(url: url)
     request.httpMethod = httpMethod
+    request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
     if let oauthToken = critical.withLock({ $0.oauthToken }) {
       request.setValue("Bearer \(oauthToken.accessToken)", forHTTPHeaderField: "Authorization")
     }

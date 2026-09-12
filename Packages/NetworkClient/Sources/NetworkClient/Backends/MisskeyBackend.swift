@@ -158,6 +158,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
         let url = URL(string: "https://\(server)/api/\(path)")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
 
         var bodyParams = params

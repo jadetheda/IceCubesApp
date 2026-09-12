@@ -63,7 +63,13 @@ import SwiftUI
 
   public func updateServerSoftware(for account: AppAccount) async {
     if account.serverSoftware != nil {
-      return
+      let hasReverified = UserDefaults.standard.bool(forKey: "didReverifyMastodonAccountsV2")
+      if account.serverSoftware == "mastodon" && !hasReverified {
+         // Allow one-time re-verification for Mastodon accounts to heal Cloudflare 403 misclassifications
+         UserDefaults.standard.set(true, forKey: "didReverifyMastodonAccountsV2")
+      } else {
+         return
+      }
     }
     
     var softwareName = "mastodon"
@@ -87,7 +93,9 @@ import SwiftUI
          }
          
          if softwareName == "mastodon", let url = URL(string: "https://\(account.server)/nodeinfo/2.0") {
-           let (data, response) = try await URLSession.shared.data(from: url)
+           var request = URLRequest(url: url)
+           request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
+           let (data, response) = try await URLSession.shared.data(for: request)
            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 500 {
               throw URLError(.badServerResponse)
            }
