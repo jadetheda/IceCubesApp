@@ -52,7 +52,7 @@ extension MisskeyNote {
             let renoteCreatedAt = parseFediverseDate(renote.createdAt)
             reblog = ReblogStatus(
                 id: renote.id,
-                content: htmlString(from: renote.text),
+                content: htmlString(from: renote.text, server: server),
                 account: renote.user.toAccount(server: server),
                 createdAt: ServerDate(date: renoteCreatedAt),
                 editedAt: nil,
@@ -63,16 +63,17 @@ extension MisskeyNote {
                 favouritesCount: renote.reactions?.values.reduce(0, +) ?? 0,
                 card: nil,
                 favourited: renote.myReaction != nil,
-                reblogged: false,
-                pinned: false,
+                reblogged: false, // will be handled by UI layer if it's the current user's reblog
                 bookmarked: false,
-                emojis: [],
+                emojis: renote.emojis?.emojis.map {
+                    Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
+                } ?? [],
                 url: renoteUrl,
                 application: nil,
                 inReplyToId: renote.replyId,
                 inReplyToAccountId: nil,
                 visibility: mapVisibility(renote.visibility),
-                poll: nil,
+                poll: renote.poll?.toPoll(noteId: renote.id),
                 spoilerText: HTMLString(stringValue: renote.cw ?? ""),
                 filtered: [],
                 sensitive: renote.files?.contains(where: { $0.isSensitive == true }) ?? false,
@@ -84,9 +85,11 @@ extension MisskeyNote {
             )
         }
 
+        let noteUrl = self.url ?? self.uri ?? "https://\(server)/notes/\(self.id)"
+
         return Status(
             id: self.id,
-            content: htmlString(from: self.text),
+            content: htmlString(from: self.text, server: server),
             account: account,
             createdAt: ServerDate(date: createdAtDate),
             editedAt: nil,
@@ -135,7 +138,7 @@ extension MisskeyNote {
     // linkify URLs, and build the markdown string the UI uses for rendering.
     // HTMLString(stringValue:) treats input as plain text — it does NOT parse HTML.
     // Only init(from: Decoder) triggers the SwiftSoup pipeline, so we JSON-decode.
-    private func htmlString(from text: String?) -> HTMLString {
+    private func htmlString(from text: String?, server: String) -> HTMLString {
         guard let text, !text.isEmpty else { return HTMLString(stringValue: "") }
 
         // Convert bare newlines to <br> for the HTML parser.
@@ -149,6 +152,28 @@ extension MisskeyNote {
                 range: NSRange(html.startIndex..., in: html),
                 withTemplate: "<a href=\"$1\">$1</a>"
             )
+        }
+        
+        // Mention linkification
+        let mentionPattern = "(^|[\\s<br>])@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)*))?"
+        if let regex = try? NSRegularExpression(pattern: mentionPattern) {
+            let nsString = html as NSString
+            let matches = regex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                let fullMatchRange = match.range
+                let prefixRange = match.range(at: 1)
+                let usernameRange = match.range(at: 2)
+                let domainRange = match.range(at: 3)
+                
+                let prefix = prefixRange.location != NSNotFound ? nsString.substring(with: prefixRange) : ""
+                let username = nsString.substring(with: usernameRange)
+                let domain = domainRange.location != NSNotFound ? nsString.substring(with: domainRange) : server
+                
+                let displayString = domainRange.location != NSNotFound ? "@\(username)@\(domain)" : "@\(username)"
+                let replacement = "\(prefix)<a href=\"https://\(domain)/@\(username)\" class=\"u-url mention\">\(displayString)</a>"
+                
+                html = (html as NSString).replacingCharacters(in: fullMatchRange, with: replacement)
+            }
         }
 
         // Encode the generated HTML as a JSON string so all control characters
