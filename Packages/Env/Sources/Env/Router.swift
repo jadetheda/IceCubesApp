@@ -195,6 +195,20 @@ public enum SettingsStartingPoint {
         }
         return .handled
       }
+    } else if url.pathComponents.count >= 2 && url.pathComponents[url.pathComponents.count - 2] == "users" {
+      Task {
+        await navigateToAccountFrom(url: url)
+      }
+      return .handled
+    } else if url.lastPathComponent.first == "@",
+      let host = url.host,
+      !host.hasPrefix("www")
+    {
+      let acct = "\(url.lastPathComponent)@\(host)"
+      Task {
+        await navigateToAccountFrom(acct: acct, url: url)
+      }
+      return .handled
     }
     return urlHandler?(url) ?? .systemAction
   }
