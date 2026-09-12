@@ -23,6 +23,8 @@ public struct StatusRowView: View {
   @Environment(UserPreferences.self) private var userPreferences
   @Environment(FediverseClient.self) private var client
   @Environment(ToastCenter.self) private var toastCenter
+  @Environment(CurrentAccount.self) private var currentAccount
+  @Environment(StatusDataController.self) private var statusDataController
 
   @State private var showSelectableText: Bool = false
   @State private var isShareAsImageSheetPresented: Bool = false
@@ -242,6 +244,7 @@ public struct StatusRowView: View {
     .alignmentGuide(.listRowSeparatorLeading) { _ in
       -100
     }
+    .sheet(isPresented: $isShareAsImageSheetPresented, content: makeShareAsImageSheet)
     .sheet(isPresented: $showSelectableText) {
       let content =
         viewModel.status.reblog?.content.asSafeMarkdownAttributedString
@@ -453,3 +456,28 @@ public struct StatusRowView: View {
   .withPreviewsEnv()
   .environment(Theme.shared)
 }
+
+  private func makeShareAsImageSheet() -> some View {
+    let renderer = ImageRenderer(content: AnyView(shareCaptureView))
+    renderer.isOpaque = true
+    renderer.scale = 3.0
+    return StatusRowShareAsImageView(
+      viewModel: viewModel,
+      renderer: renderer
+    )
+    .tint(theme.tintColor)
+  }
+
+  private var shareCaptureView: some View {
+    HStack {
+      StatusRowView(viewModel: viewModel, context: .timeline)
+        .padding(8)
+    }
+    .background(theme.primaryBackgroundColor)
+    .frame(width: 400)
+    .environment(\.isInCaptureMode, true)
+    .environment(theme)
+    .environment(userPreferences)
+    .environment(statusDataController)
+    .environment(currentAccount)
+  }

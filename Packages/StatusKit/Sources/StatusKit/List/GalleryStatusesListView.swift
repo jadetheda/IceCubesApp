@@ -9,6 +9,8 @@ import SwiftUI
 @MainActor
 public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
   @Environment(Theme.self) private var theme
+  @Environment(CurrentAccount.self) private var currentAccount
+  @Environment(UserPreferences.self) private var userPreferences
   @Environment(RouterPath.self) private var routerPath
 
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -503,6 +505,7 @@ public struct GalleryMediaCell: View {
           )
         }
       )
+      .sheet(isPresented: $isShareAsImageSheetPresented, content: makeShareAsImageSheet)
       .confirmationDialog(
         "Delete and redraft this post?",
         isPresented: Binding(
@@ -572,4 +575,31 @@ public struct GalleryAspectRatioModifier: ViewModifier {
       content
     }
   }
+
+  private func makeShareAsImageSheet() -> some View {
+    guard let viewModel else { return AnyView(EmptyView()) }
+    let renderer = ImageRenderer(content: AnyView(shareCaptureView(viewModel: viewModel)))
+    renderer.isOpaque = true
+    renderer.scale = 3.0
+    return AnyView(StatusRowShareAsImageView(
+      viewModel: viewModel,
+      renderer: renderer
+    )
+    .tint(theme.tintColor))
+  }
+
+  private func shareCaptureView(viewModel: StatusRowViewModel) -> some View {
+    HStack {
+      StatusRowView(viewModel: viewModel, context: .timeline)
+        .padding(8)
+    }
+    .background(theme.primaryBackgroundColor)
+    .frame(width: 400)
+    .environment(\.isInCaptureMode, true)
+    .environment(theme)
+    .environment(userPreferences)
+    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
+    .environment(currentAccount)
+  }
+
 }
