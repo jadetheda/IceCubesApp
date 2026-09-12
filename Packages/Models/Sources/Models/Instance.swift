@@ -44,11 +44,34 @@ public struct Instance: Codable, Sendable, Hashable {
       public let streaming: URL?
       public let status: URL?
       public init(streaming: URL?, status: URL?) { self.streaming = streaming; self.status = status }
+      
+      enum CodingKeys: String, CodingKey {
+        case streaming, status
+      }
+      
+      public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let streamingString = try? container.decodeIfPresent(String.self, forKey: .streaming)
+        self.streaming = URL(string: streamingString ?? "")
+        let statusString = try? container.decodeIfPresent(String.self, forKey: .status)
+        self.status = URL(string: statusString ?? "")
+      }
     }
     public let urls: URLs?
     
     public init(statuses: Statuses, polls: Polls, urls: URLs?) {
       self.statuses = statuses; self.polls = polls; self.urls = urls
+    }
+    
+    enum CodingKeys: String, CodingKey {
+      case statuses, polls, urls
+    }
+    
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      self.statuses = (try? container.decodeIfPresent(Statuses.self, forKey: .statuses)) ?? Statuses(maxCharacters: 500, maxMediaAttachments: 4)
+      self.polls = (try? container.decodeIfPresent(Polls.self, forKey: .polls)) ?? Polls(maxOptions: 4, maxCharactersPerOption: 50, minExpiration: 300, maxExpiration: 2629746)
+      self.urls = try? container.decodeIfPresent(URLs.self, forKey: .urls)
     }
   }
 
@@ -59,6 +82,16 @@ public struct Instance: Codable, Sendable, Hashable {
 
   public struct URLs: Codable, Sendable {
     public let streamingApi: URL?
+    
+    enum CodingKeys: String, CodingKey {
+      case streamingApi
+    }
+    
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      let streamingString = try? container.decodeIfPresent(String.self, forKey: .streamingApi)
+      self.streamingApi = URL(string: streamingString ?? "")
+    }
   }
 
   public struct APIVersions: Codable, Sendable {
@@ -69,6 +102,16 @@ public struct Instance: Codable, Sendable, Hashable {
     public let account: Account?
     public let email: String
     public init(account: Account?, email: String) { self.account = account; self.email = email }
+    
+    enum CodingKeys: String, CodingKey {
+      case account, email
+    }
+    
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      self.account = try? container.decodeIfPresent(Account.self, forKey: .account)
+      self.email = (try? container.decodeIfPresent(String.self, forKey: .email)) ?? ""
+    }
   }
 
   public struct Registrations: Codable, Sendable {
@@ -79,6 +122,16 @@ public struct Instance: Codable, Sendable, Hashable {
   public struct Thumbnail: Codable, Sendable {
     public let url: URL?
     public init(url: URL?) { self.url = url }
+    
+    enum CodingKeys: String, CodingKey {
+      case url
+    }
+    
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      let urlString = try? container.decodeIfPresent(String.self, forKey: .url)
+      self.url = URL(string: urlString ?? "")
+    }
   }
 
   public let title: String
@@ -113,5 +166,28 @@ public struct Instance: Codable, Sendable, Hashable {
     self.rules = rules
     self.urls = urls
     self.contact = contact
+  }
+  
+  enum CodingKeys: String, CodingKey {
+    case title, domain, description, shortDescription, version, apiVersions, stats, usage, languages, registrations, thumbnail, configuration, rules, urls, contact
+  }
+  
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.title = (try? container.decodeIfPresent(String.self, forKey: .title)) ?? ""
+    self.domain = (try? container.decodeIfPresent(String.self, forKey: .domain)) ?? ""
+    self.description = try? container.decodeIfPresent(String.self, forKey: .description)
+    self.shortDescription = try? container.decodeIfPresent(String.self, forKey: .shortDescription)
+    self.version = (try? container.decodeIfPresent(String.self, forKey: .version)) ?? ""
+    self.apiVersions = try? container.decodeIfPresent(APIVersions.self, forKey: .apiVersions)
+    self.stats = try? container.decodeIfPresent(Stats.self, forKey: .stats)
+    self.usage = try? container.decodeIfPresent(Usage.self, forKey: .usage)
+    self.languages = try? container.decodeIfPresent([String].self, forKey: .languages)
+    self.registrations = (try? container.decodeIfPresent(Registrations.self, forKey: .registrations)) ?? Registrations(enabled: false)
+    self.thumbnail = (try? container.decodeIfPresent(Thumbnail.self, forKey: .thumbnail)) ?? Thumbnail(url: nil)
+    self.configuration = try? container.decodeIfPresent(Configuration.self, forKey: .configuration)
+    self.rules = try? container.decodeIfPresent([Rule].self, forKey: .rules)
+    self.urls = try? container.decodeIfPresent(URLs.self, forKey: .urls)
+    self.contact = (try? container.decodeIfPresent(Contact.self, forKey: .contact)) ?? Contact(account: nil, email: "")
   }
 }
