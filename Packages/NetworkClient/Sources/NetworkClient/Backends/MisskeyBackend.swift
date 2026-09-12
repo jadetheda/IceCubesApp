@@ -60,10 +60,12 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
         let cons = _connections
         connectionsLock.unlock()
         
-        if let rootHost = host.split(separator: ".", maxSplits: 1).last {
-            if cons.contains(host) || cons.contains(String(rootHost)) || host == server || String(rootHost) == server { return true }
+        let lowerHost = host.lowercased()
+        let lowerServer = server.lowercased()
+        if let rootHost = lowerHost.split(separator: ".", maxSplits: 1).last {
+            if cons.contains(lowerHost) || cons.contains(String(rootHost)) || lowerHost == lowerServer || String(rootHost) == lowerServer { return true }
         } else {
-            if cons.contains(host) || host == server { return true }
+            if cons.contains(lowerHost) || lowerHost == lowerServer { return true }
         }
         
         // Misskey's `instance/peers` equivalent is structurally incompatible with Mastodon's, 
@@ -543,15 +545,25 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                         } else {
                             userParams["host"] = NSNull()
                         }
-                        if let data = try? await makeMisskeyRequest(path: "users/show", params: userParams),
-                           let user = try? JSONDecoder().decode(MisskeyUser.self, from: data) {
+                        do {
+                            let data = try await makeMisskeyRequest(path: "users/show", params: userParams)
+                            let user = try JSONDecoder().decode(MisskeyUser.self, from: data)
                             accounts = [user.toAccount(server: self.server)]
+                            resolved = true
+                        } catch {
+                            let fakeAccount = Account(id: "error1", username: "\(String(describing: error).prefix(100))", displayName: "Error 1", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
+                            accounts = [fakeAccount]
                             resolved = true
                         }
                     } else if parts.count == 1 {
-                        if let data = try? await makeMisskeyRequest(path: "users/show", params: ["username": parts[0], "host": NSNull()]),
-                           let user = try? JSONDecoder().decode(MisskeyUser.self, from: data) {
+                        do {
+                            let data = try await makeMisskeyRequest(path: "users/show", params: ["username": parts[0], "host": NSNull()])
+                            let user = try JSONDecoder().decode(MisskeyUser.self, from: data)
                             accounts = [user.toAccount(server: self.server)]
+                            resolved = true
+                        } catch {
+                            let fakeAccount = Account(id: "error2", username: "\(String(describing: error).prefix(100))", displayName: "Error 2", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
+                            accounts = [fakeAccount]
                             resolved = true
                         }
                     }

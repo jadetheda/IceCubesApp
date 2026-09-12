@@ -1,0 +1,297 @@
+{
+  "meta": {
+    "subject": "Iceshrimp.NET Mastodon-compatible API — compatibility gap reference",
+    "source_instance": "possums.gay",
+    "source_instance_version": "2026.1.1-beta+8a7040e6ee",
+    "spec_used": "/openapi/mastodon.json (Swagger definition labeled 'Mastodon')",
+    "compared_against": "Official Mastodon API method index at https://docs.joinmastodon.org/methods/",
+    "purpose": "Use this to determine which Mastodon client API features will NOT work against an Iceshrimp.NET server, so a client app can gate or hide the relevant UI/features.",
+    "generated": "2026-07-24",
+    "caveat": "This reflects one instance's OpenAPI spec at one point in time (beta software, changes frequently). Streaming (WebSocket) endpoints are known to be implemented but are not documented in the REST OpenAPI spec, so they are excluded from this analysis rather than marked missing."
+  },
+  "status_legend": {
+    "not_implemented": "No corresponding endpoint exists at all",
+    "partial": "Some but not all endpoints in this feature area exist",
+    "path_diverges": "Feature is implemented but under a non-standard (Pleroma-style or Iceshrimp-specific) path instead of the official Mastodon route",
+    "supported": "Full parity with official Mastodon API for this feature area"
+  },
+  "categories": [
+    {
+      "name": "trends",
+      "status": "not_implemented",
+      "missing_endpoints": [
+        "GET /api/v1/trends/tags",
+        "GET /api/v1/trends/statuses",
+        "GET /api/v1/trends/links",
+        "GET /api/v2/instance (trends fields may be absent)"
+      ],
+      "notes": "No trending feed of any kind (tags, statuses, or links)."
+    },
+    {
+      "name": "admin",
+      "status": "not_implemented",
+      "missing_endpoints": [
+        "/api/v1/admin/accounts/*",
+        "/api/v1/admin/reports/*",
+        "/api/v1/admin/domain_allows/*",
+        "/api/v1/admin/domain_blocks/*",
+        "/api/v1/admin/email_domain_blocks/*",
+        "/api/v1/admin/ip_blocks/*",
+        "/api/v1/admin/canonical_email_blocks/*",
+        "/api/v1/admin/dimensions",
+        "/api/v1/admin/measures",
+        "/api/v1/admin/retention",
+        "/api/v1/admin/trends/*"
+      ],
+      "notes": "Entire Mastodon admin API surface is absent. Iceshrimp.NET implements its own separate admin/moderation API at /api/iceshrimp/admin/* and /api/iceshrimp/moderation/* with different shapes. A client's admin panel built against the standard Mastodon admin API will not function."
+    },
+    {
+      "name": "directory",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /api/v1/directory"]
+    },
+    {
+      "name": "suggestions",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /api/v1/suggestions", "DELETE /api/v1/suggestions/{account_id}"]
+    },
+    {
+      "name": "endorsements",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /api/v1/endorsements"]
+    },
+    {
+      "name": "domain_blocks_user_level",
+      "status": "not_implemented",
+      "missing_endpoints": [
+        "GET /api/v1/domain_blocks",
+        "POST /api/v1/domain_blocks",
+        "DELETE /api/v1/domain_blocks"
+      ]
+    },
+    {
+      "name": "followed_tags",
+      "status": "not_implemented",
+      "missing_endpoints": [
+        "GET /api/v1/followed_tags",
+        "GET /api/v1/tags/{id}",
+        "POST /api/v1/tags/{id}/follow",
+        "POST /api/v1/tags/{id}/unfollow"
+      ],
+      "notes": "Hashtag timelines can be viewed (GET /api/v1/timelines/tag/{hashtag}) but tags cannot be followed/unfollowed as first-class objects."
+    },
+    {
+      "name": "annual_reports",
+      "status": "not_implemented",
+      "missing_endpoints": ["/api/v1/annual_reports/*"]
+    },
+    {
+      "name": "collections",
+      "status": "not_implemented",
+      "missing_endpoints": ["/api/v1/collections/*"]
+    },
+    {
+      "name": "grouped_notifications",
+      "status": "not_implemented",
+      "missing_endpoints": ["/api/v2/notifications (grouped)"]
+    },
+    {
+      "name": "notification_policy_requests",
+      "status": "not_implemented",
+      "missing_endpoints": [
+        "GET/PATCH /api/v1/notifications/policy",
+        "GET /api/v1/notifications/requests",
+        "GET /api/v1/notifications/requests/{id}",
+        "POST /api/v1/notifications/requests/{id}/accept",
+        "POST /api/v1/notifications/requests/{id}/dismiss"
+      ],
+      "notes": "The 'filter notifications from people you don't follow' feature set is entirely absent."
+    },
+    {
+      "name": "oembed",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /api/oembed"]
+    },
+    {
+      "name": "proofs",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /api/v1/proofs"],
+      "notes": "Deprecated in modern Mastodon anyway; low priority."
+    },
+    {
+      "name": "async_refreshes",
+      "status": "not_implemented",
+      "missing_endpoints": ["/api/v1/async_refreshes/*"],
+      "notes": "Experimental Mastodon feature; low priority."
+    },
+    {
+      "name": "health",
+      "status": "not_implemented",
+      "missing_endpoints": ["GET /health"]
+    },
+    {
+      "name": "emails",
+      "status": "not_implemented",
+      "missing_endpoints": ["POST /api/v1/emails/confirmations"]
+    },
+    {
+      "name": "featured_tags",
+      "status": "partial",
+      "supported_endpoints": ["GET /api/v1/accounts/{id}/featured_tags"],
+      "missing_endpoints": [
+        "GET /api/v1/featured_tags",
+        "POST /api/v1/featured_tags",
+        "DELETE /api/v1/featured_tags/{id}",
+        "GET /api/v1/featured_tags/suggestions"
+      ],
+      "notes": "Can view another account's featured tags but cannot manage your own."
+    },
+    {
+      "name": "notifications_dismiss_clear",
+      "status": "partial",
+      "supported_endpoints": ["GET /api/v1/notifications", "GET /api/v1/notifications/{id}"],
+      "missing_endpoints": [
+        "POST /api/v1/notifications/clear",
+        "POST /api/v1/notifications/{id}/dismiss"
+      ],
+      "path_diverges_to": "POST /api/v1/pleroma/notifications/read",
+      "notes": "Read/dismiss functionality exists but under a Pleroma-style path, not the standard Mastodon route."
+    },
+    {
+      "name": "filters_v1",
+      "status": "not_implemented",
+      "missing_endpoints": ["/api/v1/filters (legacy v1 shape)"],
+      "notes": "Only /api/v2/filters is implemented. Low priority since v1 filters are deprecated upstream too."
+    },
+    {
+      "name": "instance_metadata_extras",
+      "status": "partial",
+      "supported_endpoints": [
+        "GET /api/v1/instance",
+        "GET /api/v2/instance",
+        "GET /api/v1/instance/rules",
+        "GET /api/v1/instance/translation_languages",
+        "GET /api/v1/instance/extended_description"
+      ],
+      "missing_endpoints": [
+        "GET /api/v1/instance/peers",
+        "GET /api/v1/instance/activity",
+        "GET /api/v1/instance/privacy_policy",
+        "GET /api/v1/instance/domain_blocks (public list)"
+      ]
+    },
+    {
+      "name": "reactions_and_quotes",
+      "status": "path_diverges",
+      "path_diverges_to": [
+        "GET/PUT/DELETE /api/v1/pleroma/statuses/{id}/reactions/{reaction}",
+        "GET /api/v1/pleroma/statuses/{id}/quotes"
+      ],
+      "notes": "Functionally present but under Pleroma-style paths rather than native Mastodon quote-post routes (e.g. no /api/v1/statuses/{id}/quotes)."
+    },
+    {
+      "name": "custom_emoji_duplicate_path",
+      "status": "path_diverges",
+      "supported_endpoints": ["GET /api/v1/custom_emojis"],
+      "path_diverges_to": "GET /api/v1/pleroma/emoji",
+      "notes": "Both paths return emoji; not a gap, just noting the duplicate/non-standard route."
+    },
+    {
+      "name": "bite",
+      "status": "path_diverges",
+      "notes": "Iceshrimp-specific extension (POST /api/v1/bite, /api/v1/users/{id}/bite, /api/v1/bites/{id}/bite_back, /api/v1/statuses/{id}/bite) with no equivalent in official Mastodon API. Purely additive, not a gap."
+    },
+    {
+      "name": "accounts",
+      "status": "supported",
+      "supported_endpoints": [
+        "GET/PATCH /api/v1/accounts/verify_credentials, update_credentials",
+        "GET /api/v1/accounts, /api/v1/accounts/{id}, /lookup, /search",
+        "POST follow, unfollow, remove_from_followers, mute, unmute, block, unblock, note",
+        "GET relationships, statuses, followers, following"
+      ]
+    },
+    {
+      "name": "statuses",
+      "status": "supported",
+      "supported_endpoints": [
+        "GET/PUT/DELETE /api/v1/statuses/{id}",
+        "POST /api/v1/statuses",
+        "context, favourite, unfavourite, reblog, unreblog, pin, unpin, mute, unmute",
+        "source, favourited_by, reblogged_by, history"
+      ],
+      "missing_endpoints": ["POST /api/v1/statuses/{id}/translate"]
+    },
+    {
+      "name": "media",
+      "status": "supported",
+      "supported_endpoints": ["POST/PUT/GET /api/v1/media and /api/v2/media"]
+    },
+    {
+      "name": "polls",
+      "status": "supported",
+      "supported_endpoints": ["GET /api/v1/polls/{id}", "POST /api/v1/polls/{id}/votes"]
+    },
+    {
+      "name": "scheduled_statuses",
+      "status": "supported"
+    },
+    {
+      "name": "timelines",
+      "status": "supported",
+      "supported_endpoints": ["home", "public", "bubble (Iceshrimp-specific)", "direct", "tag/{hashtag}", "list/{id}"]
+    },
+    {
+      "name": "lists",
+      "status": "supported"
+    },
+    {
+      "name": "markers",
+      "status": "supported"
+    },
+    {
+      "name": "conversations",
+      "status": "supported"
+    },
+    {
+      "name": "search",
+      "status": "supported",
+      "notes": "v2 search implemented; v1 search absent but deprecated upstream anyway."
+    },
+    {
+      "name": "push",
+      "status": "supported"
+    },
+    {
+      "name": "reports_submit",
+      "status": "supported",
+      "notes": "POST /api/v1/reports only — no admin-side report handling (see admin category)."
+    },
+    {
+      "name": "announcements",
+      "status": "supported"
+    },
+    {
+      "name": "blocks_mutes_bookmarks_favourites",
+      "status": "supported"
+    },
+    {
+      "name": "follow_requests",
+      "status": "supported"
+    },
+    {
+      "name": "preferences",
+      "status": "supported"
+    },
+    {
+      "name": "apps_oauth",
+      "status": "supported",
+      "notes": "apps/verify_credentials, POST apps, oauth/token, oauth/revoke present."
+    },
+    {
+      "name": "streaming",
+      "status": "unknown_excluded_from_analysis",
+      "notes": "WebSocket streaming API is reported elsewhere as implemented but is not documented in this REST-only OpenAPI spec, so its actual endpoint-level completeness could not be verified here."
+    }
+  ]
+}
