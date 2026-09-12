@@ -35,6 +35,7 @@ import SwiftUI
   var translation: Translation?
   var isLoadingTranslation: Bool = false
   var showDeleteAlert: Bool = false
+  var showRedraftAlert: Bool = false
   var showAppleTranslation = false
   var preferredTranslationType = TranslationType.useServerIfPossible {
     didSet {

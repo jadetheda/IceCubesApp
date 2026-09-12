@@ -504,6 +504,22 @@ public struct GalleryMediaCell: View {
         }
       )
       .confirmationDialog(
+        "Delete and redraft this post?",
+        isPresented: Binding(
+          get: { viewModel?.showRedraftAlert ?? false },
+          set: { viewModel?.showRedraftAlert = $0 }
+        ),
+        titleVisibility: .visible
+      ) {
+        Button("Delete and redraft", role: .destructive) {
+          if let viewModel {
+            let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
+            viewModel.routerPath.presentedSheet = .redraftStatusEditor(status: status)
+          }
+        }
+        Button("Cancel", role: .cancel) {}
+      }
+      .confirmationDialog(
         "",
         isPresented: $isBlockConfirmationPresented
       ) {

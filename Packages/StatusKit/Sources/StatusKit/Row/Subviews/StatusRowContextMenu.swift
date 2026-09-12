@@ -22,9 +22,7 @@ struct StatusRowContextMenu: View {
   @Binding var showTextForSelection: Bool
   @Binding var isBlockConfirmationPresented: Bool
   @Binding var isShareAsImageSheetPresented: Bool
-  @State private var isRedraftConfirmationPresented = false
-
-  var boostLabel: some View {
+    var boostLabel: some View {
     if viewModel.status.visibility == .priv, viewModel.status.account.id == account.account?.id {
       if statusDataController.isReblogged {
         return Label("status.action.unboost", systemImage: "lock.rotation")
@@ -236,20 +234,9 @@ Button {
           }
         } else if client.isMisskey || client.isPixelfed {
           Button {
-            isRedraftConfirmationPresented = true
+            viewModel.showRedraftAlert = true
           } label: {
             Label("Delete and redraft", systemImage: "arrow.trianglehead.2.clockwise.rotate.90")
-          }
-          .confirmationDialog(
-            "Delete and redraft this post?",
-            isPresented: $isRedraftConfirmationPresented,
-            titleVisibility: .visible
-          ) {
-            Button("Delete and redraft", role: .destructive) {
-              let status = viewModel.status.reblogAsAsStatus ?? viewModel.status
-              viewModel.routerPath.presentedSheet = .redraftStatusEditor(status: status)
-            }
-            Button("Cancel", role: .cancel) {}
           }
         }
         Button(

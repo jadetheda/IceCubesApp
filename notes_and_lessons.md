@@ -37,3 +37,10 @@ When tracking image load success states (e.g. `onLoaded` closures triggered by `
   While `handle(url:)` correctly intercepted `@` URLs and native ActivityPub `/users/UUID` URLs, `handleStatus` completely lacked these specific intercept blocks. It only checked Mastodon's `status.mentions` array (which is empty for Misskey posts) and then checked if the URL ended in a numeric ID (`Int(url.lastPathComponent)`). Because `@username` is not a number, it failed all checks and forcefully fell through to the `urlHandler` (the in-app `SFSafariViewController`).
 - **The Fix:** Duplicated the precise `@` handling and `/users/` interception logic from `handle(url:)` into the bottom of `handleStatus`. This successfully hijacks the tap before it falls to Safari, extracts the identifier, and routes it directly into the `FediverseBackend` for native API resolution.
 - **Lesson Learned:** If a tap behaves radically differently depending on *where* it is on the screen, immediately check the SwiftUI view hierarchy for localized `.environment(\.openURL, ...)` overrides rather than exclusively debugging the backend API logic.
+
+## 🚨 Ongoing IceShrimp Bugs (To-Do)
+- Trending appears to be broken in IceShrimp.
+- Adding a remote local timeline for certain domains (like `aethy.com`) fails with a "not a valid instance" error. Needs investigation into how the instance validation API check is structured.
+
+## 🎉 IceShrimp Remote Media Victory
+- Remote media (videos, animations, etc.) for IceShrimp is officially loading flawlessly! All previous remote media fixes have successfully applied.
