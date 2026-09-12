@@ -3,7 +3,7 @@ import Models
 
 extension FeedViewPost {
     public func toStatus() -> Status {
-        let createdAtDate = ISO8601DateFormatter().date(from: self.post.indexedAt) ?? Date()
+        let createdAtDate = parseFediverseDate(self.post.indexedAt)
         
         return Status(
             id: self.post.cid,

@@ -1,12 +1,35 @@
 import Foundation
 import Models
 
+private let fediverseDateFormatterWithFraction: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+}()
+
+private let fediverseDateFormatterStandard: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+}()
+
+internal func parseFediverseDate(_ string: String?) -> Date {
+    guard let string = string else { return Date() }
+    if let date = fediverseDateFormatterWithFraction.date(from: string) {
+        return date
+    }
+    if let date = fediverseDateFormatterStandard.date(from: string) {
+        return date
+    }
+    return Date()
+}
+
 // MARK: - MisskeyNote → Status
 
 extension MisskeyNote {
     public func toStatus(reblogged: Bool = false) -> Status {
         let account = self.user.toAccount()
-        let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
+        let createdAtDate = parseFediverseDate(self.createdAt)
 
         let favouritesCount = self.reactions?.values.reduce(0, +) ?? 0
         let favourited = self.myReaction != nil
@@ -26,7 +49,7 @@ extension MisskeyNote {
            self.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
         {
             let renoteUrl = renote.url ?? renote.uri ?? "https://misskey/\(renote.id)"
-            let renoteCreatedAt = ISO8601DateFormatter().date(from: renote.createdAt) ?? Date()
+            let renoteCreatedAt = parseFediverseDate(renote.createdAt)
             reblog = ReblogStatus(
                 id: renote.id,
                 content: htmlString(from: renote.text),
@@ -337,7 +360,7 @@ extension MisskeyNotification {
         default:                         mappedType = "mention"
         }
 
-        let createdAtDate = ISO8601DateFormatter().date(from: self.createdAt) ?? Date()
+        let createdAtDate = parseFediverseDate(self.createdAt)
 
         return Models.Notification(
             id: self.id,
@@ -356,7 +379,7 @@ extension MisskeyMessagingMessage {
             id: id,
             content: HTMLString(stringValue: text ?? ""),
             account: user.toAccount(),
-            createdAt: ServerDate(date: ISO8601DateFormatter().date(from: createdAt) ?? Date()),
+            createdAt: ServerDate(date: parseFediverseDate(createdAt)),
             editedAt: nil,
             reblog: nil,
             mediaAttachments: [],
