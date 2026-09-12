@@ -1,13 +1,13 @@
 import Foundation
 import Models
 
-private let fediverseDateFormatterWithFraction: ISO8601DateFormatter = {
+nonisolated(unsafe) private let fediverseDateFormatterWithFraction: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
     return formatter
 }()
 
-private let fediverseDateFormatterStandard: ISO8601DateFormatter = {
+nonisolated(unsafe) private let fediverseDateFormatterStandard: ISO8601DateFormatter = {
     let formatter = ISO8601DateFormatter()
     formatter.formatOptions = [.withInternetDateTime]
     return formatter
@@ -64,6 +64,7 @@ extension MisskeyNote {
                 card: nil,
                 favourited: renote.myReaction != nil,
                 reblogged: false, // will be handled by UI layer if it's the current user's reblog
+                pinned: false,
                 bookmarked: false,
                 emojis: renote.emojis?.emojis.map {
                     Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
@@ -81,11 +82,9 @@ extension MisskeyNote {
                 tags: [],
                 quote: nil,
                 quotesCount: nil,
-                quoteApproval: nil
             )
         }
 
-        let noteUrl = self.url ?? self.uri ?? "https://\(server)/notes/\(self.id)"
 
         return Status(
             id: self.id,
