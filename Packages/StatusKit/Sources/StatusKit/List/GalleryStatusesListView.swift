@@ -545,7 +545,34 @@ public struct GalleryMediaCell: View {
       )
     }
   }
+  private func makeShareAsImageSheet() -> some View {
+    guard let viewModel else { return AnyView(EmptyView()) }
+    let renderer = ImageRenderer(content: AnyView(shareCaptureView(viewModel: viewModel)))
+    renderer.isOpaque = true
+    renderer.scale = 3.0
+    return AnyView(StatusRowShareAsImageView(
+      viewModel: viewModel,
+      renderer: renderer
+    )
+    .tint(theme.tintColor))
+  }
+
+  private func shareCaptureView(viewModel: StatusRowViewModel) -> some View {
+    HStack {
+      StatusRowView(viewModel: viewModel, context: .timeline)
+        .padding(8)
+    }
+    .background(theme.primaryBackgroundColor)
+    .frame(width: 400)
+    .environment(\.isInCaptureMode, true)
+    .environment(theme)
+    .environment(userPreferences)
+    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
+    .environment(currentAccount)
+  }
+
 }
+
 
 public struct GalleryAspectRatioModifier: ViewModifier {
   public let isSquare: Bool
@@ -574,32 +601,6 @@ public struct GalleryAspectRatioModifier: ViewModifier {
     } else {
       content
     }
-  }
-
-  private func makeShareAsImageSheet() -> some View {
-    guard let viewModel else { return AnyView(EmptyView()) }
-    let renderer = ImageRenderer(content: AnyView(shareCaptureView(viewModel: viewModel)))
-    renderer.isOpaque = true
-    renderer.scale = 3.0
-    return AnyView(StatusRowShareAsImageView(
-      viewModel: viewModel,
-      renderer: renderer
-    )
-    .tint(theme.tintColor))
-  }
-
-  private func shareCaptureView(viewModel: StatusRowViewModel) -> some View {
-    HStack {
-      StatusRowView(viewModel: viewModel, context: .timeline)
-        .padding(8)
-    }
-    .background(theme.primaryBackgroundColor)
-    .frame(width: 400)
-    .environment(\.isInCaptureMode, true)
-    .environment(theme)
-    .environment(userPreferences)
-    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
-    .environment(currentAccount)
   }
 
 }

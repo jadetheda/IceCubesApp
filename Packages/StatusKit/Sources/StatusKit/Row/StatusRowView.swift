@@ -428,6 +428,32 @@ public struct StatusRowView: View {
   }
 }
 
+
+  private func makeShareAsImageSheet() -> some View {
+    let renderer = ImageRenderer(content: AnyView(shareCaptureView))
+    renderer.isOpaque = true
+    renderer.scale = 3.0
+    return StatusRowShareAsImageView(
+      viewModel: viewModel,
+      renderer: renderer
+    )
+    .tint(theme.tintColor)
+  }
+
+  private var shareCaptureView: some View {
+    HStack {
+      StatusRowView(viewModel: viewModel, context: .timeline)
+        .padding(8)
+    }
+    .background(theme.primaryBackgroundColor)
+    .frame(width: 400)
+    .environment(\.isInCaptureMode, true)
+    .environment(theme)
+    .environment(userPreferences)
+    .environment(statusDataController)
+    .environment(currentAccount)
+  }
+
 #Preview {
   List {
     StatusRowView(
@@ -456,28 +482,3 @@ public struct StatusRowView: View {
   .withPreviewsEnv()
   .environment(Theme.shared)
 }
-
-  private func makeShareAsImageSheet() -> some View {
-    let renderer = ImageRenderer(content: AnyView(shareCaptureView))
-    renderer.isOpaque = true
-    renderer.scale = 3.0
-    return StatusRowShareAsImageView(
-      viewModel: viewModel,
-      renderer: renderer
-    )
-    .tint(theme.tintColor)
-  }
-
-  private var shareCaptureView: some View {
-    HStack {
-      StatusRowView(viewModel: viewModel, context: .timeline)
-        .padding(8)
-    }
-    .background(theme.primaryBackgroundColor)
-    .frame(width: 400)
-    .environment(\.isInCaptureMode, true)
-    .environment(theme)
-    .environment(userPreferences)
-    .environment(statusDataController)
-    .environment(currentAccount)
-  }
