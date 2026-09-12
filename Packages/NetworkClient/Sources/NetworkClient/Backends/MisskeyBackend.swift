@@ -537,16 +537,14 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                     let parts = query.trimmingCharacters(in: CharacterSet(charactersIn: "@ ")).components(separatedBy: "@")
                     var resolved = false
                     if parts.count == 2 {
-                        let uri = "https://\(parts[1])/@\(parts[0])"
-                        if let data = try? await makeMisskeyRequest(path: "ap/show", params: ["uri": uri]),
-                           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                           let apType = json["type"] as? String, apType == "User",
-                           let object = json["object"] {
-                            let objData = try JSONSerialization.data(withJSONObject: object)
-                            if let user = try? JSONDecoder().decode(MisskeyUser.self, from: objData) {
-                                accounts = [user.toAccount(server: self.server)]
-                                resolved = true
-                            }
+                        var userParams: [String: Any] = ["username": parts[0]]
+                        if parts[1] != self.server {
+                            userParams["host"] = parts[1]
+                        }
+                        if let data = try? await makeMisskeyRequest(path: "users/show", params: userParams),
+                           let user = try? JSONDecoder().decode(MisskeyUser.self, from: data) {
+                            accounts = [user.toAccount(server: self.server)]
+                            resolved = true
                         }
                     } else if parts.count == 1 {
                         if let data = try? await makeMisskeyRequest(path: "users/show", params: ["username": parts[0]]),
