@@ -61,10 +61,19 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
         connectionsLock.unlock()
         
         if let rootHost = host.split(separator: ".", maxSplits: 1).last {
-            return cons.contains(host) || cons.contains(String(rootHost)) || host == server || String(rootHost) == server
+            if cons.contains(host) || cons.contains(String(rootHost)) || host == server || String(rootHost) == server { return true }
         } else {
-            return cons.contains(host) || host == server
+            if cons.contains(host) || host == server { return true }
         }
+        
+        // Misskey's `instance/peers` equivalent is structurally incompatible with Mastodon's, 
+        // frequently requiring auth or returning 403s. To ensure cross-instance @mentions 
+        // and #tags still route natively in IceCubes, we optimistically accept them here.
+        // If the backend search API fails to resolve them later, the router will fallback to Safari.
+        if url.lastPathComponent.first == "@" { return true }
+        if url.pathComponents.contains(where: { $0 == "tags" || $0 == "tag" }) { return true }
+        
+        return false
     }
 
     // MARK: - MiAuth OAuth flow
