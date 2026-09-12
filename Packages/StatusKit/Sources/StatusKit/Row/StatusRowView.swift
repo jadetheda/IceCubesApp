@@ -426,8 +426,6 @@ public struct StatusRowView: View {
     .background(Color.black.opacity(0.40))
     .transition(.opacity)
   }
-}
-
 
   private func makeShareAsImageSheet() -> some View {
     let renderer = ImageRenderer(content: AnyView(shareCaptureView))
@@ -453,6 +451,8 @@ public struct StatusRowView: View {
     .environment(statusDataController)
     .environment(currentAccount)
   }
+
+}
 
 #Preview {
   List {
