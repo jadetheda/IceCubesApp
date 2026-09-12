@@ -7,7 +7,7 @@ import Models
 //
 // Endpoints that have no Misskey equivalent return safe stubs (empty arrays, mock
 // objects decoded from hardcoded JSON) so the UI never throws on unsupported features.
-public final class MisskeyBackend: FediverseBackend {
+public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
 
     // MARK: - NoteCreate response wrapper
     // Misskey's notes/create returns { "createdNote": { ... } } rather than the note directly.
@@ -38,14 +38,34 @@ public final class MisskeyBackend: FediverseBackend {
         )
     }
 
+    private let connectionsLock = NSLock()
+    private var _connections: Set<String> = []
+
     public init(server: String, version: FediverseClient.Version = .v1, oauthToken: OauthToken? = nil) {
         self.server = server
         self.version = version
         self.oauthToken = oauthToken
+        self._connections = [server]
     }
 
-    public func addConnections(_ connections: [String]) {}
-    public func hasConnection(with url: URL) -> Bool { false }
+    public func addConnections(_ connections: [String]) {
+        connectionsLock.lock()
+        _connections.formUnion(connections)
+        connectionsLock.unlock()
+    }
+
+    public func hasConnection(with url: URL) -> Bool {
+        guard let host = url.host else { return false }
+        connectionsLock.lock()
+        let cons = _connections
+        connectionsLock.unlock()
+        
+        if let rootHost = host.split(separator: ".", maxSplits: 1).last {
+            return cons.contains(host) || cons.contains(String(rootHost)) || host == server || String(rootHost) == server
+        } else {
+            return cons.contains(host) || host == server
+        }
+    }
 
     // MARK: - MiAuth OAuth flow
     // Misskey uses MiAuth rather than OAuth2. We generate a session UUID, redirect
