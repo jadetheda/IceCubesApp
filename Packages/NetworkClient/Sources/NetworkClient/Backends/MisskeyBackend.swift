@@ -512,6 +512,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
             var statuses: [Status] = []
             
             if query.hasPrefix("http://") || query.hasPrefix("https://") {
+                var resolvedViaAp = false
                 if let data = try? await makeMisskeyRequest(path: "ap/show", params: ["uri": query]),
                    let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let apType = json["type"] as? String,
@@ -520,12 +521,27 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                         let objData = try JSONSerialization.data(withJSONObject: object)
                         if let note = try? JSONDecoder().decode(MisskeyNote.self, from: objData) {
                             statuses = [note.toStatus(server: self.server)]
+                            resolvedViaAp = true
                         }
                     } else if apType == "User" {
                         let objData = try JSONSerialization.data(withJSONObject: object)
                         if let user = try? JSONDecoder().decode(MisskeyUser.self, from: objData) {
-                            accounts = [user.toAccount()]
+                            accounts = [user.toAccount(server: self.server)]
+                            resolvedViaAp = true
                         }
+                    }
+                }
+                
+                // Fallback for native Misskey /users/UUID links if ap/show fails
+                if !resolvedViaAp, let url = URL(string: query), url.pathComponents.count >= 2, url.pathComponents[url.pathComponents.count - 2] == "users" {
+                    let userId = url.pathComponents.last!
+                    do {
+                        let data = try await makeMisskeyRequest(path: "users/show", params: ["userId": userId])
+                        let user = try JSONDecoder().decode(MisskeyUser.self, from: data)
+                        accounts = [user.toAccount(server: self.server)]
+                    } catch {
+                        let fakeAccount = Account(id: "error3", username: "\(String(describing: error).prefix(100))", displayName: "Error 3", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
+                        accounts = [fakeAccount]
                     }
                 }
             } else {
