@@ -73,7 +73,7 @@ struct AddRemoteTimelineView: View {
         instanceNamePublisher.debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
       ) { newValue in
         Task {
-          let client = FediverseClient(server: newValue, version: .v2)
+          let client = FediverseClient(server: newValue, version: .v1)
           instance = try? await client.get(endpoint: Instances.instance)
         }
       }
