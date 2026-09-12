@@ -203,7 +203,7 @@ public final class MisskeyBackend: FediverseBackend {
                 params["poll"] = misskeyPoll
             }
             if let inReplyToId = dict["inReplyToId"] as? String { params["replyId"] = inReplyToId }
-            if let mediaIds = dict["mediaIds"] as? [String] { params["fileIds"] = mediaIds }
+            if let mediaIds = dict["mediaIds"] as? [String], !mediaIds.isEmpty { params["fileIds"] = mediaIds }
             if let cw = dict["spoilerText"] as? String, !cw.isEmpty { params["cw"] = cw }
             if let renoteId = dict["quotedStatusId"] as? String { params["renoteId"] = renoteId }
         }
