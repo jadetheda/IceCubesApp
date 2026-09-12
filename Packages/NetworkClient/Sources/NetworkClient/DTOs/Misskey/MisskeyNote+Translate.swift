@@ -82,6 +82,7 @@ extension MisskeyNote {
                 tags: [],
                 quote: nil,
                 quotesCount: nil,
+                quoteApproval: nil
             )
         }
 
