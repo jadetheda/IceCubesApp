@@ -24,7 +24,6 @@ public struct StatusRowView: View {
   @Environment(FediverseClient.self) private var client
   @Environment(ToastCenter.self) private var toastCenter
   @Environment(CurrentAccount.self) private var currentAccount
-  @Environment(StatusDataController.self) private var statusDataController
 
   @State private var showSelectableText: Bool = false
   @State private var isShareAsImageSheetPresented: Bool = false
@@ -448,7 +447,7 @@ public struct StatusRowView: View {
     .environment(\.isInCaptureMode, true)
     .environment(theme)
     .environment(userPreferences)
-    .environment(statusDataController)
+    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
     .environment(currentAccount)
   }
 
