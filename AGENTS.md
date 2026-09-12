@@ -333,3 +333,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Cross-spec adapter model and concurrency mismatch)
 - **Root Cause**: The Fediverse adapters used undeclared `ServerCapabilities` fields, duplicate backend properties, unqualified nested client errors, and synthesized model initializers that are not public. The open Mastodon backend also inherited the protocol's `Sendable` requirement while keeping mutable lock-protected state.
 - **Solution**: Add each declared capability and deliberate public model initializer used by adapters. Use the installed model parameter names and top-level `Visibility`. Keep the protocol's concurrency contract; mark the open lock-protected backend hierarchy `@unchecked Sendable` and avoid mutable overridden capability storage.
+
+## 🐛 Exit Code 65 Logs (Misskey Translation Redeclarations)
+- **Root Cause**: While refactoring the `MisskeyNote+Translate.swift` file for URL routing and mentions, duplicate declarations of `noteUrl` were introduced, a required parameter (`pinned: false`) was accidentally dropped from `ReblogStatus`, and Swift 6's strict concurrency model flagged global `ISO8601DateFormatter` instances as unsafe.
+- **Solution**: Always double-check variable declarations during large regex/sed edits to prevent duplication. When encountering Swift 6 `Sendable` concurrency warnings on formatters, explicitly mark them `nonisolated(unsafe)` if they are genuinely read-only globals. Ensure all mapping structs maintain their required parameter counts.
