@@ -293,7 +293,7 @@ public final class MisskeyBackend: FediverseBackend {
         if path == "timelines/home" {
             let data = try await makeMisskeyRequest(path: "notes/timeline", params: params)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
-            return notes.map { $0.toStatus() } as! Entity
+            return notes.map { $0.toStatus(server: self.server) } as! Entity
 
         } else if path == "timelines/public" {
             let isLocal = (params["local"] as? String) == "true"
@@ -307,7 +307,7 @@ public final class MisskeyBackend: FediverseBackend {
             params["withReplies"] = false
             let data = try await makeMisskeyRequest(path: apiPath, params: params)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
-            return notes.map { $0.toStatus() } as! Entity
+            return notes.map { $0.toStatus(server: self.server) } as! Entity
 
         } else if path.hasPrefix("timelines/list/") {
             let listId = path.replacingOccurrences(of: "timelines/list/", with: "")
@@ -317,7 +317,7 @@ public final class MisskeyBackend: FediverseBackend {
                 path: "notes/user-list-timeline",
                 params: timelineParams)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
-            return notes.map { $0.toStatus() } as! Entity
+            return notes.map { $0.toStatus(server: self.server) } as! Entity
 
         } else if path.hasPrefix("timelines/") {
             // Tag timelines come in as "timelines/tag/:tag" — route to notes/search-by-tag.
@@ -326,7 +326,7 @@ public final class MisskeyBackend: FediverseBackend {
                 let tag = components[2]
                 if let data = try? await makeMisskeyRequest(path: "notes/search-by-tag", params: ["tag": tag, "limit": params["limit"] ?? 20]),
                    let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
-                    return notes.map { $0.toStatus() } as! Entity
+                    return notes.map { $0.toStatus(server: self.server) } as! Entity
                 }
             }
             return ([Status]() as! Entity)
@@ -470,7 +470,7 @@ public final class MisskeyBackend: FediverseBackend {
 
             let data = try await makeMisskeyRequest(path: "users/notes", params: noteParams)
             let notes = try JSONDecoder().decode([MisskeyNote].self, from: data)
-            return notes.map { $0.toStatus() } as! Entity
+            return notes.map { $0.toStatus(server: self.server) } as! Entity
 
         // --- Search ---
         } else if path == "search" {
@@ -488,7 +488,7 @@ public final class MisskeyBackend: FediverseBackend {
                     if apType == "Note" {
                         let objData = try JSONSerialization.data(withJSONObject: object)
                         if let note = try? JSONDecoder().decode(MisskeyNote.self, from: objData) {
-                            statuses = [note.toStatus()]
+                            statuses = [note.toStatus(server: self.server)]
                         }
                     } else if apType == "User" {
                         let objData = try JSONSerialization.data(withJSONObject: object)
@@ -501,7 +501,7 @@ public final class MisskeyBackend: FediverseBackend {
                 if type == "statuses" || type == nil,
                    let data = try? await makeMisskeyRequest(path: "notes/search", params: ["query": query]),
                    let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
-                    statuses = notes.map { $0.toStatus() }
+                    statuses = notes.map { $0.toStatus(server: self.server) }
                 }
                 if type == "accounts" || type == nil,
                    let data = try? await makeMisskeyRequest(path: "users/search", params: ["query": query]),
@@ -519,14 +519,14 @@ public final class MisskeyBackend: FediverseBackend {
             // Misskey uses i/favorites for bookmarked notes.
             let data = try await makeMisskeyRequest(path: "i/favorites", params: params)
             let favorites = try JSONDecoder().decode([MisskeyFavorite].self, from: data)
-            return favorites.map { $0.note.toStatus() } as! Entity
+            return favorites.map { $0.note.toStatus(server: self.server) } as! Entity
 
         } else if path == "favourites" {
             // Misskey's likes endpoint returns the same note wrapper shape as
             // i/favorites, but represents reactions rather than bookmarks.
             let data = try await makeMisskeyRequest(path: "i/likes", params: params)
             let likes = try JSONDecoder().decode([MisskeyFavorite].self, from: data)
-            return likes.map { $0.note.toStatus() } as! Entity
+            return likes.map { $0.note.toStatus(server: self.server) } as! Entity
 
         } else if path == "markers" {
             // Marker is Codable-only (no public memberwise init). Decode from a null stub.
@@ -595,7 +595,7 @@ public final class MisskeyBackend: FediverseBackend {
                 return Conversation(
                     id: other.id,
                     unread: message.isRead == false,
-                    lastStatus: message.toStatus(),
+                    lastStatus: message.toStatus(server: self.server),
                     accounts: [other.toAccount()]
                 )
             }
@@ -609,7 +609,7 @@ public final class MisskeyBackend: FediverseBackend {
                 path: "messaging/messages",
                 params: ["userId": userId, "limit": 100, "markAsRead": true])
             let messages = try JSONDecoder().decode([MisskeyMessagingMessage].self, from: data)
-            return messages.reversed().map { $0.toStatus() } as! Entity
+            return messages.reversed().map { $0.toStatus(server: self.server) } as! Entity
 
         } else if path == "lists" {
             let data = try await makeMisskeyRequest(path: "users/lists/list", params: [:])
@@ -655,7 +655,7 @@ public final class MisskeyBackend: FediverseBackend {
             // Return the note's status (poll data embedded) rather than crashing.
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus() as! Entity
+            return note.toStatus(server: self.server) as! Entity
 
         // --- Tags ---
         } else if path.hasPrefix("tags/") {
@@ -675,7 +675,7 @@ public final class MisskeyBackend: FediverseBackend {
             if path == "trends/statuses" {
                 if let data = try? await makeMisskeyRequest(path: "notes/featured", params: params),
                    let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
-                    return notes.map { $0.toStatus() } as! Entity
+                    return notes.map { $0.toStatus(server: self.server) } as! Entity
                 }
                 return ([Status]() as! Entity)
             } else if path == "trends/tags" {
@@ -701,7 +701,7 @@ public final class MisskeyBackend: FediverseBackend {
             params["noteId"] = id
             let data = try await makeMisskeyRequest(path: "notes/show", params: params)
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus() as! Entity
+            return note.toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/history") && path.hasPrefix("statuses/") {
             return ([StatusHistory]() as! Entity)
@@ -736,11 +736,11 @@ public final class MisskeyBackend: FediverseBackend {
 
             if let convData = try? await makeMisskeyRequest(path: "notes/conversation", params: params),
                let convNotes = try? JSONDecoder().decode([MisskeyNote].self, from: convData) {
-                ancestors = convNotes.map { $0.toStatus() }
+                ancestors = convNotes.map { $0.toStatus(server: self.server) }
             }
             if let childrenData = try? await makeMisskeyRequest(path: "notes/children", params: params),
                let childrenNotes = try? JSONDecoder().decode([MisskeyNote].self, from: childrenData) {
-                descendants = childrenNotes.map { $0.toStatus() }
+                descendants = childrenNotes.map { $0.toStatus(server: self.server) }
             }
             return StatusContext(ancestors: ancestors, descendants: descendants) as! Entity
 
@@ -786,7 +786,7 @@ public final class MisskeyBackend: FediverseBackend {
             // user sees something useful instead of a generic "Decoding Error".
             do {
                 let response = try JSONDecoder().decode(NoteCreateResponse.self, from: data)
-                return response.createdNote.toStatus() as! Entity
+                return response.createdNote.toStatus(server: self.server) as! Entity
             } catch {
                 let body = String(data: data, encoding: .utf8) ?? "no body"
                 print("[MisskeyBackend] notes/create decode failed: \(error)\nRaw response: \(body)")
@@ -809,7 +809,7 @@ public final class MisskeyBackend: FediverseBackend {
                 path: "messaging/messages/create",
                 params: params)
             let message = try JSONDecoder().decode(MisskeyMessagingMessage.self, from: data)
-            return message.toStatus() as! Entity
+            return message.toStatus(server: self.server) as! Entity
 
         } else if path.hasPrefix("conversations/") && path.hasSuffix("/read") {
             let id = path
@@ -827,7 +827,7 @@ public final class MisskeyBackend: FediverseBackend {
             return Conversation(
                 id: id,
                 unread: false,
-                lastStatus: message?.toStatus(),
+                lastStatus: message?.toStatus(server: self.server),
                 accounts: message.map { [$0.user.toAccount()] } ?? []
             ) as! Entity
 
@@ -839,7 +839,7 @@ public final class MisskeyBackend: FediverseBackend {
             // Return the note status since Misskey has no separate poll object endpoint.
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus() as! Entity
+            return note.toStatus(server: self.server) as! Entity
 
         } else if path.hasPrefix("tags/") && (path.hasSuffix("/follow") || path.hasSuffix("/unfollow")) {
             let tagName = path
@@ -887,7 +887,7 @@ public final class MisskeyBackend: FediverseBackend {
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "notes/reactions/delete", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/favourite") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/favourite", with: "")
@@ -900,7 +900,7 @@ public final class MisskeyBackend: FediverseBackend {
             params["reaction"] = actionIsLike ? "❤" : "⭐"
             let _ = try? await makeMisskeyRequest(path: "notes/reactions/create", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/reblog") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/reblog", with: "")
@@ -909,42 +909,42 @@ public final class MisskeyBackend: FediverseBackend {
             // Return the original note with reblogged=true so StatusDataController
             // keeps the boost button highlighted after the action.
             let originalData = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: originalData).toStatus(reblogged: true) as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: originalData).toStatus(reblogged: true, server: self.server) as! Entity
 
         } else if path.hasSuffix("/unreblog") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unreblog", with: "")
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "notes/unrenote", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/bookmark") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/bookmark", with: "")
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "notes/favorites/create", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/unbookmark") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unbookmark", with: "")
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "notes/favorites/delete", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/pin") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/pin", with: "")
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "i/pin", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/unpin") && path.hasPrefix("statuses/") {
             let id = path.replacingOccurrences(of: "statuses/", with: "").replacingOccurrences(of: "/unpin", with: "")
             params["noteId"] = id
             let _ = try? await makeMisskeyRequest(path: "i/unpin", params: params)
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
-            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus() as! Entity
+            return try JSONDecoder().decode(MisskeyNote.self, from: data).toStatus(server: self.server) as! Entity
 
         } else if path.hasSuffix("/follow") && path.hasPrefix("accounts/") {
             let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/follow", with: "")

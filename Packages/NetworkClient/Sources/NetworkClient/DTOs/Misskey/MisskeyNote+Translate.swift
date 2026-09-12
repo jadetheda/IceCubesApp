@@ -27,8 +27,8 @@ internal func parseFediverseDate(_ string: String?) -> Date {
 // MARK: - MisskeyNote → Status
 
 extension MisskeyNote {
-    public func toStatus(reblogged: Bool = false) -> Status {
-        let account = self.user.toAccount()
+    public func toStatus(reblogged: Bool = false, server: String = "misskey") -> Status {
+        let account = self.user.toAccount(server: server)
         let createdAtDate = parseFediverseDate(self.createdAt)
 
         let favouritesCount = self.reactions?.values.reduce(0, +) ?? 0
@@ -39,7 +39,7 @@ extension MisskeyNote {
             Emoji(shortcode: $0.name, url: $0.url, staticUrl: $0.url, visibleInPicker: false)
         } ?? []
 
-        let noteUrl = self.url ?? self.uri ?? "https://misskey/\(self.id)"
+        let noteUrl = self.url ?? self.uri ?? "https://\(server)/notes/\(self.id)"
 
         // Renote without text = boost (reblog). Renote with text = quote post.
         // Misskey-compatible servers do not all agree on whether an empty
@@ -48,12 +48,12 @@ extension MisskeyNote {
         if let renote = self.renote,
            self.text?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty != false
         {
-            let renoteUrl = renote.url ?? renote.uri ?? "https://misskey/\(renote.id)"
+            let renoteUrl = renote.url ?? renote.uri ?? "https://\(server)/notes/\(renote.id)"
             let renoteCreatedAt = parseFediverseDate(renote.createdAt)
             reblog = ReblogStatus(
                 id: renote.id,
                 content: htmlString(from: renote.text),
-                account: renote.user.toAccount(),
+                account: renote.user.toAccount(server: server),
                 createdAt: ServerDate(date: renoteCreatedAt),
                 editedAt: nil,
                 mediaAttachments: renote.files?.map { $0.toMediaAttachment() } ?? [],
@@ -221,13 +221,13 @@ extension MisskeyPoll {
 
 // MARK: - MisskeyUser → Account
 extension MisskeyUser {
-    public func toAccount() -> Account {
+    public func toAccount(server: String = "misskey") -> Account {
         let safeUsername = self.username ?? "unknown"
-        let avatarURL = URL(string: self.avatarUrl ?? "https://\(host ?? "example.com")/placeholder.png")
+        let avatarURL = URL(string: self.avatarUrl ?? "https://\(host ?? server)/placeholder.png")
             ?? URL(string: "https://example.com/placeholder.png")!
         let headerURL = URL(string: self.bannerUrl ?? "") ?? avatarURL
         let acct = self.host != nil ? "\(safeUsername)@\(self.host!)" : safeUsername
-        let profileURL = URL(string: "https://\(self.host ?? "misskey")/\(safeUsername)")
+        let profileURL = URL(string: "https://\(self.host ?? server)/@\(safeUsername)")
 
         // Account.Field is Codable-only; build JSON and decode.
         var accountFields: [Account.Field] = []
@@ -343,7 +343,7 @@ extension MisskeyFile {
 
 // MARK: - MisskeyNotification → Notification
 extension MisskeyNotification {
-    public func toNotification() -> Models.Notification? {
+    public func toNotification(server: String = "misskey") -> Models.Notification? {
         guard let user = self.user else { return nil }
 
         // Map Misskey notification types to their Mastodon equivalents.
@@ -366,19 +366,19 @@ extension MisskeyNotification {
             id: self.id,
             type: mappedType,
             createdAt: ServerDate(date: createdAtDate),
-            account: user.toAccount(),
-            status: self.note?.toStatus(),
+            account: user.toAccount(server: server),
+            status: self.note?.toStatus(server: server),
             groupKey: nil
         )
     }
 }
 
 extension MisskeyMessagingMessage {
-    func toStatus() -> Status {
+    func toStatus(server: String = "misskey") -> Status {
         Status(
             id: id,
             content: HTMLString(stringValue: text ?? ""),
-            account: user.toAccount(),
+            account: user.toAccount(server: server),
             createdAt: ServerDate(date: parseFediverseDate(createdAt)),
             editedAt: nil,
             reblog: nil,
