@@ -209,6 +209,11 @@ public enum SettingsStartingPoint {
     {
       navigate(to: .hashTag(tag: tag, account: nil))
       return .handled
+    } else if url.pathComponents.count >= 2 && url.pathComponents[url.pathComponents.count - 2] == "users" {
+      Task {
+        await navigateToAccountFrom(url: url)
+      }
+      return .handled
     } else if url.lastPathComponent.first == "@",
       let host = url.host,
       !host.hasPrefix("www")
