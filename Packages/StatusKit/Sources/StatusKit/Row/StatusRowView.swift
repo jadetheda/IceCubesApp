@@ -447,7 +447,7 @@ public struct StatusRowView: View {
     .environment(\.isInCaptureMode, true)
     .environment(theme)
     .environment(userPreferences)
-    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
+    .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: viewModel.client))
     .environment(currentAccount)
   }
 
