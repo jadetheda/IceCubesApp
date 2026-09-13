@@ -241,7 +241,7 @@ const server = http.createServer(async (req, res) => {
         const d = await res.json();
         if (d.success) { 
           if (btn) btn.textContent = 'Triggered!';
-          setTimeout(fetchBuilds, 1000); 
+          setTimeout(fetchBuilds, 1500); setTimeout(fetchBuilds, 4000); setTimeout(fetchBuilds, 8000); 
         } else { 
           alert('Trigger failed: ' + (d.error || 'Unknown error')); 
           if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = '1'; }

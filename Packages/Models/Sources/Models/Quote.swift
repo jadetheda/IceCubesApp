@@ -29,6 +29,5 @@ public struct Quote: Codable, Sendable {
     case state
     case quotedStatus = "quoted_status"
     case quotedStatusId = "quoted_status_id"
-    case quoteId = "quote_id"
   }
 }
