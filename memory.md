@@ -833,3 +833,4 @@
   - **Resolution**: Created `GallerySettingsView` for layout variables, `ExploreAlgorithmSettingsView` for IceShrimp configurations, and moved them into subviews. Migrated text/media toggles to `timeline.content-filter.title` section.
 
 - 2026-09-13 08:00 UTC: Fixed Exit Code 65 build failure in Quote.swift caused by a mismatched CodingKey (quoteId vs quote_id) that was left over from a previous refactor and caused a compiler failure because it had no matching stored property.
+- 2026-09-13 08:24 UTC: Fixed secondary Quote.swift compiler error caused by my previous fix where .quoteId was still referenced in the custom init(). Replaced the usage of Quote.CodingKeys with a local FallbackKeys enum so it stops trying to parse the missing key and successfully falls back to quote_id for legacy endpoints.

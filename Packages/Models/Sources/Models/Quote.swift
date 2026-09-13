@@ -9,12 +9,17 @@ public struct Quote: Codable, Sendable {
   public let quotedStatus: Status?
   public let quotedStatusId: String?
 
+  private enum FallbackKeys: String, CodingKey {
+    case quoteId = "quote_id"
+  }
+
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     state = try? container.decode(State.self, forKey: .state)
+    let fallbackContainer = try? decoder.container(keyedBy: FallbackKeys.self)
     quotedStatusId =
       (try? container.decode(String.self, forKey: .quotedStatusId))
-      ?? (try? container.decode(String.self, forKey: .quoteId))
+      ?? (try? fallbackContainer?.decode(String.self, forKey: .quoteId))
     quotedStatus = try? container.decode(Status.self, forKey: .quotedStatus)
   }
 
