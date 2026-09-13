@@ -827,3 +827,7 @@
   - **Bug Fix**: Fixed a bug where "Hide Seen Posts" would not visually update the timeline on pull-to-refresh if there were no new statuses fetched from the API.
   - **Context**: `TimelineViewModel.fetchNewPagesFrom()` would return early if `newestStatuses` was empty, bypassing the `statusesState = .displayWithGaps()` re-render, which left previously seen posts lingering on the screen until a scroll or layout change forced a refresh.
   - **Resolution**: Passed `pullToRefresh` flag into `fetchNewPagesFrom()` and injected explicit `statusesState` layout invalidations into the early-return blocks. This guarantees a visual refresh whenever `sessionSeenPosts` is updated.
+- **2026-09-13 (UTC)**
+  - **Refactor**: Executed massive settings architecture refactoring according to `settings_analysis.md`.
+  - **Context**: Extracted configuration bloat out of `ContentSettingsView` and `DisplaySettingsView`.
+  - **Resolution**: Created `GallerySettingsView` for layout variables, `ExploreAlgorithmSettingsView` for IceShrimp configurations, and moved them into subviews. Migrated text/media toggles to `timeline.content-filter.title` section.

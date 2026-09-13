@@ -429,7 +429,7 @@ struct SettingsTabs: View {
         isImportingSettings = true
       }
     } header: {
-      Text("settings.experimental.header")
+      Text("Backup & Restore")
     } footer: {
       Text("Export preferences, tag groups, and remote timeline configurations to a JSON file.")
     }

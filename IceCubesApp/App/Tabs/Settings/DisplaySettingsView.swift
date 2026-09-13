@@ -254,9 +254,9 @@ struct DisplaySettingsView: View {
       }
       Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
       Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
-      Toggle("Hide interaction buttons on Timeline", isOn: $userPreferences.hideInteractionButtons)
-      Toggle("Show 'Hide Pinned' in Timeline Menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
-      Toggle("Hide Pinned Items Symbol", isOn: $userPreferences.hidePinnedItemsSymbol)
+      Toggle("Hide interaction buttons", isOn: $userPreferences.hideInteractionButtons)
+      Toggle("Show hide pinned button in filter menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
+      Toggle("Hide pinned items indicator", isOn: $userPreferences.hidePinnedItemsSymbol)
       Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
         ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
           Text(buttonStyle.description).tag(buttonStyle)
@@ -267,7 +267,7 @@ struct DisplaySettingsView: View {
           Text(action.description).tag(action)
         }
       }
-      Picker("Boost Button Behavior", selection: $userPreferences.boostButtonBehavior) {
+      Picker("Boost button behavior", selection: $userPreferences.boostButtonBehavior) {
         ForEach(PreferredBoostButtonBehavior.allCases, id: \.rawValue) { behavior in
           Text(behavior.title).tag(behavior)
         }
@@ -277,7 +277,7 @@ struct DisplaySettingsView: View {
           Text(buttonStyle.description).tag(buttonStyle)
         }
       }
-      Toggle("Multi-Image Grid Layout", isOn: $userPreferences.statusMediaGridMode)
+      Toggle("Use grid layout for multiple images", isOn: $userPreferences.statusMediaGridMode)
       Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
       Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
       Toggle("settings.display.pending-at-bottom", isOn: $userPreferences.pendingShownAtBottom)
@@ -303,23 +303,26 @@ struct DisplaySettingsView: View {
         }
       }
       Toggle("settings.display.show-account-popover", isOn: $userPreferences.showAccountPopover)
-      Toggle("Compact Layout", isOn: $theme.compactLayoutPadding)
+      Toggle("Use compact layout", isOn: $theme.compactLayoutPadding)
     }
     
 
-      Section("settings.display.gallery.title") {
-        Stepper(String(format: NSLocalizedString("settings.display.gallery.columns", comment: ""), userPreferences.galleryColumns), value: $userPreferences.galleryColumns, in: 2...4)
-        Toggle(isOn: $userPreferences.galleryCropToSquare) {
-          Label("settings.display.gallery.crop-square", systemImage: "crop")
+      Section {
+        Toggle(isOn: $userPreferences.showHidePostsWithoutMediaToggle) {
+          Label("settings.content.timeline.gallery-toggle", systemImage: "photo.on.rectangle.angled")
         }
-        Toggle(isOn: $userPreferences.galleryOptimizeItemLayout) {
-          Label("settings.display.gallery.optimize-layout", systemImage: "arrow.up.left.and.down.right.and.arrow.up.right.and.down.left")
-        }
-        Toggle(isOn: $userPreferences.galleryRoundCorners) {
-          Label("settings.display.gallery.round-corners", systemImage: "squareshape")
-        }
-        Toggle(isOn: $userPreferences.galleryAddThinMargins) {
-          Label("settings.display.gallery.add-margins", systemImage: "arrow.left.and.right")
+      } header: {
+        Text("Toolbar & Filter Menu")
+      } footer: {
+        Text("settings.content.timeline.gallery-toggle-footer")
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+      
+      Section {
+        NavigationLink(destination: GallerySettingsView()) {
+          Label("settings.display.gallery.title", systemImage: "rectangle.grid.2x2")
         }
       }
       

@@ -696,17 +696,17 @@ import SwiftUI
     public var id: String { rawValue }
 
     public static var localCases: [Self] {
-      [.mastodon, .simpleScore, .decayingScore]
+      [.simpleScore, .decayingScore]
     }
     
     public var description: String {
       switch self {
       case .mastodon:
-        return "Mastodon (Default)"
+        return "Mastodon"
       case .simpleScore:
-        return "Simple Score"
+        return "Sort by top"
       case .decayingScore:
-        return "Decaying Score (IceShrimp fallback)"
+        return "Mastodon replica"
       }
     }
   }

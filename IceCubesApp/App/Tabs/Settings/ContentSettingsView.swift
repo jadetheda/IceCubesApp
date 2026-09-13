@@ -99,38 +99,13 @@ struct ContentSettingsView: View {
 
       if client.isIceShrimpWorkaroundsEnabled {
         Section {
-          Picker("Algorithm", selection: $userPreferences.trendingAlgorithm) {
-            ForEach(UserPreferences.TrendingAlgorithm.localCases) { algorithm in
-              Text(algorithm.description).tag(algorithm)
-            }
+          NavigationLink(destination: ExploreAlgorithmSettingsView()) {
+            Text("IceShrimp.net explore algorithm")
           }
-          if userPreferences.trendingAlgorithm == .simpleScore {
-            Stepper("Posts to Search: \(userPreferences.trendingSimpleScoreSearchLimit)", value: $userPreferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
-          } else if userPreferences.trendingAlgorithm == .decayingScore {
-            VStack(alignment: .leading) {
-              Text("settings.content.iceshrimp.trending-algorithm")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-              Stepper(String(format: NSLocalizedString("settings.content.iceshrimp.trending-threshold", comment: ""), userPreferences.iceShrimpTrendingThreshold), value: $userPreferences.iceShrimpTrendingThreshold, in: 1...50)
-              Stepper(value: $userPreferences.iceShrimpTrendingHalfLife, in: 0.1...24.0, step: 0.1) {
-                Text(String(format: NSLocalizedString("settings.content.iceshrimp.trending-half-life", comment: ""), userPreferences.iceShrimpTrendingHalfLife))
-              }
-            }
-          }
-        } header: {
-          Text("settings.content.iceshrimp.header")
-        } footer: {
-          Text("settings.content.iceshrimp.footer")
         }
         #if !os(visionOS)
           .listRowBackground(theme.primaryBackgroundColor)
         #endif
-      } else if userPreferences.trendingAlgorithm != .mastodon {
-        Color.clear
-          .frame(height: 0)
-          .onAppear {
-            userPreferences.trendingAlgorithm = .mastodon
-          }
       }
 
       Section {
@@ -211,58 +186,11 @@ struct ContentSettingsView: View {
         Toggle(isOn: $contentFilter.showQuotePosts) {
           Label("timeline.filter.show-quote", systemImage: "quote.bubble")
         }
-      }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
-
-      Section {
-        Toggle(isOn: $userPreferences.hideSeenPostsEnabled) {
-          Label("settings.content.hide-seen.title", systemImage: "eye.slash")
-        }
-        if userPreferences.hideSeenPostsEnabled {
-          VStack(alignment: .leading) {
-            Text(String(format: NSLocalizedString("settings.content.hide-seen.threshold", comment: ""), String(format: "%.1f", userPreferences.hideSeenPostsThreshold)))
-            Slider(value: $userPreferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
-          }
-          Toggle(isOn: $userPreferences.hideSeenPostsLikedOnly) {
-            Text("settings.content.hide-seen.liked-only")
-          }
-          Toggle(isOn: $userPreferences.hideSeenPostsShowInHeader) {
-            Text("settings.content.hide-seen.show-header")
-          }
-          Toggle(isOn: $userPreferences.hideSeenPostsIncludeBoosts) {
-            Text("settings.content.hide-seen.include-boosts")
-          }
-          Toggle(isOn: $userPreferences.hideSeenPostsIsToggle) {
-            Text("settings.content.hide-seen.is-toggle")
-          }
-        }
-      } footer: {
-        Text("settings.content.hide-seen.footer")
-      }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
-      
-      Section {
-        Toggle(isOn: $userPreferences.showHidePostsWithoutMediaToggle) {
-          Label("settings.content.timeline.gallery-toggle", systemImage: "photo.on.rectangle.angled")
-        }
-      } footer: {
-        Text("settings.content.timeline.gallery-toggle-footer")
-      }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
-
-      
-      Section("Display Mode") {
         Toggle(isOn: Binding(
             get: { !contentFilter.hidePostsWithoutMedia },
             set: { contentFilter.hidePostsWithoutMedia = !$0 }
         )) {
-          Label("Text posts", systemImage: "text.alignleft")
+          Label("Show text posts", systemImage: "text.alignleft")
         }
         .disabled(contentFilter.isGalleryMode)
         
@@ -270,7 +198,7 @@ struct ContentSettingsView: View {
             get: { !contentFilter.hidePostsWithMedia },
             set: { contentFilter.hidePostsWithMedia = !$0 }
         )) {
-          Label("Media posts", systemImage: "photo")
+          Label("Show media posts", systemImage: "photo")
         }
         
         Toggle(isOn: $contentFilter.isGalleryMode) {
@@ -281,9 +209,21 @@ struct ContentSettingsView: View {
                contentFilter.hidePostsWithMedia = false 
            }
         }
+        
         Toggle(isOn: $contentFilter.hidePostsFromBots) {
           Label("timeline.filter.hide-posts-from-bots", systemImage: "poweroutlet.type.b")
         }
+      }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
+
+      Section {
+        NavigationLink(destination: HideSeenPostsSettingsView()) {
+          Label("settings.experimental.hide-seen-posts", systemImage: "eye.slash")
+        }
+      } footer: {
+        Text("settings.content.hide-seen.footer")
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)
