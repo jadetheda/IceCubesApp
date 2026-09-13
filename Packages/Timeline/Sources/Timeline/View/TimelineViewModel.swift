@@ -401,7 +401,7 @@ extension TimelineViewModel: GapLoadingFetcher {
         try await fetchFirstPage(client: client)
       } else if let latest = await datasource.get().first, timeline.supportNewestPagination {
         pendingStatusesObserver.isLoadingNewStatuses = !pullToRefresh
-        try await fetchNewPagesFrom(latestStatus: latest.id, client: client)
+        try await fetchNewPagesFrom(latestStatus: latest.id, client: client, pullToRefresh: pullToRefresh)
       }
     } catch {
       if await datasource.isEmpty {
@@ -480,7 +480,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   // Fetch pages from the top most status of the timeline.
-  private func fetchNewPagesFrom(latestStatus: String, client: FediverseClient) async throws {
+  private func fetchNewPagesFrom(latestStatus: String, client: FediverseClient, pullToRefresh: Bool = false) async throws {
     canStreamEvents = false
     let initialTimeline = timeline
 
@@ -494,6 +494,10 @@ extension TimelineViewModel: GapLoadingFetcher {
       initialTimeline == timeline
     else {
       canStreamEvents = true
+      if pullToRefresh {
+        let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+        statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+      }
       return
     }
 
@@ -504,6 +508,10 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     guard !actuallyNewStatuses.isEmpty else {
       canStreamEvents = true
+      if pullToRefresh {
+        let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+        statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
+      }
       return
     }
 
