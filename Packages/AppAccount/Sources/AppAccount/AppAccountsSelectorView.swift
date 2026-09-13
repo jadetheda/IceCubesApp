@@ -53,6 +53,10 @@ public struct AppAccountsSelectorView: View {
       labelView
         .contentShape(.circle)
     }
+    .highPriorityGesture(TapGesture(count: 2).onEnded {
+      appAccounts.switchToPreviousAccount()
+      HapticManager.shared.fireHaptic(.buttonPress)
+    })
     .contextMenu {
       ForEach(accountsViewModel.sorted { $0.acct < $1.acct }, id: \.appAccount.id) {
         viewModel in

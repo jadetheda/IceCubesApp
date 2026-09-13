@@ -11,8 +11,14 @@ import SwiftUI
   @AppStorage("latestCurrentAccountKey", store: UserPreferences.sharedDefault)
   public static var latestCurrentAccountKey: String = ""
 
+  @AppStorage("previousAccountKey", store: UserPreferences.sharedDefault)
+  public static var previousAccountKey: String = ""
+
   public var currentAccount: AppAccount {
     didSet {
+      if oldValue.id != currentAccount.id {
+        Self.previousAccountKey = oldValue.id
+      }
       Self.latestCurrentAccountKey = currentAccount.id
       let software = currentAccount.serverSoftware ?? (currentAccount.isIceShrimp == true ? "iceshrimp" : "mastodon")
       currentClient = .init(
@@ -59,6 +65,15 @@ import SwiftUI
       availableAccounts.append(account)
       currentAccount = account
     } catch {}
+  }
+
+  public func switchToPreviousAccount() {
+    if let prevAccount = availableAccounts.first(where: { $0.id == Self.previousAccountKey }),
+       prevAccount.id != currentAccount.id {
+      currentAccount = prevAccount
+    } else if let otherAccount = availableAccounts.first(where: { $0.id != currentAccount.id }) {
+      currentAccount = otherAccount
+    }
   }
 
   public func updateServerSoftware(for account: AppAccount) async {
