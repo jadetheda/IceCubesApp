@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node scripts/companion_server.js",
     "dev": "node scripts/companion_server.js",
-    "build": "echo 'No build step required for companion server'"
+    "build": "echo nobuild"
   },
   "dependencies": {}
 }

@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+/.idea/*
+.DS_Store
+/build
+**/build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/cropper/build/
+/build/
+/app/fdroid/release/
+/app/playstore/release/

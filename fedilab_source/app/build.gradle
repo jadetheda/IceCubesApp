@@ -1,0 +1,245 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'androidx.navigation.safeargs.kotlin'
+}
+def flavor
+android {
+    compileSdk 36
+
+    defaultConfig {
+        minSdk 21
+        targetSdk 36
+        versionCode 568
+        versionName "3.43.3"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    flavorDimensions "default"
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            pseudoLocalesEnabled true
+        }
+    }
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    productFlavors {
+        fdroid {
+            applicationId "fr.gouv.etalab.mastodon"
+            buildConfigField "boolean", "DONATIONS", "true"
+            buildConfigField "boolean", "push", "false"
+            flavor = "fdroid"
+        }
+        playstore {
+            applicationId "app.fedilab.android"
+            buildConfigField "boolean", "DONATIONS", "false"
+            buildConfigField "boolean", "push", "true"
+            flavor = "playstore"
+        }
+    }
+    buildFeatures {
+        viewBinding true
+    }
+    sourceSets {
+        playstore {
+            java.srcDirs = ['src/main/java', 'src/playstore/java']
+            res.srcDirs = ['src/main/res', 'src/playstore/res']
+        }
+        fdroid {
+            java.srcDirs = ['src/main/java', 'src/fdroid/java']
+            res.srcDirs = ['src/main/res', 'src/fdroid/res']
+        }
+        main {
+            res.srcDirs = [
+                    'src/main/res/layouts/mastodon',
+                    'src/main/res/layouts/peertube',
+                    'src/main/res/layouts',
+
+                    'src/main/res/drawables/mastodon',
+                    'src/main/res/drawables/peertube',
+                    'src/main/res/drawables',
+
+                    'src/main/res/menus/mastodon',
+                    'src/main/res/menus/peertube',
+                    'src/main/res/menus',
+
+                    'src/main/res/values',
+
+                    'src/main/res'
+            ]
+        }
+    }
+    configurations {
+        cleanedAnnotations
+        implementation.exclude group: 'org.jetbrains', module: 'annotations'
+        all {
+            exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
+        }
+    }
+    namespace 'app.fedilab.android'
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+    buildToolsVersion '35.0.0'
+}
+allprojects {
+    repositories {
+        mavenLocal()
+        maven { url "https://jitpack.io" }
+    }
+}
+dependencies {
+    implementation 'org.unifiedpush.android:connector:3.0.9'
+
+    playstoreImplementation('org.unifiedpush.android:embedded-fcm-distributor:3.0.0')
+
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity:1.9.3'
+
+    implementation 'com.google.android.material:material:1.10.0'
+
+
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation "com.google.code.gson:gson:2.10.1"
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-simplexml:2.9.0'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation "org.conscrypt:conscrypt-android:2.5.3"
+    implementation 'com.vanniktech:emoji-google:0.21.0'
+    implementation 'androidx.emoji2:emoji2-emojipicker:1.5.0'
+    implementation 'com.github.GrenderG:Toasty:1.5.2'
+    implementation "com.github.bumptech.glide:glide:4.16.0"
+    implementation "com.github.bumptech.glide:okhttp3-integration:4.16.0"
+    implementation("com.github.bumptech.glide:recyclerview-integration:4.16.0") {
+        // Excludes the support library because it's already included by Glide.
+        transitive = false
+    }
+
+    implementation "org.jsoup:jsoup:1.18.1"
+    implementation 'com.github.mergehez:ArgPlayer:v3.1'
+
+    implementation project(':autoimageslider')
+    implementation project(path: ':mytransl')
+    implementation project(path: ':ratethisapp')
+    implementation project(path: ':sparkbutton')
+    implementation project(path: ':colorPicker')
+    implementation project(path: ':mathjaxandroid')
+    implementation project(path: ':doubletapplayerview')
+
+    implementation 'com.burhanrashid52:photoeditor:1.5.1'
+    implementation("com.vanniktech:android-image-cropper:4.3.3")
+    annotationProcessor "com.github.bumptech.glide:compiler:4.16.0"
+    implementation 'jp.wasabeef:glide-transformations:4.3.0'
+    implementation project(':APNG4Android:apng')
+    implementation project(':APNG4Android:gif')
+    implementation project(':APNG4Android:awebp')
+    implementation project(':APNG4Android:avif')
+    implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
+    implementation "androidx.media3:media3-exoplayer:1.2.1"
+    implementation "androidx.media3:media3-exoplayer-dash:1.2.1"
+    implementation "androidx.media3:media3-ui:1.2.1"
+    implementation "androidx.media3:media3-session:1.2.1"
+
+
+    implementation "androidx.viewpager2:viewpager2:1.1.0"
+    implementation "androidx.work:work-runtime:2.9.0"
+    implementation 'app.futured.hauler:hauler:5.0.0'
+    implementation "com.github.chrisbanes:PhotoView:2.3.0"
+    implementation "ch.acra:acra-mail:5.11.3"
+    implementation "ch.acra:acra-limiter:5.11.3"
+    implementation "ch.acra:acra-dialog:5.11.3"
+    implementation("com.madgag.spongycastle:bctls-jdk15on:1.58.0.0") {
+        exclude group: 'junit', module: 'junit'
+    }
+    implementation 'com.burhanrashid52:photoeditor:1.5.1'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
+    implementation 'androidx.navigation:navigation-fragment:2.8.7'
+    implementation 'androidx.navigation:navigation-ui:2.8.7'
+    testImplementation 'junit:junit:'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.14'
+    implementation 'com.r0adkll:slidableactivity:2.1.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+
+    implementation 'androidx.vectordrawable:vectordrawable:1.2.0'
+    implementation "androidx.fragment:fragment:1.8.6"
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
+    implementation 'androidx.browser:browser:1.8.0'
+    implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation 'com.github.amoskorir:avatarimagegenerator:1.5.0'
+
+    implementation "com.github.mabbas007:TagsEditText:1.0.5"
+    implementation "net.gotev:uploadservice:4.9.2"
+    implementation "net.gotev:uploadservice-okhttp:4.9.2"
+    implementation 'androidx.media:media:1.7.0'
+    implementation 'com.github.mancj:MaterialSearchBar:0.8.5'
+
+    implementation 'com.github.androidmads:QRGenerator:1.0.1'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.0'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.0'
+    implementation 'io.noties.markwon:core:4.6.2'
+    implementation 'io.noties.markwon:ext-tables:4.6.2'
+    implementation 'io.noties.markwon:syntax-highlight:4.6.2'
+    implementation 'io.noties.markwon:ext-strikethrough:4.6.2'
+    implementation 'io.noties.markwon:inline-parser:4.6.2'
+    annotationProcessor 'io.noties:prism4j-bundler:2.0.0'
+
+    //************ CAST **************///
+
+    //---> Google libs (google_full)
+    playstoreImplementation "com.google.android.gms:play-services-cast-tv:21.1.1"
+    playstoreImplementation "com.google.android.gms:play-services-cast:22.0.0"
+    playstoreImplementation "androidx.mediarouter:mediarouter:1.7.0"
+    playstoreImplementation 'com.google.android.gms:play-services-cast-framework:22.0.0'
+
+
+    //----> Other flavors
+    fdroidImplementation 'su.litvak.chromecast:api-v2:0.11.3'
+
+    fdroidImplementation 'org.slf4j:slf4j-simple:1.7.30'
+
+}
+def getCurrentFlavor() {
+    Gradle gradle = getGradle()
+    String  tskReqStr = gradle.getStartParameter().getTaskRequests().toString()
+    println("tskReqStr:" +tskReqStr)
+    Pattern pattern
+
+    if( tskReqStr.contains( "assemble" ) ) // to run ./gradlew assembleRelease to build APK
+        pattern = Pattern.compile("assemble(\\w+)(Release|Debug)")
+    else if( tskReqStr.contains( "bundle" ) ) // to run ./gradlew bundleRelease to build .aab
+        pattern = Pattern.compile("assemble(\\w+)(Release|Debug)")
+    else
+        pattern = Pattern.compile("generate(\\w+)(Release|Debug)")
+
+    Matcher matcher = pattern.matcher( tskReqStr )
+    println(tskReqStr)
+    if( matcher.find() )
+        return matcher.group(1).toLowerCase()
+    else
+    {
+        println "NO MATCH FOUND"
+        return ""
+    }
+}
+println("Flavor: ${getCurrentFlavor()}")
+if ( getCurrentFlavor() == "playstore" ){
+    apply plugin: 'com.google.gms.google-services'
+}
