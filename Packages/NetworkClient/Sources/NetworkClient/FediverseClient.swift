@@ -125,7 +125,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
         await serverSoftwareCache.set("pixelfed", for: cacheKey)
         return "pixelfed"
       }
-      if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") {
+      if name.contains("misskey") || name.contains("firefish") || name.contains("calckey") || name.contains("sharkey") {
         await serverSoftwareCache.set("misskey", for: cacheKey)
         return "misskey"
       }
