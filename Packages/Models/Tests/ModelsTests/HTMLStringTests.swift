@@ -157,4 +157,16 @@ func testHTMLStringInit_trailingHashtags() throws {
   #expect(false == htmlString4.hadTrailingTags) // Mixed content, so tags are not removed
   #expect("This is a test\n\nCheck out [this link](https://example.com) and [#swift](https://mastodon.social/tags/swift)" == htmlString4.asMarkdown)
   #expect(2 == htmlString4.links.count)
+  
+  // Test IceShrimp tags (no class="hashtag")
+  let iceShrimpContent = "\"<p>Testing IceShrimp tags</p><p><a href=\\\"https://iceshrimp.net/tags/fediverse\\\">#fediverse</a> <a href=\\\"https://iceshrimp.net/tags/swift\\\">#<span>swift</span></a></p>\""
+  let htmlString5 = try decoder.decode(HTMLString.self, from: Data(iceShrimpContent.utf8))
+  #expect("Testing IceShrimp tags" == htmlString5.asRawText)
+  #expect(true == htmlString5.hadTrailingTags)
+  
+  // Test false positive (normal link with /tags/ in URL should NOT be removed)
+  let falsePositiveContent = "\"<p>Here are some Github tags</p><p><a href=\\\"https://github.com/apple/swift/tags/\\\">Swift Tags</a></p>\""
+  let htmlString6 = try decoder.decode(HTMLString.self, from: Data(falsePositiveContent.utf8))
+  #expect("Here are some Github tags\n\nSwift Tags" == htmlString6.asRawText)
+  #expect(false == htmlString6.hadTrailingTags) // It should not be removed!
 }

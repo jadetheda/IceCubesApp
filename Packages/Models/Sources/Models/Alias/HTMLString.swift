@@ -167,7 +167,18 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
           } else if name == "a" {
             // Accept only anchors that look like hashtag links
             let cls = (try? child.attr("class")) ?? ""
-            if !cls.contains("hashtag") { return false }
+            let href = (try? child.attr("href")) ?? ""
+            
+            let element = child as? SwiftSoup.Element
+            let anchorText = (try? element?.text()) ?? ""
+            let trimmedText = anchorText.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            let textStartsWithHash = trimmedText.hasPrefix("#") || trimmedText.hasPrefix("＃")
+            let hasTagInUrl = href.contains("/tags/") || href.contains("/tag/")
+            
+            let isHashtag = cls.contains("hashtag") || (hasTagInUrl && textStartsWithHash)
+                            
+            if !isHashtag { return false }
             hasAtLeastOneHashtag = true
           } else {
             // Any other element means mixed content
