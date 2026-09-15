@@ -51,6 +51,38 @@ public enum WindowDestinationEditor: Hashable, Codable {
 
 public enum WindowDestinationMedia: Hashable, Codable {
   case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool)
+
+  enum CodingKeys: CodingKey {
+    case mediaViewer
+  }
+  
+  enum MediaViewerCodingKeys: CodingKey {
+    case attachments, selectedAttachment, useRemoteMedia
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    if container.contains(.mediaViewer) {
+      let nested = try container.nestedContainer(keyedBy: MediaViewerCodingKeys.self, forKey: .mediaViewer)
+      let attachments = try nested.decode([MediaAttachment].self, forKey: .attachments)
+      let selectedAttachment = try nested.decode(MediaAttachment.self, forKey: .selectedAttachment)
+      let useRemoteMedia = try nested.decodeIfPresent(Bool.self, forKey: .useRemoteMedia) ?? false
+      self = .mediaViewer(attachments: attachments, selectedAttachment: selectedAttachment, useRemoteMedia: useRemoteMedia)
+    } else {
+      throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: container.codingPath, debugDescription: "Unknown case"))
+    }
+  }
+  
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    switch self {
+    case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
+      var nested = container.nestedContainer(keyedBy: MediaViewerCodingKeys.self, forKey: .mediaViewer)
+      try nested.encode(attachments, forKey: .attachments)
+      try nested.encode(selectedAttachment, forKey: .selectedAttachment)
+      try nested.encode(useRemoteMedia, forKey: .useRemoteMedia)
+    }
+  }
 }
 
 public enum SheetDestination: Identifiable, Hashable {
