@@ -157,35 +157,52 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
       do {
         let paras = try doc.select("p:not(.quote-inline)")
         guard let lastP = paras.array().last else { return false }
-        var hasAtLeastOneHashtag = false
-        for child in lastP.getChildNodes() {
-          let name = child.nodeName()
+        func isHashtagOnlyNode(_ node: SwiftSoup.Node) -> Bool {
+          let name = node.nodeName()
           if name == "#text" {
-            // Allow whitespace-only text
-            let txt = child.description.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !txt.isEmpty { return false }
+            let txt = node.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            return txt.isEmpty
+          } else if name == "br" {
+            return true
+          } else if name == "span" {
+            for child in node.getChildNodes() {
+              if !isHashtagOnlyNode(child) { return false }
+            }
+            return true
           } else if name == "a" {
-            // Accept only anchors that look like hashtag links
-            let cls = (try? child.attr("class")) ?? ""
-            let href = (try? child.attr("href")) ?? ""
-            
-            let element = child as? SwiftSoup.Element
+            let cls = (try? node.attr("class")) ?? ""
+            let href = (try? node.attr("href")) ?? ""
+            let element = node as? SwiftSoup.Element
             let anchorText = (try? element?.text()) ?? ""
             let trimmedText = anchorText.trimmingCharacters(in: .whitespacesAndNewlines)
-            
             let textStartsWithHash = trimmedText.hasPrefix("#") || trimmedText.hasPrefix("＃")
             let hasTagInUrl = href.contains("/tags/") || href.contains("/tag/")
-            
-            let isHashtag = cls.contains("hashtag") || (hasTagInUrl && textStartsWithHash)
-                            
-            if !isHashtag { return false }
-            hasAtLeastOneHashtag = true
-          } else {
-            // Any other element means mixed content
-            return false
+            return cls.contains("hashtag") || (hasTagInUrl && textStartsWithHash)
+          }
+          return false
+        }
+
+        var hasAtLeastOneHashtag = false
+        var allValid = true
+        for child in lastP.getChildNodes() {
+          if !isHashtagOnlyNode(child) {
+            allValid = false
+            break
+          }
+          if child.nodeName() == "a" || (child.nodeName() == "span" && child.description.contains("href")) {
+             hasAtLeastOneHashtag = true
           }
         }
-        return hasAtLeastOneHashtag
+        
+        // Ensure we actually found anchors inside spans if they were nested
+        if allValid && !hasAtLeastOneHashtag {
+           let anchors = try? lastP.select("a")
+           if let anchors = anchors, !anchors.isEmpty() {
+               hasAtLeastOneHashtag = true
+           }
+        }
+        
+        return allValid && hasAtLeastOneHashtag
       } catch {
         return false
       }
