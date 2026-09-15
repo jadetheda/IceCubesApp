@@ -41,6 +41,9 @@ import Observation
   }
 
   public var isEditSupported: Bool {
+    if client?.isGoToSocial == true {
+      return true
+    }
     if client?.isPixelfed == true {
       return pixelfedVersion >= 0.11
     }

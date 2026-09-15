@@ -65,6 +65,7 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
   public var isAuth: Bool { backend.isAuth }
   public var isMisskey: Bool { backend is MisskeyBackend }
   public var isPixelfed: Bool { backend is PixelfedBackend }
+  public var isGoToSocial: Bool { backend is GoToSocialBackend }
   public var isIceShrimpWorkaroundsEnabled: Bool { backend.isIceShrimpWorkaroundsEnabled }
   public var oauthToken: OauthToken? { backend.oauthToken }
   public var capabilities: ServerCapabilities { backend.capabilities }
@@ -82,7 +83,8 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
         self.backend = IceShrimpBackend(server: server, version: version, oauthToken: oauthToken)
     case "misskey":
         self.backend = MisskeyBackend(server: server, version: version, oauthToken: oauthToken)
-    
+    case "gotosocial":
+        self.backend = GoToSocialBackend(server: server, version: version, oauthToken: oauthToken)
     case "peertube":
         self.backend = PeertubeBackend(server: server, version: version, oauthToken: oauthToken)
     default:
@@ -134,6 +136,10 @@ public final class FediverseClient: Equatable, Identifiable, Hashable, Sendable 
       if name.contains("peertube") {
         await serverSoftwareCache.set("peertube", for: cacheKey)
         return "peertube"
+      }
+      if name.contains("gotosocial") {
+        await serverSoftwareCache.set("gotosocial", for: cacheKey)
+        return "gotosocial"
       }
       
       await serverSoftwareCache.set("mastodon", for: cacheKey)
