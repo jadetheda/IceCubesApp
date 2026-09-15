@@ -28,10 +28,11 @@ struct AccountAvatarView: View {
         openWindow(
           value: WindowDestinationMedia.mediaViewer(
             attachments: [attachement],
-            selectedAttachment: attachement))
+            selectedAttachment: attachement,
+            useRemoteMedia: false))
       #else
         quickLook.prepareFor(
-          selectedMediaAttachment: attachement, mediaAttachments: [attachement])
+          selectedMediaAttachment: attachement, mediaAttachments: [attachement], useRemoteMedia: false)
       #endif
     }
     .accessibilityElement(children: .combine)

@@ -30,7 +30,8 @@ extension IceCubesApp {
           if let namespace = quickLook.namespace {
             MediaUIView(
               selectedAttachment: selectedMediaAttachment,
-              attachments: quickLook.mediaAttachments
+              attachments: quickLook.mediaAttachments,
+              useRemoteMedia: quickLook.useRemoteMedia
             )
             .navigationTransition(.zoom(sourceID: selectedMediaAttachment.id, in: namespace))
             .presentationBackground(.black)
@@ -117,10 +118,11 @@ extension IceCubesApp {
     WindowGroup(for: WindowDestinationMedia.self) { destination in
       Group {
         switch destination.wrappedValue {
-        case let .mediaViewer(attachments, selectedAttachment):
+        case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
           MediaUIView(
             selectedAttachment: selectedAttachment,
-            attachments: attachments)
+            attachments: attachments,
+            useRemoteMedia: useRemoteMedia)
         case .none:
           EmptyView()
         }

@@ -10,6 +10,7 @@
 
 ### Features
 
+- [ ] **Misskey/Sharkey Streaming API**: Update `StreamWatcher.swift` to support Misskey-style JSON payloads (`{"type": "connect"}`) and `?i={token}` WebSocket authentication. The app currently maintains the connection to prevent crashes, but true live-streaming of posts/notifications is missing for these servers.
 - [ ] Maybe: long-press profile tab to open profile switcher
 - [x] Add status.server to instance info
 - [ ] toggle to set separate custom theme settings for light/dark

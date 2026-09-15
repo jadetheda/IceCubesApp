@@ -74,9 +74,9 @@ public struct MediaUIView: View, @unchecked Sendable {
     .background(Color.black)
   }
 
-  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment]) {
-    data = attachments.compactMap { DisplayData(from: $0) }
-    initialItem = DisplayData(from: selectedAttachment)
+  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false) {
+    data = attachments.compactMap { DisplayData(from: $0, useRemoteMedia: useRemoteMedia) }
+    initialItem = DisplayData(from: selectedAttachment, useRemoteMedia: useRemoteMedia)
   }
 
   private func scrollToPrevious() {
@@ -233,11 +233,11 @@ private struct DisplayData: Identifiable, Hashable {
   let type: DisplayType
   let fallbackUrl: URL?
 
-  init?(from attachment: MediaAttachment) {
+  init?(from attachment: MediaAttachment, useRemoteMedia passedUseRemoteMedia: Bool = false) {
     
     let noVideo = false
     
-    let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce
+    let useRemoteMedia = Env.UserPreferences.shared.remoteMediaAlwaysForce || passedUseRemoteMedia
     let fallback = Env.UserPreferences.shared.remoteMediaFallbackOnFail
     
     guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) else { return nil }

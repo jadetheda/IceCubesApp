@@ -50,7 +50,7 @@ public enum WindowDestinationEditor: Hashable, Codable {
 }
 
 public enum WindowDestinationMedia: Hashable, Codable {
-  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment)
+  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool)
 }
 
 public enum SheetDestination: Identifiable, Hashable {

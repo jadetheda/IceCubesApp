@@ -177,7 +177,7 @@ public struct MediaUIAttachmentVideoView: View {
                 let attachement = MediaAttachment.videoWith(url: viewModel.url)
                 openWindow(
                   value: WindowDestinationMedia.mediaViewer(
-                    attachments: [attachement], selectedAttachment: attachement))
+                    attachments: [attachement], selectedAttachment: attachement, useRemoteMedia: false))
               #else
                 isFullScreen = true
               #endif

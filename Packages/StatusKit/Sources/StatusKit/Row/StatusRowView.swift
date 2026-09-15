@@ -335,11 +335,12 @@ public struct StatusRowView: View {
           openWindow(
             value: WindowDestinationMedia.mediaViewer(
               attachments: attachments,
-              selectedAttachment: attachments[0]
+              selectedAttachment: attachments[0],
+              useRemoteMedia: false
             ))
         #else
           quickLook.prepareFor(
-            selectedMediaAttachment: attachments[0], mediaAttachments: attachments)
+            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false)
         #endif
       }
     }
