@@ -346,7 +346,7 @@ struct SettingsTabs: View {
         }
       #endif
 
-      Link(destination: URL(string: "https://github.com/jadetheda/IceCubesApp")!) {
+      Link(destination: URL(string: "https://github.com/jadetheda/IceCubesApp/tree/multi-spec-support")!) {
         Label("settings.app.source", systemImage: "link")
       }
       .accessibilityRemoveTraits(.isButton)
