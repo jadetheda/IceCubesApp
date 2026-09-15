@@ -52,11 +52,11 @@ public enum WindowDestinationEditor: Hashable, Codable {
 public enum WindowDestinationMedia: Hashable, Codable {
   case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool)
 
-  enum CodingKeys: CodingKey {
+  enum CodingKeys: String, CodingKey {
     case mediaViewer
   }
   
-  enum MediaViewerCodingKeys: CodingKey {
+  enum MediaViewerCodingKeys: String, CodingKey {
     case attachments, selectedAttachment, useRemoteMedia
   }
 

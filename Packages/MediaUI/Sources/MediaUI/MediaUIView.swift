@@ -74,6 +74,7 @@ public struct MediaUIView: View, @unchecked Sendable {
     .background(Color.black)
   }
 
+  @MainActor
   public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false) {
     data = attachments.compactMap { DisplayData(from: $0, useRemoteMedia: useRemoteMedia) }
     initialItem = DisplayData(from: selectedAttachment, useRemoteMedia: useRemoteMedia)
@@ -233,6 +234,7 @@ private struct DisplayData: Identifiable, Hashable {
   let type: DisplayType
   let fallbackUrl: URL?
 
+  @MainActor
   init?(from attachment: MediaAttachment, useRemoteMedia passedUseRemoteMedia: Bool = false) {
     
     let noVideo = false
