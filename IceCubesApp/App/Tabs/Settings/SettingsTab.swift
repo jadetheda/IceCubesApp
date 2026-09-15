@@ -346,7 +346,7 @@ struct SettingsTabs: View {
         }
       #endif
 
-      Link(destination: URL(string: "https://github.com/Dimillian/IceCubesApp")!) {
+      Link(destination: URL(string: "https://github.com/jadetheda/IceCubesApp")!) {
         Label("settings.app.source", systemImage: "link")
       }
       .accessibilityRemoveTraits(.isButton)
