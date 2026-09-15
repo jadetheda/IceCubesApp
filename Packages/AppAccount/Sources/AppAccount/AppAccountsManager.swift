@@ -8,11 +8,15 @@ import SwiftUI
 
 @MainActor
 @Observable public class AppAccountsManager {
-  @AppStorage("latestCurrentAccountKey", store: UserPreferences.sharedDefault)
-  public static var latestCurrentAccountKey: String = ""
+  public static var latestCurrentAccountKey: String {
+    get { UserPreferences.sharedDefault?.string(forKey: "latestCurrentAccountKey") ?? "" }
+    set { UserPreferences.sharedDefault?.set(newValue, forKey: "latestCurrentAccountKey") }
+  }
 
-  @AppStorage("previousAccountKey", store: UserPreferences.sharedDefault)
-  public static var previousAccountKey: String = ""
+  public static var previousAccountKey: String {
+    get { UserPreferences.sharedDefault?.string(forKey: "previousAccountKey") ?? "" }
+    set { UserPreferences.sharedDefault?.set(newValue, forKey: "previousAccountKey") }
+  }
 
   public var currentAccount: AppAccount {
     didSet {

@@ -1293,6 +1293,8 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
         // Misskey streaming endpoint so it at least doesn't crash.
         let streamingBase = instanceStreamingURL?.absoluteString ?? "wss://\(server)"
         let wsURL = URL(string: "\(streamingBase)/streaming") ?? URL(string: "wss://\(server)/streaming")!
-        return URLSession.shared.webSocketTask(with: wsURL)
+        var request = URLRequest(url: wsURL)
+        request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
+        return URLSession.shared.webSocketTask(with: request)
     }
 }

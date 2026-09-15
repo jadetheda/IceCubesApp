@@ -315,11 +315,13 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
   {
     let url = try makeURL(
       scheme: "wss", endpoint: endpoint, forceServer: instanceStreamingURL?.host)
-    var subprotocols: [String] = []
+    var request = URLRequest(url: url)
+    request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
     if let oauthToken = critical.withLock({ $0.oauthToken }) {
-      subprotocols.append(oauthToken.accessToken)
+      request.setValue("Bearer \(oauthToken.accessToken)", forHTTPHeaderField: "Authorization")
+      request.setValue(oauthToken.accessToken, forHTTPHeaderField: "Sec-WebSocket-Protocol")
     }
-    return urlSession.webSocketTask(with: url, protocols: subprotocols)
+    return urlSession.webSocketTask(with: request)
   }
 
   public func mediaUpload<Entity: Decodable>(
