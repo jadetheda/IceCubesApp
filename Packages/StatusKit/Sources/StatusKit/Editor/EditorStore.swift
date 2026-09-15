@@ -158,7 +158,10 @@ extension StatusEditor {
     var showPostingErrorAlert: Bool = false
 
     var canPost: Bool {
-      textState.statusText.length > 0 || !mediaContainers.isEmpty
+      if let fediverseClient = client as? FediverseClient, fediverseClient.isPixelfed {
+        return !mediaContainers.isEmpty
+      }
+      return textState.statusText.length > 0 || !mediaContainers.isEmpty
     }
 
     var shouldDisablePollButton: Bool {

@@ -65,11 +65,33 @@ extension FediverseClient: StatusEditor.MediaDescriptionService.Client {
     mediaId: String,
     description: String
   ) async throws -> MediaAttachment {
-    try await put(
+    if isPixelfed {
+      let wrapper: PixelfedMediaAttachmentWrapper = try await put(
+        endpoint: Media.media(
+          id: mediaId,
+          json: .init(description: description)
+        )
+      )
+      return wrapper.attachment
+    }
+    return try await put(
       endpoint: Media.media(
         id: mediaId,
         json: .init(description: description)
       )
     )
+  }
+}
+
+private struct PixelfedMediaAttachmentWrapper: Decodable {
+  let attachment: MediaAttachment
+  
+  init(from decoder: Decoder) throws {
+    do {
+      self.attachment = try MediaAttachment(from: decoder)
+    } catch {
+      var container = try decoder.unkeyedContainer()
+      self.attachment = try container.decode(MediaAttachment.self)
+    }
   }
 }
