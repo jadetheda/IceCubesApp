@@ -28,10 +28,11 @@ import SwiftUI
 
   func preparePlayer(autoPlay: Bool, isCompact: Bool, loopVideo: Bool) {
     let asset: AVURLAsset
-    if url.pathExtension.isEmpty || url.pathExtension.lowercased() == "gif" {
-      asset = AVURLAsset(url: url, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
+    let activeUrl = (hasFalledBack && fallbackUrl != nil) ? fallbackUrl! : url
+    if activeUrl.pathExtension.isEmpty || activeUrl.pathExtension.lowercased() == "gif" {
+      asset = AVURLAsset(url: activeUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
     } else {
-      asset = AVURLAsset(url: url)
+      asset = AVURLAsset(url: activeUrl)
     }
     let item = AVPlayerItem(asset: asset)
     player = .init(playerItem: item)
