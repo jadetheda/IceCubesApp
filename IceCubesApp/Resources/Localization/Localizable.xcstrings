@@ -94908,6 +94908,17 @@
           }
         }
       }
+    },
+    "settings.other.loop-video": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loop videos"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

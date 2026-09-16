@@ -25,7 +25,7 @@ import SwiftUI
     self.forceAutoPlay = forceAutoPlay
   }
 
-  func preparePlayer(autoPlay: Bool, isCompact: Bool) {
+  func preparePlayer(autoPlay: Bool, isCompact: Bool, loopVideo: Bool) {
     let asset: AVURLAsset
     if url.pathExtension.isEmpty || url.pathExtension.lowercased() == "gif" {
       asset = AVURLAsset(url: url, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
@@ -58,7 +58,7 @@ import SwiftUI
     ) { [weak self] _ in
       Task { @MainActor in
         guard let self else { return }
-        if autoPlay || self.forceAutoPlay {
+        if loopVideo || self.forceAutoPlay {
           self.play()
         }
       }
@@ -187,7 +187,8 @@ public struct MediaUIAttachmentVideoView: View {
       .onAppear {
         viewModel.preparePlayer(
           autoPlay: isFullScreen ? true : preferences.autoPlayVideo,
-          isCompact: isCompact)
+          isCompact: isCompact,
+          loopVideo: isFullScreen ? true : preferences.loopVideo)
         viewModel.mute(preferences.muteVideo)
       }
       .onDisappear {

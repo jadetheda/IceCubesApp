@@ -28,6 +28,7 @@ import SwiftUI
     @AppStorage("app_default_posts_sensitive") public var appDefaultPostsSensitive = false
     @AppStorage("app_require_alt_text") public var appRequireAltText = false
     @AppStorage("autoplay_video") public var autoPlayVideo = true
+    @AppStorage("loop_video") public var loopVideo = true
     @AppStorage("animate_emojis") public var animateEmojis = true
     @AppStorage("cache_server_emotes") public var cacheServerEmotes = true
     @AppStorage("mute_video") public var muteVideo = true
@@ -274,6 +275,12 @@ import SwiftUI
   public var autoPlayVideo: Bool {
     didSet {
       storage.autoPlayVideo = autoPlayVideo
+    }
+  }
+
+  public var loopVideo: Bool {
+    didSet {
+      storage.loopVideo = loopVideo
     }
   }
     
@@ -858,6 +865,7 @@ import SwiftUI
     appDefaultPostsSensitive = storage.appDefaultPostsSensitive
     appRequireAltText = storage.appRequireAltText
     autoPlayVideo = storage.autoPlayVideo
+    loopVideo = storage.loopVideo
     animateEmojis = storage.animateEmojis
     cacheServerEmotes = storage.cacheServerEmotes
     preferredTranslationType = storage.preferredTranslationType

@@ -33,6 +33,9 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.autoPlayVideo) {
           Text("settings.other.autoplay-video")
         }
+        Toggle(isOn: $userPreferences.loopVideo) {
+          Text("settings.other.loop-video")
+        }
         Toggle(isOn: $userPreferences.muteVideo) {
           Text("settings.other.mute-video")
         }
