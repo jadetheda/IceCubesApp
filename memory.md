@@ -867,3 +867,6 @@
   - **Feature**: Replaced the "New Post" button on the Lists tab with an "Add List" button.
   - **Context**: The `ToolbarTab` was globally injecting `statusEditorToolbarItem` on all `NavigationTab` instances.
   - **Resolution**: Added `isListsTab` boolean to `NavigationTab` and `ToolbarTab`. Conditionalized the trailing navigation bar item to spawn `routerPath.presentedSheet = .listCreate` when `isListsTab` is true.
+  - **Feature**: Added a "Loop videos" preference toggle to `ContentSettingsView`.
+  - **Context**: The user wanted a dedicated toggle to control video and animation looping, which was previously hardcoded to piggyback off the `autoPlayVideo` setting.
+  - **Resolution**: Decoupled the `AVPlayerItemDidPlayToEndTime` looping logic in `MediaUIAttachmentVideoView` from `autoPlayVideo`. Injected a new `@AppStorage("loop_video")` boolean into `UserPreferences`. Set it to actively override looping everywhere across the app (timeline and fullscreen) when disabled, while letting GIFs implicitly loop as expected.
