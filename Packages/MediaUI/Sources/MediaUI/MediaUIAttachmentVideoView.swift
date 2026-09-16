@@ -58,7 +58,7 @@ import SwiftUI
     ) { [weak self] _ in
       Task { @MainActor in
         guard let self else { return }
-        if loopVideo || self.forceAutoPlay {
+        if loopVideo {
           self.play()
         }
       }
@@ -188,7 +188,7 @@ public struct MediaUIAttachmentVideoView: View {
         viewModel.preparePlayer(
           autoPlay: isFullScreen ? true : preferences.autoPlayVideo,
           isCompact: isCompact,
-          loopVideo: isFullScreen ? true : preferences.loopVideo)
+          loopVideo: preferences.loopVideo)
         viewModel.mute(preferences.muteVideo)
       }
       .onDisappear {
