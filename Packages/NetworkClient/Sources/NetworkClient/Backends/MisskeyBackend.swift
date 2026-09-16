@@ -541,8 +541,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                         let user = try JSONDecoder().decode(MisskeyUser.self, from: data)
                         accounts = [user.toAccount(server: self.server)]
                     } catch {
-                        let fakeAccount = Account(id: "error3", username: "\(String(describing: error).prefix(100))", displayName: "Error 3", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
-                        accounts = [fakeAccount]
+                        // Fall through
                     }
                 }
             } else {
@@ -568,9 +567,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                             accounts = [user.toAccount(server: self.server)]
                             resolved = true
                         } catch {
-                            let fakeAccount = Account(id: "error1", username: "\(String(describing: error).prefix(100))", displayName: "Error 1", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
-                            accounts = [fakeAccount]
-                            resolved = true
+                            // Failed to resolve exactly, fall through to search
                         }
                     } else if parts.count == 1 {
                         do {
@@ -579,9 +576,7 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
                             accounts = [user.toAccount(server: self.server)]
                             resolved = true
                         } catch {
-                            let fakeAccount = Account(id: "error2", username: "\(String(describing: error).prefix(100))", displayName: "Error 2", avatar: URL(string: "https://example.com/a.png")!, header: URL(string: "https://example.com/a.png")!, acct: "error@error", note: .init(stringValue: ""), createdAt: ServerDate(), followersCount: 0, followingCount: 0, statusesCount: 0, lastStatusAt: nil, fields: [], locked: false, emojis: [], url: nil, bot: false, discoverable: false)
-                            accounts = [fakeAccount]
-                            resolved = true
+                            // Failed to resolve exactly, fall through to search
                         }
                     }
                     
@@ -1292,7 +1287,11 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
         // Misskey streaming uses a different protocol; return a task that connects to the
         // Misskey streaming endpoint so it at least doesn't crash.
         let streamingBase = instanceStreamingURL?.absoluteString ?? "wss://\(server)"
-        let wsURL = URL(string: "\(streamingBase)/streaming") ?? URL(string: "wss://\(server)/streaming")!
+        var wsURLString = "\(streamingBase)/streaming"
+        if let token = oauthToken?.accessToken {
+            wsURLString += "?i=\(token)"
+        }
+        let wsURL = URL(string: wsURLString) ?? URL(string: "wss://\(server)/streaming")!
         var request = URLRequest(url: wsURL)
         request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
         return URLSession.shared.webSocketTask(with: request)

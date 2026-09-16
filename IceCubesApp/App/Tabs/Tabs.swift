@@ -168,7 +168,7 @@ enum AppTab: Identifiable, Hashable, CaseIterable, Codable {
         FollowedTagsListView()
       }
     case .lists:
-      NavigationTab {
+      NavigationTab(isListsTab: true) {
         ListsListView()
       }
     case .links:

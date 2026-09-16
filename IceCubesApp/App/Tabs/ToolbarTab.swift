@@ -11,14 +11,27 @@ struct ToolbarTab: ToolbarContent {
   @Environment(UserPreferences.self) private var userPreferences
 
   @Binding var routerPath: RouterPath
+  var isListsTab: Bool = false
   
   @Namespace private var transition
 
   var body: some ToolbarContent {
     if !isSecondaryColumn {
-      statusEditorToolbarItem(
-        routerPath: routerPath,
-        visibility: userPreferences.postVisibility)
+      if isListsTab {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button {
+            routerPath.presentedSheet = .listCreate
+          } label: {
+            Image(systemName: "plus")
+              .accessibilityLabel("Add List")
+          }
+          .tint(.label)
+        }
+      } else {
+        statusEditorToolbarItem(
+          routerPath: routerPath,
+          visibility: userPreferences.postVisibility)
+      }
       if #available(iOS 26.0, *) {
         ToolbarItem(placement: .navigationBarLeading) {
           AppAccountsSelectorView(

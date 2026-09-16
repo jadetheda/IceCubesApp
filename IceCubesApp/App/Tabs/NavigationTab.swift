@@ -15,10 +15,12 @@ struct NavigationTab<Content: View>: View {
   @Environment(FediverseClient.self) private var client
 
   var content: () -> Content
+  var isListsTab: Bool = false
 
   @State private var routerPath = RouterPath()
 
-  init(@ViewBuilder content: @escaping () -> Content) {
+  init(isListsTab: Bool = false, @ViewBuilder content: @escaping () -> Content) {
+    self.isListsTab = isListsTab
     self.content = content
   }
 
@@ -33,7 +35,7 @@ struct NavigationTab<Content: View>: View {
         )
         .withSafariRouter()
         .toolbar {
-          ToolbarTab(routerPath: $routerPath)
+          ToolbarTab(routerPath: $routerPath, isListsTab: isListsTab)
         }
         .onChange(of: client.id) {
           routerPath.path = []
