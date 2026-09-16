@@ -857,3 +857,13 @@
   - **Feature**: Implemented full GoToSocial server support (`GoToSocialBackend.swift`).
   - **Context**: Addressed historical user feedback from 02/05/2025: *"GoToSocial is already well supported, but there are a few improvements that could be implemented including: GtS post editing, and improved Markdown rendering."*
   - **Resolution**: Fully resolved the GtS post editing complaint. GoToSocial supports the `PUT` endpoint for editing, but reports its version as `0.19.x`. IceCubes previously locked the edit button behind a strict Mastodon `v3.5+` version check. The new backend safely bypasses this check (`isGoToSocial == true`) in `CurrentInstance.swift`, unlocking native post editing. Also ensured feature-degradation stability by intercepting unsupported endpoints (Trending, Metrics) to return empty arrays instead of 404 network crashes.
+- 2026-09-15T02:24:00Z: Fixed streamwatcher bug for Misskey/Sharkey live-streaming by appending OAuth token in MisskeyBackend's makeWebSocketTask, updating StreamWatcher to emit "connect" payloads for Misskey instances, and parsing Misskey's nested "channel" JSON payloads in StreamEventDecoder. Improves offline/production readiness by fully supporting Misskey live timelines.
+- 2026-09-15T02:27:00Z: Fixed a critical bug in `StreamWatcher.swift` where `JSONDecoder().keyDecodingStrategy = .convertFromSnakeCase` was being incorrectly applied to Misskey WebSocket JSON payloads. Misskey natively uses camelCase (e.g., `userId`, `createdAt`), and forcing snake_case conversion caused all Misskey timeline events (`MisskeyNote`, `MisskeyNotification`) to fail decoding and drop silently. Moved the `.convertFromSnakeCase` assignment to execute only for Mastodon decoding paths.
+
+- **2026-09-16 (UTC)**
+  - **Bug Fix**: Fixed a Misskey search bug where queries that didn't exactly match a username returned a fake "Error 2" user.
+  - **Context**: `MisskeyBackend` was capturing API exceptions for `/users/show` and immediately returning a hardcoded `Account(id: "error2")` instead of gracefully falling through to `/users/search`.
+  - **Resolution**: Removed the fakeAccount injections in the `catch` blocks so that Misskey can properly fallback to generalized search queries.
+  - **Feature**: Replaced the "New Post" button on the Lists tab with an "Add List" button.
+  - **Context**: The `ToolbarTab` was globally injecting `statusEditorToolbarItem` on all `NavigationTab` instances.
+  - **Resolution**: Added `isListsTab` boolean to `NavigationTab` and `ToolbarTab`. Conditionalized the trailing navigation bar item to spawn `routerPath.presentedSheet = .listCreate` when `isListsTab` is true.
