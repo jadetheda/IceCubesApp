@@ -870,3 +870,6 @@
   - **Feature**: Added a "Loop videos" preference toggle to `ContentSettingsView`.
   - **Context**: The user wanted a dedicated toggle to control video and animation looping, which was previously hardcoded to piggyback off the `autoPlayVideo` setting.
   - **Resolution**: Decoupled the `AVPlayerItemDidPlayToEndTime` looping logic in `MediaUIAttachmentVideoView` from `autoPlayVideo`. Injected a new `@AppStorage("loop_video")` boolean into `UserPreferences`. Set it to actively override looping everywhere across the app (timeline and fullscreen) when disabled, while letting GIFs implicitly loop as expected.
+  - **Bug Fix**: Fixed a critical upstream AVPlayer bug where remote videos (especially in search or fullscreen) would refuse to loop.
+  - **Context**: The `AVPlayerItemDidPlayToEndTime` observer was rigidly bound to `player.currentItem`. When Misskey/Pixelfed remote videos failed to load natively and `hasFalledBack` swapped in the `fallbackUrl` via `replaceCurrentItem`, the loop observer was permanently orphaned on the dead item.
+  - **Resolution**: Refactored the observer to listen globally (`object: nil`) and dynamically evaluate `item == self.player?.currentItem` inside the closure. Saved the `loopVideo` preference to the ViewModel so it flawlessly survives media swap-outs and lifecycle refreshes.
