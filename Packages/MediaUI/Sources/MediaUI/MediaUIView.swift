@@ -217,8 +217,8 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
     return nil
   }
 
-private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
-    guard let data = await imageData(url, fallbackUrl: fallbackUrl) else { return false }
+  private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
+    guard let image = try? await uiimageFor(url: url, fallbackUrl: fallbackUrl) else { return false }
 
     var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
 
@@ -227,15 +227,8 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
       status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
     }
     if status == .authorized {
-      do {
-        try await PHPhotoLibrary.shared().performChanges {
-          let request = PHAssetCreationRequest.forAsset()
-          request.addResource(with: .photo, data: data, options: nil)
-        }
-        return true
-      } catch {
-        return false
-      }
+      UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+      return true
     }
     return false
   }
