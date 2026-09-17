@@ -20,19 +20,19 @@ struct StatusRowContextMenu: View {
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
 
-//  var downloadableMedia: [Models.MediaAttachment] {
-//    let baseAttachments: [Models.MediaAttachment]
-//    if viewModel.status.mediaAttachments.isEmpty {
-//      baseAttachments = viewModel.status.reblog?.mediaAttachments ?? []
-//    } else {
-//      baseAttachments = viewModel.status.mediaAttachments
-//    }
-//    
-//    return baseAttachments.filter { attachment in
-//      let type = attachment.supportedType
-//      return type == .image || type == .video || type == .gifv
-//    }
-//  }
+  var downloadableMedia: [Models.MediaAttachment] {
+    let baseAttachments: [Models.MediaAttachment]
+    if viewModel.status.mediaAttachments.isEmpty {
+      baseAttachments = viewModel.status.reblog?.mediaAttachments ?? []
+    } else {
+      baseAttachments = viewModel.status.mediaAttachments
+    }
+    
+    return baseAttachments.filter { attachment in
+      let type = attachment.supportedType
+      return type == .image || type == .video || type == .gifv
+    }
+  }
 
   var viewModel: StatusRowViewModel
   @Binding var showTextForSelection: Bool
@@ -159,7 +159,7 @@ Button {
           Label("status.action.share-image", systemImage: "photo")
         }
 
-        // downloadMediaButton
+        downloadMediaButton
       }
     } label: {
       Label("status.action.share-title", systemImage: "square.and.arrow.up")
@@ -321,109 +321,109 @@ Button {
     }
   }
 
-//  @ViewBuilder
-//  private var accountContactMenuItems: some View {
-//    Button {
-//      #if targetEnvironment(macCatalyst) || os(visionOS)
-//        openWindow(
-//          value: WindowDestinationEditor.mentionStatusEditor(
-//            account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
-//        )
-//      #else
-//        viewModel.routerPath.presentedSheet = .mentionStatusEditor(
-//          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
-//      #endif
-//    } label: {
-//      Label("status.action.mention", systemImage: "at")
-//    }
-//    Button {
-//      #if targetEnvironment(macCatalyst) || os(visionOS)
-//        openWindow(
-//          value: WindowDestinationEditor.mentionStatusEditor(
-//            account: viewModel.status.reblog?.account ?? viewModel.status.account,
-//            visibility: .direct))
-//      #else
-//        viewModel.routerPath.presentedSheet = .mentionStatusEditor(
-//          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .direct
-//        )
-//      #endif
-//    } label: {
-//      Label("status.action.message", systemImage: "tray.full")
-//    }
-//    if viewModel.authorRelationship?.blocking == true {
-//      Button {
-//        Task {
-//          do {
-//            let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
-//            viewModel.authorRelationship = try await client.post(
-//              endpoint: Accounts.unblock(id: operationAccount.id))
-//          } catch {}
-//        }
-//      } label: {
-//        Label("account.action.unblock", systemImage: "person.crop.circle.badge.exclamationmark")
-//      }
-//    } else {
-//      Button {
-//        isBlockConfirmationPresented = true
-//      } label: {
-//        Label("account.action.block", systemImage: "person.crop.circle.badge.xmark")
-//      }
-//    }
-//  }
-//
+  @ViewBuilder
+  private var accountContactMenuItems: some View {
+    Button {
+      #if targetEnvironment(macCatalyst) || os(visionOS)
+        openWindow(
+          value: WindowDestinationEditor.mentionStatusEditor(
+            account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
+        )
+      #else
+        viewModel.routerPath.presentedSheet = .mentionStatusEditor(
+          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
+      #endif
+    } label: {
+      Label("status.action.mention", systemImage: "at")
+    }
+    Button {
+      #if targetEnvironment(macCatalyst) || os(visionOS)
+        openWindow(
+          value: WindowDestinationEditor.mentionStatusEditor(
+            account: viewModel.status.reblog?.account ?? viewModel.status.account,
+            visibility: .direct))
+      #else
+        viewModel.routerPath.presentedSheet = .mentionStatusEditor(
+          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .direct
+        )
+      #endif
+    } label: {
+      Label("status.action.message", systemImage: "tray.full")
+    }
+    if viewModel.authorRelationship?.blocking == true {
+      Button {
+        Task {
+          do {
+            let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
+            viewModel.authorRelationship = try await client.post(
+              endpoint: Accounts.unblock(id: operationAccount.id))
+          } catch {}
+        }
+      } label: {
+        Label("account.action.unblock", systemImage: "person.crop.circle.badge.exclamationmark")
+      }
+    } else {
+      Button {
+        isBlockConfirmationPresented = true
+      } label: {
+        Label("account.action.block", systemImage: "person.crop.circle.badge.xmark")
+      }
+    }
+  }
 
-//  @ViewBuilder
-//  private var // downloadMediaButton: some View {
-//    if downloadableMedia.count > 0 {
-//      Button {
-//        Task {
-//          await downloadAllMedia(attachments: downloadableMedia)
-//          HapticManager.shared.fireHaptic(.notification(.success))
-//        }
-//      } label: {
-//        if downloadableMedia.count > 1 {
-//          Label("status.action.download-all-media", systemImage: "square.and.arrow.down.on.square")
-//        } else {
-//          Label("status.action.download-media", systemImage: "square.and.arrow.down.on.square")
-//        }
-//      }
-//    }
-//  }
-//
-//  private func downloadAllMedia(attachments: [Models.MediaAttachment]) async {
-//    for attachment in attachments {
-//      guard let info = attachment.displayInfo(useRemoteMedia: preferences.remoteMediaAlwaysForce, fallbackOnFail: preferences.remoteMediaFallbackOnFail, neverLoadVideo: false) else { continue }
-//      
-//      var data: Data? = nil
-//      data = try? await URLSession.shared.data(from: info.url).0
-//      if data == nil, let fallbackUrl = info.fallbackUrl {
-//        data = try? await URLSession.shared.data(from: fallbackUrl).0
-//      }
-//      
-//      if let data {
-//        var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
-//        if status != .authorized {
-//          status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-//        }
-//        if status == .authorized {
-//          do {
-//            try await PHPhotoLibrary.shared().performChanges {
-//              let request = PHAssetCreationRequest.forAsset()
-//              let type = attachment.supportedType
-//              let resourceType: PHAssetResourceType
-//              if type == .video || type == .gifv {
-//                resourceType = .video
-//              } else {
-//                resourceType = .photo
-//              }
-//              request.addResource(with: resourceType, data: data, options: nil)
-//            }
-//          } catch {
-//            print(error)
-//          }
-//        }
-//      }
-//    }
-//  }
+
+  @ViewBuilder
+  private var downloadMediaButton: some View {
+    if downloadableMedia.count > 0 {
+      Button {
+        Task {
+          await downloadAllMedia(attachments: downloadableMedia)
+          HapticManager.shared.fireHaptic(.notification(.success))
+        }
+      } label: {
+        if downloadableMedia.count > 1 {
+          Label("status.action.download-all-media", systemImage: "square.and.arrow.down.on.square")
+        } else {
+          Label("status.action.download-media", systemImage: "square.and.arrow.down.on.square")
+        }
+      }
+    }
+  }
+
+  private func downloadAllMedia(attachments: [Models.MediaAttachment]) async {
+    for attachment in attachments {
+      guard let info = attachment.displayInfo(useRemoteMedia: preferences.remoteMediaAlwaysForce, fallbackOnFail: preferences.remoteMediaFallbackOnFail, neverLoadVideo: false) else { continue }
+      
+      var data: Data? = nil
+      data = try? await URLSession.shared.data(from: info.url).0
+      if data == nil, let fallbackUrl = info.fallbackUrl {
+        data = try? await URLSession.shared.data(from: fallbackUrl).0
+      }
+      
+      if let data {
+        var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        if status != .authorized {
+          status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        }
+        if status == .authorized {
+          do {
+            try await PHPhotoLibrary.shared().performChanges {
+              let request = PHAssetCreationRequest.forAsset()
+              let type = attachment.supportedType
+              let resourceType: PHAssetResourceType
+              if type == .video || type == .gifv {
+                resourceType = .video
+              } else {
+                resourceType = .photo
+              }
+              request.addResource(with: resourceType, data: data, options: nil)
+            }
+          } catch {
+            print(error)
+          }
+        }
+      }
+    }
+  }
 
 }
