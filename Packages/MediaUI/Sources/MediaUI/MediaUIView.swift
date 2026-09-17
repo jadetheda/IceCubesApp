@@ -104,10 +104,10 @@ private struct MediaToolBar: ToolbarContent {
     #if !targetEnvironment(macCatalyst)
       DismissToolbarItem()
     #endif
-    QuickLookToolbarItem(itemUrl: data.url)
+    QuickLookToolbarItem(itemUrl: data.url, fallbackUrl: data.fallbackUrl)
     AltTextToolbarItem(alt: data.description)
-    SavePhotoToolbarItem(url: data.url, type: data.type)
-    ShareToolbarItem(url: data.url, type: data.type)
+    SavePhotoToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
+    ShareToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
   }
 }
 
@@ -155,6 +155,7 @@ private struct AltTextToolbarItem: ToolbarContent {
 
 private struct SavePhotoToolbarItem: ToolbarContent, @unchecked Sendable {
   let url: URL
+  let fallbackUrl: URL?
   let type: DisplayType
   @State private var state = SavingState.unsaved
 
@@ -164,7 +165,7 @@ private struct SavePhotoToolbarItem: ToolbarContent, @unchecked Sendable {
         Button {
           Task {
             state = .saving
-            if await saveImage(url: url) {
+            if await saveImage(url: url, fallbackUrl: fallbackUrl) {
               withAnimation {
                 state = .saved
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -194,24 +195,30 @@ private struct SavePhotoToolbarItem: ToolbarContent, @unchecked Sendable {
     case saved
   }
 
-  private func imageData(_ url: URL) async -> Data? {
-    var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
+  private func imageData(_ url: URL, fallbackUrl: URL?) async -> Data? {
+var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
+    if data == nil, let fallbackUrl {
+      data = ImagePipeline.shared.cache.cachedData(for: .init(url: fallbackUrl))
+    }
     if data == nil {
       data = try? await URLSession.shared.data(from: url).0
+    }
+    if data == nil, let fallbackUrl {
+      data = try? await URLSession.shared.data(from: fallbackUrl).0
     }
     return data
   }
 
-  private func uiimageFor(url: URL) async throws -> UIImage? {
-    let data = await imageData(url)
+  private func uiimageFor(url: URL, fallbackUrl: URL?) async throws -> UIImage? {
+    let data = await imageData(url, fallbackUrl: fallbackUrl)
     if let data {
       return UIImage(data: data)
     }
     return nil
   }
 
-  private func saveImage(url: URL) async -> Bool {
-    guard let image = try? await uiimageFor(url: url) else { return false }
+  private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
+    guard let image = try? await uiimageFor(url: url, fallbackUrl: fallbackUrl) else { return false }
 
     var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
 

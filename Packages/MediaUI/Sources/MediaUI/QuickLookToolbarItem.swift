@@ -4,6 +4,7 @@ import SwiftUI
 
 struct QuickLookToolbarItem: ToolbarContent, @unchecked Sendable {
   let itemUrl: URL
+  let fallbackUrl: URL? = nil
   @State private var localPath: URL?
   @State private var isLoading = false
 
@@ -12,7 +13,7 @@ struct QuickLookToolbarItem: ToolbarContent, @unchecked Sendable {
       Button {
         Task {
           isLoading = true
-          localPath = await localPathFor(url: itemUrl)
+          localPath = await localPathFor(url: itemUrl, fallbackUrl: fallbackUrl)
           isLoading = false
         }
       } label: {
@@ -26,19 +27,25 @@ struct QuickLookToolbarItem: ToolbarContent, @unchecked Sendable {
     }
   }
 
-  private func imageData(_ url: URL) async -> Data? {
-    var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
+  private func imageData(_ url: URL, fallbackUrl: URL?) async -> Data? {
+var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
+    if data == nil, let fallbackUrl {
+      data = ImagePipeline.shared.cache.cachedData(for: .init(url: fallbackUrl))
+    }
     if data == nil {
       data = try? await URLSession.shared.data(from: url).0
+    }
+    if data == nil, let fallbackUrl {
+      data = try? await URLSession.shared.data(from: fallbackUrl).0
     }
     return data
   }
 
-  private func localPathFor(url: URL) async -> URL {
+  private func localPathFor(url: URL, fallbackUrl: URL?) async -> URL {
     try? FileManager.default.removeItem(at: quickLookDir)
     try? FileManager.default.createDirectory(at: quickLookDir, withIntermediateDirectories: true)
     let path = quickLookDir.appendingPathComponent(url.lastPathComponent)
-    let data = await imageData(url)
+    let data = await imageData(url, fallbackUrl: fallbackUrl)
     try? data?.write(to: path)
     return path
   }
