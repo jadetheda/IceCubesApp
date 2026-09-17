@@ -94919,6 +94919,17 @@
           }
         }
       }
+    },
+    "status.action.download-all-images": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download all images"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

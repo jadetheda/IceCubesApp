@@ -1,0 +1,23 @@
+--- StreamWatcher.swift
++++ StreamWatcher.swift
+@@ -189,11 +216,19 @@
+ 
+ private actor StreamEventDecoder {
+   struct DecodedEvent {
+-    let rawEvent: RawStreamEvent
++    let rawEvent: RawStreamEvent?
+     let event: (any StreamEvent)?
+   }
+ 
+   private var lastTask: Task<DecodedEvent, Error>?
++  private var isMisskey: Bool = false
++  private var server: String = "misskey"
++
++  func setClient(isMisskey: Bool, server: String) {
++    self.isMisskey = isMisskey
++    self.server = server
++  }
+ 
+   func decode(data: Data) async throws -> DecodedEvent {
+     let previousTask = lastTask
++    let isMisskey = self.isMisskey

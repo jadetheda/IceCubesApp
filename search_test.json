@@ -1,0 +1,43 @@
+[
+  {
+    "id": "ar6nu82twfve04q2",
+    "createdAt": "2026-09-15T20:00:02.405Z",
+    "userId": "9khgo8lubc",
+    "user": {
+      "id": "9khgo8lubc",
+      "name": "\u7d75\u6587\u5b57\u7d39\u4ecbBot",
+      "username": "emojis",
+      "host": null,
+      "avatarUrl": "https://proxy.misskeyusercontent.jp/avatar.webp?url=https%3A%2F%2Fmedia.misskeyusercontent.jp%2Fio%2Fc3476794-8378-41a5-a7c2-202085e928e8.png&avatar=1",
+      "avatarBlurhash": "eKGkp+t600NH^%}*f6A0kCRP04WE~8oJX95Faz$way-oD%ay%NofaJ",
+      "avatarDecorations": [
+        {
+          "id": "9m9q4lg6dd9u0ch3",
+          "url": "https://media.misskeyusercontent.jp/io/8401d2c2-5a2e-4c37-a38e-0ffb2829c84e.png"
+        }
+      ],
+      "isBot": true,
+      "isCat": false,
+      "emojis": {},
+      "onlineStatus": "unknown",
+      "badgeRoles": []
+    },
+    "text": "?[misskey.io](https://misskey.io)\u306b\u306f\u3001\u3053\u3093\u306a\u30ab\u30b9\u30bf\u30e0\u7d75\u6587\u5b57\u304c\u3042\u308a\u307e\u3059\u3002\n\n:daisessen_dogoon:\n\n\u3010**\u540d\u524d**\u3011\n> daisessen_dogoon\n\u3010**\u30ab\u30c6\u30b4\u30ea\u30fc**\u3011\n> Letters / Japanese / \u7af6\u99ac\n\u3010**\u30bf\u30b0**\u3011\n> \u3060\u3044\u305b\u3063\u305b\u3093\u3069\u3054\u30fc\u3093 \u5927\u63a5\u6226\u30c9\u30b4\u30fc\u30f3 \u9752\u5d8b\u9054\u4e5f \u3042\u304a\u3057\u307e\u305f\u3064\u3084\n\u3010**\u30e9\u30a4\u30bb\u30f3\u30b9**\u3011\n> Public Domain",
+    "cw": null,
+    "visibility": "public",
+    "localOnly": false,
+    "reactionAcceptance": null,
+    "renoteCount": 0,
+    "repliesCount": 0,
+    "reactionCount": 1,
+    "reactions": {
+      ":meow_yikes@.:": 1
+    },
+    "reactionEmojis": {},
+    "fileIds": [],
+    "files": [],
+    "replyId": null,
+    "renoteId": null,
+    "clippedCount": 0
+  }
+]

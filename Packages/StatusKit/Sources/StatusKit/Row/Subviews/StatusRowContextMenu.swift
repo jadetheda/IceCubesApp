@@ -3,6 +3,8 @@ import Env
 import Foundation
 import NetworkClient
 import SwiftUI
+import Photos
+import Models
 
 @MainActor
 struct StatusRowContextMenu: View {
@@ -17,6 +19,10 @@ struct StatusRowContextMenu: View {
   @Environment(StatusDataController.self) private var statusDataController
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
+
+  var imageAttachments: [Models.MediaAttachment] {
+    (viewModel.status.mediaAttachments.isEmpty ? (viewModel.status.reblog?.mediaAttachments ?? []) : viewModel.status.mediaAttachments).filter { $0.supportedType == .image }
+  }
 
   var viewModel: StatusRowViewModel
   @Binding var showTextForSelection: Bool
@@ -137,10 +143,20 @@ struct StatusRowContextMenu: View {
           Label("status.action.share-link", systemImage: "link")
         }
 
-        Button {
+Button {
           isShareAsImageSheetPresented = true
         } label: {
           Label("status.action.share-image", systemImage: "photo")
+        }
+
+        if imageAttachments.count > 1 {
+          Button {
+            Task {
+              await downloadAllImages(attachments: imageAttachments)
+            }
+          } label: {
+            Label("status.action.download-all-images", systemImage: "square.and.arrow.down.on.square")
+          }
         }
       }
     } label: {
@@ -352,4 +368,35 @@ Button {
       }
     }
   }
+
+
+  private func downloadAllImages(attachments: [Models.MediaAttachment]) async {
+    for attachment in attachments {
+      guard let info = attachment.displayInfo(useRemoteMedia: preferences.remoteMediaAlwaysForce, fallbackOnFail: preferences.remoteMediaFallbackOnFail, neverLoadVideo: false) else { continue }
+      
+      var data: Data? = nil
+      data = try? await URLSession.shared.data(from: info.url).0
+      if data == nil, let fallbackUrl = info.fallbackUrl {
+        data = try? await URLSession.shared.data(from: fallbackUrl).0
+      }
+      
+      if let data {
+        var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+        if status != .authorized {
+          status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+        }
+        if status == .authorized {
+          do {
+            try await PHPhotoLibrary.shared().performChanges {
+              let request = PHAssetCreationRequest.forAsset()
+              request.addResource(with: .photo, data: data, options: nil)
+            }
+          } catch {
+            print(error)
+          }
+        }
+      }
+    }
+  }
+
 }
