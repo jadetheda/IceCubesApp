@@ -4,7 +4,7 @@ import SwiftUI
 
 struct QuickLookToolbarItem: ToolbarContent, @unchecked Sendable {
   let itemUrl: URL
-  let fallbackUrl: URL? = nil
+  var fallbackUrl: URL? = nil
   @State private var localPath: URL?
   @State private var isLoading = false
 

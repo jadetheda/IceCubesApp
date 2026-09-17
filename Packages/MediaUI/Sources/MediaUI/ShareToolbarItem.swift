@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ShareToolbarItem: ToolbarContent, @unchecked Sendable {
   let url: URL
-  let fallbackUrl: URL? = nil
+  var fallbackUrl: URL? = nil
   let type: DisplayType
 
   var body: some ToolbarContent {

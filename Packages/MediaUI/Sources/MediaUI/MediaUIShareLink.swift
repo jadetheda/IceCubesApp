@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct MediaUIShareLink: View, @unchecked Sendable {
   let url: URL
-  let fallbackUrl: URL? = nil
+  var fallbackUrl: URL? = nil
   let type: DisplayType
 
   public init(url: URL, fallbackUrl: URL? = nil, type: DisplayType) {
