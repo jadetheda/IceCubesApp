@@ -138,88 +138,79 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
 
   private mutating func removeTrailingTags(doc: SwiftSoup.Document) {
     // Fast bail-outs
-    if !asMarkdown.contains("#") { return }
+    if !asMarkdown.contains("#") && !asMarkdown.contains("＃") { return }
 
-    // Split markdown by double newlines to get paragraphs (same as building logic)
-    let paragraphs = asMarkdown.split(separator: "\n\n", omittingEmptySubsequences: false).map(
-      String.init)
-    guard
-      let lastIndex = paragraphs.lastIndex(where: {
-        !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-      })
-    else {
-      return
-    }
-
-    // Inspect original HTML last paragraph to ensure it is hashtags-only
-    // and not a quote-inline. This avoids regex backtracking on large inputs.
-    let isLastParagraphTagsOnly: Bool = {
-      do {
-        let paras = try doc.select("p:not(.quote-inline)")
-        guard let lastP = paras.array().last else { return false }
-        func isHashtagOnlyNode(_ node: SwiftSoup.Node) -> Bool {
-          let name = node.nodeName()
-          if name == "#text" {
-            let txt = node.description.trimmingCharacters(in: .whitespacesAndNewlines)
-            return txt.isEmpty
-          } else if name == "br" {
-            return true
-          } else if name == "span" {
-            for child in node.getChildNodes() {
-              if !isHashtagOnlyNode(child) { return false }
-            }
-            return true
-          } else if name == "a" {
+    guard let body = doc.body() else { return }
+    var foundHashtag = false
+    
+    func isHashtagAnchor(_ node: SwiftSoup.Node) -> Bool {
+        let name = node.nodeName()
+        if name == "a" {
             let cls = (try? node.attr("class")) ?? ""
             let href = (try? node.attr("href")) ?? ""
-            let element = node as? SwiftSoup.Element
-            let anchorText = (try? element?.text()) ?? ""
+            let anchorText = (try? (node as? SwiftSoup.Element)?.text()) ?? ""
             let trimmedText = anchorText.trimmingCharacters(in: .whitespacesAndNewlines)
             let textStartsWithHash = trimmedText.hasPrefix("#") || trimmedText.hasPrefix("＃")
             let hasTagInUrl = href.contains("/tags/") || href.contains("/tag/")
             return cls.contains("hashtag") || (hasTagInUrl && textStartsWithHash)
-          }
-          return false
         }
-
-        var hasAtLeastOneHashtag = false
-        var allValid = true
-        for child in lastP.getChildNodes() {
-          if !isHashtagOnlyNode(child) {
-            allValid = false
-            break
-          }
-          if child.nodeName() == "a" || (child.nodeName() == "span" && child.description.contains("href")) {
-             hasAtLeastOneHashtag = true
-          }
+        if name == "span" {
+            for child in node.getChildNodes() {
+                if isHashtagAnchor(child) { return true }
+            }
         }
-        
-        // Ensure we actually found anchors inside spans if they were nested
-        if allValid && !hasAtLeastOneHashtag {
-           let anchors = try? lastP.select("a")
-           if let anchors = anchors, !anchors.isEmpty() {
-               hasAtLeastOneHashtag = true
-           }
-        }
-        
-        return allValid && hasAtLeastOneHashtag
-      } catch {
         return false
-      }
-    }()
-
-    guard isLastParagraphTagsOnly else { return }
-
-    // Remove the last non-empty paragraph from both markdown and raw text
-    hadTrailingTags = true
-    let updatedMarkdownParagraphs = Array(paragraphs.prefix(lastIndex))
-    asMarkdown = updatedMarkdownParagraphs.joined(separator: "\n\n")
-
-    let rawParagraphs = asRawText.split(separator: "\n\n", omittingEmptySubsequences: false).map(
-      String.init)
-    if lastIndex < rawParagraphs.count {
-      let updatedRawParagraphs = Array(rawParagraphs.prefix(lastIndex))
-      asRawText = updatedRawParagraphs.joined(separator: "\n\n")
+    }
+    
+    func isRemovable(_ node: SwiftSoup.Node) -> Bool {
+        let name = node.nodeName()
+        if name == "#text" {
+            return node.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        if name == "br" || name == "hr" {
+            return true
+        }
+        return isHashtagAnchor(node)
+    }
+    
+    func popTrailingTags(from element: SwiftSoup.Element) -> Bool {
+        var didRemove = false
+        while let lastChild = element.getChildNodes().last {
+            if isRemovable(lastChild) {
+                if isHashtagAnchor(lastChild) { foundHashtag = true }
+                try? lastChild.remove()
+                didRemove = true
+            } else if let el = lastChild as? SwiftSoup.Element {
+                let removedInside = popTrailingTags(from: el)
+                if removedInside {
+                    didRemove = true
+                    if el.childNodeSize() == 0 {
+                        try? el.remove()
+                    } else {
+                        break
+                    }
+                } else {
+                    break
+                }
+            } else {
+                break
+            }
+        }
+        return didRemove
+    }
+    
+    _ = popTrailingTags(from: body)
+    
+    if foundHashtag {
+        hadTrailingTags = true
+        
+        let mdRegex = try! NSRegularExpression(pattern: "(?:\\s*\\[[#＃].*?\\]\\([^\\)]+\\))+\\s*$", options: .caseInsensitive)
+        let mdRange = NSRange(location: 0, length: asMarkdown.utf16.count)
+        asMarkdown = mdRegex.stringByReplacingMatches(in: asMarkdown, options: [], range: mdRange, withTemplate: "").trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let rawRegex = try! NSRegularExpression(pattern: "(?:\\s*[#＃]\\S+)+\\s*$", options: .caseInsensitive)
+        let rawRange = NSRange(location: 0, length: asRawText.utf16.count)
+        asRawText = rawRegex.stringByReplacingMatches(in: asRawText, options: [], range: rawRange, withTemplate: "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
   }
 
