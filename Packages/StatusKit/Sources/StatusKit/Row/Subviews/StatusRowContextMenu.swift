@@ -21,7 +21,17 @@ struct StatusRowContextMenu: View {
   @Environment(Theme.self) private var theme
 
   var downloadableMedia: [Models.MediaAttachment] {
-    (viewModel.status.mediaAttachments.isEmpty ? (viewModel.status.reblog?.mediaAttachments ?? []) : viewModel.status.mediaAttachments).filter { $0.supportedType == .image || $0.supportedType == .video || $0.supportedType == .gifv }
+    let baseAttachments: [Models.MediaAttachment]
+    if viewModel.status.mediaAttachments.isEmpty {
+      baseAttachments = viewModel.status.reblog?.mediaAttachments ?? []
+    } else {
+      baseAttachments = viewModel.status.mediaAttachments
+    }
+    
+    return baseAttachments.filter { attachment in
+      let type = attachment.supportedType
+      return type == .image || type == .video || type == .gifv
+    }
   }
 
   var viewModel: StatusRowViewModel
@@ -394,7 +404,13 @@ Button {
           do {
             try await PHPhotoLibrary.shared().performChanges {
               let request = PHAssetCreationRequest.forAsset()
-              let resourceType: PHAssetResourceType = (attachment.supportedType == .video || attachment.supportedType == .gifv) ? .video : .photo
+              let type = attachment.supportedType
+              let resourceType: PHAssetResourceType
+              if type == .video || type == .gifv {
+                resourceType = .video
+              } else {
+                resourceType = .photo
+              }
               request.addResource(with: resourceType, data: data, options: nil)
             }
           } catch {
