@@ -153,6 +153,7 @@ Button {
           Button {
             Task {
               await downloadAllMedia(attachments: downloadableMedia)
+              HapticManager.shared.fireHaptic(.notification(.success))
             }
           } label: {
             Label(downloadableMedia.count > 1 ? "status.action.download-all-media" : "status.action.download-media", systemImage: "square.and.arrow.down.on.square")
