@@ -377,9 +377,10 @@ Button {
     if downloadableMedia.count > 0 {
       let alwaysForce = preferences.remoteMediaAlwaysForce
       let fallbackOnFail = preferences.remoteMediaFallbackOnFail
+      let postUrl = viewModel.status.reblog?.url ?? viewModel.status.url
       Button {
         Task {
-          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail)
+          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail, postUrl: postUrl)
           HapticManager.shared.fireHaptic(.notification(.success))
         }
       } label: {
@@ -392,7 +393,7 @@ Button {
     }
   }
 
-  private func downloadAllMedia(attachments: [Models.MediaAttachment], alwaysForce: Bool, fallbackOnFail: Bool) async {
+  private func downloadAllMedia(attachments: [Models.MediaAttachment], alwaysForce: Bool, fallbackOnFail: Bool, postUrl: String?) async {
     for attachment in attachments {
       guard let info = attachment.displayInfo(useRemoteMedia: alwaysForce, fallbackOnFail: fallbackOnFail, neverLoadVideo: false) else { continue }
       
@@ -419,6 +420,11 @@ Button {
               
               try await PHPhotoLibrary.shared().performChanges {
                 let request = PHAssetCreationRequest.creationRequestForAsset()
+                #if compiler(>=5.9)
+                if let urlStr = postUrl {
+                  request.caption = urlStr
+                }
+                #endif
                 request.addResource(with: resourceType, fileURL: tempFile, options: nil)
               }
               
@@ -426,6 +432,11 @@ Button {
             } else {
               try await PHPhotoLibrary.shared().performChanges {
                 let request = PHAssetCreationRequest.creationRequestForAsset()
+                #if compiler(>=5.9)
+                if let urlStr = postUrl {
+                  request.caption = urlStr
+                }
+                #endif
                 request.addResource(with: resourceType, data: data, options: nil)
               }
             }
