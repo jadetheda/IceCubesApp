@@ -227,13 +227,14 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
       status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
     }
     if status == .authorized {
-      return await withCheckedContinuation { continuation in
-        PHPhotoLibrary.shared().performChanges({
+      do {
+        try await PHPhotoLibrary.shared().performChanges {
           let request = PHAssetCreationRequest.forAsset()
           request.addResource(with: .photo, data: data, options: nil)
-        }) { success, _ in
-          continuation.resume(returning: success)
         }
+        return true
+      } catch {
+        return false
       }
     }
     return false

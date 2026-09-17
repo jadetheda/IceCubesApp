@@ -159,20 +159,7 @@ Button {
           Label("status.action.share-image", systemImage: "photo")
         }
 
-        if downloadableMedia.count > 0 {
-          Button {
-            Task {
-              await downloadAllMedia(attachments: downloadableMedia)
-              HapticManager.shared.fireHaptic(.notification(.success))
-            }
-          } label: {
-            if downloadableMedia.count > 1 {
-              Label("status.action.download-all-media", systemImage: "square.and.arrow.down.on.square")
-            } else {
-              Label("status.action.download-media", systemImage: "square.and.arrow.down.on.square")
-            }
-          }
-        }
+        downloadMediaButton
       }
     } label: {
       Label("status.action.share-title", systemImage: "square.and.arrow.up")
@@ -384,6 +371,24 @@ Button {
     }
   }
 
+
+  @ViewBuilder
+  private var downloadMediaButton: some View {
+    if downloadableMedia.count > 0 {
+      Button {
+        Task {
+          await downloadAllMedia(attachments: downloadableMedia)
+          HapticManager.shared.fireHaptic(.notification(.success))
+        }
+      } label: {
+        if downloadableMedia.count > 1 {
+          Label("status.action.download-all-media", systemImage: "square.and.arrow.down.on.square")
+        } else {
+          Label("status.action.download-media", systemImage: "square.and.arrow.down.on.square")
+        }
+      }
+    }
+  }
 
   private func downloadAllMedia(attachments: [Models.MediaAttachment]) async {
     for attachment in attachments {
