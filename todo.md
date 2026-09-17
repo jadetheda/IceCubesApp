@@ -5,8 +5,6 @@
 ### Massive fucking bugs
 
 - [ ] Gallery Mode is fucking broken BAD
-- [ ] Remote Media is broken as fuck now, which is a huge problem considering  IceShrimp.NET videos/GIFs need this.
-- [ ] In the process of trying to fix remote media, I think other media in general got fucked up.
 
 ### Features
 
@@ -39,6 +37,11 @@
 # Completed
 
 ## Bugs & Corrections
+
+- [x] **Bug:** Navigating away from a video that fell back to a remote URL and returning causes it to permanently error out because the view lifecycle blindly resets to the dead primary URL.
+- [x] **Bug:** Videos opened in Search or Fullscreen fail to loop because fallback mechanisms orphan the AVPlayer observer on the dead URL.
+- [x] Remote Media is broken as fuck now, which is a huge problem considering IceShrimp.NET videos/GIFs need this.
+- [x] In the process of trying to fix remote media, I think other media in general got fucked up.
 
 - [x] The open source software credits are formatted incorrectly now (check the old version)
 - [x] **Bug:** The **"Media-Only Toggle in Timeline Menu"** option is incorrectly labeled. **"Media-Only"** should read **"Gallery Mode"**.
