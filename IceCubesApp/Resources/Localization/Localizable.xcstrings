@@ -94941,6 +94941,17 @@
           }
         }
       }
+    },
+    "settings.experimental.hide-seen-posts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Seen Posts"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
