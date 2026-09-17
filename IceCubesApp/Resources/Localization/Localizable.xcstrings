@@ -94920,13 +94920,24 @@
         }
       }
     },
-    "status.action.download-all-images": {
+    "status.action.download-media": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Download all images"
+            "value": "Download media"
+          }
+        }
+      }
+    },
+    "status.action.download-all-media": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download all media"
           }
         }
       }

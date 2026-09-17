@@ -20,8 +20,8 @@ struct StatusRowContextMenu: View {
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
 
-  var imageAttachments: [Models.MediaAttachment] {
-    (viewModel.status.mediaAttachments.isEmpty ? (viewModel.status.reblog?.mediaAttachments ?? []) : viewModel.status.mediaAttachments).filter { $0.supportedType == .image }
+  var downloadableMedia: [Models.MediaAttachment] {
+    (viewModel.status.mediaAttachments.isEmpty ? (viewModel.status.reblog?.mediaAttachments ?? []) : viewModel.status.mediaAttachments).filter { $0.supportedType == .image || $0.supportedType == .video || $0.supportedType == .gifv }
   }
 
   var viewModel: StatusRowViewModel
@@ -149,13 +149,13 @@ Button {
           Label("status.action.share-image", systemImage: "photo")
         }
 
-        if imageAttachments.count > 1 {
+        if downloadableMedia.count > 0 {
           Button {
             Task {
-              await downloadAllImages(attachments: imageAttachments)
+              await downloadAllMedia(attachments: downloadableMedia)
             }
           } label: {
-            Label("status.action.download-all-images", systemImage: "square.and.arrow.down.on.square")
+            Label(downloadableMedia.count > 1 ? "status.action.download-all-media" : "status.action.download-media", systemImage: "square.and.arrow.down.on.square")
           }
         }
       }
@@ -370,7 +370,7 @@ Button {
   }
 
 
-  private func downloadAllImages(attachments: [Models.MediaAttachment]) async {
+  private func downloadAllMedia(attachments: [Models.MediaAttachment]) async {
     for attachment in attachments {
       guard let info = attachment.displayInfo(useRemoteMedia: preferences.remoteMediaAlwaysForce, fallbackOnFail: preferences.remoteMediaFallbackOnFail, neverLoadVideo: false) else { continue }
       
@@ -389,7 +389,8 @@ Button {
           do {
             try await PHPhotoLibrary.shared().performChanges {
               let request = PHAssetCreationRequest.forAsset()
-              request.addResource(with: .photo, data: data, options: nil)
+              let resourceType: PHAssetResourceType = (attachment.supportedType == .video || attachment.supportedType == .gifv) ? .video : .photo
+              request.addResource(with: resourceType, data: data, options: nil)
             }
           } catch {
             print(error)
