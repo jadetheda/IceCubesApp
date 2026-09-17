@@ -57,12 +57,10 @@ import SwiftUI
     self.loopVideo = loopVideo
     playbackEndObserver = NotificationCenter.default.addObserver(
       forName: .AVPlayerItemDidPlayToEndTime,
-      object: nil, queue: .main
-    ) { [weak self] notification in
+      object: player.currentItem, queue: .main
+    ) { [weak self] _ in
       Task { @MainActor in
-        guard let self = self, 
-              let item = notification.object as? AVPlayerItem, 
-              item == self.player?.currentItem else { return }
+        guard let self else { return }
         if self.loopVideo {
           self.play()
         }
@@ -119,6 +117,20 @@ import SwiftUI
             let newItem = AVPlayerItem(asset: fallbackAsset)
             self.player?.replaceCurrentItem(with: newItem)
             self.setupObserver(for: newItem)
+            
+            if let playbackEndObserver = self.playbackEndObserver {
+              NotificationCenter.default.removeObserver(playbackEndObserver)
+            }
+            self.playbackEndObserver = NotificationCenter.default.addObserver(
+              forName: .AVPlayerItemDidPlayToEndTime,
+              object: newItem, queue: .main
+            ) { [weak self] _ in
+              Task { @MainActor in
+                guard let self else { return }
+                if self.loopVideo { self.play() }
+              }
+            }
+            
             if wasPlaying {
               self.player?.play()
             }
