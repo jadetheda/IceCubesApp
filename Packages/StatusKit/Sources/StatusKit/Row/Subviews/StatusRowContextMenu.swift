@@ -375,9 +375,11 @@ Button {
   @ViewBuilder
   private var downloadMediaButton: some View {
     if downloadableMedia.count > 0 {
+      let alwaysForce = preferences.remoteMediaAlwaysForce
+      let fallbackOnFail = preferences.remoteMediaFallbackOnFail
       Button {
         Task {
-          await downloadAllMedia(attachments: downloadableMedia)
+          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail)
           HapticManager.shared.fireHaptic(.notification(.success))
         }
       } label: {
@@ -390,9 +392,9 @@ Button {
     }
   }
 
-  private func downloadAllMedia(attachments: [Models.MediaAttachment]) async {
+  private func downloadAllMedia(attachments: [Models.MediaAttachment], alwaysForce: Bool, fallbackOnFail: Bool) async {
     for attachment in attachments {
-      guard let info = attachment.displayInfo(useRemoteMedia: preferences.remoteMediaAlwaysForce, fallbackOnFail: preferences.remoteMediaFallbackOnFail, neverLoadVideo: false) else { continue }
+      guard let info = attachment.displayInfo(useRemoteMedia: alwaysForce, fallbackOnFail: fallbackOnFail, neverLoadVideo: false) else { continue }
       
       var data: Data? = nil
       data = try? await URLSession.shared.data(from: info.url).0
@@ -407,16 +409,25 @@ Button {
         }
         if status == .authorized {
           do {
-            try await PHPhotoLibrary.shared().performChanges {
-              let request = PHAssetCreationRequest.forAsset()
-              let type = attachment.supportedType
-              let resourceType: PHAssetResourceType
-              if type == .video || type == .gifv {
-                resourceType = .video
-              } else {
-                resourceType = .photo
+            let type = attachment.supportedType
+            let isVideo = type == .video || type == .gifv
+            let resourceType: PHAssetResourceType = isVideo ? .video : .photo
+            
+            if isVideo {
+              let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mp4")
+              try data.write(to: tempFile)
+              
+              try await PHPhotoLibrary.shared().performChanges {
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: resourceType, fileURL: tempFile, options: nil)
               }
-              request.addResource(with: resourceType, data: data, options: nil)
+              
+              try? FileManager.default.removeItem(at: tempFile)
+            } else {
+              try await PHPhotoLibrary.shared().performChanges {
+                let request = PHAssetCreationRequest.forAsset()
+                request.addResource(with: resourceType, data: data, options: nil)
+              }
             }
           } catch {
             print(error)
