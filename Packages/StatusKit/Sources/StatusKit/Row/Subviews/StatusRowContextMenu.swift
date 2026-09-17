@@ -156,7 +156,11 @@ Button {
               HapticManager.shared.fireHaptic(.notification(.success))
             }
           } label: {
-            Label(downloadableMedia.count > 1 ? "status.action.download-all-media" : "status.action.download-media", systemImage: "square.and.arrow.down.on.square")
+            if downloadableMedia.count > 1 {
+              Label("status.action.download-all-media", systemImage: "square.and.arrow.down.on.square")
+            } else {
+              Label("status.action.download-media", systemImage: "square.and.arrow.down.on.square")
+            }
           }
         }
       }
