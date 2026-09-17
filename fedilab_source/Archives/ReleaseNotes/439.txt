@@ -1,6 +1,0 @@
-Changed:
-- Remove card presentation
-- Link color for black theme
-
-Fixed:
-- Crash when changing the theme

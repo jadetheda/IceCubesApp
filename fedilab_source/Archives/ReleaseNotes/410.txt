@@ -1,4 +1,0 @@
-- New cache mechanism
-- Cache can be disabled in settings
-- Add counters for new messages
-- Some fixes.

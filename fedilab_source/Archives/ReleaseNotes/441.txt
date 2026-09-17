@@ -1,3 +1,0 @@
-Fixed:
-- Jumps with fit preview images when scrolling up
-- Fetch more button broken with cache

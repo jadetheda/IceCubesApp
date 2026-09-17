@@ -1,1 +1,0 @@
-- Fix crashes for some pleroma instances

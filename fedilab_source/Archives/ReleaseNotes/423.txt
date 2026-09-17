@@ -1,5 +1,0 @@
-Fixed:
-- Order of notifications
-- URL when sharing boosted message
-- Blank pages when restarting
-- Fix some crashes
