@@ -155,7 +155,7 @@ extension MisskeyNote {
         }
         
         // Mention linkification
-        let mentionPattern = "(^|[\\s<br>])@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)*))?"
+        let mentionPattern = "(^|\\s|<br>)@([a-zA-Z0-9_]+)(?:@([a-zA-Z0-9_-]+(?:\\.[a-zA-Z0-9_-]+)*))?"
         if let regex = try? NSRegularExpression(pattern: mentionPattern) {
             let nsString = html as NSString
             let matches = regex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
@@ -171,6 +171,26 @@ extension MisskeyNote {
                 
                 let displayString = domainRange.location != NSNotFound ? "@\(username)@\(domain)" : "@\(username)"
                 let replacement = "\(prefix)<a href=\"https://\(domain)/@\(username)\" class=\"u-url mention\">\(displayString)</a>"
+                
+                html = (html as NSString).replacingCharacters(in: fullMatchRange, with: replacement)
+            }
+        }
+
+// Hashtag linkification
+        let hashtagPattern = "(^|\\s|<br>)([#＃][a-zA-Z0-9_]+)"
+        if let regex = try? NSRegularExpression(pattern: hashtagPattern) {
+            let nsString = html as NSString
+            let matches = regex.matches(in: html, range: NSRange(location: 0, length: nsString.length))
+            for match in matches.reversed() {
+                let fullMatchRange = match.range
+                let prefixRange = match.range(at: 1)
+                let tagRange = match.range(at: 2)
+                
+                let prefix = prefixRange.location != NSNotFound ? nsString.substring(with: prefixRange) : ""
+                let tag = nsString.substring(with: tagRange)
+                let tagText = String(tag.dropFirst())
+                
+                let replacement = "\(prefix)<a href=\"https://\(server)/tags/\(tagText)\" class=\"mention hashtag\" rel=\"tag\">\(tag)</a>"
                 
                 html = (html as NSString).replacingCharacters(in: fullMatchRange, with: replacement)
             }
