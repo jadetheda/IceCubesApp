@@ -418,14 +418,14 @@ Button {
               try data.write(to: tempFile)
               
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.forAsset()
+                let request = PHAssetCreationRequest.creationRequestForAsset()
                 request.addResource(with: resourceType, fileURL: tempFile, options: nil)
               }
               
               try? FileManager.default.removeItem(at: tempFile)
             } else {
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.forAsset()
+                let request = PHAssetCreationRequest.creationRequestForAsset()
                 request.addResource(with: resourceType, data: data, options: nil)
               }
             }
