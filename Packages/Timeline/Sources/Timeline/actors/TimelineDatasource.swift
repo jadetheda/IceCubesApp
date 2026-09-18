@@ -23,7 +23,7 @@ actor TimelineDatasource {
     items
   }
 
-  func getFiltered(seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
+  func getFiltered(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     let currentAccountId = await CurrentAccount.shared.account?.id
@@ -35,7 +35,7 @@ actor TimelineDatasource {
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -43,7 +43,7 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFilteredItems(seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [TimelineItem] {
+  func getFilteredItems(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [TimelineItem] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
     let currentAccountId = await CurrentAccount.shared.account?.id
@@ -58,7 +58,7 @@ actor TimelineDatasource {
         filtered.append(item)
       case .status(let status):
         let realId = status.reblog?.id ?? status.id
-        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
+        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
           filtered.append(item)
           realIds.insert(realId)
         }
@@ -67,14 +67,14 @@ actor TimelineDatasource {
     return filtered
   }
 
-  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
+  func getFiltered(using snapshot: TimelineContentFilter.Snapshot, isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let currentAccountId = await CurrentAccount.shared.account?.id
     var filtered: [Status] = []
     var realIds: Set<String> = []
     for item in items {
       guard case .status(let status) = item else { continue }
       let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, seen: seen, currentAccountId: currentAccountId, exempt: exempt) {
+      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: seen, currentAccountId: currentAccountId, exempt: exempt) {
         filtered.append(status)
         realIds.insert(realId)
       }
@@ -241,7 +241,7 @@ actor TimelineDatasource {
 
   // MARK: - Private Helpers
 
-  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, seen: Set<String>? = nil, currentAccountId: String? = nil, exempt: Set<String>? = nil) -> Bool {
+  private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, isGalleryModeOverride: Bool? = nil, seen: Set<String>? = nil, currentAccountId: String? = nil, exempt: Set<String>? = nil) -> Bool {
     let isHidden = if let filterContext {
       status.isHidden(in: filterContext)
     } else {
@@ -302,7 +302,7 @@ actor TimelineDatasource {
     }
     
 
-    let requiresMedia = filter.hidePostsWithoutMedia || filter.isGalleryMode
+    let requiresMedia = filter.hidePostsWithoutMedia || (isGalleryModeOverride ?? filter.isGalleryMode)
     let hasMedia = !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false
     return !isHidden
       && !hideDueToLanguage

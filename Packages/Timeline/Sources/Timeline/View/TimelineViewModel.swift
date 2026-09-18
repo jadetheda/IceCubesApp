@@ -427,7 +427,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       !cachedItems.isEmpty
     {
       await datasource.setItems(cachedItems)
-      let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+      let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
       if let latestSeenId = await cache.getLatestSeenStatus(for: client, filter: timeline.id)?.first
       {
         // Restore cache and scroll to latest seen status.
@@ -495,7 +495,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     else {
       canStreamEvents = true
       if pullToRefresh {
-        let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+        let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
         statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
       }
       return
@@ -509,7 +509,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     guard !actuallyNewStatuses.isEmpty else {
       canStreamEvents = true
       if pullToRefresh {
-        let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+        let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
         statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
       }
       return
@@ -568,7 +568,7 @@ extension TimelineViewModel: GapLoadingFetcher {
   private func updateTimelineWithNewStatuses(
     _ newStatuses: [Status], latestStatus: String, fetchedCount: Int, shouldCreateGap: Bool
   ) async {
-    let topStatus = await datasource.getFiltered(seen: sessionSeenPosts, exempt: exemptFromHideSeen).first
+    let topStatus = await datasource.getFiltered(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).first
 
     // Insert new statuses at the top
     let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
@@ -591,7 +591,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     await cache()
     let prefs = UserPreferences.shared
 
-    let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
     let renderedStatusIds = Set(items.compactMap { item -> String? in
       if case .status(let status) = item { return status.id }
       return nil
@@ -657,7 +657,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       lastId: lastId,
       offset: statuses.count)
 
-    let visibleCountBefore = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+    let visibleCountBefore = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
     await datasource.append(contentOf: newStatuses)
     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
 
@@ -739,7 +739,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       await datasource.hideSeenPosts(seen: sessionSeenPosts, includeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts)
     }
     
-    var items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    var items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
     
     if items.count < 10, let client = client, let lastId = await datasource.get().last?.id {
       do {
@@ -751,7 +751,7 @@ extension TimelineViewModel: GapLoadingFetcher {
         let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
         await datasource.append(contentOf: filteredNewStatuses)
         StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-        items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+        items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
       } catch { }
     }
     withAnimation {
@@ -769,15 +769,36 @@ extension TimelineViewModel: GapLoadingFetcher {
     await updateStatusesState()
 
     do {
-      // Fetch statuses within the gap
-      let statuses = try await timeline.fetchStatuses(
-        client: client,
-        sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
-        maxId: gap.maxId,
-        minId: nil,
-        offset: 0,
-        limit: 50
-      )
+      var currentMaxId = gap.maxId
+      var totalFetched: [Status] = []
+      var hasVisibleMedia = false
+      var autoFetches = 0
+      
+      // Auto-fetch loop to prevent "gap mashing" in Gallery Mode where text posts leave invisible gaps
+      repeat {
+          let statuses = try await timeline.fetchStatuses(
+            client: client,
+            sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
+            maxId: currentMaxId,
+            minId: nil,
+            offset: 0,
+            limit: 50
+          )
+          
+          if statuses.isEmpty { break }
+          totalFetched.append(contentsOf: statuses)
+          
+          if isGalleryMode {
+              hasVisibleMedia = statuses.contains { !$0.asMediaStatus.isEmpty }
+          } else {
+              hasVisibleMedia = true
+          }
+          
+          currentMaxId = statuses.last?.id
+          autoFetches += 1
+      } while isGalleryMode && !hasVisibleMedia && currentMaxId != nil && autoFetches < Constants.emptyFilterAutoPageLimit
+      
+      let statuses = totalFetched
 
       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
 
@@ -856,12 +877,12 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   private func updateStatusesState() async {
-    let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
     statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
   }
 
   private func updateStatusesStateWithAnimation() async {
-    let items = await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
     withAnimation {
       statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage)
     }
@@ -873,7 +894,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     visibleCountBefore: Int = 0
   ) async -> Int {
     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
-    guard await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore else { return lastFetchedCount }
+    guard await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore else { return lastFetchedCount }
     guard let client else { return lastFetchedCount }
 
     var pagesLoaded = 0
@@ -881,7 +902,7 @@ extension TimelineViewModel: GapLoadingFetcher {
 
     while pagesLoaded < Constants.emptyFilterAutoPageLimit,
       lastCount >= Constants.nextPageLimit,
-      await datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore
+      await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore
     {
       let statuses = await datasource.get()
       guard let lastId = statuses.last?.id else { break }
