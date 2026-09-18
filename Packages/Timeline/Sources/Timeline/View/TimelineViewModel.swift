@@ -775,7 +775,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       var autoFetches = 0
       
       // Auto-fetch loop to prevent "gap mashing" in Gallery Mode where text posts leave invisible gaps
-      repeat {
+      while autoFetches < Constants.emptyFilterAutoPageLimit {
           let statuses = try await timeline.fetchStatuses(
             client: client,
             sinceId: gap.sinceId.isEmpty ? nil : gap.sinceId,
@@ -789,19 +789,22 @@ extension TimelineViewModel: GapLoadingFetcher {
           totalFetched.append(contentsOf: statuses)
           
           if isGalleryMode {
-              hasVisibleMedia = statuses.contains { !$0.asMediaStatus.isEmpty }
+              let mediaCount = statuses.filter { !$0.asMediaStatus.isEmpty }.count
+              if mediaCount > 0 {
+                  hasVisibleMedia = true
+              }
           } else {
               hasVisibleMedia = true
           }
           
-          currentMaxId = statuses.last?.id
-          autoFetches += 1
-          
-          if !isGalleryMode { break }
           if hasVisibleMedia { break }
+          if !isGalleryMode { break }
+          
+          currentMaxId = statuses.last?.id
           if currentMaxId == nil { break }
-          if autoFetches >= Constants.emptyFilterAutoPageLimit { break }
-      } while true
+          
+          autoFetches += 1
+      }
       
       let statuses = totalFetched
 

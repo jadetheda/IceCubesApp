@@ -324,7 +324,12 @@ actor TimelineDatasource {
     if !showQuotePosts, hasQuote || hasLegacyQuoteLink { return false }
     
     if filter.hidePostsWithMedia {
-      let mediaEmpty = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      var mediaEmpty = status.mediaAttachments.isEmpty
+      if let reblog = status.reblog {
+          if !reblog.mediaAttachments.isEmpty {
+              mediaEmpty = false
+          }
+      }
       if !mediaEmpty { return false }
     }
     
