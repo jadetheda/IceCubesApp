@@ -309,7 +309,7 @@ actor TimelineDatasource {
       && (showThreads || status.inReplyToAccountId != status.account.id)
       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
-      && (!filter.hidePostsWithoutMedia || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+      && (!(filter.hidePostsWithoutMedia || filter.isGalleryMode) || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
       && !(filter.hidePostsFromBots && isBotAuthored)
       && (!filter.hideSeenPosts || !isSeen)
       && (!filter.hideOwnPosts || status.account.id != currentAccountId)
