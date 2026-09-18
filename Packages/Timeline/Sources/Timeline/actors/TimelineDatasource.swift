@@ -301,6 +301,9 @@ actor TimelineDatasource {
       }
     }
     
+
+    let requiresMedia = filter.hidePostsWithoutMedia || filter.isGalleryMode
+    let hasMedia = !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false
     return !isHidden
       && !hideDueToLanguage
       && (showReplies || status.inReplyToId == nil
@@ -309,7 +312,7 @@ actor TimelineDatasource {
       && (showThreads || status.inReplyToAccountId != status.account.id)
       && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
       && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
-      && (!(filter.hidePostsWithoutMedia || filter.isGalleryMode) || (!status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false))
+      && (!requiresMedia || hasMedia)
       && !(filter.hidePostsFromBots && isBotAuthored)
       && (!filter.hideSeenPosts || !isSeen)
       && (!filter.hideOwnPosts || status.account.id != currentAccountId)
