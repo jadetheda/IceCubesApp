@@ -642,10 +642,8 @@ extension TimelineViewModel: GapLoadingFetcher {
     for status in filteredStatuses {
       if let reblog = status.reblog {
         pendingStatusesObserver.reblogIds[status.id] = reblog.id
-        newStatusesIDs.append(reblog.id)
-      } else {
-        newStatusesIDs.append(status.id)
       }
+      newStatusesIDs.append(status.id)
     }
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
