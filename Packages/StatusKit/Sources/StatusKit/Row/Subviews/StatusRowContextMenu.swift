@@ -419,7 +419,7 @@ Button {
               try data.write(to: tempFile)
               
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.creationRequestForAsset()
+                let request = PHAssetCreationRequest.forAsset()
                 request.addResource(with: resourceType, fileURL: tempFile, options: nil)
               }
               
@@ -430,7 +430,7 @@ Button {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
               }
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.creationRequestForAsset()
+                let request = PHAssetCreationRequest.forAsset()
                 request.addResource(with: resourceType, data: finalData, options: nil)
               }
             }
