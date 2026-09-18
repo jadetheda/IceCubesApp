@@ -109,7 +109,12 @@ struct TimelineListView: View {
       .onChange(of: isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {
           Task { await viewModel.layoutModeChanged() }
-          let targetId = newValue ? viewModel.getTopVisibleMediaStatusId() : viewModel.getTopVisibleStatusId()
+          var targetId: String? = nil
+          if newValue {
+              targetId = viewModel.getTopVisibleMediaStatusId()
+          } else {
+              targetId = viewModel.getTopVisibleStatusId()
+          }
           if let targetId = targetId {
             Task {
               try? await Task.sleep(nanoseconds: 300_000_000)

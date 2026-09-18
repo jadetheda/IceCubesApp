@@ -789,9 +789,11 @@ extension TimelineViewModel: GapLoadingFetcher {
           totalFetched.append(contentsOf: statuses)
           
           if isGalleryMode {
-              let mediaCount = statuses.filter { !$0.asMediaStatus.isEmpty }.count
-              if mediaCount > 0 {
-                  hasVisibleMedia = true
+              for s in statuses {
+                  if !s.asMediaStatus.isEmpty {
+                      hasVisibleMedia = true
+                      break
+                  }
               }
           } else {
               hasVisibleMedia = true
