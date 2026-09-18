@@ -598,14 +598,25 @@ extension TimelineViewModel: GapLoadingFetcher {
     })
     let isGalleryMode = self.isGalleryMode
 
-    let newStatusesIDs = newStatuses.filter { status in
-      guard renderedStatusIds.contains(status.id) else { return false }
+    var filteredStatuses: [Status] = []
+    for status in newStatuses {
+      if !renderedStatusIds.contains(status.id) { continue }
+      
       if isGalleryMode {
-        if status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true) {
-          return false
+        var mediaEmpty = status.mediaAttachments.isEmpty
+        if let reblog = status.reblog {
+            if !reblog.mediaAttachments.isEmpty {
+                mediaEmpty = false
+            }
         }
+        if mediaEmpty { continue }
       }
-      guard prefs.hideSeenPostsEnabled else { return true }
+      
+      if !prefs.hideSeenPostsEnabled {
+          filteredStatuses.append(status)
+          continue
+      }
+      
       var isSeen = SeenPostsManager.shared.isSeen(id: status.id)
       if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
         isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
@@ -613,15 +624,28 @@ extension TimelineViewModel: GapLoadingFetcher {
       if !isSeen, status.account.id == CurrentAccount.shared.account?.id {
         isSeen = true
       }
-      if !isSeen, status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
-        isSeen = true
+      if !isSeen {
+          if status.reblogged == true { isSeen = true }
+          else if status.favourited == true { isSeen = true }
+          else if let reblog = status.reblog {
+              if reblog.reblogged == true { isSeen = true }
+              else if reblog.favourited == true { isSeen = true }
+          }
       }
-      return !isSeen
-    }.map { status in
+      
+      if !isSeen {
+          filteredStatuses.append(status)
+      }
+    }
+    
+    var newStatusesIDs: [String] = []
+    for status in filteredStatuses {
       if let reblog = status.reblog {
         pendingStatusesObserver.reblogIds[status.id] = reblog.id
+        newStatusesIDs.append(reblog.id)
+      } else {
+        newStatusesIDs.append(status.id)
       }
-      return status.id
     }
 
     pendingStatusesObserver.pendingStatuses.insert(contentsOf: newStatusesIDs, at: 0)
