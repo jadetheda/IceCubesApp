@@ -26,7 +26,8 @@ actor TimelineDatasource {
   func getFiltered(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
-    let currentAccountId = await CurrentAccount.shared.account?.id
+    let currentAccount = await CurrentAccount.shared.account
+    let currentAccountId = currentAccount?.id
 
     let actualSeen: Set<String>? = seen
 
@@ -46,7 +47,8 @@ actor TimelineDatasource {
   func getFilteredItems(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [TimelineItem] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
-    let currentAccountId = await CurrentAccount.shared.account?.id
+    let currentAccount = await CurrentAccount.shared.account
+    let currentAccountId = currentAccount?.id
 
     let actualSeen = seen
 
@@ -68,7 +70,8 @@ actor TimelineDatasource {
   }
 
   func getFiltered(using snapshot: TimelineContentFilter.Snapshot, isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
-    let currentAccountId = await CurrentAccount.shared.account?.id
+    let currentAccount = await CurrentAccount.shared.account
+    let currentAccountId = currentAccount?.id
     var filtered: [Status] = []
     var realIds: Set<String> = []
     for item in items {
@@ -117,7 +120,8 @@ actor TimelineDatasource {
   // MARK: - Status Operations
 
   func hideSeenPosts(seen: Set<String>, includeBoosts: Bool) async {
-    let currentAccountId = await CurrentAccount.shared.account?.id
+    let currentAccount = await CurrentAccount.shared.account
+    let currentAccountId = currentAccount?.id
     items.removeAll { item in
       if case .status(let status) = item {
         if seen.contains(status.id) {

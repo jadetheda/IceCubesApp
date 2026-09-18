@@ -681,7 +681,8 @@ extension TimelineViewModel: GapLoadingFetcher {
       lastId: lastId,
       offset: statuses.count)
 
-    let visibleCountBefore = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+    let visibleItemsBefore = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let visibleCountBefore = visibleItemsBefore.count
     await datasource.append(contentOf: newStatuses)
     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
 
@@ -772,18 +773,22 @@ extension TimelineViewModel: GapLoadingFetcher {
     
     var items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
     
-    if items.count < 10, let client = client, let lastId = await datasource.get().last?.id {
-      do {
-        let newStatuses: [Status] = try await statusFetcher.fetchNextPage(
-          client: client,
-          timeline: timeline,
-          lastId: lastId,
-          offset: await datasource.get().count)
+    if items.count < 10, let client = client {
+      let dsStatuses = await datasource.get()
+      if let lastId = dsStatuses.last?.id {
+          let currentOffset = dsStatuses.count
+          do {
+            let newStatuses: [Status] = try await statusFetcher.fetchNextPage(
+              client: client,
+              timeline: timeline,
+              lastId: lastId,
+              offset: currentOffset)
         let filteredNewStatuses = filterSeenStatuses(from: newStatuses)
         await datasource.append(contentOf: filteredNewStatuses)
         StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
         items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
       } catch { }
+      }
     }
     withAnimation {
       statusesState = .displayWithGaps(items: items, nextPageState: .hasNextPage) // nextPageState is approximate here
@@ -935,7 +940,8 @@ extension TimelineViewModel: GapLoadingFetcher {
     visibleCountBefore: Int = 0
   ) async -> Int {
     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
-    let initialFilteredCount = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+    let initialItems = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    let initialFilteredCount = initialItems.count
     guard initialFilteredCount <= visibleCountBefore else { return lastFetchedCount }
     guard let client else { return lastFetchedCount }
 
@@ -945,7 +951,8 @@ extension TimelineViewModel: GapLoadingFetcher {
     while pagesLoaded < Constants.emptyFilterAutoPageLimit {
       if lastCount < Constants.nextPageLimit { break }
       
-      let loopFilteredCount = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+      let loopFilteredItems = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+      let loopFilteredCount = loopFilteredItems.count
       if loopFilteredCount > visibleCountBefore { break }
       let statuses = await datasource.get()
       guard let lastId = statuses.last?.id else { break }
@@ -1098,7 +1105,8 @@ extension TimelineViewModel {
     
     if !isSeen {
       let snapshot = await TimelineContentFilter.shared.snapshot()
-      let currentAccountId = await CurrentAccount.shared.account?.id
+      let currentAccount = await CurrentAccount.shared.account
+    let currentAccountId = currentAccount?.id
       
       let isHidden = if let filterContext = timeline.filterContext {
         event.status.isHidden(in: filterContext)
