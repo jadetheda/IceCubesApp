@@ -316,17 +316,23 @@ actor TimelineDatasource {
       hasMedia = true
     }
 
-    return !isHidden
-      && !hideDueToLanguage
-      && (showReplies || status.inReplyToId == nil
-        || status.inReplyToAccountId == status.account.id)
-      && (showBoosts || status.reblog == nil)
-      && (showThreads || status.inReplyToAccountId != status.account.id)
-      && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
-      && (!filter.hidePostsWithMedia || (status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true))
-      && (!requiresMedia || hasMedia)
-      && !(filter.hidePostsFromBots && isBotAuthored)
-      && (!filter.hideSeenPosts || !isSeen)
-      && (!filter.hideOwnPosts || status.account.id != currentAccountId)
+    if isHidden { return false }
+    if hideDueToLanguage { return false }
+    if !showReplies, status.inReplyToId != nil, status.inReplyToAccountId != status.account.id { return false }
+    if !showBoosts, status.reblog != nil { return false }
+    if !showThreads, status.inReplyToAccountId == status.account.id { return false }
+    if !showQuotePosts, hasQuote || hasLegacyQuoteLink { return false }
+    
+    if filter.hidePostsWithMedia {
+      let mediaEmpty = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      if !mediaEmpty { return false }
+    }
+    
+    if requiresMedia, !hasMedia { return false }
+    if filter.hidePostsFromBots, isBotAuthored { return false }
+    if filter.hideSeenPosts, isSeen { return false }
+    if filter.hideOwnPosts, status.account.id == currentAccountId { return false }
+    
+    return true
   }
 }
