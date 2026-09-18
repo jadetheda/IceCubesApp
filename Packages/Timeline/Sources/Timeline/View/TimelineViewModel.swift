@@ -666,9 +666,16 @@ extension TimelineViewModel: GapLoadingFetcher {
       pageLimit: Constants.nextPageLimit,
       visibleCountBefore: visibleCountBefore)
     await cache()
-    statusesState = await .displayWithGaps(
-      items: datasource.getFilteredItems(seen: sessionSeenPosts, exempt: exemptFromHideSeen),
-      nextPageState: (newStatuses.isEmpty || lastCount == 0) ? .none : .hasNextPage)
+    let filteredItems = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
+    
+    let nextState: StatusesState.PagingState
+    if newStatuses.isEmpty || lastCount == 0 {
+      nextState = .none
+    } else {
+      nextState = .hasNextPage
+    }
+    
+    statusesState = .displayWithGaps(items: filteredItems, nextPageState: nextState)
   }
 
   func statusDidAppear(status: Status) {
@@ -904,16 +911,18 @@ extension TimelineViewModel: GapLoadingFetcher {
     visibleCountBefore: Int = 0
   ) async -> Int {
     guard lastFetchedCount >= pageLimit else { return lastFetchedCount }
-    guard await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore else { return lastFetchedCount }
+    let initialFilteredCount = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+    guard initialFilteredCount <= visibleCountBefore else { return lastFetchedCount }
     guard let client else { return lastFetchedCount }
 
     var pagesLoaded = 0
     var lastCount = lastFetchedCount
 
-    while pagesLoaded < Constants.emptyFilterAutoPageLimit,
-      lastCount >= Constants.nextPageLimit,
-      await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count <= visibleCountBefore
-    {
+    while pagesLoaded < Constants.emptyFilterAutoPageLimit {
+      if lastCount < Constants.nextPageLimit { break }
+      
+      let loopFilteredCount = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen).count
+      if loopFilteredCount > visibleCountBefore { break }
       let statuses = await datasource.get()
       guard let lastId = statuses.last?.id else { break }
       let newStatuses: [Status]
