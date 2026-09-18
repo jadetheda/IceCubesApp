@@ -796,7 +796,13 @@ extension TimelineViewModel: GapLoadingFetcher {
           
           currentMaxId = statuses.last?.id
           autoFetches += 1
-      } while isGalleryMode && !hasVisibleMedia && currentMaxId != nil && autoFetches < Constants.emptyFilterAutoPageLimit
+          
+          var shouldContinue = false
+          if isGalleryMode, !hasVisibleMedia, currentMaxId != nil, autoFetches < Constants.emptyFilterAutoPageLimit {
+              shouldContinue = true
+          }
+          if !shouldContinue { break }
+      } while true
       
       let statuses = totalFetched
 

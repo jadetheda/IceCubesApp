@@ -302,8 +302,20 @@ actor TimelineDatasource {
     }
     
 
-    let requiresMedia = filter.hidePostsWithoutMedia || (isGalleryModeOverride ?? filter.isGalleryMode)
-    let hasMedia = !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false
+    
+    var requiresMedia = filter.hidePostsWithoutMedia
+    if let override = isGalleryModeOverride {
+      if override { requiresMedia = true }
+    } else if filter.isGalleryMode {
+      requiresMedia = true
+    }
+
+    
+    var hasMedia = !status.mediaAttachments.isEmpty
+    if let reblog = status.reblog, !reblog.mediaAttachments.isEmpty {
+      hasMedia = true
+    }
+
     return !isHidden
       && !hideDueToLanguage
       && (showReplies || status.inReplyToId == nil
