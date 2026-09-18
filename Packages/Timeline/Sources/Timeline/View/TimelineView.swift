@@ -20,7 +20,6 @@ struct ContentFilterOnChangeModifier: ViewModifier {
       .onChange(of: contentFilter.showQuotePosts) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsWithMedia) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in action() }
-      .onChange(of: contentFilter.isGalleryMode) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsFromBots) { _, _ in action() }
       .onChange(of: contentFilter.hideSeenPosts) { _, _ in action() }
   }
@@ -143,9 +142,6 @@ public struct TimelineView: View {
                   return contentFilter.isGalleryMode 
               },
               set: { newValue in 
-                  if newValue {
-                      contentFilter.hidePostsWithoutMedia = true
-                  }
                   if case .list(let list) = timeline {
                       if newValue {
                           if !preferences.listsGalleryMode.contains(list.id) {
