@@ -201,10 +201,14 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
       data = ImagePipeline.shared.cache.cachedData(for: .init(url: fallbackUrl))
     }
     if data == nil {
-      data = try? await URLSession.shared.data(from: url).0
+      if let (fetchedData, _) = try? await URLSession.shared.data(from: url) {
+        data = fetchedData
+      }
     }
     if data == nil, let fallbackUrl {
-      data = try? await URLSession.shared.data(from: fallbackUrl).0
+      if let (fetchedData, _) = try? await URLSession.shared.data(from: fallbackUrl) {
+        data = fetchedData
+      }
     }
     return data
   }

@@ -428,7 +428,8 @@ extension TimelineViewModel: GapLoadingFetcher {
     {
       await datasource.setItems(cachedItems)
       let items = await datasource.getFilteredItems(isGalleryMode: isGalleryMode, seen: sessionSeenPosts, exempt: exemptFromHideSeen)
-      if let latestSeenId = await cache.getLatestSeenStatus(for: client, filter: timeline.id)?.first
+      if let latestSeenStatuses = await cache.getLatestSeenStatus(for: client, filter: timeline.id),
+         let latestSeenId = latestSeenStatuses.first
       {
         // Restore cache and scroll to latest seen status.
         if isGalleryMode {

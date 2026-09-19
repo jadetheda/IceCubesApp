@@ -97,14 +97,13 @@ struct StatusRowContextMenu: View {
             await statusDataController.toggleFavorite(remoteStatus: nil)
           }
         } label: {
-          Label(
-            theme.actionIsLike
-                ? (statusDataController.isFavorited ? "Unlike" : "Like")
-                : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite"),
-            systemImage: theme.actionIsLike
-                ? (statusDataController.isFavorited ? "heart.fill" : "heart")
-                : (statusDataController.isFavorited ? "star.fill" : "star")
-          )
+          let title = theme.actionIsLike
+            ? (statusDataController.isFavorited ? "Unlike" : "Like")
+            : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite")
+          let icon = theme.actionIsLike
+            ? (statusDataController.isFavorited ? "heart.fill" : "heart")
+            : (statusDataController.isFavorited ? "star.fill" : "star")
+          Label(title, systemImage: icon)
         }
 
         Button {
@@ -398,9 +397,13 @@ Button {
       guard let info = attachment.displayInfo(useRemoteMedia: alwaysForce, fallbackOnFail: fallbackOnFail, neverLoadVideo: false) else { continue }
       
       var data: Data? = nil
-      data = try? await URLSession.shared.data(from: info.url).0
+      if let (fetchedData, _) = try? await URLSession.shared.data(from: info.url) {
+        data = fetchedData
+      }
       if data == nil, let fallbackUrl = info.fallbackUrl {
-        data = try? await URLSession.shared.data(from: fallbackUrl).0
+        if let (fetchedData, _) = try? await URLSession.shared.data(from: fallbackUrl) {
+          data = fetchedData
+        }
       }
       
       if let data {
