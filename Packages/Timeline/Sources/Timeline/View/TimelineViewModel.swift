@@ -803,7 +803,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     await updateStatusesState()
 
     do {
-      var currentMaxId = gap.maxId
+      var currentMaxId: String? = gap.maxId
       var totalFetched: [Status] = []
       var hasVisibleMedia = false
       var autoFetches = 0
@@ -1102,9 +1102,7 @@ extension TimelineViewModel {
     }
     
     if !isSeen {
-      let snapshot = await TimelineContentFilter.shared.snapshot()
-      let currentAccount = await CurrentAccount.shared.account
-    let currentAccountId = currentAccount?.id
+      let snapshot = TimelineContentFilter.shared.snapshot()
       
       let isHidden = if let filterContext = timeline.filterContext {
         event.status.isHidden(in: filterContext)
