@@ -228,10 +228,13 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
     }
     if status == .authorized {
       do {
+        let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension
+        let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
+        try data.write(to: tempFile)
         try await PHPhotoLibrary.shared().performChanges {
-          let request = PHAssetCreationRequest.forAsset()
-          request.addResource(with: .photo, data: data, options: nil)
+          PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempFile)
         }
+        try? FileManager.default.removeItem(at: tempFile)
         return true
       } catch {
         return false

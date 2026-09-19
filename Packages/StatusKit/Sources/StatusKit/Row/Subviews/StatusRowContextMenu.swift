@@ -419,8 +419,7 @@ Button {
               try data.write(to: tempFile)
               
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: resourceType, fileURL: tempFile, options: nil)
+                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempFile)
               }
               
               try? FileManager.default.removeItem(at: tempFile)
@@ -429,10 +428,13 @@ Button {
               if let urlStr = postUrl {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
               }
+              let ext = attachment.url.pathExtension.isEmpty ? "jpg" : attachment.url.pathExtension
+              let tempImgFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
+              try finalData.write(to: tempImgFile)
               try await PHPhotoLibrary.shared().performChanges {
-                let request = PHAssetCreationRequest.forAsset()
-                request.addResource(with: resourceType, data: finalData, options: nil)
+                PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempImgFile)
               }
+              try? FileManager.default.removeItem(at: tempImgFile)
             }
           } catch {
             print(error)
