@@ -337,3 +337,15 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Misskey Translation Redeclarations)
 - **Root Cause**: While refactoring the `MisskeyNote+Translate.swift` file for URL routing and mentions, duplicate declarations of `noteUrl` were introduced, a required parameter (`pinned: false`) was accidentally dropped from `ReblogStatus`, and Swift 6's strict concurrency model flagged global `ISO8601DateFormatter` instances as unsafe.
 - **Solution**: Always double-check variable declarations during large regex/sed edits to prevent duplication. When encountering Swift 6 `Sendable` concurrency warnings on formatters, explicitly mark them `nonisolated(unsafe)` if they are genuinely read-only globals. Ensure all mapping structs maintain their required parameter counts.
+
+## 🐛 Exit Code 65 Logs (Constraint Solver OOM - Inline Awaits & Chains)
+- **Root Cause**: The Swift constraint solver will violently hang and trigger Exit Code 65 (OOM) if multiple asynchronous property accessors or complex boolean evaluation chains are nested. Specific triggers include chaining property accessors directly onto `await` calls (e.g., `await obj.get().count` or `await CurrentAccount.shared.account?.id`), nesting ternary operators directly inside Enum initializers (e.g., `StatusesState.displayWithGaps(nextPageState: isEmpty ? A : B)`), and combining large `.filter { ... }.map { ... }` blocks with nested optional coalescing.
+- **Solution**: Radically flatten the code. Always extract `await` results to explicit local variables before accessing their properties (e.g., `let ds = await obj.get(); let count = ds.count`). Extract ternary outcomes to explicit variables before passing them into enums. Convert large `filter/map` chains into standard `for` loops appending to local mutable arrays.
+
+## 🐛 Exit Code 65 Logs (Hidden Syntax Errors via Log Truncation)
+- **Root Cause**: A build failing with Exit Code 65 is not always a constraint solver timeout. If the build crashes earlier than the typical 6-8 minute mark, it might be a hard syntax error (e.g., a deprecated Apple SDK API like `PHAssetCreationRequest.creationRequestForAsset()`). However, GitHub Actions truncates `xcodebuild` console output to 1 MB, meaning `gh run view --log` will often silently hide the actual compiler syntax error.
+- **Solution**: If a build fails unexpectedly fast and `gh run view` shows no syntax error, you MUST download the full raw artifact zip log to find the hidden compiler failure (usually at the very bottom of the `xcodebuild` step).
+
+## 🐛 Exit Code 65 Logs (Strict Optional Type Mismatches)
+- **Root Cause**: When flattening code to avoid constraint solver hangs, extracting a variable dynamically (e.g., `var currentMaxId = gap.maxId` where `gap.maxId` is a non-optional `String`) causes the compiler to rigidly type it. Reassigning an optional value (e.g., `currentMaxId = statuses.last?.id`) later in the loop causes a hard, silent compilation failure.
+- **Solution**: Always explicitly type local variables as optionals (`var currentMaxId: String? = gap.maxId`) when flattening logic if they will ever accept an optional reassignment.
