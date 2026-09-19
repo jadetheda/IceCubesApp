@@ -235,9 +235,11 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
         let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension
         let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
         try data.write(to: tempFile)
-        try await PHPhotoLibrary.shared().performChanges {
-          PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempFile)
-        }
+        try await Task.detached {
+          try await PHPhotoLibrary.shared().performChanges {
+            PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempFile)
+          }
+        }.value
         try? FileManager.default.removeItem(at: tempFile)
         return true
       } catch {

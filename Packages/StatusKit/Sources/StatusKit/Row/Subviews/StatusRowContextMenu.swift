@@ -421,9 +421,11 @@ Button {
               let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mp4")
               try data.write(to: tempFile)
               
-              try await PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempFile)
-              }
+              try await Task.detached {
+                try await PHPhotoLibrary.shared().performChanges {
+                  PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempFile)
+                }
+              }.value
               
               try? FileManager.default.removeItem(at: tempFile)
             } else {
@@ -435,9 +437,11 @@ Button {
               let ext = rawExt.isEmpty ? "jpg" : rawExt
               let tempImgFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
               try finalData.write(to: tempImgFile)
-              try await PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempImgFile)
-              }
+              try await Task.detached {
+                try await PHPhotoLibrary.shared().performChanges {
+                  PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempImgFile)
+                }
+              }.value
               try? FileManager.default.removeItem(at: tempImgFile)
             }
           } catch {
