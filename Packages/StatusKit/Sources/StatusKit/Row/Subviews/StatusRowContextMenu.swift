@@ -428,7 +428,8 @@ Button {
               if let urlStr = postUrl {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
               }
-              let ext = attachment.url.pathExtension.isEmpty ? "jpg" : attachment.url.pathExtension
+              let rawExt = attachment.url?.pathExtension ?? ""
+              let ext = rawExt.isEmpty ? "jpg" : rawExt
               let tempImgFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
               try finalData.write(to: tempImgFile)
               try await PHPhotoLibrary.shared().performChanges {
