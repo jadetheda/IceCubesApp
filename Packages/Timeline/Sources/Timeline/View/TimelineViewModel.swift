@@ -807,6 +807,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       var totalFetched: [Status] = []
       var hasVisibleMedia = false
       var autoFetches = 0
+      var lastFetchedCount = 0
       
       // Auto-fetch loop to prevent "gap mashing" in Gallery Mode where text posts leave invisible gaps
       while autoFetches < Constants.emptyFilterAutoPageLimit {
@@ -819,6 +820,7 @@ extension TimelineViewModel: GapLoadingFetcher {
             limit: 50
           )
           
+          lastFetchedCount = statuses.count
           if statuses.isEmpty { break }
           totalFetched.append(contentsOf: statuses)
           
@@ -834,7 +836,6 @@ extension TimelineViewModel: GapLoadingFetcher {
           }
           
           if hasVisibleMedia { break }
-          if !isGalleryMode { break }
           
           currentMaxId = statuses.last?.id
           if currentMaxId == nil { break }
@@ -860,7 +861,7 @@ extension TimelineViewModel: GapLoadingFetcher {
 
       // If we fetched 40 or more statuses, there might be more older statuses
       // Lower threshold because some instances might not return exactly 50
-      if statuses.count >= 40, let oldestLoadedStatus = statuses.last,
+      if lastFetchedCount >= 40, let oldestLoadedStatus = statuses.last,
         let originalGapIndex = gapIndex
       {
         // Create a new gap from the original gap's sinceId to the oldest status we just loaded
