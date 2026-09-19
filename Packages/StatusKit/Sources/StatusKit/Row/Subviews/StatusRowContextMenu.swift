@@ -97,10 +97,10 @@ struct StatusRowContextMenu: View {
             await statusDataController.toggleFavorite(remoteStatus: nil)
           }
         } label: {
-          let title = theme.actionIsLike
+          let title: LocalizedStringKey = theme.actionIsLike
             ? (statusDataController.isFavorited ? "Unlike" : "Like")
             : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite")
-          let icon = theme.actionIsLike
+          let icon: String = theme.actionIsLike
             ? (statusDataController.isFavorited ? "heart.fill" : "heart")
             : (statusDataController.isFavorited ? "star.fill" : "star")
           Label(title, systemImage: icon)
