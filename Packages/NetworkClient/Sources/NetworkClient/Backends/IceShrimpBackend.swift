@@ -71,7 +71,8 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
             supportsCustomEmojis: true,
             supportsFollowNotifications: false,
             supportsFollowedTags: false,
-            supportsAccountMetrics: false
+            supportsAccountMetrics: false,
+            supportsAddingNonFollowersToLists: true
         )
     }
 
