@@ -95060,6 +95060,16 @@
           }
         }
       }
+    },
+    "settings.content.media.embed-post-url": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Embed post URL in saved media"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

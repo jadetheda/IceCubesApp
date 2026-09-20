@@ -43,7 +43,7 @@ struct ContentSettingsView: View {
           Text("settings.content.media.show.alt")
         }
         Toggle(isOn: $userPreferences.embedPostUrlInMedia) {
-          Label("Embed Post URL in saved media", systemImage: "link")
+          Label("settings.content.media.embed-post-url", systemImage: "link")
         }
         Toggle(isOn: $userPreferences.animateEmojis) {
             Text("settings.other.animate-emojis")
