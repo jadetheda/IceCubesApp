@@ -8,6 +8,7 @@
 
 ### Features
 
+- [ ] Update `QuickLook.swift` and `WindowDestinationMedia` to accept a `postUrl` parameter so that `MediaUIView` (the fullscreen viewer) can embed Mastodon post links in JPEGs/HEICs when the user taps "Download", mirroring the Context Menu feature.
 - [ ] **Misskey/Sharkey Streaming API**: Update `StreamWatcher.swift` to support Misskey-style JSON payloads (`{"type": "connect"}`) and `?i={token}` WebSocket authentication. The app currently maintains the connection to prevent crashes, but true live-streaming of posts/notifications is missing for these servers.
 - [ ] Maybe: long-press profile tab to open profile switcher
 - [x] Add status.server to instance info
