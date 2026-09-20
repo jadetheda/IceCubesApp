@@ -158,7 +158,7 @@ public struct ListEditView: View {
           }
           Spacer()
           if let relationship = viewModel.searchedRelationships[account.id] {
-            if relationship.following || client.isMisskey {
+            if relationship.following || client.capabilities.supportsAddingNonFollowersToLists {
               Toggle(
                 "",
                 isOn: .init(

@@ -34,7 +34,8 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
             supportsAccountMetrics: false,
             supportsStatusEditing: false,
             supportsTrendingLinks: false,
-            supportsNativeMessaging: true
+            supportsNativeMessaging: true,
+            supportsAddingNonFollowersToLists: true
         )
     }
 

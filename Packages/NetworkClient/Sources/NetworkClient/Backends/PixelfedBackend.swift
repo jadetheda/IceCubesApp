@@ -16,7 +16,8 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
             supportsAccountMetrics: false, // Account metrics are Mastodon specific
             supportsStatusEditing: true, // Pixelfed 0.11+ supports edit (gated by CurrentInstance)
             supportsTrendingLinks: false, // Pixelfed is images only
-            supportsNativeMessaging: false
+            supportsNativeMessaging: false,
+            supportsLists: false // Pixelfed doesn't support lists
         )
     }
     

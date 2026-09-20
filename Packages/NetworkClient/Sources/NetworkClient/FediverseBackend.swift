@@ -14,6 +14,8 @@ public struct ServerCapabilities: Sendable {
     public var supportsStatusEditing: Bool = true
     public var supportsTrendingLinks: Bool = true
     public var supportsNativeMessaging: Bool = false
+    public var supportsLists: Bool = true
+    public var supportsAddingNonFollowersToLists: Bool = false
     
     public init(
         supportsAdvancedFilterContexts: Bool = true,
@@ -27,7 +29,9 @@ public struct ServerCapabilities: Sendable {
         supportsAccountMetrics: Bool = true,
         supportsStatusEditing: Bool = true,
         supportsTrendingLinks: Bool = true,
-        supportsNativeMessaging: Bool = false
+        supportsNativeMessaging: Bool = false,
+        supportsLists: Bool = true,
+        supportsAddingNonFollowersToLists: Bool = false
     ) {
         self.supportsAdvancedFilterContexts = supportsAdvancedFilterContexts
         self.supportsEndorsements = supportsEndorsements
@@ -41,6 +45,8 @@ public struct ServerCapabilities: Sendable {
         self.supportsStatusEditing = supportsStatusEditing
         self.supportsTrendingLinks = supportsTrendingLinks
         self.supportsNativeMessaging = supportsNativeMessaging
+        self.supportsLists = supportsLists
+        self.supportsAddingNonFollowersToLists = supportsAddingNonFollowersToLists
     }
 }
 
