@@ -552,6 +552,13 @@ import SwiftUI
     }
   }
 
+  // Media Embed
+  public var embedPostUrlInMedia: Bool {
+    didSet {
+      storage.embedPostUrlInMedia = embedPostUrlInMedia
+    }
+  }
+
   // Hide Seen Posts
   public var hideSeenPostsEnabled: Bool {
     didSet {
@@ -909,6 +916,7 @@ import SwiftUI
     notificationsTruncateStatusContent = storage.notificationsTruncateStatusContent
     streamHomeTimeline = storage.streamHomeTimeline
     fullTimelineFetch = storage.fullTimelineFetch
+    embedPostUrlInMedia = storage.embedPostUrlInMedia
     hideSeenPostsEnabled = storage.hideSeenPostsEnabled
     hideSeenPostsThreshold = storage.hideSeenPostsThreshold
     hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly
