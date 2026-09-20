@@ -430,7 +430,8 @@ Button {
               try? FileManager.default.removeItem(at: tempFile)
             } else {
               var finalData = data
-              if let urlStr = postUrl {
+              let embedEnabled = UserPreferences.shared.embedPostUrlInMedia
+              if let urlStr = postUrl, embedEnabled {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
               }
               let rawExt = attachment.url?.pathExtension ?? ""

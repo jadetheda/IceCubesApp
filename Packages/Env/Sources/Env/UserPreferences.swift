@@ -98,6 +98,7 @@ import SwiftUI
 
     // Hide Seen Posts (Experimental)
     @AppStorage("hide_seen_posts_enabled") public var hideSeenPostsEnabled: Bool = false
+    @AppStorage("embed_post_url_in_media") public var embedPostUrlInMedia: Bool = false
     @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
     @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
     @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
