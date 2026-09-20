@@ -1,5 +1,0 @@
-print("Plan for Pixelfed Integration:")
-print("1. Update FediverseClient.swift to parse 'pixelfed' in nodeinfo.")
-print("2. Add PixelfedBackend.swift inheriting from MastodonBackend.")
-print("3. Override capabilities in PixelfedBackend.")
-print("4. Check Pixelfed-specific endpoints like trending.")

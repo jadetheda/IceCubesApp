@@ -1,8 +1,0 @@
-2026-09-16T04:10:24.7310000Z Requested labels: macos-latest
-2026-09-16T04:10:24.7310000Z Job defined at: jadetheda/IceCubesApp/.github/workflows/build-ipa.yml@refs/heads/multi-spec-support
-2026-09-16T04:10:24.7310000Z Waiting for a runner to pick up this job...
-2026-09-16T04:10:24.7290000Z Evaluating build.if
-2026-09-16T04:10:24.7290000Z Evaluating: success()
-2026-09-16T04:10:24.7290000Z Result: true
-2026-09-16T04:10:24.7360000Z Job is about to start running on the hosted runner: GitHub Actions 1000000147
-2026-09-16T04:10:24.7360000Z Job is waiting for a hosted runner to come online.
