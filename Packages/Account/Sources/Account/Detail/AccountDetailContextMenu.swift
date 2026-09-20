@@ -190,7 +190,7 @@ public struct AccountDetailContextMenu: View {
           }
         #endif
 
-        if relationship?.following == true && !client.isPixelfed {
+        if (relationship?.following == true || client.isMisskey) && !client.isPixelfed {
           Button {
             routerPath.presentedSheet = .listAddAccount(account: account)
           } label: {
