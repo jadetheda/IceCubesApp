@@ -11,13 +11,20 @@ public struct MediaCaptionUtils {
     guard count == 1 else { return data }
     
     let mutableData = NSMutableData()
-    let outputType = (type as String) == "org.webmproject.webp" ? "public.heic" as CFString : type
+    let isWebP = (type as String) == "org.webmproject.webp"
+    
+    let outputType: CFString
+    if isWebP {
+        outputType = "public.heic" as CFString
+    } else {
+        outputType = type
+    }
+    
     guard let destination = CGImageDestinationCreateWithData(mutableData, outputType, 1, nil) else { return data }
     
     var metadata = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] ?? [:]
     
-    // Ensure maximum quality when transcoding WebP to prevent degradation
-    if (type as String) == "org.webmproject.webp" {
+    if isWebP {
         metadata[kCGImageDestinationLossyCompressionQuality as String] = 1.0
     }
     
