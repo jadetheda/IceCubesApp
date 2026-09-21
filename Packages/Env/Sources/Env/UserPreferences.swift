@@ -99,6 +99,8 @@ import SwiftUI
     // Hide Seen Posts (Experimental)
     @AppStorage("hide_seen_posts_enabled") public var hideSeenPostsEnabled: Bool = false
     @AppStorage("embed_post_url_in_media") public var embedPostUrlInMedia: Bool = false
+    @AppStorage("embed_post_text_in_media") public var embedPostTextInMedia: Bool = false
+    @AppStorage("embed_post_tags_in_media") public var embedPostTagsInMedia: Bool = false
     @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
     @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
     @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
@@ -558,6 +560,16 @@ import SwiftUI
       storage.embedPostUrlInMedia = embedPostUrlInMedia
     }
   }
+  public var embedPostTextInMedia: Bool {
+    didSet {
+      storage.embedPostTextInMedia = embedPostTextInMedia
+    }
+  }
+  public var embedPostTagsInMedia: Bool {
+    didSet {
+      storage.embedPostTagsInMedia = embedPostTagsInMedia
+    }
+  }
 
   // Hide Seen Posts
   public var hideSeenPostsEnabled: Bool {
@@ -917,6 +929,8 @@ import SwiftUI
     streamHomeTimeline = storage.streamHomeTimeline
     fullTimelineFetch = storage.fullTimelineFetch
     embedPostUrlInMedia = storage.embedPostUrlInMedia
+    embedPostTextInMedia = storage.embedPostTextInMedia
+    embedPostTagsInMedia = storage.embedPostTagsInMedia
     hideSeenPostsEnabled = storage.hideSeenPostsEnabled
     hideSeenPostsThreshold = storage.hideSeenPostsThreshold
     hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly

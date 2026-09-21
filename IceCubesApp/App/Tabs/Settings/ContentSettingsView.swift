@@ -42,8 +42,8 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.showAltTextForMedia) {
           Text("settings.content.media.show.alt")
         }
-        Toggle(isOn: $userPreferences.embedPostUrlInMedia) {
-          Label("settings.content.media.embed-post-url", systemImage: "link")
+        NavigationLink(destination: PhotoMetadataSettingsView()) {
+          Label("settings.content.media.embed-metadata.title", systemImage: "photo.badge.arrow.down")
         }
         Toggle(isOn: $userPreferences.animateEmojis) {
             Text("settings.other.animate-emojis")

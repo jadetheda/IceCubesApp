@@ -1,7 +1,8 @@
 import DesignSystem
 import Env
 import Foundation
-import NetworkClient
+import Network
+import MediaUIClient
 import SwiftUI
 import Photos
 import Models
@@ -430,9 +431,9 @@ Button {
               try? FileManager.default.removeItem(at: tempFile)
             } else {
               var finalData = data
-              let embedEnabled = preferences.embedPostUrlInMedia
-              if let urlStr = postUrl, embedEnabled {
-                finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
+              let exportMetadata = PhotoExportMetadata(postUrl: postUrl.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name })
+              if let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
+                finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
               }
               let rawExt = attachment.url?.pathExtension ?? ""
               let ext = rawExt.isEmpty ? "jpg" : rawExt

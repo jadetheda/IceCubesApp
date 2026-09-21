@@ -95070,6 +95070,46 @@
           }
         }
       }
+    },
+    "settings.content.media.embed-post-text": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include post text in photo captions"
+          }
+        }
+      }
+    },
+    "settings.content.media.embed-post-tags": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include post tags in photo captions"
+          }
+        }
+      }
+    },
+    "settings.content.media.embed-metadata.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exported photo metadata"
+          }
+        }
+      }
+    },
+    "settings.content.media.embed-metadata.footer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metadata is saved to the image's EXIF/IPTC properties when downloading photos."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

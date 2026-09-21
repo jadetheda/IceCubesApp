@@ -27,13 +27,15 @@ public struct StatusRowMediaPreviewView: View {
   public let attachments: [MediaAttachment]
   public let sensitive: Bool
   public let useRemoteMedia: Bool
+  public let exportMetadata: PhotoExportMetadata?
 
   @State private var isQuickLookLoading: Bool = false
 
-  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false) {
+  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil) {
     self.attachments = attachments
     self.sensitive = sensitive
     self.useRemoteMedia = useRemoteMedia
+    self.exportMetadata = exportMetadata
   }
 
   #if targetEnvironment(macCatalyst)
@@ -166,14 +168,16 @@ public struct StatusRowMediaPreviewView: View {
         value: WindowDestinationMedia.mediaViewer(
           attachments: attachments,
           selectedAttachment: attachments[index],
-          useRemoteMedia: effectiveUseRemoteMedia
+          useRemoteMedia: effectiveUseRemoteMedia,
+          exportMetadata: exportMetadata
         )
       )
     #else
       quickLook.prepareFor(
         selectedMediaAttachment: attachments[index],
         mediaAttachments: attachments,
-        useRemoteMedia: effectiveUseRemoteMedia
+        useRemoteMedia: effectiveUseRemoteMedia,
+        photoMetadata: exportMetadata
       )
     #endif
   }

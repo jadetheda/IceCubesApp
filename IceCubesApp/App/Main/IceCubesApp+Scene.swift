@@ -118,11 +118,12 @@ extension IceCubesApp {
     WindowGroup(for: WindowDestinationMedia.self) { destination in
       Group {
         switch destination.wrappedValue {
-        case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
+        case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia, exportMetadata):
           MediaUIView(
             selectedAttachment: selectedAttachment,
             attachments: attachments,
-            useRemoteMedia: useRemoteMedia)
+            useRemoteMedia: useRemoteMedia,
+            exportMetadata: exportMetadata)
         case .none:
           EmptyView()
         }

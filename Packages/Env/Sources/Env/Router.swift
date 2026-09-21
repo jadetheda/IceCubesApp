@@ -50,14 +50,14 @@ public enum WindowDestinationEditor: Hashable, Codable {
 }
 
 public enum WindowDestinationMedia: Hashable, Codable {
-  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool)
+  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool, exportMetadata: PhotoExportMetadata?)
 
   enum CodingKeys: String, CodingKey {
     case mediaViewer
   }
   
   enum MediaViewerCodingKeys: String, CodingKey {
-    case attachments, selectedAttachment, useRemoteMedia
+    case attachments, selectedAttachment, useRemoteMedia, exportMetadata
   }
 
   public init(from decoder: Decoder) throws {
@@ -67,7 +67,8 @@ public enum WindowDestinationMedia: Hashable, Codable {
       let attachments = try nested.decode([MediaAttachment].self, forKey: .attachments)
       let selectedAttachment = try nested.decode(MediaAttachment.self, forKey: .selectedAttachment)
       let useRemoteMedia = try nested.decodeIfPresent(Bool.self, forKey: .useRemoteMedia) ?? false
-      self = .mediaViewer(attachments: attachments, selectedAttachment: selectedAttachment, useRemoteMedia: useRemoteMedia)
+      let exportMetadata = try nested.decodeIfPresent(PhotoExportMetadata.self, forKey: .exportMetadata)
+      self = .mediaViewer(attachments: attachments, selectedAttachment: selectedAttachment, useRemoteMedia: useRemoteMedia, exportMetadata: exportMetadata)
     } else {
       throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: container.codingPath, debugDescription: "Unknown case"))
     }
@@ -76,11 +77,12 @@ public enum WindowDestinationMedia: Hashable, Codable {
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     switch self {
-    case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
+    case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia, exportMetadata):
       var nested = container.nestedContainer(keyedBy: MediaViewerCodingKeys.self, forKey: .mediaViewer)
       try nested.encode(attachments, forKey: .attachments)
       try nested.encode(selectedAttachment, forKey: .selectedAttachment)
       try nested.encode(useRemoteMedia, forKey: .useRemoteMedia)
+      try nested.encodeIfPresent(exportMetadata, forKey: .exportMetadata)
     }
   }
 }

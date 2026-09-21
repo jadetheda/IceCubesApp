@@ -1,4 +1,6 @@
 import Foundation
+import Models
+import Env
 import ImageIO
 
 public struct MediaCaptionUtils {
@@ -40,5 +42,21 @@ public struct MediaCaptionUtils {
     guard CGImageDestinationFinalize(destination) else { return data }
     
     return mutableData as Data
+  }
+  public static func createCaption(from exportMetadata: PhotoExportMetadata?, preferences: UserPreferences) -> String? {
+    guard let exportMetadata else { return nil }
+    var caption = ""
+    if preferences.embedPostTextInMedia, let text = exportMetadata.postText {
+      caption += text + "\n\n"
+    }
+    if preferences.embedPostTagsInMedia, let tags = exportMetadata.postTags, !tags.isEmpty {
+      caption += tags.map { "#\($0)" }.joined(separator: " ") + "\n\n"
+    }
+    if preferences.embedPostUrlInMedia, let url = exportMetadata.postUrl {
+      caption += url.absoluteString
+    }
+    
+    let trimmed = caption.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? nil : trimmed
   }
 }

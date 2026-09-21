@@ -9,6 +9,7 @@ import SwiftUI
 public struct MediaUIView: View, @unchecked Sendable {
   private let data: [DisplayData]
   private let initialItem: DisplayData?
+  private let exportMetadata: PhotoExportMetadata?
   @State private var scrolledItem: DisplayData?
   @FocusState private var isFocused: Bool
   @State private var isOverlayPresented = true
@@ -75,9 +76,10 @@ public struct MediaUIView: View, @unchecked Sendable {
   }
 
   @MainActor
-  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false) {
+  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil) {
     data = attachments.compactMap { DisplayData(from: $0, useRemoteMedia: useRemoteMedia) }
     initialItem = DisplayData(from: selectedAttachment, useRemoteMedia: useRemoteMedia)
+    self.exportMetadata = exportMetadata
   }
 
   private func scrollToPrevious() {

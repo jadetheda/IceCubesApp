@@ -8,6 +8,7 @@ import SwiftUI
   public var selectedMediaAttachment: MediaAttachment?
   public var mediaAttachments: [MediaAttachment] = []
   public var useRemoteMedia: Bool = false
+  public var photoMetadata: PhotoExportMetadata? = nil
   
   @ObservationIgnored
   public var namespace: Namespace.ID?
@@ -17,10 +18,11 @@ import SwiftUI
   private init() {}
 
   public func prepareFor(
-    selectedMediaAttachment: MediaAttachment, mediaAttachments: [MediaAttachment], useRemoteMedia: Bool = false
+    selectedMediaAttachment: MediaAttachment, mediaAttachments: [MediaAttachment], useRemoteMedia: Bool = false, photoMetadata: PhotoExportMetadata? = nil
   ) {
     self.selectedMediaAttachment = selectedMediaAttachment
     self.mediaAttachments = mediaAttachments
     self.useRemoteMedia = useRemoteMedia
+    self.photoMetadata = photoMetadata
   }
 }
