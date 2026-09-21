@@ -239,7 +239,7 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
     if status == .authorized {
       do {
         var finalData = data
-        if let exportMetadata = exportMetadata, let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
+        if let exportMetadata = exportMetadata, let caption = MediaCaptionUtils.createCaption(from: exportMetadata, includeText: preferences.embedPostTextInMedia, includeTags: preferences.embedPostTagsInMedia, includeUrl: preferences.embedPostUrlInMedia) {
             finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
         }
         let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension

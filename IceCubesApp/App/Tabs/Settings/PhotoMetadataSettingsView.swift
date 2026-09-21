@@ -6,11 +6,13 @@ public struct PhotoMetadataSettingsView: View {
 
   public init() {}
 
-  private var masterBinding: Binding<Bool> {
-    Binding<Bool>(
-      get: {
-        preferences.embedPostUrlInMedia || preferences.embedPostTextInMedia || preferences.embedPostTagsInMedia
-      },
+  public var body: some View {
+    @Bindable var bindablePreferences = preferences
+    
+    let isMasterEnabled = preferences.embedPostUrlInMedia || preferences.embedPostTextInMedia || preferences.embedPostTagsInMedia
+    
+    let masterBinding = Binding<Bool>(
+      get: { isMasterEnabled },
       set: { newValue in
         withAnimation {
           if newValue {
@@ -25,15 +27,12 @@ public struct PhotoMetadataSettingsView: View {
         }
       }
     )
-  }
 
-  public var body: some View {
-    @Bindable var bindablePreferences = preferences
     Form {
       Section {
         Toggle("settings.content.media.embed-master", isOn: masterBinding)
         
-        if masterBinding.wrappedValue {
+        if isMasterEnabled {
           Group {
             Toggle("settings.content.media.embed-post-url", isOn: $bindablePreferences.embedPostUrlInMedia)
             Toggle("settings.content.media.embed-post-text", isOn: $bindablePreferences.embedPostTextInMedia)

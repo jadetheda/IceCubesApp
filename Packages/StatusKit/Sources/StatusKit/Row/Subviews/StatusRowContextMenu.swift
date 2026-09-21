@@ -433,7 +433,7 @@ Button {
             } else {
               var finalData = data
               let exportMetadata = viewModel.photoExportMetadata
-              if let caption = await MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
+              if let caption = MediaCaptionUtils.createCaption(from: exportMetadata, includeText: preferences.embedPostTextInMedia, includeTags: preferences.embedPostTagsInMedia, includeUrl: preferences.embedPostUrlInMedia) {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
               }
               let rawExt = attachment.url?.pathExtension ?? ""

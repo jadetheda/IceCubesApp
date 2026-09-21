@@ -43,17 +43,16 @@ public struct MediaCaptionUtils {
     
     return mutableData as Data
   }
-  @MainActor
-  public static func createCaption(from exportMetadata: PhotoExportMetadata?, preferences: UserPreferences) -> String? {
+  public static func createCaption(from exportMetadata: PhotoExportMetadata?, includeText: Bool, includeTags: Bool, includeUrl: Bool) -> String? {
     guard let exportMetadata else { return nil }
     var caption = ""
-    if preferences.embedPostTextInMedia, let text = exportMetadata.postText {
+    if includeText, let text = exportMetadata.postText {
       caption += text + "\n\n"
     }
-    if preferences.embedPostTagsInMedia, let tags = exportMetadata.postTags, !tags.isEmpty {
+    if includeTags, let tags = exportMetadata.postTags, !tags.isEmpty {
       caption += tags.map { "#\($0)" }.joined(separator: " ") + "\n\n"
     }
-    if preferences.embedPostUrlInMedia, let url = exportMetadata.postUrl {
+    if includeUrl, let url = exportMetadata.postUrl {
       caption += url.absoluteString
     }
     
