@@ -16,8 +16,7 @@ struct StatusRowContentView: View {
   var body: some View {
     
     if !viewModel.finalStatus.spoilerText.asRawText.isEmpty {
-      @Bindable var viewModel = viewModel
-      StatusRowSpoilerView(status: viewModel.finalStatus, displaySpoiler: $viewModel.displaySpoiler)
+      StatusRowSpoilerView(status: viewModel.finalStatus, displaySpoiler: Bindable(viewModel).displaySpoiler)
     }
 
     if !viewModel.displaySpoiler {
