@@ -1,0 +1,743 @@
+diff --git a/IceCubesApp/App/Main/IceCubesApp+Scene.swift b/IceCubesApp/App/Main/IceCubesApp+Scene.swift
+index 639df264..78c09938 100644
+--- a/IceCubesApp/App/Main/IceCubesApp+Scene.swift
++++ b/IceCubesApp/App/Main/IceCubesApp+Scene.swift
+@@ -118,11 +118,12 @@ extension IceCubesApp {
+     WindowGroup(for: WindowDestinationMedia.self) { destination in
+       Group {
+         switch destination.wrappedValue {
+-        case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
++        case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia, exportMetadata):
+           MediaUIView(
+             selectedAttachment: selectedAttachment,
+             attachments: attachments,
+-            useRemoteMedia: useRemoteMedia)
++            useRemoteMedia: useRemoteMedia,
++            exportMetadata: exportMetadata)
+         case .none:
+           EmptyView()
+         }
+diff --git a/IceCubesApp/App/Tabs/Settings/ContentSettingsView.swift b/IceCubesApp/App/Tabs/Settings/ContentSettingsView.swift
+index 465ca614..a4dd5843 100644
+--- a/IceCubesApp/App/Tabs/Settings/ContentSettingsView.swift
++++ b/IceCubesApp/App/Tabs/Settings/ContentSettingsView.swift
+@@ -42,8 +42,8 @@ struct ContentSettingsView: View {
+         Toggle(isOn: $userPreferences.showAltTextForMedia) {
+           Text("settings.content.media.show.alt")
+         }
+-        Toggle(isOn: $userPreferences.embedPostUrlInMedia) {
+-          Label("settings.content.media.embed-post-url", systemImage: "link")
++        NavigationLink(destination: PhotoMetadataSettingsView()) {
++          Label("settings.content.media.embed-metadata.title", systemImage: "photo.badge.arrow.down")
+         }
+         Toggle(isOn: $userPreferences.animateEmojis) {
+             Text("settings.other.animate-emojis")
+diff --git a/IceCubesApp/App/Tabs/Settings/PhotoMetadataSettingsView.swift b/IceCubesApp/App/Tabs/Settings/PhotoMetadataSettingsView.swift
+new file mode 100644
+index 00000000..1015e8ea
+--- /dev/null
++++ b/IceCubesApp/App/Tabs/Settings/PhotoMetadataSettingsView.swift
+@@ -0,0 +1,50 @@
++import SwiftUI
++import Env
++
++public struct PhotoMetadataSettingsView: View {
++  @Environment(UserPreferences.self) private var preferences
++
++  public init() {}
++
++  private var masterBinding: Binding<Bool> {
++    Binding<Bool>(
++      get: {
++        preferences.embedPostUrlInMedia || preferences.embedPostTextInMedia || preferences.embedPostTagsInMedia
++      },
++      set: { newValue in
++        withAnimation {
++          if newValue {
++            if !preferences.embedPostUrlInMedia && !preferences.embedPostTextInMedia && !preferences.embedPostTagsInMedia {
++              preferences.embedPostUrlInMedia = true
++            }
++          } else {
++            preferences.embedPostUrlInMedia = false
++            preferences.embedPostTextInMedia = false
++            preferences.embedPostTagsInMedia = false
++          }
++        }
++      }
++    )
++  }
++
++  public var body: some View {
++    Form {
++      Section {
++        Toggle("settings.content.media.embed-master", isOn: masterBinding)
++        
++        if masterBinding.wrappedValue {
++          Group {
++            Toggle("settings.content.media.embed-post-url", isOn: Bindable(preferences).embedPostUrlInMedia)
++            Toggle("settings.content.media.embed-post-text", isOn: Bindable(preferences).embedPostTextInMedia)
++            Toggle("settings.content.media.embed-post-tags", isOn: Bindable(preferences).embedPostTagsInMedia)
++          }
++          .padding(.leading, 16)
++        }
++      } footer: {
++        Text("settings.content.media.embed-metadata.footer")
++      }
++    }
++    .navigationTitle("settings.content.media.embed-metadata.title")
++    .navigationBarTitleDisplayMode(.inline)
++  }
++}
+diff --git a/IceCubesApp/Resources/Localization/Localizable.xcstrings b/IceCubesApp/Resources/Localization/Localizable.xcstrings
+index de5e9deb..b7e277d8 100644
+--- a/IceCubesApp/Resources/Localization/Localizable.xcstrings
++++ b/IceCubesApp/Resources/Localization/Localizable.xcstrings
+@@ -95070,6 +95070,56 @@
+           }
+         }
+       }
++    },
++    "settings.content.media.embed-post-text": {
++      "localizations": {
++        "en": {
++          "stringUnit": {
++            "state": "translated",
++            "value": "Include post text in photo captions"
++          }
++        }
++      }
++    },
++    "settings.content.media.embed-post-tags": {
++      "localizations": {
++        "en": {
++          "stringUnit": {
++            "state": "translated",
++            "value": "Include post tags in photo captions"
++          }
++        }
++      }
++    },
++    "settings.content.media.embed-metadata.title": {
++      "localizations": {
++        "en": {
++          "stringUnit": {
++            "state": "translated",
++            "value": "Exported photo metadata"
++          }
++        }
++      }
++    },
++    "settings.content.media.embed-metadata.footer": {
++      "localizations": {
++        "en": {
++          "stringUnit": {
++            "state": "translated",
++            "value": "Metadata is saved to the image's EXIF/IPTC properties when downloading photos."
++          }
++        }
++      }
++    },
++    "settings.content.media.embed-master": {
++      "localizations": {
++        "en": {
++          "stringUnit": {
++            "state": "translated",
++            "value": "Include post info in downloaded photo captions"
++          }
++        }
++      }
+     }
+   },
+   "version": "1.0"
+diff --git a/Packages/Account/Sources/Account/Detail/Components/AccountAvatarView.swift b/Packages/Account/Sources/Account/Detail/Components/AccountAvatarView.swift
+index 279e4682..8b98555e 100644
+--- a/Packages/Account/Sources/Account/Detail/Components/AccountAvatarView.swift
++++ b/Packages/Account/Sources/Account/Detail/Components/AccountAvatarView.swift
+@@ -29,10 +29,10 @@ struct AccountAvatarView: View {
+           value: WindowDestinationMedia.mediaViewer(
+             attachments: [attachement],
+             selectedAttachment: attachement,
+-            useRemoteMedia: false))
++            useRemoteMedia: false, exportMetadata: nil))
+       #else
+         quickLook.prepareFor(
+-          selectedMediaAttachment: attachement, mediaAttachments: [attachement], useRemoteMedia: false)
++          selectedMediaAttachment: attachement, mediaAttachments: [attachement], useRemoteMedia: false, photoMetadata: nil)
+       #endif
+     }
+     .accessibilityElement(children: .combine)
+diff --git a/Packages/Account/Sources/Account/Detail/Components/AccountHeaderImageView.swift b/Packages/Account/Sources/Account/Detail/Components/AccountHeaderImageView.swift
+index 8347ef7d..d0078afd 100644
+--- a/Packages/Account/Sources/Account/Detail/Components/AccountHeaderImageView.swift
++++ b/Packages/Account/Sources/Account/Detail/Components/AccountHeaderImageView.swift
+@@ -78,10 +78,11 @@ struct AccountHeaderImageView: View {
+           value: WindowDestinationMedia.mediaViewer(
+             attachments: [attachement],
+             selectedAttachment: attachement,
+-            useRemoteMedia: false
++            useRemoteMedia: false,
++            exportMetadata: nil
+           ))
+       #else
+-        quickLook.prepareFor(selectedMediaAttachment: attachement, mediaAttachments: [attachement], useRemoteMedia: false)
++        quickLook.prepareFor(selectedMediaAttachment: attachement, mediaAttachments: [attachement], useRemoteMedia: false, photoMetadata: nil)
+       #endif
+     }
+     .accessibilityElement(children: .combine)
+diff --git a/Packages/Env/Sources/Env/QuickLook.swift b/Packages/Env/Sources/Env/QuickLook.swift
+index 8bf710df..cf035d2a 100644
+--- a/Packages/Env/Sources/Env/QuickLook.swift
++++ b/Packages/Env/Sources/Env/QuickLook.swift
+@@ -8,6 +8,7 @@ import SwiftUI
+   public var selectedMediaAttachment: MediaAttachment?
+   public var mediaAttachments: [MediaAttachment] = []
+   public var useRemoteMedia: Bool = false
++  public var photoMetadata: PhotoExportMetadata? = nil
+   
+   @ObservationIgnored
+   public var namespace: Namespace.ID?
+@@ -17,10 +18,11 @@ import SwiftUI
+   private init() {}
+ 
+   public func prepareFor(
+-    selectedMediaAttachment: MediaAttachment, mediaAttachments: [MediaAttachment], useRemoteMedia: Bool = false
++    selectedMediaAttachment: MediaAttachment, mediaAttachments: [MediaAttachment], useRemoteMedia: Bool = false, photoMetadata: PhotoExportMetadata? = nil
+   ) {
+     self.selectedMediaAttachment = selectedMediaAttachment
+     self.mediaAttachments = mediaAttachments
+     self.useRemoteMedia = useRemoteMedia
++    self.photoMetadata = photoMetadata
+   }
+ }
+diff --git a/Packages/Env/Sources/Env/Router.swift b/Packages/Env/Sources/Env/Router.swift
+index e288d7d1..ae7d7ad7 100644
+--- a/Packages/Env/Sources/Env/Router.swift
++++ b/Packages/Env/Sources/Env/Router.swift
+@@ -50,14 +50,14 @@ public enum WindowDestinationEditor: Hashable, Codable {
+ }
+ 
+ public enum WindowDestinationMedia: Hashable, Codable {
+-  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool)
++  case mediaViewer(attachments: [MediaAttachment], selectedAttachment: MediaAttachment, useRemoteMedia: Bool, exportMetadata: PhotoExportMetadata?)
+ 
+   enum CodingKeys: String, CodingKey {
+     case mediaViewer
+   }
+   
+   enum MediaViewerCodingKeys: String, CodingKey {
+-    case attachments, selectedAttachment, useRemoteMedia
++    case attachments, selectedAttachment, useRemoteMedia, exportMetadata
+   }
+ 
+   public init(from decoder: Decoder) throws {
+@@ -67,7 +67,8 @@ public enum WindowDestinationMedia: Hashable, Codable {
+       let attachments = try nested.decode([MediaAttachment].self, forKey: .attachments)
+       let selectedAttachment = try nested.decode(MediaAttachment.self, forKey: .selectedAttachment)
+       let useRemoteMedia = try nested.decodeIfPresent(Bool.self, forKey: .useRemoteMedia) ?? false
+-      self = .mediaViewer(attachments: attachments, selectedAttachment: selectedAttachment, useRemoteMedia: useRemoteMedia)
++      let exportMetadata = try nested.decodeIfPresent(PhotoExportMetadata.self, forKey: .exportMetadata)
++      self = .mediaViewer(attachments: attachments, selectedAttachment: selectedAttachment, useRemoteMedia: useRemoteMedia, exportMetadata: exportMetadata)
+     } else {
+       throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: container.codingPath, debugDescription: "Unknown case"))
+     }
+@@ -76,11 +77,12 @@ public enum WindowDestinationMedia: Hashable, Codable {
+   public func encode(to encoder: Encoder) throws {
+     var container = encoder.container(keyedBy: CodingKeys.self)
+     switch self {
+-    case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia):
++    case let .mediaViewer(attachments, selectedAttachment, useRemoteMedia, exportMetadata):
+       var nested = container.nestedContainer(keyedBy: MediaViewerCodingKeys.self, forKey: .mediaViewer)
+       try nested.encode(attachments, forKey: .attachments)
+       try nested.encode(selectedAttachment, forKey: .selectedAttachment)
+       try nested.encode(useRemoteMedia, forKey: .useRemoteMedia)
++      try nested.encodeIfPresent(exportMetadata, forKey: .exportMetadata)
+     }
+   }
+ }
+diff --git a/Packages/Env/Sources/Env/UserPreferences.swift b/Packages/Env/Sources/Env/UserPreferences.swift
+index c0995495..bf373215 100644
+--- a/Packages/Env/Sources/Env/UserPreferences.swift
++++ b/Packages/Env/Sources/Env/UserPreferences.swift
+@@ -99,6 +99,8 @@ import SwiftUI
+     // Hide Seen Posts (Experimental)
+     @AppStorage("hide_seen_posts_enabled") public var hideSeenPostsEnabled: Bool = false
+     @AppStorage("embed_post_url_in_media") public var embedPostUrlInMedia: Bool = false
++    @AppStorage("embed_post_text_in_media") public var embedPostTextInMedia: Bool = false
++    @AppStorage("embed_post_tags_in_media") public var embedPostTagsInMedia: Bool = false
+     @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
+     @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
+     @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
+@@ -558,6 +560,16 @@ import SwiftUI
+       storage.embedPostUrlInMedia = embedPostUrlInMedia
+     }
+   }
++  public var embedPostTextInMedia: Bool {
++    didSet {
++      storage.embedPostTextInMedia = embedPostTextInMedia
++    }
++  }
++  public var embedPostTagsInMedia: Bool {
++    didSet {
++      storage.embedPostTagsInMedia = embedPostTagsInMedia
++    }
++  }
+ 
+   // Hide Seen Posts
+   public var hideSeenPostsEnabled: Bool {
+@@ -917,6 +929,8 @@ import SwiftUI
+     streamHomeTimeline = storage.streamHomeTimeline
+     fullTimelineFetch = storage.fullTimelineFetch
+     embedPostUrlInMedia = storage.embedPostUrlInMedia
++    embedPostTextInMedia = storage.embedPostTextInMedia
++    embedPostTagsInMedia = storage.embedPostTagsInMedia
+     hideSeenPostsEnabled = storage.hideSeenPostsEnabled
+     hideSeenPostsThreshold = storage.hideSeenPostsThreshold
+     hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/MediaCaptionUtils.swift b/Packages/MediaUI/Sources/MediaUI/MediaCaptionUtils.swift
+similarity index 69%
+rename from Packages/StatusKit/Sources/StatusKit/Row/Subviews/MediaCaptionUtils.swift
+rename to Packages/MediaUI/Sources/MediaUI/MediaCaptionUtils.swift
+index 7eae0f71..f6656cd5 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/MediaCaptionUtils.swift
++++ b/Packages/MediaUI/Sources/MediaUI/MediaCaptionUtils.swift
+@@ -1,4 +1,6 @@
+ import Foundation
++import Models
++import Env
+ import ImageIO
+ 
+ public struct MediaCaptionUtils {
+@@ -41,4 +43,20 @@ public struct MediaCaptionUtils {
+     
+     return mutableData as Data
+   }
++  public static func createCaption(from exportMetadata: PhotoExportMetadata?, preferences: UserPreferences) -> String? {
++    guard let exportMetadata else { return nil }
++    var caption = ""
++    if preferences.embedPostTextInMedia, let text = exportMetadata.postText {
++      caption += text + "\n\n"
++    }
++    if preferences.embedPostTagsInMedia, let tags = exportMetadata.postTags, !tags.isEmpty {
++      caption += tags.map { "#\($0)" }.joined(separator: " ") + "\n\n"
++    }
++    if preferences.embedPostUrlInMedia, let url = exportMetadata.postUrl {
++      caption += url.absoluteString
++    }
++    
++    let trimmed = caption.trimmingCharacters(in: .whitespacesAndNewlines)
++    return trimmed.isEmpty ? nil : trimmed
++  }
+ }
+diff --git a/Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift b/Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift
+index ae8115ce..7acf1a90 100644
+--- a/Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift
++++ b/Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift
+@@ -194,7 +194,7 @@ public struct MediaUIAttachmentVideoView: View {
+                 let attachement = MediaAttachment.videoWith(url: viewModel.url)
+                 openWindow(
+                   value: WindowDestinationMedia.mediaViewer(
+-                    attachments: [attachement], selectedAttachment: attachement, useRemoteMedia: false))
++                    attachments: [attachement], selectedAttachment: attachement, useRemoteMedia: false, exportMetadata: nil))
+               #else
+                 isFullScreen = true
+               #endif
+diff --git a/Packages/MediaUI/Sources/MediaUI/MediaUIView.swift b/Packages/MediaUI/Sources/MediaUI/MediaUIView.swift
+index 663e5cbd..76c8d65b 100644
+--- a/Packages/MediaUI/Sources/MediaUI/MediaUIView.swift
++++ b/Packages/MediaUI/Sources/MediaUI/MediaUIView.swift
+@@ -9,6 +9,7 @@ import SwiftUI
+ public struct MediaUIView: View, @unchecked Sendable {
+   private let data: [DisplayData]
+   private let initialItem: DisplayData?
++  private let exportMetadata: PhotoExportMetadata?
+   @State private var scrolledItem: DisplayData?
+   @FocusState private var isFocused: Bool
+   @State private var isOverlayPresented = true
+@@ -57,7 +58,7 @@ public struct MediaUIView: View, @unchecked Sendable {
+       .scrollPosition(id: $scrolledItem)
+       .toolbar {
+         if isOverlayPresented, let item = scrolledItem {
+-          MediaToolBar(data: item)
++          MediaToolBar(data: item, exportMetadata: exportMetadata)
+         }
+       }
+       .toolbar(isOverlayPresented ? .visible : .hidden, for: .navigationBar)
+@@ -75,9 +76,10 @@ public struct MediaUIView: View, @unchecked Sendable {
+   }
+ 
+   @MainActor
+-  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false) {
++  public init(selectedAttachment: MediaAttachment, attachments: [MediaAttachment], useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil) {
+     data = attachments.compactMap { DisplayData(from: $0, useRemoteMedia: useRemoteMedia) }
+     initialItem = DisplayData(from: selectedAttachment, useRemoteMedia: useRemoteMedia)
++    self.exportMetadata = exportMetadata
+   }
+ 
+   private func scrollToPrevious() {
+@@ -99,6 +101,7 @@ public struct MediaUIView: View, @unchecked Sendable {
+ 
+ private struct MediaToolBar: ToolbarContent {
+   let data: DisplayData
++  let exportMetadata: PhotoExportMetadata?
+ 
+   var body: some ToolbarContent {
+     #if !targetEnvironment(macCatalyst)
+@@ -106,7 +109,7 @@ private struct MediaToolBar: ToolbarContent {
+     #endif
+     QuickLookToolbarItem(itemUrl: data.url, fallbackUrl: data.fallbackUrl)
+     AltTextToolbarItem(alt: data.description)
+-    SavePhotoToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
++    SavePhotoToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type, exportMetadata: exportMetadata)
+     ShareToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
+   }
+ }
+@@ -157,7 +160,9 @@ private struct SavePhotoToolbarItem: ToolbarContent, @unchecked Sendable {
+   let url: URL
+   let fallbackUrl: URL?
+   let type: DisplayType
++  let exportMetadata: PhotoExportMetadata?
+   @State private var state = SavingState.unsaved
++  @Environment(Env.UserPreferences.self) private var preferences
+ 
+   var body: some ToolbarContent {
+     ToolbarItem(placement: .topBarTrailing) {
+@@ -221,7 +226,8 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
+     return nil
+   }
+ 
+-private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
++  @MainActor
++  private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
+     guard let data = await imageData(url, fallbackUrl: fallbackUrl) else { return false }
+ 
+     var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+@@ -232,9 +238,13 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
+     }
+     if status == .authorized {
+       do {
++        var finalData = data
++        if let exportMetadata = exportMetadata, let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
++            finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
++        }
+         let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension
+         let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
+-        try data.write(to: tempFile)
++        try finalData.write(to: tempFile)
+         try await Task.detached {
+           try await PHPhotoLibrary.shared().performChanges {
+             PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempFile)
+diff --git a/Packages/Models/Sources/Models/PhotoExportMetadata.swift b/Packages/Models/Sources/Models/PhotoExportMetadata.swift
+new file mode 100644
+index 00000000..f51a05dd
+--- /dev/null
++++ b/Packages/Models/Sources/Models/PhotoExportMetadata.swift
+@@ -0,0 +1,13 @@
++import Foundation
++
++public struct PhotoExportMetadata: Hashable, Codable, Sendable {
++  public let postUrl: URL?
++  public let postText: String?
++  public let postTags: [String]?
++  
++  public init(postUrl: URL?, postText: String?, postTags: [String]?) {
++    self.postUrl = postUrl
++    self.postText = postText
++    self.postTags = postTags
++  }
++}
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift
+index 376bd563..a59d868c 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift
+@@ -331,16 +331,18 @@ public struct StatusRowView: View {
+       Button("accessibility.status.media-viewer-action.label") {
+         HapticManager.shared.fireHaptic(.notification(.success))
+         let attachments = viewModel.finalStatus.mediaAttachments
++        let metadata = viewModel.photoExportMetadata
+         #if targetEnvironment(macCatalyst) || os(visionOS)
+           openWindow(
+             value: WindowDestinationMedia.mediaViewer(
+               attachments: attachments,
+               selectedAttachment: attachments[0],
+-              useRemoteMedia: false
++              useRemoteMedia: false,
++              exportMetadata: metadata
+             ))
+         #else
+           quickLook.prepareFor(
+-            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false)
++            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false, photoMetadata: metadata)
+         #endif
+       }
+     }
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+index 8781d9cb..dec9b0e1 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -118,6 +118,13 @@ import SwiftUI
+     (status.reblog?.url ?? status.url).flatMap(URL.init(string:))
+   }
+ 
++  var photoExportMetadata: PhotoExportMetadata {
++    let url: URL? = status.url.flatMap { URL(string: $0) }
++    let text: String? = status.content.asRawText
++    let tags: [String]? = status.tags.map { $0.name }
++    return PhotoExportMetadata(postUrl: url, postText: text, postTags: tags)
++  }
++
+   @ViewBuilder
+   var backgroundColor: some View {
+     if status.visibility == .direct {
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContentView.swift b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContentView.swift
+index c517954a..45468315 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContentView.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContentView.swift
+@@ -43,7 +43,7 @@ struct StatusRowContentView: View {
+           StatusRowMediaPreviewView(
+             attachments: viewModel.finalStatus.mediaAttachments,
+             sensitive: viewModel.finalStatus.sensitive,
+-            useRemoteMedia: viewModel.useRemoteMedia)
++            useRemoteMedia: viewModel.useRemoteMedia, exportMetadata: viewModel.photoExportMetadata)
+           if theme.statusDisplayStyle == .compact {
+             Spacer()
+           }
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContextMenu.swift b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContextMenu.swift
+index 8d1207bb..39100026 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContextMenu.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowContextMenu.swift
+@@ -1,7 +1,8 @@
+ import DesignSystem
+ import Env
+ import Foundation
+-import NetworkClient
++import Network
++import MediaUIClient
+ import SwiftUI
+ import Photos
+ import Models
+@@ -430,9 +431,9 @@ Button {
+               try? FileManager.default.removeItem(at: tempFile)
+             } else {
+               var finalData = data
+-              let embedEnabled = preferences.embedPostUrlInMedia
+-              if let urlStr = postUrl, embedEnabled {
+-                finalData = MediaCaptionUtils.embedCaption(into: data, caption: urlStr)
++              let exportMetadata = viewModel.photoExportMetadata
++              if let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
++                finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
+               }
+               let rawExt = attachment.url?.pathExtension ?? ""
+               let ext = rawExt.isEmpty ? "jpg" : rawExt
+diff --git a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowMediaPreviewView.swift b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowMediaPreviewView.swift
+index 34ac06b1..708d6c44 100644
+--- a/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowMediaPreviewView.swift
++++ b/Packages/StatusKit/Sources/StatusKit/Row/Subviews/StatusRowMediaPreviewView.swift
+@@ -27,13 +27,15 @@ public struct StatusRowMediaPreviewView: View {
+   public let attachments: [MediaAttachment]
+   public let sensitive: Bool
+   public let useRemoteMedia: Bool
++  public let exportMetadata: PhotoExportMetadata?
+ 
+   @State private var isQuickLookLoading: Bool = false
+ 
+-  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false) {
++  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil) {
+     self.attachments = attachments
+     self.sensitive = sensitive
+     self.useRemoteMedia = useRemoteMedia
++    self.exportMetadata = exportMetadata
+   }
+ 
+   #if targetEnvironment(macCatalyst)
+@@ -166,14 +168,16 @@ public struct StatusRowMediaPreviewView: View {
+         value: WindowDestinationMedia.mediaViewer(
+           attachments: attachments,
+           selectedAttachment: attachments[index],
+-          useRemoteMedia: effectiveUseRemoteMedia
++          useRemoteMedia: effectiveUseRemoteMedia,
++          exportMetadata: exportMetadata
+         )
+       )
+     #else
+       quickLook.prepareFor(
+         selectedMediaAttachment: attachments[index],
+         mediaAttachments: attachments,
+-        useRemoteMedia: effectiveUseRemoteMedia
++        useRemoteMedia: effectiveUseRemoteMedia,
++        photoMetadata: exportMetadata
+       )
+     #endif
+   }
+diff --git a/memory.md b/memory.md
+index 8684013e..720d7d84 100644
+--- a/memory.md
++++ b/memory.md
+@@ -923,3 +923,8 @@
+   - **Bug Fix (StatusRowContextMenu)**: Fixed a bug introduced during the flattening of constraint-solver traps. Explicitly typed the extracted `title` variable as `LocalizedStringKey` and `icon` as `String` to prevent SwiftUI from treating `title` as a plain `String` and losing localization capabilities for `"status.action.unfavorite"` and `"status.action.favorite"`.
+ 
+ - **2026-09-20**: Added `supportsLists` and `supportsAddingNonFollowersToLists` to `ServerCapabilities`. Refactored UI checks for `client.isMisskey` and `client.isPixelfed` around list management to strictly use the capability architecture, allowing Misskey backend to seamlessly support adding non-followed users to lists.
++
++## 🪵 Activity Log
++- **2026-09-21 03:10 UTC**: Fixed Exit Code 65 traps in `StatusRowView`, `StatusRowContentView`, and `StatusRowContextMenu` by extracting inline `PhotoExportMetadata` instantiations to a computed property `photoExportMetadata` in `StatusRowViewModel`. Also updated `MediaUIView` to pass the `exportMetadata` down to `SavePhotoToolbarItem` and implemented the caption embedding logic in `saveImage(url:fallbackUrl:)` via `MediaCaptionUtils.createCaption` and `embedCaption` before writing to `PHPhotoLibrary`, ensuring metadata injection is fully functional.
++- 2026-09-21 07:13 UTC: Fixed Exit Code 65 (compilation error) in `MediaUIView.swift` by explicitly marking the async `saveImage(url:fallbackUrl:)` function as `@MainActor` to prevent an actor isolation violation when accessing the `@Environment` `UserPreferences` object.
++- 2026-09-21 07:13 UTC: Hardened Exit Code 65 protections in `StatusRowContentView.swift` by extracting the `viewModel.photoExportMetadata` access into a safe local variable before passing it into the `StatusRowMediaPreviewView` within the `HStack` ViewBuilder.
+diff --git a/test_streamwatcher.patch b/test_streamwatcher.patch
+deleted file mode 100644
+index b74a5229..00000000
+--- a/test_streamwatcher.patch
++++ /dev/null
+@@ -1,154 +0,0 @@
+---- Packages/Env/Sources/Env/StreamWatcher.swift
+-+++ Packages/Env/Sources/Env/StreamWatcher.swift
+-@@ -40,6 +40,9 @@
+-     }
+-     self.client = client
+-     self.instanceStreamingURL = instanceStreamingURL
+-+    Task {
+-+      await streamEventDecoder.setClient(isMisskey: client.isMisskey == true, server: client.server)
+-+    }
+-     connect()
+-   }
+- 
+-@@ -65,8 +68,20 @@
+-       connect()
+-     }
+-     watchedStreams = streams
+-     for stream in streams {
+--      sendMessage(message: StreamMessage(type: "subscribe", stream: stream.rawValue))
+-+      if client?.isMisskey == true {
+-+        let channel: String
+-+        switch stream {
+-+        case .user: channel = "homeTimeline"
+-+        case .local: channel = "localTimeline"
+-+        case .federated: channel = "globalTimeline"
+-+        case .direct: channel = "main"
+-+        }
+-+        let message = MisskeyStreamMessage(type: "connect", body: MisskeyStreamMessageBody(channel: channel, id: stream.rawValue))
+-+        sendMisskeyMessage(message: message)
+-+      } else {
+-+        sendMessage(message: StreamMessage(type: "subscribe", stream: stream.rawValue))
+-+      }
+-     }
+-   }
+- 
+-@@ -82,6 +97,14 @@
+-       task?.send(.string(stringMessage), completionHandler: { _ in })
+-     }
+-   }
+-+
+-+  private func sendMisskeyMessage(message: MisskeyStreamMessage) {
+-+    if let encodedMessage = try? encoder.encode(message),
+-+      let stringMessage = String(data: encodedMessage, encoding: .utf8)
+-+    {
+-+      task?.send(.string(stringMessage), completionHandler: { _ in })
+-+    }
+-+  }
+- 
+-   private func receiveMessage() {
+-     task?.receive(completionHandler: { [weak self] result in
+-@@ -99,13 +122,17 @@
+-             guard let self else { return }
+-             do {
+-               let decodedEvent = try await streamEventDecoder.decode(data: data)
+--              logger.info("Stream update: \(decodedEvent.rawEvent.event)")
+-+              if let raw = decodedEvent.rawEvent {
+-+                logger.info("Stream update: \(raw.event)")
+-+              } else {
+-+                logger.info("Stream update: Misskey event")
+-+              }
+-               await MainActor.run {
+-                 if let event = decodedEvent.event {
+-                   self.events.append(event)
+-                   self.latestEvent = event
+-                 }
+-               }
+-             } catch let StreamDecodeError.event(rawEvent, error) {
+-               logger.error("Error decoding streaming event to final event: \(error.localizedDescription)")
+-               logger.error("Raw data: \(rawEvent.payload)")
+-@@ -162,11 +189,19 @@
+- 
+- private actor StreamEventDecoder {
+-   struct DecodedEvent {
+--    let rawEvent: RawStreamEvent
+-+    let rawEvent: RawStreamEvent?
+-     let event: (any StreamEvent)?
+-   }
+- 
+-   private var lastTask: Task<DecodedEvent, Error>?
+-+  private var isMisskey: Bool = false
+-+  private var server: String = "misskey"
+-+
+-+  func setClient(isMisskey: Bool, server: String) {
+-+    self.isMisskey = isMisskey
+-+    self.server = server
+-+  }
+- 
+-   func decode(data: Data) async throws -> DecodedEvent {
+-     let previousTask = lastTask
+-+    let isMisskey = self.isMisskey
+-+    let server = self.server
+-     let task = Task {
+-       if let previousTask {
+-         _ = try? await previousTask.value
+-       }
+--      return try decodeSequentially(data: data)
+-+      return try decodeSequentially(data: data, isMisskey: isMisskey, server: server)
+-     }
+-     lastTask = task
+-     return try await task.value
+-   }
+- 
+--  private nonisolated func decodeSequentially(data: Data) throws -> DecodedEvent {
+-+  private nonisolated func decodeSequentially(data: Data, isMisskey: Bool, server: String) throws -> DecodedEvent {
+-     let decoder = JSONDecoder()
+-     decoder.keyDecodingStrategy = .convertFromSnakeCase
+-+
+-+    if isMisskey {
+-+      return try decodeMisskeyEvent(data: data, decoder: decoder, server: server)
+-+    }
+-+
+-     let rawEvent: RawStreamEvent
+-     do {
+-       rawEvent = try decoder.decode(RawStreamEvent.self, from: data)
+-@@ -224,4 +259,41 @@
+-     }
+-   }
+-+
+-+  private nonisolated func decodeMisskeyEvent(data: Data, decoder: JSONDecoder, server: String) throws -> DecodedEvent {
+-+    guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+-+          let type = json["type"] as? String,
+-+          type == "channel",
+-+          let body = json["body"] as? [String: Any],
+-+          let eventType = body["type"] as? String,
+-+          let payload = body["body"] as? [String: Any] else {
+-+        return DecodedEvent(rawEvent: nil, event: nil)
+-+    }
+-+    
+-+    let payloadData = try JSONSerialization.data(withJSONObject: payload)
+-+
+-+    switch eventType {
+-+    case "note":
+-+        let note = try decoder.decode(MisskeyNote.self, from: payloadData)
+-+        return DecodedEvent(rawEvent: nil, event: StreamEventUpdate(status: note.toStatus(server: server)))
+-+    case "notification":
+-+        let notification = try decoder.decode(MisskeyNotification.self, from: payloadData)
+-+        if let modelsNotification = notification.toNotification(server: server) {
+-+            return DecodedEvent(rawEvent: nil, event: StreamEventNotification(notification: modelsNotification))
+-+        }
+-+    default:
+-+        break
+-+    }
+-+    return DecodedEvent(rawEvent: nil, event: nil)
+-+  }
+- }
+-+
+-+private struct MisskeyStreamMessage: Encodable {
+-+  let type: String
+-+  let body: MisskeyStreamMessageBody
+-+}
+-+
+-+private struct MisskeyStreamMessageBody: Encodable {
+-+  let channel: String
+-+  let id: String
+-+}

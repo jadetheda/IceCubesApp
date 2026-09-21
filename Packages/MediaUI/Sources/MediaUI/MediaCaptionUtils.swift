@@ -43,6 +43,7 @@ public struct MediaCaptionUtils {
     
     return mutableData as Data
   }
+  @MainActor
   public static func createCaption(from exportMetadata: PhotoExportMetadata?, preferences: UserPreferences) -> String? {
     guard let exportMetadata else { return nil }
     var caption = ""

@@ -39,11 +39,12 @@ struct StatusRowContentView: View {
       }
 
       if !viewModel.finalStatus.mediaAttachments.isEmpty {
+        let metadata = viewModel.photoExportMetadata
         HStack {
           StatusRowMediaPreviewView(
             attachments: viewModel.finalStatus.mediaAttachments,
             sensitive: viewModel.finalStatus.sensitive,
-            useRemoteMedia: viewModel.useRemoteMedia, exportMetadata: viewModel.photoExportMetadata)
+            useRemoteMedia: viewModel.useRemoteMedia, exportMetadata: metadata)
           if theme.statusDisplayStyle == .compact {
             Spacer()
           }

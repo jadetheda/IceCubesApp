@@ -28,15 +28,16 @@ public struct PhotoMetadataSettingsView: View {
   }
 
   public var body: some View {
+    @Bindable var bindablePreferences = preferences
     Form {
       Section {
         Toggle("settings.content.media.embed-master", isOn: masterBinding)
         
         if masterBinding.wrappedValue {
           Group {
-            Toggle("settings.content.media.embed-post-url", isOn: Bindable(preferences).embedPostUrlInMedia)
-            Toggle("settings.content.media.embed-post-text", isOn: Bindable(preferences).embedPostTextInMedia)
-            Toggle("settings.content.media.embed-post-tags", isOn: Bindable(preferences).embedPostTagsInMedia)
+            Toggle("settings.content.media.embed-post-url", isOn: $bindablePreferences.embedPostUrlInMedia)
+            Toggle("settings.content.media.embed-post-text", isOn: $bindablePreferences.embedPostTextInMedia)
+            Toggle("settings.content.media.embed-post-tags", isOn: $bindablePreferences.embedPostTagsInMedia)
           }
           .padding(.leading, 16)
         }
