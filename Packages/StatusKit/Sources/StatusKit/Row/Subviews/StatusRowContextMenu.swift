@@ -5,7 +5,7 @@ import Network
 import MediaUIClient
 import SwiftUI
 import Photos
-import Models
+import Models\nimport MediaUI
 
 @MainActor
 struct StatusRowContextMenu: View {
