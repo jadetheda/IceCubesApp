@@ -58,7 +58,7 @@ public struct MediaUIView: View, @unchecked Sendable {
       .scrollPosition(id: $scrolledItem)
       .toolbar {
         if isOverlayPresented, let item = scrolledItem {
-          MediaToolBar(data: item)
+          MediaToolBar(data: item, exportMetadata: exportMetadata)
         }
       }
       .toolbar(isOverlayPresented ? .visible : .hidden, for: .navigationBar)
@@ -101,6 +101,7 @@ public struct MediaUIView: View, @unchecked Sendable {
 
 private struct MediaToolBar: ToolbarContent {
   let data: DisplayData
+  let exportMetadata: PhotoExportMetadata?
 
   var body: some ToolbarContent {
     #if !targetEnvironment(macCatalyst)
@@ -108,7 +109,7 @@ private struct MediaToolBar: ToolbarContent {
     #endif
     QuickLookToolbarItem(itemUrl: data.url, fallbackUrl: data.fallbackUrl)
     AltTextToolbarItem(alt: data.description)
-    SavePhotoToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
+    SavePhotoToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type, exportMetadata: exportMetadata)
     ShareToolbarItem(url: data.url, fallbackUrl: data.fallbackUrl, type: data.type)
   }
 }
@@ -159,7 +160,9 @@ private struct SavePhotoToolbarItem: ToolbarContent, @unchecked Sendable {
   let url: URL
   let fallbackUrl: URL?
   let type: DisplayType
+  let exportMetadata: PhotoExportMetadata?
   @State private var state = SavingState.unsaved
+  @Environment(Env.UserPreferences.self) private var preferences
 
   var body: some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
@@ -223,7 +226,8 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
     return nil
   }
 
-private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
+  @MainActor
+  private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
     guard let data = await imageData(url, fallbackUrl: fallbackUrl) else { return false }
 
     var status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
@@ -234,9 +238,13 @@ private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
     }
     if status == .authorized {
       do {
+        var finalData = data
+        if let exportMetadata = exportMetadata, let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
+            finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
+        }
         let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension
         let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
-        try data.write(to: tempFile)
+        try finalData.write(to: tempFile)
         try await Task.detached {
           try await PHPhotoLibrary.shared().performChanges {
             PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempFile)

@@ -431,7 +431,7 @@ Button {
               try? FileManager.default.removeItem(at: tempFile)
             } else {
               var finalData = data
-              let exportMetadata = PhotoExportMetadata(postUrl: postUrl.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name })
+              let exportMetadata = viewModel.photoExportMetadata
               if let caption = MediaCaptionUtils.createCaption(from: exportMetadata, preferences: preferences) {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
               }

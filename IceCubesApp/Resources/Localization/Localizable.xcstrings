@@ -95110,6 +95110,16 @@
           }
         }
       }
+    },
+    "settings.content.media.embed-master": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Include post info in downloaded photo captions"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -118,6 +118,14 @@ import SwiftUI
     (status.reblog?.url ?? status.url).flatMap(URL.init(string:))
   }
 
+  var photoExportMetadata: PhotoExportMetadata {
+    PhotoExportMetadata(
+      postUrl: status.url.flatMap { URL(string: $0) },
+      postText: status.content.asRawText,
+      postTags: status.tags.map { $0.name }
+    )
+  }
+
   @ViewBuilder
   var backgroundColor: some View {
     if status.visibility == .direct {

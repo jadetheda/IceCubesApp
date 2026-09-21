@@ -331,17 +331,18 @@ public struct StatusRowView: View {
       Button("accessibility.status.media-viewer-action.label") {
         HapticManager.shared.fireHaptic(.notification(.success))
         let attachments = viewModel.finalStatus.mediaAttachments
+        let metadata = viewModel.photoExportMetadata
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(
             value: WindowDestinationMedia.mediaViewer(
               attachments: attachments,
               selectedAttachment: attachments[0],
               useRemoteMedia: false,
-              exportMetadata: PhotoExportMetadata(postUrl: viewModel.status.url.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name })
+              exportMetadata: metadata
             ))
         #else
           quickLook.prepareFor(
-            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false, photoMetadata: PhotoExportMetadata(postUrl: viewModel.status.url.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name }))
+            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false, photoMetadata: metadata)
         #endif
       }
     }
