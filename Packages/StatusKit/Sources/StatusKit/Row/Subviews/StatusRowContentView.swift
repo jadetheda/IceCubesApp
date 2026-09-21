@@ -43,7 +43,7 @@ struct StatusRowContentView: View {
           StatusRowMediaPreviewView(
             attachments: viewModel.finalStatus.mediaAttachments,
             sensitive: viewModel.finalStatus.sensitive,
-            useRemoteMedia: viewModel.useRemoteMedia)
+            useRemoteMedia: viewModel.useRemoteMedia, exportMetadata: PhotoExportMetadata(postUrl: viewModel.status.url.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name }))
           if theme.statusDisplayStyle == .compact {
             Spacer()
           }

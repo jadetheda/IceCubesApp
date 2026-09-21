@@ -336,11 +336,12 @@ public struct StatusRowView: View {
             value: WindowDestinationMedia.mediaViewer(
               attachments: attachments,
               selectedAttachment: attachments[0],
-              useRemoteMedia: false
+              useRemoteMedia: false,
+              exportMetadata: PhotoExportMetadata(postUrl: viewModel.status.url.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name })
             ))
         #else
           quickLook.prepareFor(
-            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false)
+            selectedMediaAttachment: attachments[0], mediaAttachments: attachments, useRemoteMedia: false, photoMetadata: PhotoExportMetadata(postUrl: viewModel.status.url.flatMap { URL(string: $0) }, postText: viewModel.status.content.asRawText, postTags: viewModel.status.tags.map { $0.name }))
         #endif
       }
     }
