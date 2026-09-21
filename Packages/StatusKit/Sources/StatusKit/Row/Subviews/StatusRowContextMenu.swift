@@ -1,8 +1,7 @@
 import DesignSystem
 import Env
 import Foundation
-import Network
-import MediaUIClient
+import NetworkClient
 import SwiftUI
 import Photos
 import Models

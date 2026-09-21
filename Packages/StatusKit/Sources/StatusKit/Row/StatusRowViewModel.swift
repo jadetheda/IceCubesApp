@@ -119,10 +119,22 @@ import SwiftUI
   }
 
   var photoExportMetadata: PhotoExportMetadata {
-    let url: URL? = status.url.flatMap { URL(string: $0) }
+    var urlStr: URL? = nil
+    if let stringUrl = status.url {
+      urlStr = URL(string: stringUrl)
+    }
     let text: String? = status.content.asRawText
-    let tags: [String]? = status.tags.map { $0.name }
-    return PhotoExportMetadata(postUrl: url, postText: text, postTags: tags)
+    
+    var tagsList: [String]? = nil
+    if !status.tags.isEmpty {
+      var extracted = [String]()
+      for tag in status.tags {
+        extracted.append(tag.name)
+      }
+      tagsList = extracted
+    }
+    
+    return PhotoExportMetadata(postUrl: urlStr, postText: text, postTags: tagsList)
   }
 
   @ViewBuilder

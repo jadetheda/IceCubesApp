@@ -49,7 +49,11 @@ public struct MediaCaptionUtils {
       caption += text + "\n\n"
     }
     if includeTags, let tags = exportMetadata.postTags, !tags.isEmpty {
-      caption += tags.map { "#\($0)" }.joined(separator: " ") + "\n\n"
+      var tagString = ""
+      for tag in tags {
+        tagString += "#" + tag + " "
+      }
+      caption += tagString.trimmingCharacters(in: .whitespaces) + "\n\n"
     }
     if includeUrl, let url = exportMetadata.postUrl {
       caption += url.absoluteString
