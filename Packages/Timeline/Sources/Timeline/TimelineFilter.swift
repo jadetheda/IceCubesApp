@@ -472,9 +472,10 @@ extension TimelineFilter {
       accountId == nil,
       client.isIceShrimpWorkaroundsEnabled
     {
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
       let results: SearchResults = try await client.get(
         endpoint: Search.search(
-          query: "#\(tag)",
+          query: "#\(cleanTag)",
           type: .statuses,
           offset: offset,
           following: nil
