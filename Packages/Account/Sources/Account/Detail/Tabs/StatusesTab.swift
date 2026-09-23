@@ -113,10 +113,14 @@ private struct StatusesTabView: View {
   @Environment(Theme.self) private var theme
   var contentFilter = TimelineContentFilter.shared
 
+  private var shouldShowFilterWarning: Bool {
+    contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia
+  }
+
   var body: some View {
     Group {
       if case .display = fetcher.statusesState {
-        if contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia {
+        if shouldShowFilterWarning {
           HStack {
             Image(systemName: "line.3.horizontal.decrease.circle")
             Text("Some posts are hidden by your \(String(localized: "timeline.content-filter.title"))")

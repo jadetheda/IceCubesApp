@@ -35,6 +35,9 @@ struct AnyStatusesListView: View {
   @Environment(Theme.self) private var theme
   
   var contentFilter = TimelineContentFilter.shared
+  private var shouldShowFilterWarningBanner: Bool {
+    showFilterWarning && (contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia)
+  }
   
   var body: some View {
     if contentFilter.isGalleryMode {
@@ -59,7 +62,7 @@ struct AnyStatusesListView: View {
           .allowsHitTesting(false)
         }
       case let .display(statuses, nextPageState):
-        if showFilterWarning && (contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia) {
+        if shouldShowFilterWarningBanner {
           HStack {
             Image(systemName: "line.3.horizontal.decrease.circle")
             Text("Some posts are hidden by your \(String(localized: "timeline.content-filter.title"))")

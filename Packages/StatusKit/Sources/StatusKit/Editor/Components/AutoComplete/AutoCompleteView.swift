@@ -33,12 +33,16 @@ extension StatusEditor {
       }
     }
 
+    private var shouldShowSuggestions: Bool {
+      if !store.mentionsSuggestions.isEmpty { return true }
+      if !store.tagsSuggestions.isEmpty { return true }
+      if store.showRecentsTagsInline { return true }
+      return false
+    }
+
     @ViewBuilder
     var contentView: some View {
-      if !store.mentionsSuggestions.isEmpty ||
-          !store.tagsSuggestions.isEmpty ||
-          store.showRecentsTagsInline
-      {
+      if shouldShowSuggestions {
         VStack {
           HStack {
             ScrollView(.horizontal, showsIndicators: false) {
