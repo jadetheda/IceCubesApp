@@ -53,3 +53,11 @@ When tracking image load success states (e.g. `onLoaded` closures triggered by `
   2. Do not use local `let` variables for complex logic inside ViewBuilders.
   3. **Always use explicitly nested `if` statements** (e.g., `if a { if b { if c { ... } } }`). This prevents tuple-inference and provides the constraint solver with small, independent AST paths to evaluate, guaranteeing instant compilation.
   4. **Never chain multiple `||` operators inside a ViewBuilder.** If you need an OR condition involving `@Observable` or `@Environment` properties, extract it into a `private var conditionName: Bool` computed property *outside* the ViewBuilder.
+
+## 🐛 Exit Code 65 Logs (Constraint Solver OOM - Inline Awaits & Chains)
+- **Root Cause**: The Swift constraint solver will violently hang and trigger Exit Code 65 (OOM) if multiple asynchronous property accessors or complex boolean evaluation chains are nested. Specific triggers include chaining property accessors directly onto `await` calls inside `.task` modifiers (e.g., `viewState = .loaded(tags: await assistant.generateTags(from: text).values)`). 
+- **Solution**: Always extract `await` results to explicit local variables before accessing their properties (e.g., `let generatedTags = await assistant.generateTags(from: text); viewState = .loaded(tags: generatedTags.values)`).
+
+## 🐛 Exit Code 65 Logs (The Mother of All Constraint Traps)
+- **Root Cause**: Even if code previously compiled fine, reducing the constraint weight of child views (like `StatusRowContentView`) can shift AST weight onto parent views (like `StatusRowView`), pushing them past the timeout threshold. A comma-separated ViewBuilder boolean tuple evaluating an `@Observable` alongside two `@Environment` variables, combined with a chained `||` and `&&` (e.g. `viewModel.showActions, isFocused || (theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons)`), will cause instantaneous compiler panics when the surrounding context changes.
+- **Solution**: Never rely on "it compiled before." If an AST OOM crash shifts slightly earlier or later, proactively seek out and extract all complex comma-tuples, `||`, and `&&` chains from parent views into `private var` and `private func` computed helpers outside the ViewBuilder scope.
