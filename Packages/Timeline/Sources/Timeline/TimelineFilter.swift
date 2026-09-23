@@ -113,8 +113,7 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .link(_, title):
       title
     case let .hashtag(tag, _):
-      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
-      "#\(cleanTag)"
+      "#\(tag.hasPrefix("#") ? String(tag.dropFirst()) : tag)"
     case let .tagGroup(title, _, _):
       title
     case let .list(list):
@@ -141,8 +140,7 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .link(_, title):
       LocalizedStringKey(title)
     case let .hashtag(tag, _):
-      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
-      LocalizedStringKey("#\(cleanTag)")
+      LocalizedStringKey("#\(tag.hasPrefix("#") ? String(tag.dropFirst()) : tag)")
     case let .tagGroup(title, _, _):
       LocalizedStringKey(title)  // ?? not sure since this can't be localized.
     case let .list(list):
@@ -228,7 +226,7 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .list(list):
       return Timelines.list(listId: list.id, sinceId: sinceId, maxId: maxId, minId: minId)
     case let .hashtag(tag, accountId):
-      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+       
       if let accountId {
         return Accounts.statuses(
           id: accountId,
@@ -472,10 +470,10 @@ extension TimelineFilter {
       accountId == nil,
       client.isIceShrimpWorkaroundsEnabled
     {
-      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+       
       let results: SearchResults = try await client.get(
         endpoint: Search.search(
-          query: "#\(cleanTag)",
+          query: "#\(tag.hasPrefix("#") ? String(tag.dropFirst()) : tag)",
           type: .statuses,
           offset: offset,
           following: nil
