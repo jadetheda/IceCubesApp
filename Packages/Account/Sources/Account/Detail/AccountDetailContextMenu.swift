@@ -38,16 +38,17 @@ public struct AccountDetailContextMenu: View {
           }
 
           
-          if let server = account.url?.host(), server != client.server {
-            let isCurrentRemoteLocal: Bool = {
-              if let last = routerPath.path.last,
-                 case let .remoteLocalTimeline(remoteServer) = last,
-                 remoteServer == server {
-                return true
-              }
-              return false
-            }()
-            if !isCurrentRemoteLocal {
+          if let server = account.url?.host() {
+            if server != client.server {
+              let isCurrentRemoteLocal: Bool = {
+                if let last = routerPath.path.last,
+                   case let .remoteLocalTimeline(remoteServer) = last,
+                   remoteServer == server {
+                  return true
+                }
+                return false
+              }()
+              if !isCurrentRemoteLocal {
               Button {
                 routerPath.navigate(to: .remoteLocalTimeline(server: server))
               } label: {
@@ -108,9 +109,8 @@ public struct AccountDetailContextMenu: View {
             }
           }
 
-          if let relationshipValue = relationship,
-            relationshipValue.following
-          {
+          if let relationshipValue = relationship {
+            if relationshipValue.following {
             if client.capabilities.supportsFollowNotifications {
               if relationshipValue.notifying {
                 Button {
@@ -199,7 +199,8 @@ public struct AccountDetailContextMenu: View {
           #endif
         }
 
-        if (relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists) && client.capabilities.supportsLists {
+        let canAddToList = (relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists) && client.capabilities.supportsLists
+        if canAddToList {
           Button {
             routerPath.presentedSheet = .listAddAccount(account: account)
           } label: {

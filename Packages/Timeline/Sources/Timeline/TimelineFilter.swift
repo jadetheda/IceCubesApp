@@ -548,38 +548,30 @@ extension TimelineFilter {
       return scoredStatuses.map { $0.0 }
     }
     if case let .tagGroup(_, tags, _) = self, client.isIceShrimpWorkaroundsEnabled {
-      return try await withThrowingTaskGroup(of: [Status].self) { group in
-        for tag in tags {
-          let cleanTag = tag.replacingOccurrences(of: "#", with: "")
-          group.addTask {
-            do {
-              return try await client.get(endpoint: Timelines.hashtag(tag: cleanTag, additional: nil, maxId: maxId, minId: minId))
-            } catch {
-              return []
+      var uniqueStatuses: [Status] = []
+      var seenIds = Set<String>()
+      
+      for tag in tags {
+        let cleanTag = tag.replacingOccurrences(of: "#", with: "")
+        do {
+          let statuses: [Status] = try await client.get(endpoint: Timelines.hashtag(tag: cleanTag, additional: nil, maxId: maxId, minId: minId))
+          for status in statuses {
+            if !seenIds.contains(status.id) {
+              seenIds.insert(status.id)
+              uniqueStatuses.append(status)
             }
           }
+        } catch {
+          continue
         }
-        var allStatuses: [Status] = []
-        for try await statuses in group {
-          allStatuses.append(contentsOf: statuses)
-        }
-        
-        var uniqueStatuses: [Status] = []
-        var seenIds = Set<String>()
-        for status in allStatuses {
-          if !seenIds.contains(status.id) {
-            seenIds.insert(status.id)
-            uniqueStatuses.append(status)
-          }
-        }
-        
-        uniqueStatuses.sort { $0.id > $1.id }
-        
-        // Return all merged statuses without truncating via .prefix(). 
-        // Truncating combined tag timelines causes permanent data loss (dropped posts in the gaps) 
-        // and artificially lowers the unread post indicators.
-        return uniqueStatuses
       }
+      
+      uniqueStatuses.sort { $0.id > $1.id }
+      
+      // Return all merged statuses without truncating via .prefix(). 
+      // Truncating combined tag timelines causes permanent data loss (dropped posts in the gaps) 
+      // and artificially lowers the unread post indicators.
+      return uniqueStatuses
     }
     
     return try await client.get(

@@ -119,10 +119,10 @@ public final class StatusDataControllerProvider {
 
   public func toggleFavorite(remoteStatus: String?) async {
     guard client.isAuth else { return }
-    isFavorited.toggle()
     let id = remoteStatus ?? status.id
-    let endpoint = isFavorited ? Statuses.favorite(id: id) : Statuses.unfavorite(id: id)
+    let endpoint = isFavorited ? Statuses.unfavorite(id: id) : Statuses.favorite(id: id)
     withAnimation(.default) {
+      isFavorited.toggle()
       favoritesCount += isFavorited ? 1 : -1
     }
     do {
@@ -130,17 +130,19 @@ public final class StatusDataControllerProvider {
       updateFrom(status: status)
       NotificationCenter.default.post(name: .statusUpdated, object: status)
     } catch {
-      isFavorited.toggle()
-      favoritesCount += isFavorited ? -1 : 1
+      withAnimation(.default) {
+        isFavorited.toggle()
+        favoritesCount += isFavorited ? -1 : 1
+      }
     }
   }
 
   public func toggleReblog(remoteStatus: String?) async {
     guard client.isAuth else { return }
-    isReblogged.toggle()
     let id = remoteStatus ?? status.id
-    let endpoint = isReblogged ? Statuses.reblog(id: id) : Statuses.unreblog(id: id)
+    let endpoint = isReblogged ? Statuses.unreblog(id: id) : Statuses.reblog(id: id)
     withAnimation(.default) {
+      isReblogged.toggle()
       reblogsCount += isReblogged ? 1 : -1
     }
     do {
@@ -149,22 +151,28 @@ public final class StatusDataControllerProvider {
       updateFrom(status: realStatus)
       NotificationCenter.default.post(name: .statusUpdated, object: realStatus)
     } catch {
-      isReblogged.toggle()
-      reblogsCount += isReblogged ? -1 : 1
+      withAnimation(.default) {
+        isReblogged.toggle()
+        reblogsCount += isReblogged ? -1 : 1
+      }
     }
   }
 
   public func toggleBookmark(remoteStatus: String?) async {
     guard client.isAuth else { return }
-    isBookmarked.toggle()
     let id = remoteStatus ?? status.id
-    let endpoint = isBookmarked ? Statuses.bookmark(id: id) : Statuses.unbookmark(id: id)
+    let endpoint = isBookmarked ? Statuses.unbookmark(id: id) : Statuses.bookmark(id: id)
+    withAnimation(.default) {
+      isBookmarked.toggle()
+    }
     do {
       let status: Status = try await client.post(endpoint: endpoint)
       updateFrom(status: status)
       NotificationCenter.default.post(name: .statusUpdated, object: status)
     } catch {
-      isBookmarked.toggle()
+      withAnimation(.default) {
+        isBookmarked.toggle()
+      }
     }
   }
 }

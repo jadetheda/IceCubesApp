@@ -25,8 +25,9 @@ struct AccountDetailToolbar: ToolbarContent {
 
   var body: some ToolbarContent {
     ToolbarItem(placement: .principal) {
-      if let account = account, displayTitle {
-        VStack {
+      if let account = account {
+        if displayTitle {
+          VStack {
           EmojiTextApp(.init(stringValue: account.safeDisplayName), emojis: account.emojis)
             .font(.headline)
           Text("account.detail.featured-tags-n-posts \(account.statusesCount ?? 0)")
