@@ -47,8 +47,12 @@ extension StatusEditor {
       nativeName: String?,
       name: String?
     ) -> some View {
-      if let nativeName, let name {
-        Text("\(nativeName) (\(name))")
+      if let nativeName {
+        if let name {
+          Text("\(nativeName) (\(name))")
+        } else {
+          Text(isoCode.uppercased())
+        }
       } else {
         Text(isoCode.uppercased())
       }

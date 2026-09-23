@@ -17,8 +17,10 @@ struct AccountAvatarView: View {
       AvatarView(account.avatar, config: .account)
         .accessibilityLabel("accessibility.tabs.profile.user-avatar.label")
       
-      if isCurrentUser, isSupporter {
-        supporterBadge
+      if isCurrentUser {
+        if isSupporter {
+          supporterBadge
+        }
       }
     }
     .onTapGesture {

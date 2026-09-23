@@ -20,16 +20,19 @@ public struct FiltersListView: View {
   public var body: some View {
     NavigationStack {
       Form {
-        if !isLoading, filters.isEmpty {
-          EmptyView()
+        if filters.isEmpty {
+          if isLoading {
+            Section {
+              ProgressView()
+            }
+          } else {
+            EmptyView()
+          }
         } else {
           Section {
-            if isLoading, filters.isEmpty {
-              ProgressView()
-            } else {
-              ForEach(filters) { filter in
-                NavigationLink(destination: EditFilterView(filter: filter)) {
-                  VStack(alignment: .leading) {
+            ForEach(filters) { filter in
+              NavigationLink(destination: EditFilterView(filter: filter)) {
+                VStack(alignment: .leading) {
                     Text(filter.title)
                       .font(.scaledSubheadline)
                     Text("\(filter.context.map(\.name).joined(separator: ", "))")
@@ -52,7 +55,6 @@ public struct FiltersListView: View {
               .onDelete { indexes in
                 deleteFilter(client, indexes: indexes)
               }
-            }
           }
           #if !os(visionOS)
             .listRowBackground(theme.primaryBackgroundColor)

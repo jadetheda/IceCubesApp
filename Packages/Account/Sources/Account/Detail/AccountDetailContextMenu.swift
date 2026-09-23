@@ -40,22 +40,14 @@ public struct AccountDetailContextMenu: View {
           
           if let server = account.url?.host() {
             if server != client.server {
-              let isCurrentRemoteLocal: Bool = {
-                if let last = routerPath.path.last,
-                   case let .remoteLocalTimeline(remoteServer) = last,
-                   remoteServer == server {
-                  return true
+              if routerPath.path.last != .remoteLocalTimeline(server: server) {
+                Button {
+                  routerPath.navigate(to: .remoteLocalTimeline(server: server))
+                } label: {
+                  Label("View Local Timeline", systemImage: "globe")
                 }
-                return false
-              }()
-              if !isCurrentRemoteLocal {
-              Button {
-                routerPath.navigate(to: .remoteLocalTimeline(server: server))
-              } label: {
-                Label("View Local Timeline", systemImage: "globe")
               }
             }
-          }
           }
 #if !targetEnvironment(macCatalyst)
             Divider()
@@ -182,11 +174,23 @@ public struct AccountDetailContextMenu: View {
           #endif
         }
 
-        if preferences.preferredTranslationType == .useDeepl, let translateAction = translateAction {
-          Button {
-            translateAction()
-          } label: {
-            Label("status.action.translate", systemImage: "captions.bubble")
+        if preferences.preferredTranslationType == .useDeepl {
+          if let translateAction = translateAction {
+            Button {
+              translateAction()
+            } label: {
+              Label("status.action.translate", systemImage: "captions.bubble")
+            }
+          } else {
+            #if canImport(_Translation_SwiftUI)
+              if #available(iOS 17.4, *) {
+                Button {
+                  showTranslateView = true
+                } label: {
+                  Label("status.action.translate", systemImage: "captions.bubble")
+                }
+              }
+            #endif
           }
         } else {
           #if canImport(_Translation_SwiftUI)

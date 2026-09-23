@@ -100,8 +100,9 @@ private struct ConditionalUserDefinedFieldAccessibilityActionModifier: ViewModif
   let routerPath: RouterPath
 
   func body(content: Content) -> some View {
-    if let url = URL(string: field.value.asRawText), UIApplication.shared.canOpenURL(url) {
-      content
+    if let url = URL(string: field.value.asRawText) {
+      if UIApplication.shared.canOpenURL(url) {
+        content
         .accessibilityAction {
           let _ = routerPath.handle(url: url)
         }
@@ -109,6 +110,11 @@ private struct ConditionalUserDefinedFieldAccessibilityActionModifier: ViewModif
         // March 18th, 2023: The button trait is still re-applied…
         .accessibilityRemoveTraits(.isButton)
         .accessibilityInputLabels([field.name])
+      } else {
+        content
+          // This element is not interactive; setting this property removes its button trait
+          .accessibilityRespondsToUserInteraction(false)
+      }
     } else {
       content
         // This element is not interactive; setting this property removes its button trait

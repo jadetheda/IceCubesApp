@@ -133,12 +133,13 @@ struct EditFilterView: View {
       .listRowBackground(theme.primaryBackgroundColor)
     #endif
 
-    if filter == nil, !title.isEmpty {
-      Section {
-        Button {
-          Task {
-            await saveFilter(client)
-          }
+    if filter == nil {
+      if !title.isEmpty {
+        Section {
+          Button {
+            Task {
+              await saveFilter(client)
+            }
         } label: {
           if isSavingFilter {
             ProgressView()
@@ -154,6 +155,7 @@ struct EditFilterView: View {
       #if !os(visionOS)
         .listRowBackground(theme.secondaryBackgroundColor)
       #endif
+      }
     }
   }
 

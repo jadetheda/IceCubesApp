@@ -11,7 +11,8 @@ struct MetricsChartSelectionOverlay: View {
 
   var body: some View {
     GeometryReader { geometry in
-      if let selectedData, !isLoading {
+      if let selectedData {
+        if !isLoading {
         let xPosition = proxy.position(forX: selectedData.dayStart) ?? 0
         let plotArea = proxy.plotFrame.map { geometry[$0] } ?? .zero
         let clampedX = min(max(plotArea.minX + xPosition, plotArea.minX + 48), plotArea.maxX - 48)
@@ -34,6 +35,7 @@ struct MetricsChartSelectionOverlay: View {
             .stroke(theme.labelColor.opacity(0.15), lineWidth: 1)
         )
         .position(x: clampedX, y: plotArea.minY + 12)
+        }
       }
     }
   }

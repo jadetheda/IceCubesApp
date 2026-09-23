@@ -42,25 +42,25 @@ struct AccountHeaderImageView: View {
       } else {
         LazyImage(url: account.header) { state in
             if let container = state.imageContainer {
-                if theme.avatarAnimated && container.type == .gif, let data = container.data {
-                    GifView(data:data)
-                        .aspectRatio(contentMode: .fill)
-                        .overlay(account.haveHeader ? .black.opacity(0.50) : .clear)
-                        .frame(height: Constants.headerHeight)
-                        .clipped()
-                } else {
-                    if let image = state.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .overlay(account.haveHeader ? .black.opacity(0.50) : .clear)
-                            .frame(height: Constants.headerHeight)
-                            .clipped()
+                if theme.avatarAnimated {
+                  if container.type == .gif {
+                    if let data = container.data {
+                      GifView(data:data)
+                          .aspectRatio(contentMode: .fill)
+                          .overlay(account.haveHeader ? .black.opacity(0.50) : .clear)
+                          .frame(height: Constants.headerHeight)
+                          .clipped()
                     } else {
-                        theme.secondaryBackgroundColor
-                            .frame(height: Constants.headerHeight)
+                      fallbackImageView(state: state)
                     }
+                  } else {
+                    fallbackImageView(state: state)
+                  }
+                } else {
+                  fallbackImageView(state: state)
                 }
+            } else {
+              fallbackImageView(state: state)
             }
         }
         .frame(height: Constants.headerHeight)
@@ -92,6 +92,21 @@ struct AccountHeaderImageView: View {
     .accessibilityHidden(account.haveHeader == false)
   }
   
+  @ViewBuilder
+  private func fallbackImageView(state: ImageState) -> some View {
+    if let image = state.image {
+      image
+        .resizable()
+        .aspectRatio(contentMode: .fill)
+        .overlay(account.haveHeader ? .black.opacity(0.50) : .clear)
+        .frame(height: Constants.headerHeight)
+        .clipped()
+    } else {
+      theme.secondaryBackgroundColor
+        .frame(height: Constants.headerHeight)
+    }
+  }
+
   @ViewBuilder
   private var followsYouBadge: some View {
     if #available(iOS 26.0, *) {

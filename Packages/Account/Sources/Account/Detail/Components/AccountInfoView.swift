@@ -112,10 +112,14 @@ struct AccountInfoView: View {
   
   private var followButtonView: some View {
     HStack {
-      if let followButtonViewModel = followButtonViewModel, !isCurrentUser {
-        FollowButton(viewModel: followButtonViewModel)
-      } else if !isCurrentUser {
-        ProgressView()
+      if let followButtonViewModel = followButtonViewModel {
+        if !isCurrentUser {
+          FollowButton(viewModel: followButtonViewModel)
+        }
+      } else {
+        if !isCurrentUser {
+          ProgressView()
+        }
       }
     }
     .padding(.top, 4)
@@ -123,21 +127,25 @@ struct AccountInfoView: View {
   
   @ViewBuilder
   private var relationshipNoteView: some View {
-    if let note = relationship?.note, !note.isEmpty, !isCurrentUser {
-      VStack(alignment: .leading, spacing: 4) {
-        Text("account.relation.note.label")
-          .foregroundStyle(.secondary)
-        Text(note)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(8)
-          #if !os(visionOS)
-            .background(theme.secondaryBackgroundColor)
-          #endif
-          .cornerRadius(4)
-          .overlay(
-            RoundedRectangle(cornerRadius: 4)
-              .stroke(.gray.opacity(0.35), lineWidth: 1)
-          )
+    if let note = relationship?.note {
+      if !note.isEmpty {
+        if !isCurrentUser {
+          VStack(alignment: .leading, spacing: 4) {
+            Text("account.relation.note.label")
+              .foregroundStyle(.secondary)
+            Text(note)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(8)
+              #if !os(visionOS)
+                .background(theme.secondaryBackgroundColor)
+              #endif
+              .cornerRadius(4)
+              .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                  .stroke(.gray.opacity(0.35), lineWidth: 1)
+              )
+          }
+        }
       }
     }
   }
@@ -161,7 +169,8 @@ struct AccountInfoView: View {
   
   @ViewBuilder
   private var translationView: some View {
-    if let translation = translation, !isLoadingTranslation {
+    if let translation = translation {
+      if !isLoadingTranslation {
       GroupBox {
         VStack(alignment: .leading, spacing: 4) {
           Text(translation.content.asSafeMarkdownAttributedString)
@@ -175,6 +184,7 @@ struct AccountInfoView: View {
         }
       }
       .fixedSize(horizontal: false, vertical: true)
+      }
     }
   }
   

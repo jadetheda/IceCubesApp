@@ -46,15 +46,19 @@ extension StatusEditor {
                 if !store.mentionsSuggestions.isEmpty {
                   Self.MentionsView(store: store)
                 } else {
-                  if #available(iOS 26, *), Assistant.isAvailable, store.tagsSuggestions.isEmpty {
-                    Self.SuggestedTagsView(store: store,
-                                           isTagSuggestionExpanded: $isTagSuggestionExpanded)
-                  } else if store.showRecentsTagsInline {
-                    Self.RecentTagsView(
-                      store: store, isTagSuggestionExpanded: $isTagSuggestionExpanded)
+                  if #available(iOS 26, *) {
+                    if Assistant.isAvailable {
+                      if store.tagsSuggestions.isEmpty {
+                        Self.SuggestedTagsView(store: store,
+                                               isTagSuggestionExpanded: $isTagSuggestionExpanded)
+                      } else {
+                        tagsFallbackView
+                      }
+                    } else {
+                      tagsFallbackView
+                    }
                   } else {
-                    Self.RemoteTagsView(
-                      store: store, isTagSuggestionExpanded: $isTagSuggestionExpanded)
+                    tagsFallbackView
                   }
                 }
               }
@@ -82,6 +86,17 @@ extension StatusEditor {
           }
         }
       }
+    }
+  }
+
+  @ViewBuilder
+  private var tagsFallbackView: some View {
+    if store.showRecentsTagsInline {
+      Self.RecentTagsView(
+        store: store, isTagSuggestionExpanded: $isTagSuggestionExpanded)
+    } else {
+      Self.RemoteTagsView(
+        store: store, isTagSuggestionExpanded: $isTagSuggestionExpanded)
     }
   }
 }
