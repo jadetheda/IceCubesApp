@@ -52,3 +52,4 @@ When tracking image load success states (e.g. `onLoaded` closures triggered by `
   1. Do not use comma-separated booleans inside ViewBuilders.
   2. Do not use local `let` variables for complex logic inside ViewBuilders.
   3. **Always use explicitly nested `if` statements** (e.g., `if a { if b { if c { ... } } }`). This prevents tuple-inference and provides the constraint solver with small, independent AST paths to evaluate, guaranteeing instant compilation.
+  4. **Never chain multiple `||` operators inside a ViewBuilder.** If you need an OR condition involving `@Observable` or `@Environment` properties, extract it into a `private var conditionName: Bool` computed property *outside* the ViewBuilder.
