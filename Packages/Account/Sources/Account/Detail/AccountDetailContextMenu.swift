@@ -181,10 +181,10 @@ public struct AccountDetailContextMenu: View {
           #endif
         }
 
-        if preferences.preferredTranslationType == .useDeepl {
+        if preferences.preferredTranslationType == .useDeepl, let translateAction = translateAction {
           Button {
             Task {
-              await translateAction?()
+              await translateAction()
             }
           } label: {
             Label("status.action.translate", systemImage: "captions.bubble")
