@@ -52,34 +52,46 @@ struct StatusRowContentView: View {
         .padding(.vertical, 4)
       }
 
-      if !reasons.contains(.placeholder) && !isCompact && (viewModel.isEmbedLoading || viewModel.embeddedStatus != nil) {
-        if let embeddedStatus = viewModel.embeddedStatus {
-          StatusEmbeddedView(
-            status: embeddedStatus,
-            client: viewModel.client,
-            routerPath: viewModel.routerPath
-          )
-          #if !targetEnvironment(macCatalyst)
-          .fixedSize(horizontal: false, vertical: true)
-          #endif
-          .transition(.opacity)
-        } else {
-          StatusEmbeddedView(
-            status: Status.placeholder(),
-            client: viewModel.client,
-            routerPath: viewModel.routerPath
-          )
-          #if !targetEnvironment(macCatalyst)
-          .fixedSize(horizontal: false, vertical: true)
-          #endif
-          .redacted(reason: .placeholder)
-          .transition(.opacity)
+      if !reasons.contains(.placeholder) {
+        if !isCompact {
+          if viewModel.isEmbedLoading || viewModel.embeddedStatus != nil {
+            if let embeddedStatus = viewModel.embeddedStatus {
+              StatusEmbeddedView(
+                status: embeddedStatus,
+                client: viewModel.client,
+                routerPath: viewModel.routerPath
+              )
+              #if !targetEnvironment(macCatalyst)
+              .fixedSize(horizontal: false, vertical: true)
+              #endif
+              .transition(.opacity)
+            } else {
+              StatusEmbeddedView(
+                status: Status.placeholder(),
+                client: viewModel.client,
+                routerPath: viewModel.routerPath
+              )
+              #if !targetEnvironment(macCatalyst)
+              .fixedSize(horizontal: false, vertical: true)
+              #endif
+              .redacted(reason: .placeholder)
+              .transition(.opacity)
+            }
+          }
         }
       }
 
       if let card = viewModel.finalStatus.card {
-        if !viewModel.isEmbedLoading && !isCompact && theme.statusDisplayStyle != .compact && viewModel.embeddedStatus == nil && viewModel.finalStatus.mediaAttachments.isEmpty {
-          StatusRowCardView(card: card)
+        if !viewModel.isEmbedLoading {
+          if !isCompact {
+            if theme.statusDisplayStyle != .compact {
+              if viewModel.embeddedStatus == nil {
+                if viewModel.finalStatus.mediaAttachments.isEmpty {
+                  StatusRowCardView(card: card)
+                }
+              }
+            }
+          }
         }
       }
       

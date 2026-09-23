@@ -200,13 +200,14 @@ public struct AccountDetailContextMenu: View {
           #endif
         }
 
-        let canAddToList = (relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists) && client.capabilities.supportsLists
-        if canAddToList {
+        if client.capabilities.supportsLists {
+          if relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists {
           Button {
             routerPath.presentedSheet = .listAddAccount(account: account)
           } label: {
             Label("account.action.add-remove-list", systemImage: "list.bullet")
           }
+        }
         }
 
         if let url = account.url {
