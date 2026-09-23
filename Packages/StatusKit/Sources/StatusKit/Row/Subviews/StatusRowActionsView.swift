@@ -322,7 +322,7 @@ struct StatusRowActionsView: View {
     return finalStatus.quoteApproval?.currentUser == .denied
   }
 
-  private func shouldDisable(action: Action.Trigger, for finalStatus: AnyStatus) -> Bool {
+  private func shouldDisable(action: Action, for finalStatus: AnyStatus) -> Bool {
     if action == .boost && (finalStatus.visibility == .priv || finalStatus.visibility == .direct) { return true }
     if action == .quote && isQuoteUnavailable(for: finalStatus) { return true }
     return false
