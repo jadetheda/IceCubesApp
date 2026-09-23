@@ -29,6 +29,10 @@ extension StatusEditor {
     @State private var showTranslateView: Bool = false
     @State private var isTranslating: Bool = false
 
+    private var canEditAltText: Bool {
+      currentInstance.isEditAltTextSupported
+    }
+
     var body: some View {
       NavigationStack {
         Form {
@@ -88,7 +92,7 @@ extension StatusEditor {
               if !imageDescription.isEmpty {
                 isUpdating = true
                 if store.mode.isRedrafting
-                  || (currentInstance.isEditAltTextSupported && store.mode.isEditing)
+                  || (canEditAltText && store.mode.isEditing)
                 {
                   Task {
                     await store.editDescription(
