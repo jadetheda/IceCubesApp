@@ -91,8 +91,6 @@ extension StatusEditor {
         }
       }
     }
-  }
-
   @ViewBuilder
   private var tagsFallbackView: some View {
     if store.showRecentsTagsInline {
@@ -103,4 +101,7 @@ extension StatusEditor {
         store: store, isTagSuggestionExpanded: $isTagSuggestionExpanded)
     }
   }
+
+  }
+
 }
