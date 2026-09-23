@@ -91,10 +91,11 @@ struct StatusRowContentView: View {
       }
       
       // Display trailing tags if they were removed from content
-      if statusDataController.content.hadTrailingTags,
-         !statusDataController.tags.isEmpty {
-        StatusRowTagsView(tags: statusDataController.tags)
-          .padding(.top, 8)
+      if statusDataController.content.hadTrailingTags {
+        if !statusDataController.tags.isEmpty {
+          StatusRowTagsView(tags: statusDataController.tags)
+            .padding(.top, 8)
+        }
       }
     }
   }
