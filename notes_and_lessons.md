@@ -44,3 +44,11 @@ When tracking image load success states (e.g. `onLoaded` closures triggered by `
 
 ## 🎉 IceShrimp Remote Media Victory
 - Remote media (videos, animations, etc.) for IceShrimp is officially loading flawlessly! All previous remote media fixes have successfully applied.
+
+## 🐛 COMPILER CRASH (Exit Code 65) & ViewBuilder Complexity Timeouts
+- **Symptom:** `xcodebuild` abruptly crashes with "Process completed with exit code 65" without printing any explicit `fatal error` or `syntax error` to the console. The timeline of the failure dictates the exact cause: if it fails instantly, it's a syntax error. If it crashes after 4-10 minutes, the Swift AST constraint solver ran out of memory (OOM).
+- **Root Cause:** The SwiftUI 5.10 constraint solver crashes when evaluating dense, complex ViewBuilders that contain comma-separated boolean evaluations (e.g. `if a, b, c`), chained `&&` statements, or local `let` variable declarations (e.g., `let x = a && b`) that rely on complex macro properties like `@Observable` or `@Environment`.
+- **Solution:** 
+  1. Do not use comma-separated booleans inside ViewBuilders.
+  2. Do not use local `let` variables for complex logic inside ViewBuilders.
+  3. **Always use explicitly nested `if` statements** (e.g., `if a { if b { if c { ... } } }`). This prevents tuple-inference and provides the constraint solver with small, independent AST paths to evaluate, guaranteeing instant compilation.
