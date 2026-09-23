@@ -226,6 +226,8 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .list(list):
       return Timelines.list(listId: list.id, sinceId: sinceId, maxId: maxId, minId: minId)
     case let .hashtag(tag, accountId):
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+
        
       if let accountId {
         return Accounts.statuses(
