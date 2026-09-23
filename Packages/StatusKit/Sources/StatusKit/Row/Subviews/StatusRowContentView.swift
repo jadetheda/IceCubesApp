@@ -13,6 +13,10 @@ struct StatusRowContentView: View {
 
   var viewModel: StatusRowViewModel
   var context: StatusRowView.Context = .timeline
+    private var shouldShowEmbeddedStatus: Bool {
+      viewModel.isEmbedLoading || viewModel.embeddedStatus != nil
+    }
+
 
   var body: some View {
     
@@ -54,7 +58,7 @@ struct StatusRowContentView: View {
 
       if !reasons.contains(.placeholder) {
         if !isCompact {
-          if viewModel.isEmbedLoading || viewModel.embeddedStatus != nil {
+          if shouldShowEmbeddedStatus {
             if let embeddedStatus = viewModel.embeddedStatus {
               StatusEmbeddedView(
                 status: embeddedStatus,
