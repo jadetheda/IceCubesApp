@@ -113,7 +113,8 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .link(_, title):
       title
     case let .hashtag(tag, _):
-      "#\(tag)"
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+      "#\(cleanTag)"
     case let .tagGroup(title, _, _):
       title
     case let .list(list):
@@ -140,7 +141,8 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .link(_, title):
       LocalizedStringKey(title)
     case let .hashtag(tag, _):
-      "#\(tag)"
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+      LocalizedStringKey("#\(cleanTag)")
     case let .tagGroup(title, _, _):
       LocalizedStringKey(title)  // ?? not sure since this can't be localized.
     case let .list(list):
@@ -226,17 +228,18 @@ public enum TimelineFilter: Hashable, Equatable, Identifiable, Sendable {
     case let .list(list):
       return Timelines.list(listId: list.id, sinceId: sinceId, maxId: maxId, minId: minId)
     case let .hashtag(tag, accountId):
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
       if let accountId {
         return Accounts.statuses(
           id: accountId,
           sinceId: nil,
-          tag: tag,
+          tag: cleanTag,
           onlyMedia: false,
           excludeReplies: false,
           excludeReblogs: false,
           pinned: nil)
       } else {
-        return Timelines.hashtag(tag: tag, additional: nil, maxId: maxId, minId: minId)
+        return Timelines.hashtag(tag: cleanTag, additional: nil, maxId: maxId, minId: minId)
       }
     case let .tagGroup(_, tags, _):
       var tags = tags.map { $0.replacingOccurrences(of: "#", with: "") }

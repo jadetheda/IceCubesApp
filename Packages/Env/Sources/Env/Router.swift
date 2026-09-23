@@ -193,7 +193,7 @@ public enum SettingsStartingPoint {
     if url.pathComponents.count == 3,
       url.pathComponents[1] == "tags" || url.pathComponents[1] == "tag",
       url.host() == status.account.url?.host(),
-      let tag = url.pathComponents.last
+      let last = url.pathComponents.last, last != "tags", last != "tag"
     {
       // OK this test looks weird but it's
       // A 3 component path i.e. ["/", "tags", "tagname"]
@@ -201,17 +201,17 @@ public enum SettingsStartingPoint {
       // i.e. not a link that matches the pattern but elsewhere on the internet
       // In those circumstances, hijack the link and goto the tags page instead
       // The second is "tags" on Mastodon and "tag" on Akkoma.
-      navigate(to: .hashTag(tag: tag, account: nil))
+      navigate(to: .hashTag(tag: last, account: nil))
       return .handled
     } else if url.pathComponents.count == 4,
       url.pathComponents[1] == "discover",
       url.pathComponents[2] == "tags",
       url.host() == status.account.url?.host(),
-      let tag = url.pathComponents.last
+      let last = url.pathComponents.last, last != "tags"
     {
       // Similar to above, but for ["/", "discover", "tags", "tagname"]
       // as used in Pixelfed
-      navigate(to: .hashTag(tag: tag, account: nil))
+      navigate(to: .hashTag(tag: last, account: nil))
       return .handled
     } else if let mention = status.mentions.first(where: { $0.url == url }) {
       navigate(to: .accountDetail(id: mention.id))
@@ -252,11 +252,23 @@ public enum SettingsStartingPoint {
       return urlHandler?(url) ?? .systemAction
     }
 
-    if url.pathComponents.contains(where: { $0 == "tags" || $0 == "tag" }),
-      let tag = url.pathComponents.last
-    {
-      navigate(to: .hashTag(tag: tag, account: nil))
-      return .handled
+    if url.pathComponents.contains(where: { $0 == "tags" || $0 == "tag" }) {
+      var tag: String? = nil
+      if let comp = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+        if let queryTag = comp.queryItems?.first(where: { $0.name == "tag" || $0.name == "q" })?.value {
+          tag = queryTag
+        } else if let fragment = comp.fragment {
+          tag = fragment
+        }
+      }
+      if tag == nil, let last = url.pathComponents.last, last != "tags", last != "tag" {
+        tag = last
+      }
+      
+      if let tag {
+        navigate(to: .hashTag(tag: tag, account: nil))
+        return .handled
+      }
     } else if url.pathComponents.count >= 2 && url.pathComponents[url.pathComponents.count - 2] == "users" {
       Task {
         await navigateToAccountFrom(url: url)
