@@ -7,6 +7,7 @@ struct StatusRowContentView: View {
   @Environment(\.redactionReasons) private var reasons
   @Environment(\.isCompact) private var isCompact
   @Environment(\.isStatusFocused) private var isFocused
+  @Environment(StatusDataController.self) private var statusDataController
 
   @Environment(Theme.self) private var theme
 
@@ -90,9 +91,9 @@ struct StatusRowContentView: View {
       }
       
       // Display trailing tags if they were removed from content
-      if viewModel.finalStatus.content.hadTrailingTags,
-         !viewModel.finalStatus.tags.isEmpty {
-        StatusRowTagsView(tags: viewModel.finalStatus.tags)
+      if statusDataController.content.hadTrailingTags,
+         !statusDataController.tags.isEmpty {
+        StatusRowTagsView(tags: statusDataController.tags)
           .padding(.top, 8)
       }
     }

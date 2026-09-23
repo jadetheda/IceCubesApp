@@ -138,7 +138,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
 
   private mutating func removeTrailingTags(doc: SwiftSoup.Document) {
     // Fast bail-outs
-    if !asMarkdown.contains("#") && !asMarkdown.contains("＃") { return }
+    if !asMarkdown.contains("#") && !asMarkdown.contains("＃") && !asMarkdown.contains("/tags/") && !asMarkdown.contains("/tag/") { return }
 
     guard let body = doc.body() else { return }
     var foundHashtag = false
@@ -148,11 +148,8 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
         if name == "a" {
             let cls = (try? node.attr("class")) ?? ""
             let href = (try? node.attr("href")) ?? ""
-            let anchorText = (try? (node as? SwiftSoup.Element)?.text()) ?? ""
-            let trimmedText = anchorText.trimmingCharacters(in: .whitespacesAndNewlines)
-            let textStartsWithHash = trimmedText.hasPrefix("#") || trimmedText.hasPrefix("＃")
             let hasTagInUrl = href.contains("/tags/") || href.contains("/tag/")
-            return cls.contains("hashtag") || (hasTagInUrl && textStartsWithHash)
+            return cls.contains("hashtag") || hasTagInUrl
         }
         if name == "span" {
             for child in node.getChildNodes() {
@@ -204,7 +201,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     if foundHashtag {
         hadTrailingTags = true
         
-        let mdRegex = try! NSRegularExpression(pattern: "(?:\\s*\\[[#＃].*?\\]\\([^\\)]+\\))+\\s*$", options: .caseInsensitive)
+        let mdRegex = try! NSRegularExpression(pattern: "(?:\\s*\\[.*?\\]\\([^\\)]*(?:/tags/|/tag/)[^\\)]*\\)|\\s*\\[[#＃].*?\\]\\([^\\)]+\\))+\\s*$", options: .caseInsensitive)
         let mdRange = NSRange(location: 0, length: asMarkdown.utf16.count)
         asMarkdown = mdRegex.stringByReplacingMatches(in: asMarkdown, options: [], range: mdRange, withTemplate: "").trimmingCharacters(in: .whitespacesAndNewlines)
         

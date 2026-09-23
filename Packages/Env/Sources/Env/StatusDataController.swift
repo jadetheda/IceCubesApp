@@ -9,6 +9,7 @@ public protocol StatusDataControlling {
   var isReblogged: Bool { get set }
   var isBookmarked: Bool { get set }
   var isFavorited: Bool { get set }
+  var tags: [Tag] { get set }
 
   var favoritesCount: Int { get set }
   var reblogsCount: Int { get set }
@@ -62,6 +63,7 @@ public final class StatusDataControllerProvider {
   public var isBookmarked: Bool
   public var isFavorited: Bool
   public var content: HTMLString
+  public var tags: [Tag]
 
   public var favoritesCount: Int
   public var reblogsCount: Int
@@ -93,6 +95,7 @@ public final class StatusDataControllerProvider {
     favoritesCount = status.favouritesCount
     quotesCount = status.quotesCount ?? 0
     content = status.content
+    tags = status.tags
   }
 
   public func updateFrom(status: AnyStatus) {
@@ -111,6 +114,7 @@ public final class StatusDataControllerProvider {
     favoritesCount = status.favouritesCount
     quotesCount = status.quotesCount ?? 0
     content = status.content
+    tags = status.tags
   }
 
   public func toggleFavorite(remoteStatus: String?) async {
