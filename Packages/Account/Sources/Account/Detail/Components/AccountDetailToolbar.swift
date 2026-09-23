@@ -33,10 +33,10 @@ struct AccountDetailToolbar: ToolbarContent {
           Text("account.detail.featured-tags-n-posts \(account.statusesCount ?? 0)")
             .font(.footnote)
             .foregroundStyle(.secondary)
+          }
         }
       }
     }
-
     ToolbarItemGroup(placement: .navigationBarTrailing) {
       if !isCurrentUser {
         Button {

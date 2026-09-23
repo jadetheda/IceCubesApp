@@ -56,6 +56,7 @@ public struct AccountDetailContextMenu: View {
               }
             }
           }
+          }
 #if !targetEnvironment(macCatalyst)
             Divider()
           #endif
@@ -175,7 +176,7 @@ public struct AccountDetailContextMenu: View {
               }
             }
           }
-
+          }
           #if !targetEnvironment(macCatalyst)
             Divider()
           #endif
