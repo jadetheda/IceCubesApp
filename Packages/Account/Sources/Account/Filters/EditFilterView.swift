@@ -218,6 +218,10 @@ struct EditFilterView: View {
     client.backend is IceShrimpBackend
   }
 
+  private func isContextDisabled(_ context: ServerFilter.Context) -> Bool {
+    isSavingFilter || (isIceShrimpBackend && context != .home)
+  }
+
   private var contextsSection: some View {
     Section {
       ForEach(ServerFilter.Context.allCases, id: \.self) { context in
@@ -239,7 +243,7 @@ struct EditFilterView: View {
         ) {
           Label(context.name, systemImage: context.iconName)
         }
-        .disabled(isSavingFilter || (isIceShrimpBackend && context != .home))
+        .disabled(isContextDisabled(context))
       }
     } header: {
       Text("filter.edit.contexts")

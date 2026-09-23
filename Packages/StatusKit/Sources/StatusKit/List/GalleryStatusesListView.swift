@@ -27,14 +27,14 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     self.filterContext = filterContext
   }
 
+  private var columns: Int { UserPreferences.shared.galleryColumns }
+  private var itemsPerColumn: Int { horizontalSizeClass == .regular ? 6 : 4 }
+  private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
+  private var placeholderRatios: [CGFloat] { isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3] }
+
   public var body: some View {
     switch fetcher.statusesState {
     case .loading:
-      let columns = UserPreferences.shared.galleryColumns
-      let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
-      // Provide stable fake heights so the placeholders don't jitter on re-evaluation
-      let isSquare = UserPreferences.shared.galleryCropToSquare
-      let placeholderRatios: [CGFloat] = isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3]
       HStack(alignment: .top, spacing: 4) {
         ForEach(0..<columns, id: \.self) { colIndex in
           LazyVStack(spacing: 0) {
@@ -62,8 +62,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
       }
       .listRowBackground(theme.primaryBackgroundColor)
     case .display(let statuses, let nextPageState):
-      let items = statuses.map { TimelineItem.status($0) }
-      makeGrid(for: items, nextPageState: nextPageState)
+      makeGrid(for: statuses.map { TimelineItem.status($0) }, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
       makeGrid(for: items, nextPageState: nextPageState)
     }
@@ -166,9 +165,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
-    let chunks = chunkItems(items)
-    
-    ForEach(chunks) { chunk in
+    ForEach(chunkItems(items)) { chunk in
       VStack(spacing: 0) {
         if chunk.isGap, let gap = chunk.gap {
           if let gapLoader = fetcher as? GapLoadingFetcher {
@@ -280,12 +277,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @ViewBuilder
   private func makeGridChunk(for items: [TimelineItem]) -> some View {
-    let galleryNodes = computeGalleryNodes(for: items)
-    let columns = UserPreferences.shared.galleryColumns
-    let columnItems = computeColumnItems(from: galleryNodes, columns: columns)
+    makeGridChunkView(columnItems: computeColumnItems(from: computeGalleryNodes(for: items), columns: self.columns))
+  }
 
+  @ViewBuilder
+  private func makeGridChunkView(columnItems: [[GalleryNode]]) -> some View {
     HStack(alignment: .top, spacing: 4) {
-      ForEach(0..<columns, id: \.self) { colIndex in
+      ForEach(0..<columnItems.count, id: \.self) { colIndex in
         LazyVStack(spacing: 0) {
           ForEach(columnItems[colIndex]) { node in
             VStack(spacing: 0) {
@@ -346,17 +344,17 @@ public struct GalleryMediaCell: View {
   @Environment(CurrentAccount.self) private var currentAccount
   @State private var loadTask: Task<Void, Never>? = nil
 
-  public var body: some View {
-    let isSquare = UserPreferences.shared.galleryCropToSquare
-    
-    let fallback = UserPreferences.shared.remoteMediaFallbackOnFail
-    let effectiveUseRemoteMedia = isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered
-    
-    let info = mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false)
-    let resolvedUrl = info?.url
-    let fallbackUrl = info?.fallbackUrl
-    let resolvedType = info?.type
+  private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
+  
+  private var fallback: Bool { UserPreferences.shared.remoteMediaFallbackOnFail }
+  private var effectiveUseRemoteMedia: Bool { isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered }
+  
+  private var info: MediaAttachment.DisplayInfo? { mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false) }
+  private var resolvedUrl: URL? { info?.url }
+  private var fallbackUrl: URL? { info?.fallbackUrl }
+  private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
+  public var body: some View {
     if let url = resolvedUrl {
       Button {
         if let viewModel {

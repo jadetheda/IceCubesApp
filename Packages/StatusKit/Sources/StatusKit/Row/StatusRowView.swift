@@ -151,14 +151,18 @@ public struct StatusRowView: View {
     }
     .swipeActions(edge: .trailing) {
       // The actions associated with the swipes are exposed as custom accessibility actions and there is no way to remove them.
-      if !isCompact, accessibilityVoiceOverEnabled == false {
-        StatusRowSwipeView(viewModel: viewModel, mode: .trailing)
+      if !isCompact {
+        if accessibilityVoiceOverEnabled == false {
+          StatusRowSwipeView(viewModel: viewModel, mode: .trailing)
+        }
       }
     }
     .swipeActions(edge: .leading) {
       // The actions associated with the swipes are exposed as custom accessibility actions and there is no way to remove them.
-      if !isCompact, accessibilityVoiceOverEnabled == false {
-        StatusRowSwipeView(viewModel: viewModel, mode: .leading)
+      if !isCompact {
+        if accessibilityVoiceOverEnabled == false {
+          StatusRowSwipeView(viewModel: viewModel, mode: .leading)
+        }
       }
     }
     #if os(visionOS)

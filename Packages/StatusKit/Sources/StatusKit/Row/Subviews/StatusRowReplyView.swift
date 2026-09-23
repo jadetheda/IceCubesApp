@@ -17,15 +17,17 @@ struct StatusRowReplyView: View {
             .accessibilityLabel(
               Text("status.row.was-reply \(mention.username)")
             )
-          } else if viewModel.isThread, accountId == viewModel.status.account.id {
-            HStack(spacing: 2) {
-              Image(systemName: "quote.opening")
-              Text("status.row.is-thread")
+          } else if viewModel.isThread {
+            if accountId == viewModel.status.account.id {
+              HStack(spacing: 2) {
+                Image(systemName: "quote.opening")
+                Text("status.row.is-thread")
+              }
+              .accessibilityElement(children: .combine)
+              .accessibilityLabel(
+                Text("status.row.is-thread")
+              )
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(
-              Text("status.row.is-thread")
-            )
           }
         }
         .onTapGesture {

@@ -62,8 +62,11 @@ public struct StatusPollView: View {
       .foregroundColor(theme.labelColor)
   }
 
+  private var isInteractive: Bool {
+    viewModel.poll.expired == false && (viewModel.poll.voted ?? true) == false
+  }
+
   public var body: some View {
-    let isInteractive = viewModel.poll.expired == false && (viewModel.poll.voted ?? true) == false
     VStack(alignment: .leading) {
       ForEach(Array(viewModel.poll.options.enumerated()), id: \.element.id) { index, option in
         HStack {
