@@ -29,7 +29,8 @@ extension StatusEditor.AutoCompleteView {
       case .loading:
         ProgressView()
           .task {
-            viewState = .loaded(tags: await assistant.generateTags(from: store.statusText.string).values)
+            let generatedTags = await assistant.generateTags(from: store.statusText.string)
+            viewState = .loaded(tags: generatedTags.values)
           }
       case .loaded(let tags):
         ForEach(tags, id: \.self ) { tag in
