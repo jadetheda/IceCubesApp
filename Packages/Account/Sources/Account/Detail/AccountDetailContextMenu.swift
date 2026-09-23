@@ -17,6 +17,7 @@ public struct AccountDetailContextMenu: View {
   var account: Account?
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
+  var translateAction: (() async -> Void)? = nil
 
   public var body: some View {
     if let account = account {
@@ -180,15 +181,25 @@ public struct AccountDetailContextMenu: View {
           #endif
         }
 
-        #if canImport(_Translation_SwiftUI)
-          if #available(iOS 17.4, *) {
-            Button {
-              showTranslateView = true
-            } label: {
-              Label("status.action.translate", systemImage: "captions.bubble")
+        if preferences.preferredTranslationType == .useDeepl {
+          Button {
+            Task {
+              await translateAction?()
             }
+          } label: {
+            Label("status.action.translate", systemImage: "captions.bubble")
           }
-        #endif
+        } else {
+          #if canImport(_Translation_SwiftUI)
+            if #available(iOS 17.4, *) {
+              Button {
+                showTranslateView = true
+              } label: {
+                Label("status.action.translate", systemImage: "captions.bubble")
+              }
+            }
+          #endif
+        }
 
         if (relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists) && client.capabilities.supportsLists {
           Button {
