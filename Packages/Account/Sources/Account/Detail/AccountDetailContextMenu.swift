@@ -18,6 +18,10 @@ public struct AccountDetailContextMenu: View {
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
   var translateAction: (@MainActor () -> Void)? = nil
+  private var shouldAllowAddingToList: Bool {
+    relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists
+  }
+
 
   public var body: some View {
     if let account = account {
@@ -205,7 +209,7 @@ public struct AccountDetailContextMenu: View {
         }
 
         if client.capabilities.supportsLists {
-          if relationship?.following == true || client.capabilities.supportsAddingNonFollowersToLists {
+          if shouldAllowAddingToList {
           Button {
             routerPath.presentedSheet = .listAddAccount(account: account)
           } label: {
