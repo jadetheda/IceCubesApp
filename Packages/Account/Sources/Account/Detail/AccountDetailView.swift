@@ -418,25 +418,27 @@ extension AccountDetailView {
     collections = response.collections.filter(\.discoverable)
   }
 
-  private func translateWithDeepL() async {
-    guard case let .display(account, _, _, _) = viewState else { return }
-    withAnimation {
-      isLoadingTranslation = true
-    }
-    
-    let userAPIKey = DeepLUserAPIHandler.readKey()
-    let userAPIFree = userPreferences.userDeeplAPIFree
-    let deepLClient = DeepLClient(userAPIKey: userAPIKey, userAPIFree: userAPIFree)
-    
-    let targetLang = userPreferences.serverPreferences?.postLanguage ?? Locale.current.language.languageCode?.identifier ?? "en"
-    let translation = try? await deepLClient.request(
-      target: targetLang,
-      text: account.note.asRawText
-    )
-    
-    withAnimation {
-      self.translation = translation
-      isLoadingTranslation = false
+  private func translateWithDeepL() {
+    Task {
+      guard case let .display(account, _, _, _) = viewState else { return }
+      withAnimation {
+        isLoadingTranslation = true
+      }
+      
+      let userAPIKey = DeepLUserAPIHandler.readKey()
+      let userAPIFree = userPreferences.userDeeplAPIFree
+      let deepLClient = DeepLClient(userAPIKey: userAPIKey, userAPIFree: userAPIFree)
+      
+      let targetLang = userPreferences.serverPreferences?.postLanguage ?? Locale.current.language.languageCode?.identifier ?? "en"
+      let translation = try? await deepLClient.request(
+        target: targetLang,
+        text: account.note.asRawText
+      )
+      
+      withAnimation {
+        self.translation = translation
+        isLoadingTranslation = false
+      }
     }
   }
 

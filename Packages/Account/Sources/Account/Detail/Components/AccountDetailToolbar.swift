@@ -21,7 +21,7 @@ struct AccountDetailToolbar: ToolbarContent {
   @Binding var showBlockConfirmation: Bool
   @Binding var showTranslateView: Bool
   @Binding var isEditingRelationshipNote: Bool
-  var translateAction: (() async -> Void)? = nil
+  var translateAction: (() -> Void)? = nil
 
   var body: some ToolbarContent {
     ToolbarItem(placement: .principal) {

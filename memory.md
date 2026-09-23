@@ -936,3 +936,8 @@
   - Adjusted `TimelineFilter` title formats to prevent double-hashing (`##tag`).
   - Enhanced URL parsing in `Router.swift` to extract tag strings accurately from queries (`?tag=`) or fragments (`#tag`) if instances use alternative routing structures for their tags.
   - Also fixed the custom `fetchStatuses` Search workaround for Iceshrimp timelines. The workaround was completely bypassing the standard `endpoint()` generation. If `tag.name` passed from a pill natively contained a `#`, `Search.search(query: "#\(tag)")` would construct `"##tag"`, which triggered a 500 error on the Iceshrimp server.
+- **2026-09-23 04:28 UTC**: Fixed profile context menu translation ignoring DeepL preference.
+  - Updated `AccountDetailContextMenu` to evaluate `UserPreferences.preferredTranslationType`.
+  - Added a `translateWithDeepL()` async function to `AccountDetailView` which reads the user's DeepL API keys via `DeepLUserAPIHandler` and translates the account bio (`account.note.asRawText`).
+  - Plumbed `translateAction` down through `AccountDetailToolbar` into the context menu so that if the user explicitly prefers DeepL, the bio is natively translated and displayed inline inside `AccountInfoView` (matching the behavior of status translations) instead of defaulting to the Apple iOS modal.
+  - Also added a fallback in `AccountDetailContextMenu.swift`: if `translateAction` is missing (e.g., when the context menu is invoked from a Followers list where inline translation state isn't managed), it gracefully falls back to the native Apple Translate modal so the button doesn't do nothing.

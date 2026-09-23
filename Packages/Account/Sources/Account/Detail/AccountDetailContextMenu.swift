@@ -17,7 +17,7 @@ public struct AccountDetailContextMenu: View {
   var account: Account?
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
-  var translateAction: (() async -> Void)? = nil
+  var translateAction: (() -> Void)? = nil
 
   public var body: some View {
     if let account = account {
@@ -183,9 +183,7 @@ public struct AccountDetailContextMenu: View {
 
         if preferences.preferredTranslationType == .useDeepl, let translateAction = translateAction {
           Button {
-            Task {
-              await translateAction()
-            }
+            translateAction()
           } label: {
             Label("status.action.translate", systemImage: "captions.bubble")
           }
