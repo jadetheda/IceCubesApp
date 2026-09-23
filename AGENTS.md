@@ -360,3 +360,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 ## 🐛 Exit Code 65 Logs (Comma-separated Booleans in ViewBuilders)
 - **Root Cause**: Using a comma-separated boolean condition (e.g. `if statusDataController.content.hadTrailingTags, !statusDataController.tags.isEmpty`) inside a ViewBuilder where the properties belong to an `@Observable` object. The Swift 5.10 macro expansions (`access(keyPath:)`) combined with the tuple-inference of the comma operator causes the constraint solver to time out and crash silently when evaluating a complex ViewBuilder.
 - **Solution**: Always explicitly nest `if` statements instead of using commas when evaluating properties of `@Observable` macro objects inside large ViewBuilders.
+
+## 🐛 Exit Code 65 Logs (Inline `let` variables in ViewBuilders)
+- **Root Cause**: While Swift 5.4+ allows `let` statements inside ViewBuilders, evaluating complex properties (like `@Environment` or `@Observable` properties) into a local `let` inside a dense `body` wrapper causes the constraint solver to timeout. For example, `let showCard = !isCompact && theme.style != .compact` evaluates environment constraints outside of a pure `if` block, triggering an AST OOM crash around 5 minutes into an Xcodebuild.
+- **Solution**: Completely eradicate `let` property extractions for complex logic inside ViewBuilders. Instead, use explicitly nested `if` statements (e.g. `if !isCompact { if theme.style != .compact { } }`) to give the Swift compiler discrete, bite-sized AST paths to resolve.
