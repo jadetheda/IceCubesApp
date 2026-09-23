@@ -317,17 +317,22 @@ struct StatusRowActionsView: View {
     .tint(theme.tintColor)
   }
 
+  private func isQuoteUnavailable(for finalStatus: AnyStatus) -> Bool {
+    if finalStatus.visibility == .priv || finalStatus.visibility == .direct { return true }
+    return finalStatus.quoteApproval?.currentUser == .denied
+  }
+
+  private func shouldDisable(action: Action.Trigger, for finalStatus: AnyStatus) -> Bool {
+    if action == .boost && (finalStatus.visibility == .priv || finalStatus.visibility == .direct) { return true }
+    if action == .quote && isQuoteUnavailable(for: finalStatus) { return true }
+    return false
+  }
+
   @ViewBuilder
   private func actionButton(action: Action) -> some View {
     let configuration = configuration(for: action)
     let finalStatus = viewModel.finalStatus
-    let isQuoteUnavailable =
-      (finalStatus.visibility == .priv || finalStatus.visibility == .direct)
-      || finalStatus.quoteApproval?.currentUser == .denied
-    let shouldDisableAction =
-      (configuration.trigger == .boost
-        && (finalStatus.visibility == .priv || finalStatus.visibility == .direct))
-      || (configuration.trigger == .quote && isQuoteUnavailable)
+    let shouldDisableAction = shouldDisable(action: configuration.trigger, for: finalStatus)
 
     StatusActionButton(
       configuration: configuration,

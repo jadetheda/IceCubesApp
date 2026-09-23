@@ -41,6 +41,14 @@ public struct StatusRowView: View {
       isBlockConfirmationPresented: $isBlockConfirmationPresented,
       isShareAsImageSheetPresented: $isShareAsImageSheetPresented)
   }
+  private var shouldShowActions: Bool {
+    if reasons.contains(.placeholder) { return false }
+    if !viewModel.showActions { return false }
+    if isInCaptureMode { return false }
+    if isFocused { return true }
+    return theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons
+  }
+
 
   public var body: some View {
     HStack(spacing: 0) {
@@ -105,10 +113,7 @@ public struct StatusRowView: View {
                     accessibilityActions
                   }
                 }
-              if !reasons.contains(.placeholder),
-                viewModel.showActions, isFocused || (theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons),
-                !isInCaptureMode
-              {
+              if shouldShowActions {
                 StatusRowActionsView(
                   isBlockConfirmationPresented: $isBlockConfirmationPresented,
                   viewModel: viewModel
@@ -313,6 +318,10 @@ public struct StatusRowView: View {
     }
   }
 
+  private var canQuote: Bool {
+    viewModel.status.visibility != .direct && viewModel.status.visibility != .priv
+  }
+
   @ViewBuilder
   private var accessibilityActions: some View {
     // Add reply and quote, which are lost when the swipe actions are removed
@@ -325,7 +334,7 @@ public struct StatusRowView: View {
       HapticManager.shared.fireHaptic(.notification(.success))
       viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: viewModel.status)
     }
-    .disabled(viewModel.status.visibility == .direct || viewModel.status.visibility == .priv)
+    .disabled(!canQuote)
 
     if viewModel.finalStatus.mediaAttachments.isEmpty == false {
       Button("accessibility.status.media-viewer-action.label") {
