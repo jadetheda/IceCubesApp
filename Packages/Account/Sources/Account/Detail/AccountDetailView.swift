@@ -194,17 +194,15 @@ public struct AccountDetailView: View {
       }
     }
     .refreshable {
-      Task {
-        SoundEffectManager.shared.playSound(.pull)
-        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
-        await fetchAccount()
-        await fetchCollections()
-        if let tabManager {
-          await tabManager.refreshCurrentTab()
-        }
-        HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
-        SoundEffectManager.shared.playSound(.refresh)
+      SoundEffectManager.shared.playSound(.pull)
+      HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.3))
+      await fetchAccount()
+      await fetchCollections()
+      if let tabManager {
+        await tabManager.refreshCurrentTab()
       }
+      HapticManager.shared.fireHaptic(.dataRefresh(intensity: 0.7))
+      SoundEffectManager.shared.playSound(.refresh)
     }
     .onChange(of: watcher.latestEvent?.id) {
       if let latestEvent = watcher.latestEvent,

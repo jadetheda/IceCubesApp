@@ -17,7 +17,7 @@ public struct AccountDetailContextMenu: View {
   var account: Account?
   @Binding var relationship: Relationship?
   let isCurrentUser: Bool
-  var translateAction: (() -> Void)? = nil
+  var translateAction: (@MainActor () -> Void)? = nil
 
   public var body: some View {
     if let account = account {
