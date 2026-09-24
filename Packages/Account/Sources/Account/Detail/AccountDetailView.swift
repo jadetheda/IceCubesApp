@@ -387,22 +387,17 @@ extension AccountDetailView {
     if client.isAuth, !isCurrentUser {
       async let relationships: [Relationship] = client.get(
         endpoint: Accounts.relationships(ids: [accountId]))
-      do {
-        return try await .init(
-          account: account,
-          featuredTags: featuredTags,
-          relationships: relationships)
-      } catch {
-        return try await .init(
-          account: account,
-          featuredTags: [],
-          relationships: relationships)
-      }
+      return try await .init(
+        account: account,
+        featuredTags: (try? await featuredTags) ?? [],
+        relationships: (try? await relationships) ?? []
+      )
     }
     return try await .init(
       account: account,
-      featuredTags: featuredTags,
-      relationships: [])
+      featuredTags: (try? await featuredTags) ?? [],
+      relationships: []
+    )
   }
 
   private func fetchCollections() async {
@@ -416,6 +411,7 @@ extension AccountDetailView {
     collections = response.collections.filter(\.discoverable)
   }
 
+  @MainActor
   private func translateWithDeepL() {
     Task {
       guard case let .display(account, _, _, _) = viewState else { return }

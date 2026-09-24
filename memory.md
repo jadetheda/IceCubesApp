@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-09-23 23:44 UTC: Fixed async let crash in `AccountDetailView.swift` by completely removing the faulty `do/catch` block and relying purely on `(try? await _) ?? []` for both `relationships` and `featuredTags`, preventing the fallback mechanism from inappropriately discarding valid data. Verified and kept the inverted math fix in `StatusDataController.swift` which correctly restores state (`+= isFavorited ? 1 : -1`) after network failures.
 - 2026-09-18 20:17 UTC: Fixed optional unwrapping of `currentMaxId` and cleaned up unused variables/superfluous awaits in `TimelineViewModel.swift` to resolve Exit Code 65 compilation error.
 - 2026-09-18 10:07 UTC: Fixed deprecated `PHAssetCreationRequest.creationRequestForAsset()` references that were causing Exit Code 65 build failures. Replaced all occurrences with the modern `PHAssetCreationRequest.forAsset()` in `MediaUIView.swift` and `StatusRowContextMenu.swift`.
 - 2026-09-15 04:00 UTC: Fixed a fatal double-request bug in the prior attempt to resolve Pixelfed's media description API bug. Created `PixelfedMediaAttachmentWrapper` for defensive decoding that performs exactly one `put` request and safely parses both single objects and arrays, falling back safely on failure without duplicate side effects. Verified text-only post trap fix in EditorStore is syntactically sound.
@@ -969,3 +970,5 @@
     * **Chained `||` and `&&` evaluating properties in modifiers**: Fixed a complex boolean chain `.disabled(isSavingFilter || (isIceShrimpBackend && context != .home))` in `EditFilterView.swift` by extracting it to a cleanly isolated `isContextDisabled(_:)` helper method outside the ViewBuilder scope.
     * Checked for inline `await` property chaining (e.g., `await obj.get().count`) but found no instances of this pattern within the searched directories.
   * **Impact**: Further eliminated insidious ViewBuilder AST constraint solver traps, greatly reducing the risk of Exit Code 65 OOM compilation timeouts when evaluating complex views.
+- 2026-09-24 00:04 UTC: Fixed @MainActor concurrency violation in AccountDetailView's translateWithDeepL by isolating the Task to the main actor. Cleaned up scratch files. Committed fixes for AccountDetailView and StatusDataController.
+- 2026-09-24 00:08 UTC: Fixed implicit non-Sendable capture warning by moving the `@MainActor` attribute from the Task closure directly to the `translateWithDeepL` method declaration in `AccountDetailView.swift`.

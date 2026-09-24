@@ -132,7 +132,7 @@ public final class StatusDataControllerProvider {
     } catch {
       withAnimation(.default) {
         isFavorited.toggle()
-        favoritesCount += isFavorited ? -1 : 1
+        favoritesCount += isFavorited ? 1 : -1
       }
     }
   }
@@ -153,7 +153,7 @@ public final class StatusDataControllerProvider {
     } catch {
       withAnimation(.default) {
         isReblogged.toggle()
-        reblogsCount += isReblogged ? -1 : 1
+        reblogsCount += isReblogged ? 1 : -1
       }
     }
   }
