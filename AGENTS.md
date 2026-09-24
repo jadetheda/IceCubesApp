@@ -135,6 +135,51 @@ When writing Python scripts, shell commands, or architectures intended to run of
 - **Root Cause**: `Action.image` and `Action.accessibilityLabel` in `StatusRowActionsView.swift` were updated to require a non-optional `theme: Theme` parameter, but callers in `StatusActionButton.swift` and `StatusRowActionsView.swift` were not passing `theme`.
 - **Solution**: Set `theme: Theme? = nil` as a default parameter in `Action.image` and `Action.accessibilityLabel`, and explicitly pass `theme: theme` at call-sites in `StatusActionButton.swift` and `StatusRowActionsView.swift`.
 
+# 🚨 AI Agent Playbook: Swift 5.10 Constraint Solver Collapse
+
+**CRITICAL CONTEXT FOR AI AGENTS:** Read this document if you encounter continuous `Exit Code 65` compilation failures in GitHub Actions or Codemagic while modifying SwiftUI views in the `IceCubesApp` workspace.
+
+## 1. Symptom Recognition & Log Verification
+* **The Symptom:** The pipeline fails at the 7-10 minute mark with a generic `Exit Code 65`. The web UI log is often truncated or completely empty.
+* **Agent Action (Log Retrieval):** Do not assume it is a syntax error. You MUST download the raw logs via the GitHub API (`gh api /repos/<owner>/<repo>/actions/runs/<id>/logs > logs.zip`), extract them, and run `grep -i "error:"` on the main compilation text file.
+* **The Diagnosis:** If your `grep` returns 0 explicit syntax errors, the macOS runner's `swift-frontend` process crashed silently due to memory exhaustion (OOM), or the compiler hit its internal constraint solver timeout limit without emitting a proper diagnostic.
+
+## 2. The Core Mechanic: AST Type-Inference OOM
+Swift 5.10's SwiftUI ViewBuilder has a strict constraint solver memory limit. When you add new `@Observable` or `@Environment` properties to a massive `ViewBuilder` (like `StatusKit`), the type-inference algorithm hits an exponential loop and consumes all runner RAM.
+
+### The 4 Lethal AST Traps & Fixes
+You MUST strictly avoid these patterns inside `body` or any `@ViewBuilder` closures.
+
+**Trap 1: Comma-Separated `if` Conditions**
+* ❌ **Bad:** `if !isCompact, accessibilityVoiceOverEnabled == false {`
+* ✅ **Good:** `if !isCompact { if accessibilityVoiceOverEnabled == false {`
+
+**Trap 2: Inline `let` Declarations**
+* ❌ **Bad:** `let showMenu = isCompact && theme.style != .compact` (inside `body`)
+* ✅ **Good:** Extract to a `private var showMenu: Bool` computed property *outside* the view body.
+
+**Trap 3: Chained Logical Operators**
+* ❌ **Bad:** `.disabled(isSaving || (isShrimp && context != .home))`
+* ✅ **Good:** Extract to a `private func isContextDisabled(_ context: Context) -> Bool` *outside* the view body.
+
+**Trap 4: Inline `await` Property Chains**
+* ❌ **Bad:** `self.tags = await assistant.generateTags().values`
+* ✅ **Good:** `let fetchedTags = await assistant.generateTags(); self.tags = fetchedTags.values`
+
+## 3. The "Shifting Weight" Architectural Trap
+* **The Trap:** If you purge AST traps from a heavily nested child view (e.g., `StatusRowContentView`), the compiler often shifts the type-inference evaluation weight directly up to the parent view (e.g., `StatusRowView` or `GalleryStatusesListView`). This causes the *parent* to suddenly OOM instead.
+* **Agent Action:** You cannot fix AST timeouts piecemeal. You must aggressively decouple and purge AST traps from the *entire* view hierarchy concurrently.
+
+## 4. The Masked Downstream Typo Trap
+* **The Trap:** Because the constraint solver typically OOMs early in the pipeline (e.g., at the 7-minute mark compiling `StatusKit`), the compilation job aborts immediately. The compiler *never reaches* downstream packages like `Timeline` or `Account`.
+* **The Rule:** If you clear an AST timeout and the build progresses further but crashes again, expect to find hard syntax typos in downstream packages that were previously masked. Never assume downstream code is syntactically safe just because "it compiled fine before the crash."
+
+## 5. The "Blind Coding" Protocol (Agent Self-Governance)
+Without a local compiler, agents are prone to introducing the very typos that cause Trap 4. You MUST adhere to these rules when modifying code:
+1. **No Global Regex:** Never use global `sed` replacements (e.g., `s/old/new/g`) to modify code. Always target specific line ranges to prevent destroying identically named variables in other scopes.
+2. **Verify Subagent Hallucinations:** If a subagent extracts a view or variable, you MUST manually verify the types it used against the `import` statements at the top of the file (e.g., distinguishing between `NukeUI.LazyImageState` vs standard `SwiftUI.ImageState`).
+3. **Workflow State Awareness:** Never assume a CI workflow is running. Always explicitly verify the pipeline status (`gh run list`) before setting a timer or waiting.
+
 # CLAUDE.md (Imported Guidelines)
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
