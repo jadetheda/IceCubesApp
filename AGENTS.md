@@ -1,3 +1,5 @@
+# 1. Core Mandates & Workflows
+
 ## 📝 Activity & Learning Logging Guideline
 - You MUST append every single modification, optimization, bug fix, and structural change you perform to `/memory.md` under the "## 🪵 Activity Log" section.
 - **CRITICAL RESTRICTION**: Do NOT write in `/memory.md` about changes that do not concern the IceCubesApp native codebase (e.g., do not log changes made to the Web UI, `scripts/companion_server.js`, or the local AI Studio environment/dashboard). `/memory.md` is strictly for tracking the Swift/iOS app's evolution.
@@ -31,11 +33,21 @@
 - We have a SHA-256 integrity verification system in place for files within the `ios-workspace` folder to detect false-positive corruptions from AI Studio.
 - **CRITICAL RULE**: When you (the agent) legitimately modify, add, or delete files inside `ios-workspace`, you MUST update the integrity manifest by making a POST request to the API: `npx -y node -e 'fetch("http://127.0.0.1:3000/api/integrity/update", {method: "POST"})'` via `shell_exec`, so you don't trip your own corruption alarms.
 
+## ⚖️ Attribution & External Code Tracking
+- **The Issue:** As projects grow and external snippets/libraries are integrated, the origin of the code gets lost, making licensing and debugging a nightmare.
+- **The Fix:** You MUST maintain the `/attributions.md` file. Establish a rigid rule that every time external code, open-source logic, or third-party specifications are incorporated, this file MUST be updated immediately.
+- **Action:** Check if `/attributions.md` needs an update every single time you implement external code. It serves as a single source of truth for all dependencies and third-party specs.
+
+## ⚠️ Token Scarcity & Reliability Priority
+- **CRITICAL RULE**: Our token quota is minuscule. You MUST make choices that prioritize both reliability AND token scarcity. Avoid bloated implementations, limit unnecessary verbose conversational responses, and aim for efficient, highly-targeted edits that get the job done reliably on the first try.
+- **MAXIMIZING QUOTA & REQUEST EFFICIENCY**: We must actively preserve our minuscule token quota by optimizing our execution flows. Minimize the number of AI requests made during tasks by planning carefully, performing comprehensive and consolidated edits, and avoiding unnecessary tool calls or conversational round-trips.
+
+# 2. Environment Limitations & Fallbacks
+
 ## ⚠️ AI Studio GitHub Push Mangling Warning
 - **DO NOT** rely on AI Studio's default "Export to GitHub" feature without severe caution. 
 - **The Issue:** The native AI Studio GitHub push heavily mangles the repository state. It frequently ignores strict `.gitignore` rules, pushing massive binary files (`.bin`, `.chd`, `.iso`, build artifacts) directly to the remote, bloating the repository and causing LFS rejections. Furthermore, it risks overwriting custom dotfiles and agent-specific documentation files (like this very `AGENTS.md` file) with default platform templates.
 - **Agent Action:** When discussing version control or repository backups, warn the user about this behavior. Always ensure the `.gitignore` is fully robust and suggest using terminal-based Git pushes or ZIP exports instead of the default AI Studio GitHub integration to preserve structural integrity.
-
 
 ## 🚨 Binary File Corruption & Dev Server Failures (The "Sleep/Wake" Mangling Rule)
 - **The Issue**: When AI Studio is idle, the container scales to zero. Upon waking up, AI Studio's file restoration system restores the workspace. Because it parses/restores everything as UTF-8 text, it **mangles all binary files** (e.g., images inside `.xcassets`, `.png`, `.heic`, audio files like `.wav`/`.caf`, font files like `.ttf`/`.otf`), corrupts `.git/index` and loose Git objects, and sometimes deletes or fails to restore `/package.json` correctly. This prevents the dev server from starting and breaks Git commands.
@@ -74,19 +86,6 @@
        `npx -y node -e 'fetch("http://127.0.0.1:3000/api/integrity/update", {method: "POST"})'`
      - Verify status using `git status`. Do not push corrupt/temporary binaries to GitHub. Use SSH/manual token config if pushing commits.
 
-## ⚖️ Attribution & External Code Tracking
-- **The Issue:** As projects grow and external snippets/libraries are integrated, the origin of the code gets lost, making licensing and debugging a nightmare.
-- **The Fix:** You MUST maintain the `/attributions.md` file. Establish a rigid rule that every time external code, open-source logic, or third-party specifications are incorporated, this file MUST be updated immediately.
-- **Action:** Check if `/attributions.md` needs an update every single time you implement external code. It serves as a single source of truth for all dependencies and third-party specs.
-
-## 🐛 Bug Checking & Responsiveness (Exit Code 65 Rule)
-- **Check for Bugs**: You MUST always proactively check for bugs and potential edge cases in your code before committing changes. If you implement a new feature (like a toolbar button or modifier), ensure it does not break layout or cause compilation timeouts.
-- **Do NOT disappear on Exit Code 65**: If a Codemagic build fails with Exit Code 65 (or any compiler crash/timeout) during your background tasks, you must fix it, but NEVER continuously loop trying to fix it without getting back to the user. If you encounter a complex Exit Code 65, inform the user of the failure and your plan instead of silently retrying forever in the background.
-- **Learn from Exit Code 65**: Every time you encounter and fix an Exit Code 65 (or any compiler crash), you MUST document the root cause and the solution here in AGENTS.md so that you learn from it and prevent the same mistake from causing timeouts in the future.
-
-## ⚠️ Token Scarcity & Reliability Priority
-- **CRITICAL RULE**: Our token quota is minuscule. You MUST make choices that prioritize both reliability AND token scarcity. Avoid bloated implementations, limit unnecessary verbose conversational responses, and aim for efficient, highly-targeted edits that get the job done reliably on the first try.
-
 ## ⚠️ AI Studio Agent Shell (shell_exec) Limitations & Workarounds
 1. **Strict Command Whitelist (The "Mini Shell" Constraint)**: The agent's shell execution tool is highly locked down. It does NOT have access to a standard bash environment. The ONLY permitted root commands are: `npx`, `grep`, and `gradle` (for Android).
 2. **Standard Unix Commands Will Fail**: Do not attempt to use `curl`, `wget`, `ls`, `cat`, `python`, `python3`, `sed`, `awk`, `chmod`, `rm`, or `mv` via the shell tool. They will instantly fail with an unrecognized command error. (Use the agent's built-in file system tools like list_dir, view_file, and delete_file instead of shell equivalents).
@@ -95,59 +94,44 @@
 5. **Interactive Prompts Cause Deadlocks**: The shell environment has no TTY (no interactive terminal for the user). If a command requires a [Y/n] confirmation, it will hang or fail. **Rule: Always forcefully bypass prompts.** (e.g., ALWAYS use `npx -y` instead of just `npx`).
 6. **Long-Running/Background Tasks**: The shell tool cannot be used to run sleep commands or spawn daemonized background servers easily. If you need to wait for something, use the native agent schedule tool (cron/timers) rather than trying to hack a shell delay.
 
-# ⚠️ CRITICAL CONTEXT: iOS a-Shell & a-Shell Mini Limitations
+## ⚠️ CRITICAL CONTEXT: iOS a-Shell & a-Shell Mini Limitations
 When writing Python scripts, shell commands, or architectures intended to run offline on iOS via **a-Shell** or **a-Shell mini**, you MUST strictly adhere to the following limitations we have discovered. Assume this is a highly restricted Alpine-like sandbox.
 
-## 1. Zero External Dependencies (No PIL, No NPM, No C-Compilers)
+### 1. Zero External Dependencies (No PIL, No NPM, No C-Compilers)
 *   **No Node.js / NPM**: `a-Shell mini` does not have a standalone Node package. Do not write solutions that rely on `npm install` or executing JavaScript.
 *   **No C-Compilers (`clang`/`gcc`)**: You cannot compile C/C++ natively on the device.
 *   **No C-Bound Python Libraries**: `pip install` works for pure Python, but anything requiring C-bindings (like `Pillow`/`PIL` for image manipulation) will fail to build. 
 *   **Solution**: You must use the **pure Python standard library** for everything (e.g., parsing binary formats natively with `struct`). For heavy native binaries (like `xdelta3`), you must pre-compile them to WebAssembly (`.wasm`) using a WASI-SDK elsewhere, and then invoke them using a-Shell's native `wasm` command.
 
-## 2. File System & Pathing Restrictions
+### 2. File System & Pathing Restrictions
 *   **Virtual Mounting**: iOS restricts root file traversals. a-Shell uses virtual mounts (like `pickFolder`). 
 *   **Broken Glob/Walk**: Scripts attempting to use `os.walk()` or globally scan file structures will frequently fail or hit permission boundaries.
 *   **Solution**: You must firmly anchor all pathing to the script's origin directory using `os.path.dirname(os.path.abspath(__file__))`. Do not assume standard Windows/Linux relative architectures, and rely on single-file monolithic scripts where possible to prevent import chain snaps.
 
-## 3. Header Corruption & Binary Mangling
+### 3. Header Corruption & Binary Mangling
 *   **Mangled Headers**: Mobile OS export routines and a-Shell's file handling can horribly mangle standard binary headers. For example, standard `.bmp` exports on iOS often mutate into `BITMAPV4HEADER` structures with fake compression flags and massive negative dimensions (e.g., height = `-89039`).
 *   **Solution**: **Fault tolerance > strict binary specifications**. Do not rely on header data. If you expect a specific width, hard-force it. Calculate the height mathematically based on the raw file size minus the data offset, rather than trusting the header bytes.
-- **Swift String Interpolation Safety**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Writing \(\"%.1f\") will cause compiler crash (Exit Code 65). Always write \("%.1f").
 
+# 3. Troubleshooting & Known Bugs
 
-## 🐛 Exit Code 65 Logs (UserPreferences Missing Expose)
-- **Root Cause**: When adding a new property to `UserPreferences` (e.g. `tagGroupsClientSideMergeEnabled`), it was added to the nested `Storage` class but not exposed on the main `UserPreferences` object, breaking any code that tried to access it via `UserPreferences.shared`.
-- **Solution**: Always expose the property on the main `UserPreferences` class with a getter/setter pointing to the nested `storage`, and sync its initial value in `init()`.
+## 🐛 Bug Checking & Responsiveness (Exit Code 65 Rule)
+- **Check for Bugs**: You MUST always proactively check for bugs and potential edge cases in your code before committing changes. If you implement a new feature (like a toolbar button or modifier), ensure it does not break layout or cause compilation timeouts.
+- **Do NOT disappear on Exit Code 65**: If a Codemagic build fails with Exit Code 65 (or any compiler crash/timeout) during your background tasks, you must fix it, but NEVER continuously loop trying to fix it without getting back to the user. If you encounter a complex Exit Code 65, inform the user of the failure and your plan instead of silently retrying forever in the background.
+- **Learn from Exit Code 65**: Every time you encounter and fix an Exit Code 65 (or any compiler crash), you MUST document the root cause and the solution here in AGENTS.md so that you learn from it and prevent the same mistake from causing timeouts in the future.
 
-## 🐛 Exit Code 65 Logs
-- **Root Cause**: Adding properties to a struct (`TimelineContentFilter.Snapshot`) without providing default initializer values breaks any existing instantiations, specifically in test targets (`TimelineViewModelTests.swift`).
-- **Solution**: Always provide default values (e.g. `isGalleryMode: Bool = false`) in the custom `init()` of structs if modifying them, to prevent compilation failures across the codebase.
-
-## 🐛 Exit Code 65 Logs (ScrollViewReader proxy out of scope)
-- **Root Cause**: When adding modifiers (like `.onChange`) that reference a `proxy` from a `ScrollViewReader { proxy in }`, placing the modifier outside the `ScrollViewReader` block causes a `cannot find 'proxy' in scope` compilation error.
-- **Solution**: Always ensure that any modifiers utilizing `proxy` are nested *inside* the `ScrollViewReader` closure.
-
-## 🐛 Exit Code 65 Logs (MainActor-isolated references from actors)
-- **Root Cause**: Synchronously referencing main actor-isolated structures or classes (like `CurrentAccount.shared` and its nested properties) from inside a nonisolated background actor (such as `TimelineDatasource`) causes actor isolation violations and compile-time failures.
-- **Solution**: Avoid referencing `@MainActor`-isolated singletons or properties synchronously inside nonisolated actors. Cache the required properties (e.g. `currentAccountId`) locally on the actor instance using async setters, or pass them explicitly from `@MainActor`-isolated contexts (such as `TimelineViewModel`) during method calls.
-
-## 🐛 Exit Code 65 Logs (Missing theme parameter in Action.image and Action.accessibilityLabel)
-- **Root Cause**: `Action.image` and `Action.accessibilityLabel` in `StatusRowActionsView.swift` were updated to require a non-optional `theme: Theme` parameter, but callers in `StatusActionButton.swift` and `StatusRowActionsView.swift` were not passing `theme`.
-- **Solution**: Set `theme: Theme? = nil` as a default parameter in `Action.image` and `Action.accessibilityLabel`, and explicitly pass `theme: theme` at call-sites in `StatusActionButton.swift` and `StatusRowActionsView.swift`.
-
-# 🚨 AI Agent Playbook: Swift 5.10 Constraint Solver Collapse
+## 🚨 AI Agent Playbook: Swift 5.10 Constraint Solver Collapse
 
 **CRITICAL CONTEXT FOR AI AGENTS:** Read this document if you encounter continuous `Exit Code 65` compilation failures in GitHub Actions or Codemagic while modifying SwiftUI views in the `IceCubesApp` workspace.
 
-## 1. Symptom Recognition & Log Verification
+### 1. Symptom Recognition & Log Verification
 * **The Symptom:** The pipeline fails at the 7-10 minute mark with a generic `Exit Code 65`. The web UI log is often truncated or completely empty.
 * **Agent Action (Log Retrieval):** Do not assume it is a syntax error. You MUST download the raw logs via the GitHub API (`gh api /repos/<owner>/<repo>/actions/runs/<id>/logs > logs.zip`), extract them, and run `grep -i "error:"` on the main compilation text file.
 * **The Diagnosis:** If your `grep` returns 0 explicit syntax errors, the macOS runner's `swift-frontend` process crashed silently due to memory exhaustion (OOM), or the compiler hit its internal constraint solver timeout limit without emitting a proper diagnostic.
 
-## 2. The Core Mechanic: AST Type-Inference OOM
+### 2. The Core Mechanic: AST Type-Inference OOM
 Swift 5.10's SwiftUI ViewBuilder has a strict constraint solver memory limit. When you add new `@Observable` or `@Environment` properties to a massive `ViewBuilder` (like `StatusKit`), the type-inference algorithm hits an exponential loop and consumes all runner RAM.
 
-### The 4 Lethal AST Traps & Fixes
+#### The 5 Lethal AST Traps & Fixes
 You MUST strictly avoid these patterns inside `body` or any `@ViewBuilder` closures.
 
 **Trap 1: Comma-Separated `if` Conditions**
@@ -166,34 +150,130 @@ You MUST strictly avoid these patterns inside `body` or any `@ViewBuilder` closu
 * ❌ **Bad:** `self.tags = await assistant.generateTags().values`
 * ✅ **Good:** `let fetchedTags = await assistant.generateTags(); self.tags = fetchedTags.values`
 
-## 3. The "Shifting Weight" Architectural Trap
+**Trap 5: Missing Import Inside ViewBuilder/Closure**
+* ❌ **Bad:** Using a type or static function from another package (e.g., `MediaCaptionUtils.createCaption` from `MediaUI`) inside a SwiftUI `ViewBuilder` or closure without importing the module at the top of the file. The compiler constraint solver will enter an infinite loop trying to resolve the type, leading to a silent Exit Code 65 instead of a standard syntax error.
+* ✅ **Good:** Always meticulously verify that every external module referenced within a file is explicitly imported. Do not rely on the compiler to throw a clean syntax error if the missing symbol is inside a closure.
+
+### 3. The "Shifting Weight" Architectural Trap
 * **The Trap:** If you purge AST traps from a heavily nested child view (e.g., `StatusRowContentView`), the compiler often shifts the type-inference evaluation weight directly up to the parent view (e.g., `StatusRowView` or `GalleryStatusesListView`). This causes the *parent* to suddenly OOM instead.
 * **Agent Action:** You cannot fix AST timeouts piecemeal. You must aggressively decouple and purge AST traps from the *entire* view hierarchy concurrently.
 
-## 4. The Masked Downstream Typo Trap
+### 4. The Masked Downstream Typo Trap
 * **The Trap:** Because the constraint solver typically OOMs early in the pipeline (e.g., at the 7-minute mark compiling `StatusKit`), the compilation job aborts immediately. The compiler *never reaches* downstream packages like `Timeline` or `Account`.
 * **The Rule:** If you clear an AST timeout and the build progresses further but crashes again, expect to find hard syntax typos in downstream packages that were previously masked. Never assume downstream code is syntactically safe just because "it compiled fine before the crash."
 
-## 5. The "Blind Coding" Protocol (Agent Self-Governance)
+### 5. The "Blind Coding" Protocol (Agent Self-Governance)
 Without a local compiler, agents are prone to introducing the very typos that cause Trap 4. You MUST adhere to these rules when modifying code:
 1. **No Global Regex:** Never use global `sed` replacements (e.g., `s/old/new/g`) to modify code. Always target specific line ranges to prevent destroying identically named variables in other scopes.
 2. **Verify Subagent Hallucinations:** If a subagent extracts a view or variable, you MUST manually verify the types it used against the `import` statements at the top of the file (e.g., distinguishing between `NukeUI.LazyImageState` vs standard `SwiftUI.ImageState`).
 3. **Workflow State Awareness:** Never assume a CI workflow is running. Always explicitly verify the pipeline status (`gh run list`) before setting a timer or waiting.
 
-# CLAUDE.md (Imported Guidelines)
+## 🐛 Known Historical Bugs & Fixes
+
+**UserPreferences Missing Expose (Merged)**
+- **Root Cause**: When adding a new property to `UserPreferences` (e.g., `tagGroupsClientSideMergeEnabled` or `hideInteractionButtons`), it was added to the nested `Storage` class but not exposed on the main `UserPreferences` object. This caused an error when views tried to bind a toggle to it via `$userPreferences.hideInteractionButtons`.
+- **Solution**: Always expose the property on the main `UserPreferences` class with a getter/setter pointing to the nested `storage`, and sync its initial value in `init()`. Also ensure that modifying it keeps related variables correctly in sync without causing an infinite `didSet` loop.
+
+**Swift String Interpolation Syntax (Merged)**
+- **Root Cause**: Escaping quotes inside Swift string interpolations (e.g. `\(String(localized: \"key\"))` or `\(\"%.1f\")`) confuses the Swift parser and breaks the outer string literal bounds, resulting in `Exit Code 65` ("Unterminated string literal") or compiler crashes.
+- **Solution**: Never escape quotes inside Swift string interpolations. Swift 5+ supports unescaped quotes naturally. Always write `\(String(localized: "key"))` or `\("%.1f")`.
+
+**TimelineContentFilter.Snapshot Missing Default Values**
+- **Root Cause**: Adding properties to a struct (`TimelineContentFilter.Snapshot`) without providing default initializer values breaks any existing instantiations, specifically in test targets (`TimelineViewModelTests.swift`).
+- **Solution**: Always provide default values (e.g. `isGalleryMode: Bool = false`) in the custom `init()` of structs if modifying them, to prevent compilation failures across the codebase.
+
+**ScrollViewReader proxy out of scope**
+- **Root Cause**: When adding modifiers (like `.onChange`) that reference a `proxy` from a `ScrollViewReader { proxy in }`, placing the modifier outside the `ScrollViewReader` block causes a `cannot find 'proxy' in scope` compilation error.
+- **Solution**: Always ensure that any modifiers utilizing `proxy` are nested *inside* the `ScrollViewReader` closure.
+
+**MainActor-isolated references from actors**
+- **Root Cause**: Synchronously referencing main actor-isolated structures or classes (like `CurrentAccount.shared` and its nested properties) from inside a nonisolated background actor (such as `TimelineDatasource`) causes actor isolation violations and compile-time failures.
+- **Solution**: Avoid referencing `@MainActor`-isolated singletons or properties synchronously inside nonisolated actors. Cache the required properties (e.g. `currentAccountId`) locally on the actor instance using async setters, or pass them explicitly from `@MainActor`-isolated contexts (such as `TimelineViewModel`) during method calls.
+
+**Missing theme parameter in Action.image and Action.accessibilityLabel**
+- **Root Cause**: `Action.image` and `Action.accessibilityLabel` in `StatusRowActionsView.swift` were updated to require a non-optional `theme: Theme` parameter, but callers in `StatusActionButton.swift` and `StatusRowActionsView.swift` were not passing `theme`.
+- **Solution**: Set `theme: Theme? = nil` as a default parameter in `Action.image` and `Action.accessibilityLabel`, and explicitly pass `theme: theme` at call-sites in `StatusActionButton.swift` and `StatusRowActionsView.swift`.
+
+**View Builder Void return**
+- **Root Cause**: Attempting to mutate a variable directly inside a ViewBuilder block (e.g. inside `if let` before a `Button`) outside of a statement block causes the compiler to complain that `()` cannot conform to `View`.
+- **Solution**: Move the mutation logic into a separate variable initialization before the ViewBuilder block or wrap it in a self-executing closure.
+
+**MainActor isolated property access in Sendable closure**
+- **Root Cause**: Accessing a MainActor isolated property (like `hasFalledBack` in an `@Observable` class) inside a Sendable closure (like `AVPlayerItem.observe`) without jumping to the MainActor causes a compiler error/warning.
+- **Solution**: Ensure that any state mutations or reads of `@MainActor` isolated properties inside background closures are wrapped in `Task { @MainActor [weak self] in ... }`.
+
+**Main Actor Isolation Mismatch on Default Parameters**
+- **Root Cause**: Using a MainActor-isolated singleton (like `UserPreferences.shared.showErrorPopups`) as a default parameter for a function inside a non-isolated class (like `ErrorService`) will result in `main actor-isolated default value in a nonisolated context`.
+- **Solution**: Annotate the entire class with `@MainActor` if it manages UI state and relies on other MainActor-isolated dependencies for its default parameters.
+
+**Ternary Operator Type Inference for LocalizedStringKey**
+- **Root Cause**: Using a ternary operator in a single-expression `switch` case (implicit return) where one branch is a `String` literal (e.g. `"liked"`) and the other is a `LocalizedStringKey` created via string interpolation (e.g. `"notifications.label.favorite \(count)"`) causes the compiler to fail type inference and crash (Exit Code 65).
+- **Solution**: Avoid using ternary operators when returning `LocalizedStringKey` with mixed string interpolation. Refactor the `switch` statement to use explicit `return` statements and standard `if/else` control flow to help the compiler resolve the types correctly.
+
+**Missing Module Import for Environment Type**
+- **Root Cause**: Injecting an object using `@Environment(Type.self)` without importing the module where `Type` is defined will cause the Swift compiler to crash with a `Cannot find type in scope` error (Exit Code 65).
+- **Solution**: Always ensure that when you reference a type from another package (e.g. `Theme` from `DesignSystem`), the corresponding `import` statement (e.g. `import DesignSystem`) is present at the top of the file, even if it's only used as an Environment property.
+
+**TimelineTab missed property rename**
+- **Root Cause**: When renaming `hideReadPosts` to `hideSeenPosts` globally, `TimelineTab.swift` was accidentally missed because the property reference was heavily nested in conditional SwiftUI blocks (e.g., `(preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts)`), leading to a missing dynamic member error in `TimelineContentFilter`.
+- **Solution**: Always run a global, case-insensitive project search (`grep -rni`) for the legacy string after renaming widely used properties, to catch occurrences inside SwiftUI view builders.
+
+**Nuke 13 ImageResponse API Change**
+- **Root Cause**: When upstream bumped Nuke to 13.2.0, the `ImagePipeline.shared.image(for:)` asynchronous method was refactored. In Nuke 12 it returned an `ImageResponse` (with an `.image` property), but in Nuke 13 it returns the raw `UIImage` directly. Accessing `.image` on the return type was inadvertently calling an internal static function on Gifu, causing a type-inference failure.
+- **Solution**: Remove the `.image` accessor when using Nuke 13's `ImagePipeline.shared.image(for:)`, and pass the returned `UIImage` directly.
+
+**Duplicate ServerDate initializer**
+- **Root Cause**: Two date-formatting changes each added `ServerDate.init(date:)`. Swift reported `invalid redeclaration of 'init(date:)'` while compiling the `Models` package in Codemagic.
+- **Solution**: Keep one initializer. Prefer the version with a named `aDay` interval; search the edited type for duplicate initializer signatures before triggering CI.
+
+**Default argument in protocol requirement**
+- **Root Cause**: `FediverseBackend.get(endpoint:forceVersion:)` declared `= nil` in its protocol requirement. Swift rejects default arguments in protocol declarations.
+- **Solution**: Keep defaults on the concrete client API or a protocol extension. Require an explicit argument on the protocol requirement and its existential calls.
+
+**Cross-spec adapter model and concurrency mismatch**
+- **Root Cause**: The Fediverse adapters used undeclared `ServerCapabilities` fields, duplicate backend properties, unqualified nested client errors, and synthesized model initializers that are not public. The open Mastodon backend also inherited the protocol's `Sendable` requirement while keeping mutable lock-protected state.
+- **Solution**: Add each declared capability and deliberate public model initializer used by adapters. Use the installed model parameter names and top-level `Visibility`. Keep the protocol's concurrency contract; mark the open lock-protected backend hierarchy `@unchecked Sendable` and avoid mutable overridden capability storage.
+
+**Misskey Translation Redeclarations**
+- **Root Cause**: While refactoring the `MisskeyNote+Translate.swift` file for URL routing and mentions, duplicate declarations of `noteUrl` were introduced, a required parameter (`pinned: false`) was accidentally dropped from `ReblogStatus`, and Swift 6's strict concurrency model flagged global `ISO8601DateFormatter` instances as unsafe.
+- **Solution**: Always double-check variable declarations during large regex/sed edits to prevent duplication. When encountering Swift 6 `Sendable` concurrency warnings on formatters, explicitly mark them `nonisolated(unsafe)` if they are genuinely read-only globals. Ensure all mapping structs maintain their required parameter counts.
+
+**Strict Optional Type Mismatches**
+- **Root Cause**: When flattening code to avoid constraint solver hangs, extracting a variable dynamically (e.g., `var currentMaxId = gap.maxId` where `gap.maxId` is a non-optional `String`) causes the compiler to rigidly type it. Reassigning an optional value (e.g., `currentMaxId = statuses.last?.id`) later in the loop causes a hard, silent compilation failure.
+- **Solution**: Always explicitly type local variables as optionals (`var currentMaxId: String? = gap.maxId`) when flattening logic if they will ever accept an optional reassignment.
+
+**PHAssetCreationRequest Unrecognized Selector**
+- **Root Cause**: In Swift, attempting to create a new `PHAssetCreationRequest` by calling `PHAssetCreationRequest.forAsset()` compiles successfully but will instantly crash the app at runtime with an `unrecognized selector` exception because it resolves to a missing Objective-C method (`+forAsset`). This occurs because the Swift compiler often forces you to replace the older `.creationRequestForAsset()` API with `.forAsset()`, which is a trap.
+- **Solution**: Completely avoid `PHAssetCreationRequest`. Instead, write your image/video `Data` to a temporary file URL (`FileManager.default.temporaryDirectory`), and then use the safe, built-in change requests: `PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL:)` or `PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL:)`. Don't forget to delete the temporary file after the `performChanges` block completes.
+
+# 4. Architecture & Build Guidelines
+
+## ⚠️ Agent Overrides
+- **No Visual UI Tests:** Visual UI testing or simulator verifications mentioned below are overridden. Agents do not have eyes and cannot run simulator previews. Do not attempt to run visual UI tests.
+- **No Infinite Build Loops:** Do not get trapped in repetitive build-test loops. If a build fails with Exit Code 65 or other errors multiple times, document the failure and report back to the user instead of trying endlessly.
+
+## Project Rules (Strict Adherence)
+- **ABSOLUTE CRITICAL ADHERENCE TO CLAUDE.MD**: You must strictly obey and implement the architectural guidelines defined below—specifically the modern SwiftUI paradigms (No ViewModels, native `@State`/`@Binding` data flows, task modifiers, and avoiding nesting `@Observable` objects).
+- **EXCEPTIONAL CODE COMMENTING**: All written code must be thoroughly and beautifully documented. Explain *why* components are structured a certain way, document state bindings, describe side effects of tasks, and mark tricky areas with clear, human-readable explanations to ensure maintainability.
+
+## Imported CLAUDE.md Guidelines
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+### Project Overview
+
 IceCubesApp is a multiplatform Mastodon client built entirely in SwiftUI. It's an open-source native Apple application that runs on iOS, iPadOS, macOS, and visionOS.
 
-## Build Commands
-### Building for iOS Simulator
+### Build Commands
+
+#### Building for iOS Simulator
 To build IceCubesApp for iPhone Air simulator:
 ```bash
 mcp__XcodeBuildMCP__build_sim_name_proj projectPath: "/Users/thomas/Documents/Dev/Open Source/IceCubesApp/IceCubesApp.xcodeproj" scheme: "IceCubesApp" simulatorName: "iPhone Air"
 ```
 
-### Running Tests
+
+#### Running Tests
 - **All tests**: Run through Xcode's Test navigator
 - **Specific package tests (XcodeBuildMCP on simulator)**:
   ```bash
@@ -208,12 +288,14 @@ mcp__XcodeBuildMCP__build_sim_name_proj projectPath: "/Users/thomas/Documents/De
   mcp__XcodeBuildMCP__test_sim scheme: "EnvTests"
   ```
 
-### Code Formatting
+#### Code Formatting
 The project uses SwiftFormat with 2-space indentation. Configuration is in `.swiftformat`.
 
-## Architecture
-### Modular Package Structure
+### Architecture
+
+#### Modular Package Structure
 The app is organized into Swift Packages under `/Packages/`:
+
 - **Models**: Data models and API structures for Mastodon entities
 - **Network**: API client implementation with support for Mastodon, DeepL, and OpenAI APIs
 - **Env**: Environment objects, app-wide state, and dependency injection
@@ -224,76 +306,201 @@ The app is organized into Swift Packages under `/Packages/`:
 - **Notifications**: Notification views and handling
 - **MediaUI**: Media viewing with zoom, video playback, and sharing
 
-### Key Architectural Patterns (Legacy)
+#### Key Architectural Patterns (Legacy)
 The codebase contains legacy MVVM patterns, but **new features should NOT use ViewModels**.
+
 - **Legacy**: Some older views still use ViewModels (being phased out)
 - **Modern Approach**: Views as pure state expressions using SwiftUI primitives
 - **Environment Objects**: Used for dependency injection (Router, CurrentAccount, Theme, etc.)
 - **Swift Concurrency**: Async/await throughout for API calls
 - **Observation Framework**: Uses `@Observable` for services injected via Environment
 
-### App Extensions
+#### App Extensions
 - **NotificationService**: Handles push notification decryption and formatting
 - **ShareExtension**: Enables sharing content to the app
 - **ActionExtension**: Quick actions from share sheet
 - **WidgetsExtension**: Home screen widgets for timeline, mentions, and accounts
 
-### Important Implementation Details
+#### Important Implementation Details
 - **Multi-account**: Managed through `AppAccountsManager` with secure storage
 - **Push Notifications**: Custom proxy server implementation for privacy
 - **Theme System**: Extensive customization with 40+ app icons
 - **Translation**: Supports DeepL API and instance-provided translations
 - **AI Features**: OpenAI integration for alt text generation
 
-## Modern SwiftUI Architecture Guidelines (2025)
-### Core Philosophy
+### Modern SwiftUI Architecture Guidelines (2025)
+
+#### Core Philosophy
+
 - SwiftUI is the default UI paradigm - embrace its declarative nature
 - Avoid legacy UIKit patterns and unnecessary abstractions
 - Focus on simplicity, clarity, and native data flow
 - Let SwiftUI handle the complexity - don't fight the framework
 - **No ViewModels** - Use native SwiftUI data flow patterns
 
-### Architecture Principles
-#### 1. Native State Management
+#### Architecture Principles
+
+##### 1. Native State Management
+
 Use SwiftUI's built-in property wrappers appropriately:
 - `@State` - Local, ephemeral view state
 - `@Binding` - Two-way data flow between views
 - `@Observable` - Shared state (preferred for new code)
 - `@Environment` - Dependency injection for app-wide concerns
 
-#### 2. State Ownership
+##### 2. State Ownership
+
 - Views own their local state unless sharing is required
 - State flows down, actions flow up
 - Keep state as close to where it's used as possible
 - Extract shared state only when multiple views need it
 
-#### 3. Modern Async Patterns
+Example:
+```swift
+struct TimelineView: View {
+    @Environment(Client.self) private var client
+    @State private var viewState: ViewState = .loading
+
+    enum ViewState {
+        case loading
+        case loaded(statuses: [Status])
+        case error(Error)
+    }
+
+    var body: some View {
+        Group {
+            switch viewState {
+            case .loading:
+                ProgressView()
+            case .loaded(let statuses):
+                StatusList(statuses: statuses)
+            case .error(let error):
+                ErrorView(error: error)
+            }
+        }
+        .task {
+            await loadTimeline()
+        }
+    }
+
+    private func loadTimeline() async {
+        do {
+            let statuses = try await client.getHomeTimeline()
+            viewState = .loaded(statuses: statuses)
+        } catch {
+            viewState = .error(error)
+        }
+    }
+}
+```
+
+##### 3. Modern Async Patterns
+
 - Use `async/await` as the default for asynchronous operations
 - Leverage `.task` modifier for lifecycle-aware async work
 - Handle errors gracefully with try/catch
 - Avoid Combine unless absolutely necessary
 
-#### 4. View Composition
+##### 4. View Composition
+
 - Build UI with small, focused views
 - Extract reusable components naturally
 - Use view modifiers to encapsulate common styling
 - Prefer composition over inheritance
 
-#### 5. Code Organization
+##### 5. Code Organization
+
 - Organize by feature (e.g., Timeline/, Account/, Settings/)
 - Keep related code together in the same file when appropriate
 - Use extensions to organize large files
 - Follow Swift naming conventions consistently
 
-### Build Verification Process
+#### Build Verification Process
 **IMPORTANT**: When editing code, you MUST:
+
 1. Build the project after making changes using XcodeBuildMCP commands
 2. Fix any compilation errors before proceeding
 3. Run relevant tests if modifying existing functionality
 4. Ensure code follows modern SwiftUI patterns
 
-### Best Practices
-#### DO:
+Example workflow:
+```bash
+## Build the main app
+mcp__XcodeBuildMCP__build_mac_proj projectPath: "/path/to/IceCubesApp.xcodeproj" scheme: "IceCubesApp"
+
+## Or for iOS simulator
+mcp__XcodeBuildMCP__build_ios_sim_name_proj projectPath: "/path/to/IceCubesApp.xcodeproj" scheme: "IceCubesApp" simulatorName: "iPhone Air"
+```
+
+#### Implementation Examples
+
+##### Shared State with @Observable
+```swift
+@Observable
+class AppAccountsManager {
+    var currentAccount: Account?
+    var availableAccounts: [Account] = []
+
+    func switchAccount(_ account: Account) {
+        currentAccount = account
+        // Handle account switching
+    }
+}
+
+// In App file
+struct IceCubesApp: App {
+    @State private var accountManager = AppAccountsManager()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .environment(accountManager)
+        }
+    }
+}
+```
+
+##### Modern Async Data Loading
+```swift
+struct NotificationsView: View {
+    @Environment(Client.self) private var client
+    @State private var notifications: [Notification] = []
+    @State private var isLoading = false
+    @State private var error: Error?
+
+    var body: some View {
+        List(notifications) { notification in
+            NotificationRow(notification: notification)
+        }
+        .overlay {
+            if isLoading {
+                ProgressView()
+            }
+        }
+        .task {
+            await loadNotifications()
+        }
+        .refreshable {
+            await loadNotifications()
+        }
+    }
+
+    private func loadNotifications() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            notifications = try await client.getNotifications()
+        } catch {
+            self.error = error
+        }
+    }
+}
+```
+
+#### Best Practices
+
+##### DO:
 - Write self-contained views when possible
 - Use property wrappers as intended by Apple
 - Test logic in isolation, preview UI visually
@@ -302,7 +509,7 @@ Use SwiftUI's built-in property wrappers appropriately:
 - Use Swift's type system for safety
 - Trust SwiftUI's update mechanism
 
-#### DON'T:
+##### DON'T:
 - Create ViewModels for every view
 - Move state out of views unnecessarily
 - Add abstraction layers without clear benefit
@@ -311,102 +518,18 @@ Use SwiftUI's built-in property wrappers appropriately:
 - Overcomplicate simple features
 - **Nest @Observable objects within other @Observable objects** - This breaks SwiftUI's observation system. Initialize services at the view level instead.
 
-### Testing Strategy
+#### Testing Strategy
+
 - Unit test business logic in services/clients
 - Use SwiftUI Previews for visual testing
 - Test @Observable classes independently
 - Keep tests simple and focused
 - Don't sacrifice code clarity for testability
 
-### Code Style When Editing
+#### Code Style When Editing
 - Maintain existing patterns in legacy code
 - New features use modern patterns exclusively
 - Prefer composition over inheritance
 - Keep views focused and single-purpose
 - Use descriptive names for state enums
 - Write SwiftUI code that looks and feels like SwiftUI
-
-# Project Rules
-- **ABSOLUTE CRITICAL ADHERENCE TO CLAUDE.MD**: You must strictly obey and implement the architectural guidelines defined in `CLAUDE.md`—specifically the modern SwiftUI paradigms (No ViewModels, native `@State`/`@Binding` data flows, task modifiers, and avoiding nesting `@Observable` objects).
-- **EXCEPTIONAL CODE COMMENTING**: All written code must be thoroughly and beautifully documented. Explain *why* components are structured a certain way, document state bindings, describe side effects of tasks, and mark tricky areas with clear, human-readable explanations to ensure maintainability.
-- **MAXIMIZING QUOTA & REQUEST EFFICIENCY**: We must actively preserve our minuscule token quota by optimizing our execution flows. Minimize the number of AI requests made during tasks by planning carefully, performing comprehensive and consolidated edits, and avoiding unnecessary tool calls or conversational round-trips.
-
-
-
-## 🐛 Exit Code 65 Logs (UserPreferences Missing Expose - hideInteractionButtons)
-- **Root Cause**: The property `hideInteractionButtons` was declared in `UserPreferences.Storage` but not exposed on the main `UserPreferences` object. This caused an error when `DisplaySettingsView.swift` tried to bind a toggle to it via `$userPreferences.hideInteractionButtons`.
-- **Solution**: Added the missing `hideInteractionButtons` computed property directly to the `UserPreferences` class with a getter/setter pointing to the nested `storage`, and synced its initial value in `init()`. Also ensured that modifying it keeps `showInteractionButtons` correctly in sync without causing an infinite `didSet` loop.
-
-## 🐛 Exit Code 65 Logs (View Builder Void return)
-- **Root Cause**: Attempting to mutate a variable directly inside a ViewBuilder block (e.g. inside `if let` before a `Button`) outside of a statement block causes the compiler to complain that `()` cannot conform to `View`.
-- **Solution**: Move the mutation logic into a separate variable initialization before the ViewBuilder block or wrap it in a self-executing closure.
-
-## 🐛 Exit Code 65 Logs (MainActor isolated property access in Sendable closure)
-- **Root Cause**: Accessing a MainActor isolated property (like `hasFalledBack` in an `@Observable` class) inside a Sendable closure (like `AVPlayerItem.observe`) without jumping to the MainActor causes a compiler error/warning.
-- **Solution**: Ensure that any state mutations or reads of `@MainActor` isolated properties inside background closures are wrapped in `Task { @MainActor [weak self] in ... }`.
-
-## 🐛 Exit Code 65 Logs (Main Actor Isolation Mismatch on Default Parameters)
-- **Root Cause**: Using a MainActor-isolated singleton (like `UserPreferences.shared.showErrorPopups`) as a default parameter for a function inside a non-isolated class (like `ErrorService`) will result in `main actor-isolated default value in a nonisolated context`.
-- **Solution**: Annotate the entire class with `@MainActor` if it manages UI state and relies on other MainActor-isolated dependencies for its default parameters.
-
-## 🐛 Exit Code 65 Logs (Ternary Operator Type Inference for LocalizedStringKey)
-- **Root Cause**: Using a ternary operator in a single-expression `switch` case (implicit return) where one branch is a `String` literal (e.g. `"liked"`) and the other is a `LocalizedStringKey` created via string interpolation (e.g. `"notifications.label.favorite \(count)"`) causes the compiler to fail type inference and crash (Exit Code 65).
-- **Solution**: Avoid using ternary operators when returning `LocalizedStringKey` with mixed string interpolation. Refactor the `switch` statement to use explicit `return` statements and standard `if/else` control flow to help the compiler resolve the types correctly.
-
-## 🐛 Exit Code 65 Logs (Missing Module Import for Environment Type)
-- **Root Cause**: Injecting an object using `@Environment(Type.self)` without importing the module where `Type` is defined will cause the Swift compiler to crash with a `Cannot find type in scope` error (Exit Code 65).
-- **Solution**: Always ensure that when you reference a type from another package (e.g. `Theme` from `DesignSystem`), the corresponding `import` statement (e.g. `import DesignSystem`) is present at the top of the file, even if it's only used as an Environment property.
-
-## 🐛 Exit Code 65 Logs (TimelineTab missed property rename)
-- **Root Cause**: When renaming `hideReadPosts` to `hideSeenPosts` globally, `TimelineTab.swift` was accidentally missed because the property reference was heavily nested in conditional SwiftUI blocks (e.g., `(preferences.hideSeenPostsIsToggle && contentFilter.hideReadPosts)`), leading to a missing dynamic member error in `TimelineContentFilter`.
-- **Solution**: Always run a global, case-insensitive project search (`grep -rni`) for the legacy string after renaming widely used properties, to catch occurrences inside SwiftUI view builders.
-
-## 🐛 Exit Code 65 Logs (Nuke 13 ImageResponse API Change)
-- **Root Cause**: When upstream bumped Nuke to 13.2.0, the `ImagePipeline.shared.image(for:)` asynchronous method was refactored. In Nuke 12 it returned an `ImageResponse` (with an `.image` property), but in Nuke 13 it returns the raw `UIImage` directly. Accessing `.image` on the return type was inadvertently calling an internal static function on Gifu, causing a type-inference failure.
-- **Solution**: Remove the `.image` accessor when using Nuke 13's `ImagePipeline.shared.image(for:)`, and pass the returned `UIImage` directly.
-
-- **Swift String Interpolation Syntax**: When using string interpolation `\()` inside a String literal, do NOT escape the inner quotes (e.g. use `\(String(localized: "key"))`, NEVER `\(String(localized: \"key\"))`). Escaping quotes inside interpolation blocks confuses the Swift parser and breaks the outer string literal bounds, resulting in `Exit Code 65` ("Unterminated string literal").
-
-## 🐛 Exit Code 65 Logs (Duplicate ServerDate initializer)
-- **Root Cause**: Two date-formatting changes each added `ServerDate.init(date:)`. Swift reported `invalid redeclaration of 'init(date:)'` while compiling the `Models` package in Codemagic.
-- **Solution**: Keep one initializer. Prefer the version with a named `aDay` interval; search the edited type for duplicate initializer signatures before triggering CI.
-
-## 🐛 Exit Code 65 Logs (Default argument in protocol requirement)
-- **Root Cause**: `FediverseBackend.get(endpoint:forceVersion:)` declared `= nil` in its protocol requirement. Swift rejects default arguments in protocol declarations.
-- **Solution**: Keep defaults on the concrete client API or a protocol extension. Require an explicit argument on the protocol requirement and its existential calls.
-
-## 🐛 Exit Code 65 Logs (Cross-spec adapter model and concurrency mismatch)
-- **Root Cause**: The Fediverse adapters used undeclared `ServerCapabilities` fields, duplicate backend properties, unqualified nested client errors, and synthesized model initializers that are not public. The open Mastodon backend also inherited the protocol's `Sendable` requirement while keeping mutable lock-protected state.
-- **Solution**: Add each declared capability and deliberate public model initializer used by adapters. Use the installed model parameter names and top-level `Visibility`. Keep the protocol's concurrency contract; mark the open lock-protected backend hierarchy `@unchecked Sendable` and avoid mutable overridden capability storage.
-
-## 🐛 Exit Code 65 Logs (Misskey Translation Redeclarations)
-- **Root Cause**: While refactoring the `MisskeyNote+Translate.swift` file for URL routing and mentions, duplicate declarations of `noteUrl` were introduced, a required parameter (`pinned: false`) was accidentally dropped from `ReblogStatus`, and Swift 6's strict concurrency model flagged global `ISO8601DateFormatter` instances as unsafe.
-- **Solution**: Always double-check variable declarations during large regex/sed edits to prevent duplication. When encountering Swift 6 `Sendable` concurrency warnings on formatters, explicitly mark them `nonisolated(unsafe)` if they are genuinely read-only globals. Ensure all mapping structs maintain their required parameter counts.
-
-## 🐛 Exit Code 65 Logs (Constraint Solver OOM - Inline Awaits & Chains)
-- **Root Cause**: The Swift constraint solver will violently hang and trigger Exit Code 65 (OOM) if multiple asynchronous property accessors or complex boolean evaluation chains are nested. Specific triggers include chaining property accessors directly onto `await` calls (e.g., `await obj.get().count` or `await CurrentAccount.shared.account?.id`), nesting ternary operators directly inside Enum initializers (e.g., `StatusesState.displayWithGaps(nextPageState: isEmpty ? A : B)`), and combining large `.filter { ... }.map { ... }` blocks with nested optional coalescing.
-- **Solution**: Radically flatten the code. Always extract `await` results to explicit local variables before accessing their properties (e.g., `let ds = await obj.get(); let count = ds.count`). Extract ternary outcomes to explicit variables before passing them into enums. Convert large `filter/map` chains into standard `for` loops appending to local mutable arrays.
-
-## 🐛 Exit Code 65 Logs (Hidden Syntax Errors via Log Truncation)
-- **Root Cause**: A build failing with Exit Code 65 is not always a constraint solver timeout. If the build crashes earlier than the typical 6-8 minute mark, it might be a hard syntax error (e.g., a deprecated Apple SDK API like `PHAssetCreationRequest.creationRequestForAsset()`). However, GitHub Actions truncates `xcodebuild` console output to 1 MB, meaning `gh run view --log` will often silently hide the actual compiler syntax error.
-- **Solution**: If a build fails unexpectedly fast and `gh run view` shows no syntax error, you MUST download the full raw artifact zip log to find the hidden compiler failure (usually at the very bottom of the `xcodebuild` step).
-
-## 🐛 Exit Code 65 Logs (Strict Optional Type Mismatches)
-- **Root Cause**: When flattening code to avoid constraint solver hangs, extracting a variable dynamically (e.g., `var currentMaxId = gap.maxId` where `gap.maxId` is a non-optional `String`) causes the compiler to rigidly type it. Reassigning an optional value (e.g., `currentMaxId = statuses.last?.id`) later in the loop causes a hard, silent compilation failure.
-- **Solution**: Always explicitly type local variables as optionals (`var currentMaxId: String? = gap.maxId`) when flattening logic if they will ever accept an optional reassignment.
-## 🐛 Crash Logs (PHAssetCreationRequest Unrecognized Selector)
-- **Root Cause**: In Swift, attempting to create a new `PHAssetCreationRequest` by calling `PHAssetCreationRequest.forAsset()` compiles successfully but will instantly crash the app at runtime with an `unrecognized selector` exception because it resolves to a missing Objective-C method (`+forAsset`). This occurs because the Swift compiler often forces you to replace the older `.creationRequestForAsset()` API with `.forAsset()`, which is a trap.
-- **Solution**: Completely avoid `PHAssetCreationRequest`. Instead, write your image/video `Data` to a temporary file URL (`FileManager.default.temporaryDirectory`), and then use the safe, built-in change requests: `PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL:)` or `PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL:)`. Don't forget to delete the temporary file after the `performChanges` block completes.
-
-## 🐛 Exit Code 65 Logs (Missing Import Inside ViewBuilder/Closure)
-- **Root Cause**: If a file (e.g., `StatusRowContextMenu.swift`) uses a type or static function from another package (e.g., `MediaCaptionUtils.createCaption` from `MediaUI`) inside a SwiftUI `ViewBuilder` or an `action` closure, and the file is missing the `import MediaUI` statement, the Swift compiler constraint solver will not throw a standard "Cannot find in scope" error. Instead, it will enter an infinite loop frantically searching the entire namespace trying to resolve the type, ultimately exhausting its timeout limit and crashing the Xcodebuild pipeline with a silent Exit Code 65.
-- **Solution**: Always meticulously verify that every single external module referenced within a file is explicitly imported at the top of the file. Do not rely on the compiler to throw a clean syntax error if the missing symbol is inside a closure.
-
-## 🐛 Exit Code 65 Logs (Comma-separated Booleans in ViewBuilders)
-- **Root Cause**: Using a comma-separated boolean condition (e.g. `if statusDataController.content.hadTrailingTags, !statusDataController.tags.isEmpty`) inside a ViewBuilder where the properties belong to an `@Observable` object. The Swift 5.10 macro expansions (`access(keyPath:)`) combined with the tuple-inference of the comma operator causes the constraint solver to time out and crash silently when evaluating a complex ViewBuilder.
-- **Solution**: Always explicitly nest `if` statements instead of using commas when evaluating properties of `@Observable` macro objects inside large ViewBuilders.
-
-## 🐛 Exit Code 65 Logs (Inline `let` variables in ViewBuilders)
-- **Root Cause**: While Swift 5.4+ allows `let` statements inside ViewBuilders, evaluating complex properties (like `@Environment` or `@Observable` properties) into a local `let` inside a dense `body` wrapper causes the constraint solver to timeout. For example, `let showCard = !isCompact && theme.style != .compact` evaluates environment constraints outside of a pure `if` block, triggering an AST OOM crash around 5 minutes into an Xcodebuild.
-- **Solution**: Completely eradicate `let` property extractions for complex logic inside ViewBuilders. Instead, use explicitly nested `if` statements (e.g. `if !isCompact { if theme.style != .compact { } }`) to give the Swift compiler discrete, bite-sized AST paths to resolve.
-- **Rule Extension**: You must also NEVER chain multiple `||` (OR) operators inside a ViewBuilder. Extract them to computed properties.
