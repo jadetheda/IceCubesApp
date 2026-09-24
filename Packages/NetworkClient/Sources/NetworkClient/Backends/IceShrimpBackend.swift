@@ -143,15 +143,6 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
                 )
             )
         }
-        if let accountsEndpoint = endpoint as? Accounts {
-            if case let .follow(id, _, _) = accountsEndpoint {
-                overridingEndpoint = PleromaEndpoint(
-                    internalPath: "accounts/\(id)/follow",
-                    internalQueryItems: nil,
-                    internalJsonValue: nil
-                )
-            }
-        }
         if let notificationsEndpoint = endpoint as? Notifications {
             switch notificationsEndpoint {
             case .clear:
@@ -170,15 +161,6 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
     
     open override func post(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> HTTPURLResponse? {
         var overridingEndpoint = endpoint
-        if let accountsEndpoint = endpoint as? Accounts {
-            if case let .follow(id, _, _) = accountsEndpoint {
-                overridingEndpoint = PleromaEndpoint(
-                    internalPath: "accounts/\(id)/follow",
-                    internalQueryItems: nil,
-                    internalJsonValue: nil
-                )
-            }
-        }
         if let notificationsEndpoint = endpoint as? Notifications {
             switch notificationsEndpoint {
             case .clear:
