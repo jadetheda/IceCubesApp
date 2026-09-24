@@ -1,0 +1,19 @@
+{
+  "name": "Ice Cubes: Community Edition",
+  "identifier": "com.jadetheda.icecubes.repo",
+  "apps": [
+    {
+      "name": "Ice Cubes",
+      "bundleIdentifier": "com.thomasricouard.IceCubesApp",
+      "developerName": "Jade",
+      "version": "2.1.5.1",
+      "versionDate": "2026-09-24T06:37:41Z",
+      "versionDescription": "Minor update, but it took waaay too long because of some old bad code hanging around.\r\n\r\n## New (since v2.1.5)\r\n- **Translate profiles supports DeepL now.** This was an upstream problem. Previously the Translate button in profiles only brought up the default iOS translate dialog. *Not anymore!*\r\n- **Tag pills now work under IceShrimp.** Also an upstream thing, trailing tags converting to pills has been broken forever. *Now they work!*\r\n- **Viewing tags now works under IceShrimp.** Tapping tags has always been broken upstream, but our workaround hasn\u2019t worked until now either. This was because our workaround relies on emulating Search ala the Explore tab, but until now didn\u2019t specify to use v2 of the Mastodon API, unlike Explore. *That finally fixed tags.*\r\n- **A buncha bugs have been squashed too.**\r\n\r\nOn a housekeeping note, we\u2019ve merged the multi-spec-support branch into main and moved what was main to icecubes-classic. \r\n\r\nThe abstraction work for wider fediverse support is now stable enough that I\u2019m okay with it being on main, but the other branch is still there if you want it.\r\n\r\nThat\u2019s all for now <3",
+      "downloadURL": "https://github.com/jadetheda/IceCubesApp/releases/download/v2.1.5.1/IceCubesApp-Unsigned.ipa",
+      "localizedDescription": "IceCubesApp is an open-source application for accessing the decentralized social network Mastodon! It's built entirely in SwiftUI, making it fast, lightweight, and easy to use.\n\nCommunity Edition takes this app to the next-level, implementing feature requests & bug fixes as suggested by the community.",
+      "iconURL": "https://raw.githubusercontent.com/jadetheda/IceCubesApp/main/IceCubesApp/Assets.xcassets/Icon.appiconset/AppIcon.png",
+      "tintColor": "FF0000",
+      "size": 102812532
+    }
+  ]
+}
