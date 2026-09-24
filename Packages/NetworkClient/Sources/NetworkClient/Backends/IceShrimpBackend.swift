@@ -80,35 +80,12 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
     }
 
     open override func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
-        if let trendsEndpoint = endpoint as? Trends {
+        // IceShrimp does not support the Trends endpoint, so short-circuit to empty arrays
+        // to avoid crashing the UI when the trends tab is shown.
+        if endpoint is Trends {
             if Entity.self == [Status].self {
-                let url = URL(string: "https://\(server)/api/notes/featured")!
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [:]
-                request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-                
-                if let (data, _) = try? await URLSession.shared.data(for: request),
-                   let notes = try? JSONDecoder().decode([MisskeyNote].self, from: data) {
-                    return notes.map { $0.toStatus(server: self.server) } as! Entity
-                }
-                return [] as! Entity
-            } else if Entity.self == [Tag].self {
-                let url = URL(string: "https://\(server)/api/hashtags/trend")!
-                var request = URLRequest(url: url)
-                request.httpMethod = "POST"
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                let body: [String: Any] = [:]
-                request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-                
-                if let (data, _) = try? await URLSession.shared.data(for: request),
-                   let hashtags = try? JSONDecoder().decode([MisskeyTrendingHashtag].self, from: data) {
-                    return hashtags.map { Tag(name: $0.tag, url: "\(server)/tags/\($0.tag)") } as! Entity
-                }
                 return [] as! Entity
             }
-        }
         }
         
         var overridingEndpoint = endpoint
