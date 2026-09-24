@@ -467,6 +467,23 @@ extension TimelineFilter {
     offset: Int?,
     limit: Int?
   ) async throws -> [Status] {
+    if case let .hashtag(tag, accountId) = self,
+      accountId == nil,
+      client.isIceShrimpWorkaroundsEnabled
+    {
+      let cleanTag = tag.hasPrefix("#") ? String(tag.dropFirst()) : tag
+      let results: SearchResults = try await client.get(
+        endpoint: Search.search(
+          query: "#" + cleanTag,
+          type: .statuses,
+          offset: offset,
+          following: nil
+        ),
+        forceVersion: .v2
+      )
+      return results.statuses
+    }
+
 
 
 
