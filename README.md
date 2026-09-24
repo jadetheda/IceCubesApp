@@ -23,20 +23,19 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 
 **This fork is dedicated to implementing the feature request viewable in-app.**
 
-**It is just a personal project **being developed primarily using AI** *:(sorry)* so code quality is probably not great.**
+**It is just an experimental personal project **being developed using AI** *:(sorry)* so code quality is almost certainly not great.**
 
 # Features
 
 ## New in **Community Edition:**
+* **Misskey, IceShrimp, GoToSocial, and PixelFed support**
 * **Gallery Mode** (inspired by [*Hydra for Reddit*](https://github.com/dmilin1/hydra))
 * **Better inline image handling**: Wide and long images are no longer always force-cropped, posts with fewer than 5 images are displayed in a grid. (Both these options are configurable.)
 - **Hide Seen Posts** (also like [*Hydra*](https://github.com/dmilin1/hydra))
 * **Native on-device text extraction (OCR)** for generating image alt-text in the composer (credit: @ianinx!)
-* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts
-* **True "Hide Sensitive Posts" filter** (hides them completely, instead of just blurring)
-- **Hide your own posts** filter
+* **Enhanced Timeline Content Filters** now support toggling on/off media/text posts, posts by *you*, and sensitive posts, all on the fly
 * **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
-- **Content Filters for Notifications**
+- **Content Filter support for Notifications**
 * **Custom .otf and .ttf font loading**
 * **Inter font** built-in
 * **Bluesky theme set**
