@@ -25,6 +25,7 @@
 - [ ] Figure out where *the second home* of the various **Experimental Settings** should be once they're finished
 
 ### Stretch goals
+- [ ] **Bluesky AT Protocol (Petrel) Support**: Implement native Bluesky integration via the Petrel Swift lexicon library. This requires massive architectural modifications including: creating `BlueskyBackend.swift` to translate raw XRPC responses into fake Mastodon models (`Status`, `Account`, etc.), heavily rewriting `LoginView` and `AppAccount` to handle ATProtocol DID/App Password authentication flows, and fundamentally rewriting `StreamWatcher` to support the Bluesky WebSocket firehose instead of Mastodon's streaming API.
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.
 - [ ] If I load a user's profile and it comes back completely empty, we should fetch the profile content directly from the instance they belong to. **Phanpy does this, we should investigate how.**
 
