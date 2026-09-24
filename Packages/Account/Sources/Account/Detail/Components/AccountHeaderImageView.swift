@@ -93,7 +93,7 @@ struct AccountHeaderImageView: View {
   }
   
   @ViewBuilder
-  private func fallbackImageView(state: ImageState) -> some View {
+  private func fallbackImageView(state: LazyImageState) -> some View {
     if let image = state.image {
       image
         .resizable()
