@@ -175,7 +175,7 @@ extension StatusEditor {
         .navigationBarTitleDisplayMode(.inline)
       }
       .presentationDetents([.medium, .large])
-      .task {
+      .task(id: store.customEmojiContainer.count) {
         var map: [String: Emoji] = [:]
         for container in store.customEmojiContainer {
           for emoji in container.emojis {
