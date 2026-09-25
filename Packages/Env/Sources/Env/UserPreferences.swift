@@ -123,6 +123,9 @@ import SwiftUI
     @AppStorage("iceshrimp_trending_threshold") public var iceShrimpTrendingThreshold: Int = 10
     @AppStorage("iceshrimp_trending_half_life") public var iceShrimpTrendingHalfLife: Double = 24.0
 
+    @AppStorage("custom_emojis_portrait_rows") public var customEmojisPortraitRows: Int = 4
+    @AppStorage("custom_emojis_landscape_rows") public var customEmojisLandscapeRows: Int = 3
+
 
 
     init() {
@@ -340,6 +343,13 @@ import SwiftUI
   }
   public var undoScrollToTopTimeout: Double {
     didSet { storage.undoScrollToTopTimeout = undoScrollToTopTimeout }
+  }
+  
+  public var customEmojisPortraitRows: Int {
+    didSet { storage.customEmojisPortraitRows = customEmojisPortraitRows }
+  }
+  public var customEmojisLandscapeRows: Int {
+    didSet { storage.customEmojisLandscapeRows = customEmojisLandscapeRows }
   }
   public var galleryCropToSquare: Bool {
     didSet {
@@ -958,6 +968,8 @@ import SwiftUI
     showTimelineHidePinnedToggle = storage.showTimelineHidePinnedToggle
     timelinePinnedHidden = storage.timelinePinnedHidden
     showHidePostsWithoutMediaToggle = storage.showHidePostsWithoutMediaToggle
+    customEmojisPortraitRows = storage.customEmojisPortraitRows
+    customEmojisLandscapeRows = storage.customEmojisLandscapeRows
   }
 }
 

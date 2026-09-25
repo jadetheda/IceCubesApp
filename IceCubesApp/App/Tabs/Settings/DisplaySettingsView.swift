@@ -242,68 +242,77 @@ struct DisplaySettingsView: View {
     @Bindable var theme = theme
     @Bindable var userPreferences = userPreferences
     Section("settings.display.section.display") {
-      Picker("settings.display.avatar.position", selection: $theme.avatarPosition) {
-        ForEach(Theme.AvatarPosition.allCases, id: \.rawValue) { position in
-          Text(position.description).tag(position)
+      Group {
+        Picker("settings.display.avatar.position", selection: $theme.avatarPosition) {
+          ForEach(Theme.AvatarPosition.allCases, id: \.rawValue) { position in
+            Text(position.description).tag(position)
+          }
+        }
+        Picker("settings.display.avatar.shape", selection: $theme.avatarShape) {
+          ForEach(Theme.AvatarShape.allCases, id: \.rawValue) { shape in
+            Text(shape.description).tag(shape)
+          }
+        }
+        Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
+        Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
+        Toggle("Hide interaction buttons", isOn: $userPreferences.hideInteractionButtons)
+        Toggle("Show hide pinned button in filter menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
+        Toggle("Hide pinned items indicator", isOn: $userPreferences.hidePinnedItemsSymbol)
+      }
+      Group {
+        Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
+          ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
+            Text(buttonStyle.description).tag(buttonStyle)
+          }
+        }
+        Picker("settings.display.status.action-secondary", selection: $theme.statusActionSecondary) {
+          ForEach(Theme.StatusActionSecondary.allCases, id: \.rawValue) { action in
+            Text(action.description).tag(action)
+          }
+        }
+        Picker("Boost button behavior", selection: $userPreferences.boostButtonBehavior) {
+          ForEach(PreferredBoostButtonBehavior.allCases, id: \.rawValue) { behavior in
+            Text(behavior.title).tag(behavior)
+          }
+        }
+        Picker("settings.display.status.media-style", selection: $theme.statusDisplayStyle) {
+          ForEach(Theme.StatusDisplayStyle.allCases, id: \.rawValue) { buttonStyle in
+            Text(buttonStyle.description).tag(buttonStyle)
+          }
+        }
+        Toggle("Use grid layout for multiple images", isOn: $userPreferences.statusMediaGridMode)
+        Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
+        Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
+      }
+      Group {
+        Toggle("settings.display.pending-at-bottom", isOn: $userPreferences.pendingShownAtBottom)
+        Toggle("settings.display.pending-left", isOn: $userPreferences.pendingShownLeft)
+        Toggle("settings.display.show-reply-indentation", isOn: $userPreferences.showReplyIndentation)
+        if userPreferences.showReplyIndentation {
+          VStack {
+            Slider(
+              value: .init(
+                get: {
+                  Double(userPreferences.maxReplyIndentation)
+                },
+                set: { newVal in
+                  userPreferences.maxReplyIndentation = UInt(newVal)
+                }), in: 1...20, step: 1)
+            Text(
+              "settings.display.max-reply-indentation-\(String(userPreferences.maxReplyIndentation))"
+            )
+            .font(.scaledBody)
+          }
+          .alignmentGuide(.listRowSeparatorLeading) { d in
+            d[.leading]
+          }
+        }
+        Toggle("settings.display.show-account-popover", isOn: $userPreferences.showAccountPopover)
+        Toggle("Use compact layout", isOn: $theme.compactLayoutPadding)
+        NavigationLink(destination: CustomEmojisLayoutSettingsView()) {
+          Label("settings.display.custom-emojis-layout", systemImage: "face.smiling")
         }
       }
-      Picker("settings.display.avatar.shape", selection: $theme.avatarShape) {
-        ForEach(Theme.AvatarShape.allCases, id: \.rawValue) { shape in
-          Text(shape.description).tag(shape)
-        }
-      }
-      Toggle("settings.display.avatarAnimated", isOn: $theme.avatarAnimated)
-      Toggle("settings.display.full-username", isOn: $theme.displayFullUsername)
-      Toggle("Hide interaction buttons", isOn: $userPreferences.hideInteractionButtons)
-      Toggle("Show hide pinned button in filter menu", isOn: $userPreferences.showTimelineHidePinnedToggle)
-      Toggle("Hide pinned items indicator", isOn: $userPreferences.hidePinnedItemsSymbol)
-      Picker("settings.display.status.action-buttons", selection: $theme.statusActionsDisplay) {
-        ForEach(Theme.StatusActionsDisplay.allCases, id: \.rawValue) { buttonStyle in
-          Text(buttonStyle.description).tag(buttonStyle)
-        }
-      }
-      Picker("settings.display.status.action-secondary", selection: $theme.statusActionSecondary) {
-        ForEach(Theme.StatusActionSecondary.allCases, id: \.rawValue) { action in
-          Text(action.description).tag(action)
-        }
-      }
-      Picker("Boost button behavior", selection: $userPreferences.boostButtonBehavior) {
-        ForEach(PreferredBoostButtonBehavior.allCases, id: \.rawValue) { behavior in
-          Text(behavior.title).tag(behavior)
-        }
-      }
-      Picker("settings.display.status.media-style", selection: $theme.statusDisplayStyle) {
-        ForEach(Theme.StatusDisplayStyle.allCases, id: \.rawValue) { buttonStyle in
-          Text(buttonStyle.description).tag(buttonStyle)
-        }
-      }
-      Toggle("Use grid layout for multiple images", isOn: $userPreferences.statusMediaGridMode)
-      Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
-      Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
-      Toggle("settings.display.pending-at-bottom", isOn: $userPreferences.pendingShownAtBottom)
-      Toggle("settings.display.pending-left", isOn: $userPreferences.pendingShownLeft)
-      Toggle("settings.display.show-reply-indentation", isOn: $userPreferences.showReplyIndentation)
-      if userPreferences.showReplyIndentation {
-        VStack {
-          Slider(
-            value: .init(
-              get: {
-                Double(userPreferences.maxReplyIndentation)
-              },
-              set: { newVal in
-                userPreferences.maxReplyIndentation = UInt(newVal)
-              }), in: 1...20, step: 1)
-          Text(
-            "settings.display.max-reply-indentation-\(String(userPreferences.maxReplyIndentation))"
-          )
-          .font(.scaledBody)
-        }
-        .alignmentGuide(.listRowSeparatorLeading) { d in
-          d[.leading]
-        }
-      }
-      Toggle("settings.display.show-account-popover", isOn: $userPreferences.showAccountPopover)
-      Toggle("Use compact layout", isOn: $theme.compactLayoutPadding)
     }
     
 

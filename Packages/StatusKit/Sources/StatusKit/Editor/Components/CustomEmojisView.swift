@@ -101,7 +101,7 @@ extension StatusEditor {
     private func recentEmojisSection(width: CGFloat) -> some View {
       let recents = recentEmojis
       let isLandscape = verticalSizeClass == .compact
-      let rowCount = isLandscape ? 3 : 4
+      let rowCount = isLandscape ? preferences.customEmojisLandscapeRows : preferences.customEmojisPortraitRows
       let columns = max(1, Int((width + 9) / 49))
       let maxItems = columns * rowCount
       let displayRecents = Array(recents.prefix(maxItems))
@@ -132,8 +132,10 @@ extension StatusEditor {
     @ViewBuilder
     private func containerSection(for container: CategorizedEmojiContainer) -> some View {
       Section {
-        ForEach(container.emojis) { emoji in
-          emojiView(emoji)
+        LazyVGrid(columns: gridColumns, spacing: 9) {
+          ForEach(container.emojis) { emoji in
+            emojiView(emoji)
+          }
         }
       } header: {
         Text(container.categoryName)
@@ -143,6 +145,7 @@ extension StatusEditor {
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 16)
       }
+      .id(container.id)
     }
 
     @State private var gridWidth: CGFloat = 390
@@ -150,23 +153,25 @@ extension StatusEditor {
     var body: some View {
       NavigationStack {
         ScrollViewReader { (proxy: ScrollViewProxy) in
-          ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-              recentEmojisSection(width: gridWidth)
-              categoryPills(proxy: proxy)
-              LazyVGrid(columns: gridColumns, spacing: 9) {
-                ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
-                  containerSection(for: container)
+          VStack(alignment: .leading, spacing: 0) {
+            categoryPills(proxy: proxy)
+            ScrollView {
+              VStack(alignment: .leading, spacing: 0) {
+                recentEmojisSection(width: gridWidth)
+                LazyVStack(spacing: 0) {
+                  ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
+                    containerSection(for: container)
+                  }
                 }
               }
+              .background(
+                GeometryReader { (geometry: GeometryProxy) in
+                  Color.clear.task(id: geometry.size.width) {
+                    gridWidth = geometry.size.width
+                  }
+                }
+              )
             }
-            .background(
-              GeometryReader { (geometry: GeometryProxy) in
-                Color.clear.task(id: geometry.size.width) {
-                  gridWidth = geometry.size.width
-                }
-              }
-            )
           }
         }
         .toolbar {
