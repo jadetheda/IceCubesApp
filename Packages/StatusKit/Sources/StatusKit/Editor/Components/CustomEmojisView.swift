@@ -98,9 +98,8 @@ extension StatusEditor {
       .padding(.bottom, 8)
     }
 
-    private func recentEmojisSection(geometry: GeometryProxy) -> some View {
+    private func recentEmojisSection(width: CGFloat) -> some View {
       let recents = recentEmojis
-      let width = geometry.size.width
       let isLandscape = verticalSizeClass == .compact
       let rowCount = isLandscape ? 3 : 4
       let columns = max(1, Int((width + 9) / 49))
@@ -143,25 +142,31 @@ extension StatusEditor {
           .foregroundStyle(Color.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 16)
-          .id(container.id)
       }
     }
 
+    @State private var gridWidth: CGFloat = 390
+
     var body: some View {
       NavigationStack {
-        GeometryReader { (geometry: GeometryProxy) in
-          ScrollViewReader { (proxy: ScrollViewProxy) in
-            ScrollView {
-              VStack(alignment: .leading, spacing: 0) {
-                recentEmojisSection(geometry: geometry)
-                categoryPills(proxy: proxy)
-                LazyVGrid(columns: gridColumns, spacing: 9) {
-                  ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
-                    containerSection(for: container)
-                  }
+        ScrollViewReader { (proxy: ScrollViewProxy) in
+          ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+              recentEmojisSection(width: gridWidth)
+              categoryPills(proxy: proxy)
+              LazyVGrid(columns: gridColumns, spacing: 9) {
+                ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
+                  containerSection(for: container)
                 }
               }
             }
+            .background(
+              GeometryReader { (geometry: GeometryProxy) in
+                Color.clear.task(id: geometry.size.width) {
+                  gridWidth = geometry.size.width
+                }
+              }
+            )
           }
         }
         .toolbar {

@@ -110,3 +110,10 @@
 - [x] Removed the option to disable **"Require media to be loaded [to be detected as Seen]"**, since this should always remain enabled.
 - [x] Updated the app version to **2.1.4.4** in both the app metadata and the in-app **Settings** menu.
 - [ ] **Secret Feature:** Hide an optional menu called "Ice Tray" in the timeline menu that reveals a hidden list of secret items (lists, pinned statuses, etc.).
+
+## Custom Emojis Layout Settings
+- **Goal:** Allow users to dynamically configure the amount of custom emoji rows displayed in portrait vs landscape.
+- **Backend:** Add `customEmojisPortraitRows: Int = 4` and `customEmojisLandscapeRows: Int = 3` to `UserPreferences.Storage` and expose them in `UserPreferences`.
+- **UI Architecture:** Following `settings_analysis.md`, create a dedicated `CustomEmojisLayoutSettingsView.swift` containing the two Steppers to avoid UI bloat. Add a `NavigationLink` to this new sub-view from `DisplaySettingsView.swift`.
+- **Localization:** Use sentence-case keys (e.g., "Portrait rows limit") and add them to `Localizable.xcstrings`.
+- **Logic Sync:** Update `CustomEmojisView.swift` to reference `preferences.customEmojisPortraitRows` and `preferences.customEmojisLandscapeRows` instead of hardcoded `4` and `3`.
