@@ -18,48 +18,110 @@ extension StatusEditor {
       return ImagePipeline(configuration: config)
     }()
     @Environment(\.dismiss) private var dismiss
-
     @Environment(Theme.self) private var theme
+    @Environment(UserPreferences.self) private var preferences
 
     var store: EditorStore
 
+    private var recentEmojis: [Emoji] {
+      let allEmojis = store.customEmojiContainer.flatMap { $0.emojis }
+      return preferences.recentlyUsedCustomEmojis.compactMap { shortcode in
+        allEmojis.first(where: { $0.shortcode == shortcode })
+      }
+    }
+
+    private func addToRecents(_ emoji: Emoji) {
+      var recents = preferences.recentlyUsedCustomEmojis
+      if let index = recents.firstIndex(of: emoji.shortcode) {
+        recents.remove(at: index)
+      }
+      recents.insert(emoji.shortcode, at: 0)
+      if recents.count > 16 {
+        recents.removeLast()
+      }
+      preferences.recentlyUsedCustomEmojis = recents
+    }
+
+    private func emojiView(_ emoji: Emoji) -> some View {
+      LazyImage(url: URL(string: emoji.url)) { state in
+        if let image = state.image {
+          image
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .accessibilityLabel(
+              emoji.shortcode.replacingOccurrences(of: "_", with: " ")
+            )
+            .accessibilityAddTraits(.isButton)
+        } else if state.isLoading {
+          Rectangle()
+            .fill(Color.gray)
+            .accessibility(hidden: true)
+        }
+      }
+      .pipeline(emojiPipeline)
+      .frame(width: 40, height: 40)
+      .onTapGesture {
+        store.insertStatusText(text: " :\(emoji.shortcode): ")
+        addToRecents(emoji)
+      }
+    }
+
     var body: some View {
       NavigationStack {
-        ScrollView {
-          LazyVGrid(columns: [GridItem(.adaptive(minimum: 40, maximum: 40))], spacing: 9) {
-            ForEach(store.customEmojiContainer) { container in
-              Section {
-                ForEach(container.emojis) { emoji in
-                  LazyImage(url: URL(string: emoji.url)) { state in
-                    if let image = state.image {
-                      image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        
-                        .accessibilityLabel(
-                          emoji.shortcode.replacingOccurrences(of: "_", with: " ")
-                        )
-                        .accessibilityAddTraits(.isButton)
-                    } else if state.isLoading {
-                      Rectangle()
-                        .fill(Color.gray)
-                        
-                        .accessibility(hidden: true)
+        ScrollViewReader { proxy in
+          ScrollView {
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 8) {
+                ForEach(store.customEmojiContainer) { container in
+                  Button {
+                    withAnimation {
+                      proxy.scrollTo(container.id, anchor: .top)
                     }
-                  }
-                  .pipeline(emojiPipeline)
-                  .frame(width: 40, height: 40)
-                  .onTapGesture {
-                    store.insertStatusText(text: " :\(emoji.shortcode): ")
+                  } label: {
+                    Text(container.categoryName)
+                      .font(.subheadline)
+                      .padding(.horizontal, 12)
+                      .padding(.vertical, 6)
+                      .background(theme.secondaryBackgroundColor)
+                      .cornerRadius(16)
+                      .foregroundStyle(theme.labelColor)
                   }
                 }
-              } header: {
-                Text(container.categoryName)
-                  .font(.scaledHeadline)
-                  .bold()
-                  .foregroundStyle(Color.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-                  .padding(.horizontal, 16)
+              }
+              .padding(.horizontal, 16)
+              .padding(.vertical, 8)
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 40, maximum: 40))], spacing: 9) {
+              if !recentEmojis.isEmpty {
+                Section {
+                  ForEach(recentEmojis) { emoji in
+                    emojiView(emoji)
+                  }
+                } header: {
+                  Text("status.editor.emojis.recent")
+                    .font(.scaledHeadline)
+                    .bold()
+                    .foregroundStyle(Color.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                }
+              }
+
+              ForEach(store.customEmojiContainer) { container in
+                Section {
+                  ForEach(container.emojis) { emoji in
+                    emojiView(emoji)
+                  }
+                } header: {
+                  Text(container.categoryName)
+                    .font(.scaledHeadline)
+                    .bold()
+                    .foregroundStyle(Color.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 16)
+                    .id(container.id)
+                }
               }
             }
           }

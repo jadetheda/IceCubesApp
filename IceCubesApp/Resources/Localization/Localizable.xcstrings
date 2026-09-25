@@ -95660,6 +95660,16 @@
           }
         }
       }
+    },
+    "status.editor.emojis.recent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

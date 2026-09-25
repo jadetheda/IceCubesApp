@@ -13,6 +13,7 @@ import SwiftUI
     @AppStorage("show_pending_left") public var pendingShownLeft: Bool = false
 
     @AppStorage("recently_used_languages") public var recentlyUsedLanguages: [String] = []
+    @AppStorage("recently_used_custom_emojis") public var recentlyUsedCustomEmojis: [String] = []
     @AppStorage("social_keyboard_composer") public var isSocialKeyboardEnabled: Bool = false
     @AppStorage("show_language_filters") public var showLanguageFilters: Bool = false
     @AppStorage("lists_gallery_mode") public var listsGalleryMode: [String] = []
@@ -202,6 +203,11 @@ import SwiftUI
   public var recentlyUsedLanguages: [String] {
     didSet {
       storage.recentlyUsedLanguages = recentlyUsedLanguages
+    }
+  }
+  public var recentlyUsedCustomEmojis: [String] {
+    didSet {
+      storage.recentlyUsedCustomEmojis = recentlyUsedCustomEmojis
     }
   }
 
@@ -874,6 +880,7 @@ import SwiftUI
     preferredBrowser = storage.preferredBrowser
     showTranslateButton = storage.showTranslateButton
     recentlyUsedLanguages = storage.recentlyUsedLanguages
+    recentlyUsedCustomEmojis = storage.recentlyUsedCustomEmojis
     isSocialKeyboardEnabled = storage.isSocialKeyboardEnabled
     _showLanguageFilters = storage.showLanguageFilters
     listsGalleryMode = storage.listsGalleryMode
