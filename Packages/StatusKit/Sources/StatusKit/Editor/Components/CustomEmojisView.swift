@@ -18,6 +18,7 @@ extension StatusEditor {
       return ImagePipeline(configuration: config)
     }()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @Environment(Theme.self) private var theme
     @Environment(UserPreferences.self) private var preferences
 
@@ -31,15 +32,7 @@ extension StatusEditor {
       if !cachedEmojiMap.isEmpty {
         return preferences.recentlyUsedCustomEmojis.compactMap { cachedEmojiMap[$0] }
       }
-      var map: [String: Emoji] = [:]
-      for container in store.customEmojiContainer {
-        for emoji in container.emojis {
-          if map[emoji.shortcode] == nil {
-            map[emoji.shortcode] = emoji
-          }
-        }
-      }
-      return preferences.recentlyUsedCustomEmojis.compactMap { map[$0] }
+      return []
     }
 
     private func addToRecents(_ emoji: Emoji) {
@@ -108,7 +101,7 @@ extension StatusEditor {
     private func recentEmojisSection(geometry: GeometryProxy) -> some View {
       let recents = recentEmojis
       let width = geometry.size.width
-      let isLandscape = geometry.size.width > geometry.size.height
+      let isLandscape = verticalSizeClass == .compact
       let rowCount = isLandscape ? 3 : 4
       let columns = max(1, Int((width + 9) / 49))
       let maxItems = columns * rowCount
@@ -178,7 +171,7 @@ extension StatusEditor {
         .navigationBarTitleDisplayMode(.inline)
       }
       .presentationDetents([.medium, .large])
-      .task(id: store.customEmojiContainer.count) {
+      .task(id: store.customEmojiContainer) {
         var map: [String: Emoji] = [:]
         for container in store.customEmojiContainer {
           for emoji in container.emojis {
