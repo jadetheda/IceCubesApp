@@ -105,10 +105,13 @@ extension StatusEditor {
       .padding(.bottom, 8)
     }
 
-    private func recentEmojisSection(width: CGFloat) -> some View {
+    private func recentEmojisSection(geometry: GeometryProxy) -> some View {
       let recents = recentEmojis
+      let width = geometry.size.width
+      let isLandscape = geometry.size.width > geometry.size.height
+      let rowCount = isLandscape ? 3 : 4
       let columns = max(1, Int((width + 9) / 49))
-      let maxItems = columns * 3
+      let maxItems = columns * rowCount
       let displayRecents = Array(recents.prefix(maxItems))
 
       return Group {
@@ -157,7 +160,7 @@ extension StatusEditor {
           ScrollViewReader { (proxy: ScrollViewProxy) in
             ScrollView {
               VStack(alignment: .leading, spacing: 0) {
-                recentEmojisSection(width: geometry.size.width)
+                recentEmojisSection(geometry: geometry)
                 categoryPills(proxy: proxy)
                 LazyVGrid(columns: gridColumns, spacing: 9) {
                   ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in

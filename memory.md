@@ -982,3 +982,4 @@
     * Added logic to remember the most recent 100 emojis in `UserPreferences`, dynamically limiting display to 3 rows based on device width using `GeometryReader` without artificial padding.
     * Flattened AST by extracting ViewBuilder functions to avoid Exit Code 65 constraint solver OOM bugs.
   * **Impact**: Improved performance and UX for custom emoji selection while maintaining strict AST constraints for compiler safety.
+- 2026-09-25 08:05:00 UTC: Updated `recentEmojisSection` in `CustomEmojisView.swift` to accept `GeometryProxy` directly. Dynamically evaluated device orientation using `geometry.size.width > geometry.size.height` to switch between 3 rows in landscape and 4 rows in portrait mode for custom emojis, avoiding any inline `let` variables outside function blocks and removing `@ViewBuilder` traps as mandated.
