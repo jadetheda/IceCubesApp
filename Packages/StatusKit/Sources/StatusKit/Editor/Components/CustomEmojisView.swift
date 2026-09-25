@@ -4,6 +4,7 @@ import Models
 import Nuke
 import NukeUI
 import SwiftUI
+import Foundation
 
 extension StatusEditor {
   @MainActor
@@ -21,6 +22,8 @@ extension StatusEditor {
     @Environment(UserPreferences.self) private var preferences
 
     var store: EditorStore
+
+    private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40))]
 
     private var recentEmojis: [Emoji] {
       let allEmojis = store.customEmojiContainer.flatMap { $0.emojis }
@@ -42,7 +45,8 @@ extension StatusEditor {
     }
 
     private func emojiView(_ emoji: Emoji) -> some View {
-      LazyImage(url: URL(string: emoji.url)) { state in
+      let url = URL(string: emoji.url)
+      return LazyImage(url: url) { (state: NukeUI.LazyImageState) in
         if let image = state.image {
           image
             .resizable()
@@ -65,69 +69,81 @@ extension StatusEditor {
       }
     }
 
+    @ViewBuilder
+    private func categoryPills(proxy: ScrollViewProxy) -> some View {
+      ScrollView(.horizontal, showsIndicators: false) {
+        HStack(spacing: 8) {
+          ForEach(store.customEmojiContainer) { container in
+            Button {
+              withAnimation {
+                proxy.scrollTo(container.id, anchor: .top)
+              }
+            } label: {
+              Text(container.categoryName)
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(theme.secondaryBackgroundColor)
+                .cornerRadius(16)
+                .foregroundStyle(theme.labelColor)
+            }
+          }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+      }
+      .padding(.bottom, 8)
+    }
+
+    @ViewBuilder
+    private var recentEmojisSection: some View {
+      if !recentEmojis.isEmpty {
+        Text("status.editor.emojis.recent")
+          .font(.scaledHeadline)
+          .bold()
+          .foregroundStyle(Color.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.horizontal, 16)
+          .padding(.top, 16)
+
+        LazyVGrid(columns: gridColumns, spacing: 9) {
+          ForEach(recentEmojis) { emoji in
+            emojiView(emoji)
+          }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
+      }
+    }
+
+    @ViewBuilder
+    private func containerSection(for container: CategorizedEmojiContainer) -> some View {
+      Section {
+        ForEach(container.emojis) { emoji in
+          emojiView(emoji)
+        }
+      } header: {
+        Text(container.categoryName)
+          .font(.scaledHeadline)
+          .bold()
+          .foregroundStyle(Color.secondary)
+          .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.horizontal, 16)
+          .id(container.id)
+      }
+    }
+
     var body: some View {
       NavigationStack {
-        ScrollViewReader { proxy in
+        ScrollViewReader { (proxy: ScrollViewProxy) in
           ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-              
-              if !recentEmojis.isEmpty {
-                Text("status.editor.emojis.recent")
-                  .font(.scaledHeadline)
-                  .bold()
-                  .foregroundStyle(Color.secondary)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-                  .padding(.horizontal, 16)
-                  .padding(.top, 16)
-
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 40, maximum: 40))], spacing: 9) {
-                  ForEach(recentEmojis) { emoji in
-                    emojiView(emoji)
-                  }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-              }
-
-              ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                  ForEach(store.customEmojiContainer) { container in
-                    Button {
-                      withAnimation {
-                        proxy.scrollTo(container.id, anchor: .top)
-                      }
-                    } label: {
-                      Text(container.categoryName)
-                        .font(.subheadline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(theme.secondaryBackgroundColor)
-                        .cornerRadius(16)
-                        .foregroundStyle(theme.labelColor)
-                    }
-                  }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-              }
-              .padding(.bottom, 8)
-
-              LazyVGrid(columns: [GridItem(.adaptive(minimum: 40, maximum: 40))], spacing: 9) {
+              recentEmojisSection
+              categoryPills(proxy: proxy)
+              LazyVGrid(columns: gridColumns, spacing: 9) {
                 ForEach(store.customEmojiContainer) { container in
-                  Section {
-                    ForEach(container.emojis) { emoji in
-                      emojiView(emoji)
-                    }
-                  } header: {
-                    Text(container.categoryName)
-                      .font(.scaledHeadline)
-                      .bold()
-                      .foregroundStyle(Color.secondary)
-                      .frame(maxWidth: .infinity, alignment: .leading)
-                      .padding(.horizontal, 16)
-                      .id(container.id)
-                  }
+                  containerSection(for: container)
                 }
               }
             }
