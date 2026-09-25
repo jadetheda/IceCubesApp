@@ -201,7 +201,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     if foundHashtag {
         hadTrailingTags = true
         
-        let mdRegex = try! NSRegularExpression(pattern: "(?:\\s*\\[.*?\\]\\([^\\)]*(?:/tags/|/tag/)[^\\)]*\\)|\\s*\\[[#＃].*?\\]\\([^\\)]+\\))+\\s*$", options: .caseInsensitive)
+        let mdRegex = try! NSRegularExpression(pattern: "(?:\\s*\\[[^\\]]*\\]\\([^\\)]*(?:/tags/|/tag/)[^\\)]*\\)|\\s*\\[[#＃][^\\]]*\\]\\([^\\)]+\\))+\\s*$", options: .caseInsensitive)
         let mdRange = NSRange(location: 0, length: asMarkdown.utf16.count)
         asMarkdown = mdRegex.stringByReplacingMatches(in: asMarkdown, options: [], range: mdRange, withTemplate: "").trimmingCharacters(in: .whitespacesAndNewlines)
         
