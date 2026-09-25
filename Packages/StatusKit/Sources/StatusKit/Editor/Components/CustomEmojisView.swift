@@ -23,18 +23,23 @@ extension StatusEditor {
 
     var store: EditorStore
 
-    private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40))]
+    private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40), spacing: 9)]
+
+    @State private var cachedEmojiMap: [String: Emoji] = [:]
 
     private var recentEmojis: [Emoji] {
-      var emojiMap: [String: Emoji] = [:]
+      if !cachedEmojiMap.isEmpty {
+        return preferences.recentlyUsedCustomEmojis.compactMap { cachedEmojiMap[$0] }
+      }
+      var map: [String: Emoji] = [:]
       for container in store.customEmojiContainer {
         for emoji in container.emojis {
-          if emojiMap[emoji.shortcode] == nil {
-            emojiMap[emoji.shortcode] = emoji
+          if map[emoji.shortcode] == nil {
+            map[emoji.shortcode] = emoji
           }
         }
       }
-      return preferences.recentlyUsedCustomEmojis.compactMap { emojiMap[$0] }
+      return preferences.recentlyUsedCustomEmojis.compactMap { map[$0] }
     }
 
     private func addToRecents(_ emoji: Emoji) {
@@ -78,7 +83,7 @@ extension StatusEditor {
     private func categoryPills(proxy: ScrollViewProxy) -> some View {
       ScrollView(.horizontal, showsIndicators: false) {
         HStack(spacing: 8) {
-          ForEach(store.customEmojiContainer) { container in
+          ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
             Button {
               withAnimation {
                 proxy.scrollTo(container.id, anchor: .top)
@@ -100,29 +105,32 @@ extension StatusEditor {
       .padding(.bottom, 8)
     }
 
-    @ViewBuilder
     private func recentEmojisSection(width: CGFloat) -> some View {
       let recents = recentEmojis
-      if !recents.isEmpty {
-        Text("status.editor.emojis.recent")
-          .font(.scaledHeadline)
-          .bold()
-          .foregroundStyle(Color.secondary)
-          .frame(maxWidth: .infinity, alignment: .leading)
-          .padding(.horizontal, 16)
-          .padding(.top, 16)
+      let columns = max(1, Int((width + 9) / 49))
+      let maxItems = columns * 3
+      let displayRecents = Array(recents.prefix(maxItems))
 
-        let columns = max(1, Int((width + 9) / 49))
-        let maxItems = columns * 3
-        let displayRecents = Array(recents.prefix(maxItems))
+      return Group {
+        if !displayRecents.isEmpty {
+          VStack(alignment: .leading, spacing: 0) {
+            Text("status.editor.emojis.recent")
+              .font(.scaledHeadline)
+              .bold()
+              .foregroundStyle(Color.secondary)
+              .frame(maxWidth: .infinity, alignment: .leading)
+              .padding(.horizontal, 16)
+              .padding(.top, 16)
 
-        LazyVGrid(columns: gridColumns, spacing: 9) {
-          ForEach(displayRecents) { emoji in
-            emojiView(emoji)
+            LazyVGrid(columns: gridColumns, spacing: 9) {
+              ForEach(displayRecents) { emoji in
+                emojiView(emoji)
+              }
+            }
+            .padding(.top, 8)
+            .padding(.bottom, 16)
           }
         }
-        .padding(.top, 8)
-        .padding(.bottom, 16)
       }
     }
 
@@ -145,14 +153,14 @@ extension StatusEditor {
 
     var body: some View {
       NavigationStack {
-        GeometryReader { geometry in
+        GeometryReader { (geometry: GeometryProxy) in
           ScrollViewReader { (proxy: ScrollViewProxy) in
             ScrollView {
               VStack(alignment: .leading, spacing: 0) {
                 recentEmojisSection(width: geometry.size.width)
                 categoryPills(proxy: proxy)
                 LazyVGrid(columns: gridColumns, spacing: 9) {
-                  ForEach(store.customEmojiContainer) { container in
+                  ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
                     containerSection(for: container)
                   }
                 }
@@ -167,6 +175,17 @@ extension StatusEditor {
         .navigationBarTitleDisplayMode(.inline)
       }
       .presentationDetents([.medium, .large])
+      .task {
+        var map: [String: Emoji] = [:]
+        for container in store.customEmojiContainer {
+          for emoji in container.emojis {
+            if map[emoji.shortcode] == nil {
+              map[emoji.shortcode] = emoji
+            }
+          }
+        }
+        cachedEmojiMap = map
+      }
     }
   }
 }

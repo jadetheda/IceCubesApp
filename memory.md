@@ -973,3 +973,12 @@
 - 2026-09-24 00:04 UTC: Fixed @MainActor concurrency violation in AccountDetailView's translateWithDeepL by isolating the Task to the main actor. Cleaned up scratch files. Committed fixes for AccountDetailView and StatusDataController.
 - 2026-09-24 00:08 UTC: Fixed implicit non-Sendable capture warning by moving the `@MainActor` attribute from the Task closure directly to the `translateWithDeepL` method declaration in `AccountDetailView.swift`.
 - 2026-09-24 02:30 UTC: Fixed the long-standing IceShrimp tag pill loading bug. The legacy workaround incorrectly omitted `forceVersion: .v2` on the Search fallback, causing it to hit the deprecated `.v1` API and trigger an HTTP 500 crash. Workaround restored and explicitly versioned to hit `.v2`, ensuring hashtag pills route seamlessly to the Search timeline on IceShrimp instances.
+
+* **2026-09-25 07:28:00 UTC**
+  * **Description**: Rebuilt `CustomEmojisView.swift` from scratch using the provided prototype.
+  * **Fixes**:
+    * Implemented recent emojis appearing at the top with category pills below for section jumping.
+    * Used an O(1) Dictionary lookup map for parsing `recentEmojis` to prevent main-thread stuttering.
+    * Added logic to remember the most recent 100 emojis in `UserPreferences`, dynamically limiting display to 3 rows based on device width using `GeometryReader` without artificial padding.
+    * Flattened AST by extracting ViewBuilder functions to avoid Exit Code 65 constraint solver OOM bugs.
+  * **Impact**: Improved performance and UX for custom emoji selection while maintaining strict AST constraints for compiler safety.
