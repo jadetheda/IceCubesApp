@@ -107,7 +107,7 @@ extension StatusEditor {
           .padding(.horizontal, 16)
           .padding(.top, 16)
 
-        let columns = max(1, Int((width - 32 + 9) / 49))
+        let columns = max(1, Int((width + 9) / 49))
         let maxItems = columns * 3
         let displayRecents = Array(recents.prefix(maxItems))
 
@@ -116,7 +116,6 @@ extension StatusEditor {
             emojiView(emoji)
           }
         }
-        .padding(.horizontal, 16)
         .padding(.top, 8)
         .padding(.bottom, 16)
       }
