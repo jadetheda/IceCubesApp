@@ -26,10 +26,15 @@ extension StatusEditor {
     private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40))]
 
     private var recentEmojis: [Emoji] {
-      let allEmojis = store.customEmojiContainer.flatMap { $0.emojis }
-      return preferences.recentlyUsedCustomEmojis.compactMap { shortcode in
-        allEmojis.first(where: { $0.shortcode == shortcode })
+      var emojiMap: [String: Emoji] = [:]
+      for container in store.customEmojiContainer {
+        for emoji in container.emojis {
+          if emojiMap[emoji.shortcode] == nil {
+            emojiMap[emoji.shortcode] = emoji
+          }
+        }
       }
+      return preferences.recentlyUsedCustomEmojis.compactMap { emojiMap[$0] }
     }
 
     private func addToRecents(_ emoji: Emoji) {
@@ -38,7 +43,7 @@ extension StatusEditor {
         recents.remove(at: index)
       }
       recents.insert(emoji.shortcode, at: 0)
-      if recents.count > 30 {
+      if recents.count > 100 {
         recents.removeLast()
       }
       preferences.recentlyUsedCustomEmojis = recents
