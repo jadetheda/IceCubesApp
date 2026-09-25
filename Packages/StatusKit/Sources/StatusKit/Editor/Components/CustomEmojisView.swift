@@ -24,7 +24,7 @@ extension StatusEditor {
 
     var store: EditorStore
 
-    private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40), spacing: 9)]
+    private let gridColumns = [GridItem(.adaptive(minimum: 40, maximum: 40))]
 
     @State private var cachedEmojiMap: [String: Emoji] = [:]
 
