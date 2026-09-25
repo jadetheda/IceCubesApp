@@ -35,7 +35,7 @@ extension StatusEditor {
         recents.remove(at: index)
       }
       recents.insert(emoji.shortcode, at: 0)
-      if recents.count > 16 {
+      if recents.count > 14 {
         recents.removeLast()
       }
       preferences.recentlyUsedCustomEmojis = recents
