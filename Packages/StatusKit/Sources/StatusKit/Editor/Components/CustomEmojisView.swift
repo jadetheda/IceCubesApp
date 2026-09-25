@@ -38,7 +38,7 @@ extension StatusEditor {
         recents.remove(at: index)
       }
       recents.insert(emoji.shortcode, at: 0)
-      if recents.count > 14 {
+      if recents.count > 30 {
         recents.removeLast()
       }
       preferences.recentlyUsedCustomEmojis = recents
@@ -96,8 +96,9 @@ extension StatusEditor {
     }
 
     @ViewBuilder
-    private var recentEmojisSection: some View {
-      if !recentEmojis.isEmpty {
+    private func recentEmojisSection(width: CGFloat) -> some View {
+      let recents = recentEmojis
+      if !recents.isEmpty {
         Text("status.editor.emojis.recent")
           .font(.scaledHeadline)
           .bold()
@@ -106,8 +107,12 @@ extension StatusEditor {
           .padding(.horizontal, 16)
           .padding(.top, 16)
 
+        let columns = max(1, Int((width - 32 + 9) / 49))
+        let maxItems = columns * 3
+        let displayRecents = Array(recents.prefix(maxItems))
+
         LazyVGrid(columns: gridColumns, spacing: 9) {
-          ForEach(recentEmojis) { emoji in
+          ForEach(displayRecents) { emoji in
             emojiView(emoji)
           }
         }
@@ -136,14 +141,16 @@ extension StatusEditor {
 
     var body: some View {
       NavigationStack {
-        ScrollViewReader { (proxy: ScrollViewProxy) in
-          ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-              recentEmojisSection
-              categoryPills(proxy: proxy)
-              LazyVGrid(columns: gridColumns, spacing: 9) {
-                ForEach(store.customEmojiContainer) { container in
-                  containerSection(for: container)
+        GeometryReader { geometry in
+          ScrollViewReader { (proxy: ScrollViewProxy) in
+            ScrollView {
+              VStack(alignment: .leading, spacing: 0) {
+                recentEmojisSection(width: geometry.size.width)
+                categoryPills(proxy: proxy)
+                LazyVGrid(columns: gridColumns, spacing: 9) {
+                  ForEach(store.customEmojiContainer) { container in
+                    containerSection(for: container)
+                  }
                 }
               }
             }
