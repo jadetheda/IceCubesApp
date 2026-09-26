@@ -158,7 +158,7 @@ extension StatusEditor {
             ScrollView {
               VStack(alignment: .leading, spacing: 0) {
                 recentEmojisSection(width: gridWidth)
-                LazyVStack(spacing: 0) {
+                VStack(spacing: 0) {
                   ForEach(store.customEmojiContainer) { (container: CategorizedEmojiContainer) in
                     containerSection(for: container)
                   }
