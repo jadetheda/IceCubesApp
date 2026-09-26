@@ -6,7 +6,7 @@ public struct LinkHandler {
 
   public var maxId: String? {
     do {
-      let regex = try Regex("max_id=[0-9]+")
+      let regex = try Regex("max_id=[a-zA-Z0-9]+")
       if let match = rawLink.firstMatch(of: regex) {
         return match.output.first?.substring?.replacingOccurrences(of: "max_id=", with: "")
       }
