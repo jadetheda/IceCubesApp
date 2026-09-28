@@ -131,31 +131,35 @@ extension StatusEditor {
 
     @ViewBuilder
     private func containerSection(for container: CategorizedEmojiContainer) -> some View {
-      Section {
-        LazyVGrid(columns: gridColumns, spacing: 9) {
-          ForEach(container.emojis) { emoji in
-            emojiView(emoji)
-          }
-        }
-      } header: {
+      VStack(alignment: .leading, spacing: 0) {
         Text(container.categoryName)
           .font(.scaledHeadline)
           .bold()
           .foregroundStyle(Color.secondary)
           .frame(maxWidth: .infinity, alignment: .leading)
           .padding(.horizontal, 16)
+          .padding(.top, 16)
+        LazyVGrid(columns: gridColumns, spacing: 9) {
+          ForEach(container.emojis) { emoji in
+            emojiView(emoji)
+          }
+        }
+        .padding(.top, 8)
       }
       .id(container.id)
     }
 
+    @State private var scrollProxy: ScrollViewProxy?
     @State private var gridWidth: CGFloat = 390
 
     var body: some View {
       NavigationStack {
-        ScrollViewReader { (proxy: ScrollViewProxy) in
-          VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
+          if let proxy = scrollProxy {
             categoryPills(proxy: proxy)
-            ScrollView {
+          }
+          ScrollView {
+            ScrollViewReader { (proxy: ScrollViewProxy) in
               VStack(alignment: .leading, spacing: 0) {
                 recentEmojisSection(width: gridWidth)
                 VStack(spacing: 0) {
@@ -171,6 +175,9 @@ extension StatusEditor {
                   }
                 }
               )
+              .onAppear {
+                scrollProxy = proxy
+              }
             }
           }
         }
