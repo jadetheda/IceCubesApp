@@ -422,13 +422,15 @@ import SwiftUI
     if preferredTranslationType != .useDeepl {
       await translateWithInstance(userLang: userLang)
 
-      if translation == nil {
+      if translation == nil || translation?.content.asRawText.isEmpty == true {
+        translation = nil
         await translateWithDeepL(userLang: userLang)
       }
     } else {
       await translateWithDeepL(userLang: userLang)
 
-      if translation == nil {
+      if translation == nil || translation?.content.asRawText.isEmpty == true {
+        translation = nil
         await translateWithInstance(userLang: userLang)
       }
     }
