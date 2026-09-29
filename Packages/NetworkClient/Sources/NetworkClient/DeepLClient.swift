@@ -50,7 +50,7 @@ public struct DeepLClient: Sendable {
     let response = try decoder.decode(Response.self, from: result)
     if let translation = response.translations.first {
       return .init(
-        content: translation.text.removingPercentEncoding ?? "",
+        content: translation.text,
         detectedSourceLanguage: translation.detectedSourceLanguage,
         provider: "DeepL.com")
     }
