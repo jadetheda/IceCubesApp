@@ -132,6 +132,7 @@ private struct DismissToolbarItem: ToolbarContent {
 private struct AltTextToolbarItem: ToolbarContent {
   let alt: String?
   @State private var isAlertDisplayed = false
+  @State private var isDisplayingTranslation = false
 
   var body: some ToolbarContent {
     ToolbarItem(placement: .topBarTrailing) {
@@ -146,9 +147,18 @@ private struct AltTextToolbarItem: ToolbarContent {
           isPresented: $isAlertDisplayed
         ) {
           Button("alert.button.ok", action: {})
+          Button("status.action.copy-text", action: { UIPasteboard.general.string = alt })
+          #if canImport(_Translation_SwiftUI)
+            if #available(iOS 17.4, *) {
+              Button("status.action.translate", action: { isDisplayingTranslation = true })
+            }
+          #endif
         } message: {
           Text(alt)
         }
+        #if canImport(_Translation_SwiftUI)
+        .addTranslateView(isPresented: $isDisplayingTranslation, text: alt)
+        #endif
       } else {
         EmptyView()
       }
