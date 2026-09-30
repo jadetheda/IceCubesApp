@@ -432,13 +432,16 @@ extension StatusEditor {
           )
         }
         if status.text == nil || status.text?.isEmpty == true {
+          let initialText = self.textState.statusText.string
           Task {
             if let client = self.client as? FediverseClient {
               if let source: StatusSource = try? await client.get(endpoint: Statuses.source(id: status.id)) {
                 await MainActor.run {
-                  self.textEditingService.replaceText(source.text, in: self)
-                  self.spoilerText = source.spoilerText
-                  self.spoilerOn = !source.spoilerText.isEmpty
+                  if self.textState.statusText.string == initialText {
+                    self.textEditingService.replaceText(source.text, in: self)
+                    self.spoilerText = source.spoilerText ?? ""
+                    self.spoilerOn = !(source.spoilerText ?? "").isEmpty
+                  }
                 }
               }
             }
@@ -457,13 +460,16 @@ extension StatusEditor {
           return container
         }
         if status.text == nil || status.text?.isEmpty == true {
+          let initialText = self.textState.statusText.string
           Task {
             if let client = self.client as? FediverseClient {
               if let source: StatusSource = try? await client.get(endpoint: Statuses.source(id: status.id)) {
                 await MainActor.run {
-                  self.textEditingService.replaceText(source.text, in: self)
-                  self.spoilerText = source.spoilerText
-                  self.spoilerOn = !source.spoilerText.isEmpty
+                  if self.textState.statusText.string == initialText {
+                    self.textEditingService.replaceText(source.text, in: self)
+                    self.spoilerText = source.spoilerText ?? ""
+                    self.spoilerOn = !(source.spoilerText ?? "").isEmpty
+                  }
                 }
               }
             }

@@ -1013,3 +1013,13 @@
   * **Description**: Added "Copy Text" and "Translate" actions to the ALT text viewer in the fullscreen media viewer.
   * **Fixes**: `MediaUIView` only had a simple "OK" button in its ALT text alert. Duplicated the layout from `StatusRowMediaPreviewView` to include the standard copy and translate (Apple Translation framework) actions, bringing feature parity to both locations.
   * **Impact**: Users can now copy and translate image descriptions directly from the fullscreen image viewer.
+
+- **$(date -u +"%Y-%m-%d %H:%M:%S UTC")**: Fixed link protocols being dropped when editing a status. 
+  - Added `text: String?` property to `AnyStatus`, `Status`, and `ReblogStatus`.
+  - Added `StatusSource` model.
+  - Added `/api/v1/statuses/:id/source` endpoint to `Statuses` network client.
+  - Modified `EditorStore` to fetch the source text asynchronously during `prepareStatusText` if `status.text` is empty, avoiding stripping HTML properties in URLs.
+  - Updated `TextService` to use `status.text` directly if available.
+- **2026-09-30 03:56:44 UTC**: Refined previous fix for link protocols being dropped when editing a status.
+  - Made `spoilerText` optional in `StatusSource` to prevent decoding errors if the backend omits it.
+  - Modified `EditorStore` asynchronous `Statuses.source` fetch to verify that the editor text hasn't been edited by the user before overwriting it, mitigating the risk of erasing user input on slow network requests.
