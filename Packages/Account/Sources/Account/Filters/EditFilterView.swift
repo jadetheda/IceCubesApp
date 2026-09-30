@@ -253,8 +253,8 @@ struct EditFilterView: View {
     } header: {
       Text("filter.edit.contexts")
     } footer: {
-      if client.backend is IceShrimpBackend {
-        Text("To support multi-context filtering on IceShrimp, Ice Cubes saves your context preferences inside the filter's title on the server.")
+      if client.backend is IceShrimpBackend, contexts.contains(where: { $0 != .home }) {
+        Text("To support multi-context filtering on IceShrimp, Ice Cubes will save your context preferences inside the filter's title on the server.")
       }
     }
     #if !os(visionOS)
