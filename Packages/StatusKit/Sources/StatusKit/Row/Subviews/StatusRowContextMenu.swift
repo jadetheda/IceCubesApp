@@ -71,10 +71,11 @@ struct StatusRowContextMenu: View {
     if !viewModel.isRemote {
       ControlGroup {
         Button {
+          let targetStatus = viewModel.status.reblogAsAsStatus ?? viewModel.status
           #if targetEnvironment(macCatalyst) || os(visionOS)
-            openWindow(value: WindowDestinationEditor.replyToStatusEditor(status: viewModel.status))
+            openWindow(value: WindowDestinationEditor.replyToStatusEditor(status: targetStatus))
           #else
-            viewModel.routerPath.presentedSheet = .replyToStatusEditor(status: viewModel.status)
+            viewModel.routerPath.presentedSheet = .replyToStatusEditor(status: targetStatus)
           #endif
         } label: {
           Label("status.action.reply", systemImage: "arrowshape.turn.up.left")
@@ -123,10 +124,11 @@ struct StatusRowContextMenu: View {
       .controlGroupStyle(.compactMenu)
       if !isQuoteDisabled {
         Button {
+          let targetStatus = viewModel.status.reblogAsAsStatus ?? viewModel.status
           #if targetEnvironment(macCatalyst) || os(visionOS)
-            openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: viewModel.status))
+            openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: targetStatus))
           #else
-            viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: viewModel.status)
+            viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: targetStatus)
           #endif
         } label: {
           Label("status.action.quote", systemImage: "quote.bubble")

@@ -1027,3 +1027,7 @@
   * **Description**: Fixed IceShrimp/Misskey "cannot reply to a pure renote" posting errors.
   * **Fixes**: In `StatusRowActionsView`, when a user tapped the Reply or Quote button on a boosted post, the app passed `viewModel.status` (the reblog wrapper) to the editor. IceShrimp rejects attempts to reply to a boost wrapper. Updated the actions to target `viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus` so it always targets the original unwrapped post.
   * **Impact**: Users can now cleanly reply to or quote boosted statuses without triggering API rejection errors.
+* **2026-09-30 00:10:00 UTC**
+  * **Description**: Corrected a compilation error and an oversight from the previous "pure renote" reply bug fix.
+  * **Fixes**: The previous fix attempted to pass `viewModel.finalStatus` to the editor's router. However, `finalStatus` is of type `AnyStatus` (a protocol), while the router strictly expects a concrete `Status` type, resulting in a syntax failure. Corrected the unwrap logic to use `viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus ?? viewModel.status.reblogAsAsStatus ?? viewModel.status` to safely extract a concrete `Status` without protocol mismatch. Additionally, applied this exact same fix to `StatusRowContextMenu.swift`, which had also mistakenly been passing the raw boost wrapper to the editor during context menu interactions.
+  * **Impact**: Ensures the app compiles successfully while fully resolving the "pure renote" error across all UI interaction points (buttons and context menus).

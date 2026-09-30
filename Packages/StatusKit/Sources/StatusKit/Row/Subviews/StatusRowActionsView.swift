@@ -375,7 +375,7 @@ struct StatusRowActionsView: View {
       switch action {
       case .respond:
         SoundEffectManager.shared.playSound(.share)
-        let targetStatus = viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus
+        let targetStatus = (viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus) ?? (viewModel.status.reblogAsAsStatus ?? viewModel.status)
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(
             value: WindowDestinationEditor.replyToStatusEditor(
@@ -395,7 +395,7 @@ struct StatusRowActionsView: View {
         await statusDataController.toggleReblog(remoteStatus: viewModel.localStatusId)
       case .quote:
         SoundEffectManager.shared.playSound(.boost)
-        let targetStatus = viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus
+        let targetStatus = (viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus) ?? (viewModel.status.reblogAsAsStatus ?? viewModel.status)
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: targetStatus))
         #else
