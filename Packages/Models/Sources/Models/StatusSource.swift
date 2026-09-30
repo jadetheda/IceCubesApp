@@ -8,6 +8,6 @@ public struct StatusSource: Codable, Sendable {
   enum CodingKeys: String, CodingKey {
     case id
     case text
-    case spoilerText = "spoiler_text"
+    case spoilerText
   }
 }

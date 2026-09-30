@@ -1037,3 +1037,10 @@
   * **Description**: Added explanatory footer regarding the IceShrimp filter title polyfill.
   * **Fixes**: Reintroduced the footer to `EditFilterView`'s context section. It now dynamically explains that the user's multi-context preferences are saved to the filter's title on the server, instead of saying the feature is entirely unsupported.
   * **Impact**: Improves transparency for the user.
+* **2026-09-30 01:13:00 UTC**
+  * **Description**: Pre-build code audit and Exit Code 65 neutralizations.
+  * **Fixes**: Resolved multiple issues flagged by the static analysis subagent:
+    1. Fixed a comma-separated boolean tuple inside `EditFilterView`'s footer ViewBuilder (AST Trap 1) by nesting the `if` statements.
+    2. Added missing `import UIKit` to `MediaUIView.swift` and `StatusRowContextMenu.swift` to prevent the constraint solver from hanging when evaluating `UIPasteboard` closures (AST Trap 5).
+    3. Removed the explicit `"spoiler_text"` string mapping from `StatusSource.swift`'s `CodingKeys`. Because `MastodonBackend` natively decodes with `.convertFromSnakeCase`, the key was already converted to `spoilerText` by the time the custom key mapping evaluated it, causing a silent JSON erasure failure.
+  * **Impact**: Preempts three fatal `Exit Code 65` compilation timeouts and one silent data erasure bug before the next CI build.

@@ -5,6 +5,7 @@ import Nuke
 import Photos
 import QuickLook
 import SwiftUI
+import UIKit
 
 public struct MediaUIView: View, @unchecked Sendable {
   private let data: [DisplayData]
