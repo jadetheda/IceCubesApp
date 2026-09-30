@@ -375,13 +375,14 @@ struct StatusRowActionsView: View {
       switch action {
       case .respond:
         SoundEffectManager.shared.playSound(.share)
+        let targetStatus = viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(
             value: WindowDestinationEditor.replyToStatusEditor(
-              status: viewModel.localStatus ?? viewModel.status))
+              status: targetStatus))
         #else
           viewModel.routerPath.presentedSheet = .replyToStatusEditor(
-            status: viewModel.localStatus ?? viewModel.status)
+            status: targetStatus)
         #endif
       case .favorite:
         SoundEffectManager.shared.playSound(.favorite)
@@ -394,10 +395,11 @@ struct StatusRowActionsView: View {
         await statusDataController.toggleReblog(remoteStatus: viewModel.localStatusId)
       case .quote:
         SoundEffectManager.shared.playSound(.boost)
+        let targetStatus = viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus
         #if targetEnvironment(macCatalyst) || os(visionOS)
-          openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: viewModel.status))
+          openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: targetStatus))
         #else
-          viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: viewModel.status)
+          viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: targetStatus)
         #endif
       default:
         break
