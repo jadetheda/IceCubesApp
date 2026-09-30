@@ -4,6 +4,7 @@ import Models
 public enum Statuses: Endpoint {
   case postStatus(json: StatusData)
   case editStatus(id: String, json: StatusData)
+  case source(id: String)
   case status(id: String)
   case context(id: String)
   case favorite(id: String)
@@ -27,6 +28,8 @@ public enum Statuses: Endpoint {
       "statuses"
     case .status(let id):
       "statuses/\(id)"
+    case .source(let id):
+      "statuses/\(id)/source"
     case .editStatus(let id, _):
       "statuses/\(id)"
     case .context(let id):

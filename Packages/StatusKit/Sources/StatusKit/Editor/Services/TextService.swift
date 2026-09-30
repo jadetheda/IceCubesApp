@@ -397,6 +397,9 @@ extension StatusEditor {
     }
 
     private func editText(for status: Status) -> String {
+      if let text = status.text, !text.isEmpty {
+        return text
+      }
       var rawText = status.content.asRawText.escape()
       for mention in status.mentions {
         rawText = rawText.replacingOccurrences(of: "@\(mention.username)", with: "@\(mention.acct)")

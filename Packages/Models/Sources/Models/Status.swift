@@ -39,6 +39,7 @@ public protocol AnyStatus {
   var isHidden: Bool { get }
   var quote: Quote? { get }
   var quoteApproval: QuoteApproval? { get }
+  var text: String? { get }
 }
 
 public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable {
@@ -81,6 +82,7 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
   public let tags: [Tag]
   public let quote: Quote?
   public let quoteApproval: QuoteApproval?
+  public let text: String?
 
   public var isHidden: Bool {
     filtered?.first?.filter.filterAction == .hide
@@ -99,7 +101,7 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
     application: Application?, inReplyToId: String?, inReplyToAccountId: String?,
     visibility: Visibility, poll: Poll?, spoilerText: HTMLString, filtered: [Filtered]?,
     sensitive: Bool, language: String?, tags: [Tag] = [], quote: Quote?, quotesCount: Int?,
-    quoteApproval: QuoteApproval?
+    quoteApproval: QuoteApproval?, text: String? = nil
   ) {
     self.id = id
     self.content = content
@@ -132,6 +134,7 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
     self.quote = quote
     self.quotesCount = quotesCount
     self.quoteApproval = quoteApproval
+    self.text = text
   }
 
   public static func placeholder(forSettings: Bool = false, language: String? = nil) -> Status {
@@ -213,7 +216,8 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
         tags: reblog.tags,
         quote: reblog.quote,
         quotesCount: reblog.quotesCount,
-        quoteApproval: reblog.quoteApproval)
+        quoteApproval: reblog.quoteApproval,
+        text: reblog.text)
     }
     return nil
   }
@@ -268,6 +272,7 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
   public let tags: [Tag]
   public let quote: Quote?
   public let quoteApproval: QuoteApproval?
+  public let text: String?
 
   public var isHidden: Bool {
     filtered?.first?.filter.filterAction == .hide
@@ -280,7 +285,8 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
     bookmarked: Bool?, emojis: [Emoji], url: String?, application: Application? = nil,
     inReplyToId: String?, inReplyToAccountId: String?, visibility: Visibility, poll: Poll?,
     spoilerText: HTMLString, filtered: [Filtered]?, sensitive: Bool, language: String?,
-    tags: [Tag] = [], quote: Quote?, quotesCount: Int?, quoteApproval: QuoteApproval?
+    tags: [Tag] = [], quote: Quote?, quotesCount: Int?, quoteApproval: QuoteApproval?,
+    text: String? = nil
   ) {
     self.id = id
     self.content = content
@@ -312,6 +318,7 @@ public final class ReblogStatus: AnyStatus, Codable, Identifiable, Equatable, Ha
     self.quote = quote
     self.quotesCount = quotesCount
     self.quoteApproval = quoteApproval
+    self.text = text
   }
 }
 

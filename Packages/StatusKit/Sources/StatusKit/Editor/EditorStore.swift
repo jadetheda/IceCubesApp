@@ -431,6 +431,19 @@ extension StatusEditor {
             originalImage: nil
           )
         }
+        if status.text == nil || status.text?.isEmpty == true {
+          Task {
+            if let client = self.client as? FediverseClient {
+              if let source: StatusSource = try? await client.get(endpoint: Statuses.source(id: status.id)) {
+                await MainActor.run {
+                  self.textEditingService.replaceText(source.text, in: self)
+                  self.spoilerText = source.spoilerText
+                  self.spoilerOn = !source.spoilerText.isEmpty
+                }
+              }
+            }
+          }
+        }
       case .redraft(let status):
         mediaContainers = status.mediaAttachments.map { attachment in
           let container = MediaContainer.uploaded(
@@ -442,6 +455,19 @@ extension StatusEditor {
             pendingMediaDescriptions.altTextByContainerId[container.id] = description
           }
           return container
+        }
+        if status.text == nil || status.text?.isEmpty == true {
+          Task {
+            if let client = self.client as? FediverseClient {
+              if let source: StatusSource = try? await client.get(endpoint: Statuses.source(id: status.id)) {
+                await MainActor.run {
+                  self.textEditingService.replaceText(source.text, in: self)
+                  self.spoilerText = source.spoilerText
+                  self.spoilerOn = !source.spoilerText.isEmpty
+                }
+              }
+            }
+          }
         }
       default:
         break
