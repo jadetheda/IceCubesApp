@@ -23,6 +23,36 @@ public struct ServerFilter: Codable, Identifiable, Hashable, Sendable {
   public let expiresIn: Int?
   public let expiresAt: ServerDate?
 
+  enum CodingKeys: String, CodingKey {
+    case id, title, keywords, filterAction, context, expiresIn, expiresAt
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.id = try container.decode(String.self, forKey: .id)
+    self.keywords = try container.decode([Keyword].self, forKey: .keywords)
+    self.filterAction = try container.decode(Action.self, forKey: .filterAction)
+    self.expiresIn = try container.decodeIfPresent(Int.self, forKey: .expiresIn)
+    self.expiresAt = try container.decodeIfPresent(ServerDate.self, forKey: .expiresAt)
+
+    let rawTitle = try container.decode(String.self, forKey: .title)
+    if let regex = try? NSRegularExpression(pattern: "\\[iceshrimp_contexts:([a-zA-Z,]*)\\]$"),
+       let match = regex.firstMatch(in: rawTitle, range: NSRange(rawTitle.startIndex..., in: rawTitle)),
+       let contextRange = Range(match.range(at: 1), in: rawTitle),
+       let fullRange = Range(match.range(at: 0), in: rawTitle) {
+      
+      let contextsString = rawTitle[contextRange]
+      self.context = contextsString.split(separator: ",").compactMap { Context(rawValue: String($0)) }
+      
+      var cleanTitle = rawTitle
+      cleanTitle.removeSubrange(fullRange)
+      self.title = cleanTitle.trimmingCharacters(in: .whitespaces)
+    } else {
+      self.title = rawTitle
+      self.context = try container.decode([Context].self, forKey: .context)
+    }
+  }
+
   public func hasExpiry() -> Bool {
     expiresAt != nil
   }

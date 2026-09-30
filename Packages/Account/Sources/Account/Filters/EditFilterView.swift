@@ -39,9 +39,20 @@ struct EditFilterView: View {
         String(expirySelection.rawValue + 50)
       }
 
+    let finalTitle: String
+    let finalContexts: [ServerFilter.Context]
+    if client.backend is IceShrimpBackend {
+      let contextsString = contexts.map { $0.rawValue }.joined(separator: ",")
+      finalTitle = "\(title) [iceshrimp_contexts:\(contextsString)]"
+      finalContexts = [.home]
+    } else {
+      finalTitle = title
+      finalContexts = contexts
+    }
+
     return ServerFilterData(
-      title: title,
-      context: contexts,
+      title: finalTitle,
+      context: finalContexts,
       filterAction: filterAction,
       expiresIn: expiresIn)
   }
@@ -80,9 +91,6 @@ struct EditFilterView: View {
     .onAppear {
       if filter == nil {
         focusedField = .title
-      }
-      if client.backend is IceShrimpBackend {
-        contexts = [.home]
       }
     }
     .toolbar {
@@ -214,12 +222,9 @@ struct EditFilterView: View {
     #endif
   }
 
-  private var isIceShrimpBackend: Bool {
-    client.backend is IceShrimpBackend
-  }
 
   private func isContextDisabled(_ context: ServerFilter.Context) -> Bool {
-    isSavingFilter || (isIceShrimpBackend && context != .home)
+    isSavingFilter
   }
 
   private var contextsSection: some View {
@@ -247,10 +252,6 @@ struct EditFilterView: View {
       }
     } header: {
       Text("filter.edit.contexts")
-    } footer: {
-      if isIceShrimpBackend {
-        Text("IceShrimp instances only support the Home filter context.")
-      }
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
