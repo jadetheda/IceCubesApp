@@ -1,5 +1,8 @@
 # 1. Core Mandates & Workflows
 
+## 🚀 Default CI/CD Strategy
+- **CRITICAL RULE**: GitHub Actions (`build-ipa.yml`) is the strict default CI for this project. Codemagic is deprecated due to billing limitations. Whenever the user requests a build, always default to using the GitHub CLI (`gh workflow run "Build Unsigned IPA" --ref main`) rather than the Codemagic trigger scripts.
+
 ## 📝 Activity & Learning Logging Guideline
 - You MUST append every single modification, optimization, bug fix, and structural change you perform to `/memory.md` under the "## 🪵 Activity Log" section.
 - **CRITICAL RESTRICTION**: Do NOT write in `/memory.md` about changes that do not concern the IceCubesApp native codebase (e.g., do not log changes made to the Web UI, `scripts/companion_server.js`, or the local AI Studio environment/dashboard). `/memory.md` is strictly for tracking the Swift/iOS app's evolution.
@@ -533,3 +536,4 @@ struct NotificationsView: View {
 - Keep views focused and single-purpose
 - Use descriptive names for state enums
 - Write SwiftUI code that looks and feels like SwiftUI
+
