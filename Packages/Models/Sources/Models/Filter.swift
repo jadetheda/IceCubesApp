@@ -43,7 +43,7 @@ public struct Filter: Codable, Identifiable, Equatable, Hashable {
 
     let rawTitle = try container.decode(String.self, forKey: .title)
     if let regex = try? NSRegularExpression(pattern: "\\[iceshrimp_contexts:([a-zA-Z,]*)\\]$"),
-       let match = regex.firstMatch(in: rawTitle, range: NSRange(rawTitle.startIndex..., in: rawTitle)),
+       let match = regex.firstMatch(in: rawTitle, range: NSRange(location: 0, length: rawTitle.utf16.count)),
        let contextRange = Range(match.range(at: 1), in: rawTitle),
        let fullRange = Range(match.range(at: 0), in: rawTitle) {
       
