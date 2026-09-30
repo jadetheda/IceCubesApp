@@ -1023,3 +1023,7 @@
 - **2026-09-30 03:56:44 UTC**: Refined previous fix for link protocols being dropped when editing a status.
   - Made `spoilerText` optional in `StatusSource` to prevent decoding errors if the backend omits it.
   - Modified `EditorStore` asynchronous `Statuses.source` fetch to verify that the editor text hasn't been edited by the user before overwriting it, mitigating the risk of erasing user input on slow network requests.
+* **2026-09-30 00:04:00 UTC**
+  * **Description**: Fixed IceShrimp/Misskey "cannot reply to a pure renote" posting errors.
+  * **Fixes**: In `StatusRowActionsView`, when a user tapped the Reply or Quote button on a boosted post, the app passed `viewModel.status` (the reblog wrapper) to the editor. IceShrimp rejects attempts to reply to a boost wrapper. Updated the actions to target `viewModel.localStatus?.reblog ?? viewModel.localStatus ?? viewModel.finalStatus` so it always targets the original unwrapped post.
+  * **Impact**: Users can now cleanly reply to or quote boosted statuses without triggering API rejection errors.
