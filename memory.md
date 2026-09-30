@@ -1009,3 +1009,7 @@
     1. **Empty Content Fallback**: IceShrimp instances lacking a translation backend return a valid `Translation` JSON object with an empty `content` field. The app checked `if translation == nil` to fallback to DeepL/Apple, which failed since the object wasn't nil. Added an explicit `translation.content.asRawText.isEmpty` check to trigger the fallback chain correctly.
     2. **DeepL Destructive Percent Decoding**: DeepL returns plain UTF-8 text, but the app was running `.removingPercentEncoding` on the response. If the text contained a literal percent sign (e.g. `50%OFF`), the URL-decoder crashed trying to parse `%OF` as a hex code, returning `nil` and blanking the entire translation. Removed the `.removingPercentEncoding` call entirely.
   * **Impact**: Prevents translations containing percentages from disappearing, and ensures the fallback chain triggers correctly on non-configured fediverse backends.
+* **2026-09-29 23:25:00 UTC**
+  * **Description**: Added "Copy Text" and "Translate" actions to the ALT text viewer in the fullscreen media viewer.
+  * **Fixes**: `MediaUIView` only had a simple "OK" button in its ALT text alert. Duplicated the layout from `StatusRowMediaPreviewView` to include the standard copy and translate (Apple Translation framework) actions, bringing feature parity to both locations.
+  * **Impact**: Users can now copy and translate image descriptions directly from the fullscreen image viewer.
