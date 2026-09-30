@@ -65,6 +65,8 @@
 - [x] The counter is showing posts I can't see? Maybe scrolling up is still broke
 - [x] Boosts aren't being correctly detected as the same post as the original it seems (at least on Local, and at least when they're my own boosts)
 - [x] ACTUALLY, if they're my own boost, they should just always be hidden as Seen
+- [x] **Bug:** IceShrimp liked posts timeline stops paginating after the first page because IceShrimp uses alphanumeric pagination IDs instead of Mastodon's numeric IDs.
+- [x] **Bug:** Translating DeepL posts containing literal percentage signs (like `50%OFF`) completely blanks the translation out because the URL-decoder panics. Also handled IceShrimp returning empty translations when no provider is configured.
 
 ## Gallery Mode & Media Layout Enhancements
 
@@ -112,8 +114,9 @@
 - [ ] **Secret Feature:** Hide an optional menu called "Ice Tray" in the timeline menu that reveals a hidden list of secret items (lists, pinned statuses, etc.).
 
 ## Custom Emojis Layout Settings
-- **Goal:** Allow users to dynamically configure the amount of custom emoji rows displayed in portrait vs landscape.
-- **Backend:** Add `customEmojisPortraitRows: Int = 4` and `customEmojisLandscapeRows: Int = 3` to `UserPreferences.Storage` and expose them in `UserPreferences`.
-- **UI Architecture:** Following `settings_analysis.md`, create a dedicated `CustomEmojisLayoutSettingsView.swift` containing the two Steppers to avoid UI bloat. Add a `NavigationLink` to this new sub-view from `DisplaySettingsView.swift`.
-- **Localization:** Use sentence-case keys (e.g., "Portrait rows limit") and add them to `Localizable.xcstrings`.
-- **Logic Sync:** Update `CustomEmojisView.swift` to reference `preferences.customEmojisPortraitRows` and `preferences.customEmojisLandscapeRows` instead of hardcoded `4` and `3`.
+- [x] **Goal:** Allow users to dynamically configure the amount of custom emoji rows displayed in portrait vs landscape.
+- [x] **Backend:** Add `customEmojisPortraitRows: Int = 4` and `customEmojisLandscapeRows: Int = 3` to `UserPreferences.Storage` and expose them in `UserPreferences`.
+- [x] **UI Architecture:** Following `settings_analysis.md`, create a dedicated `CustomEmojisLayoutSettingsView.swift` containing the two Steppers to avoid UI bloat. Add a `NavigationLink` to this new sub-view from `DisplaySettingsView.swift`.
+- [x] **Localization:** Use sentence-case keys (e.g., "Portrait rows limit") and add them to `Localizable.xcstrings`.
+- [x] **Logic Sync:** Update `CustomEmojisView.swift` to reference `preferences.customEmojisPortraitRows` and `preferences.customEmojisLandscapeRows` instead of hardcoded `4` and `3`.
+- [x] **Bug Fix:** Fixed the category pills so they accurately jump to their respective emoji sections without being swallowed by LazyVGrid flattened contexts.
