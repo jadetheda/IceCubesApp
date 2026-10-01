@@ -63,6 +63,7 @@ struct AccountSettingsView: View {
         Label(
           "settings.account.cached-posts-\(String(cachedPostsCount))", systemImage: "internaldrive")
         Label("Cached Emojis: \(String(cachedEmojisCount))", systemImage: "face.smiling")
+          .environment(\.symbolVariants, .none)
         Button("settings.account.action.delete-cache", role: .destructive) {
           Task {
             await timelineCache.clearCache(for: appAccountsManager.currentClient.id)
