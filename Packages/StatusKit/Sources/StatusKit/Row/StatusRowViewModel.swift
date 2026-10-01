@@ -126,15 +126,15 @@ import SwiftUI
 
   var photoExportMetadata: PhotoExportMetadata {
     var urlStr: URL? = nil
-    if let stringUrl = status.url {
+    if let stringUrl = finalStatus.url {
       urlStr = URL(string: stringUrl)
     }
-    let text: String? = status.content.asRawText
+    let text: String? = finalStatus.content.asRawText
     
     var tagsList: [String]? = nil
-    if !status.tags.isEmpty {
+    if !finalStatus.tags.isEmpty {
       var extracted = [String]()
-      for tag in status.tags {
+      for tag in finalStatus.tags {
         extracted.append(tag.name)
       }
       tagsList = extracted
