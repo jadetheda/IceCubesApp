@@ -71,10 +71,48 @@ public struct PluraldawnDecoder {
         
         let payload = extractedData.subdata(in: magicRange.upperBound..<extractedData.count)
         
-        // Decompress using zlib
-        guard let decompressed = try? (payload as NSData).decompressed(using: .zlib) as Data else { return nil }
+        // Decompress using Compression framework to gracefully handle trailing garbage
+        let decompressed = payload.withUnsafeBytes { srcPointer -> Data? in
+            guard let srcBase = srcPointer.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return nil }
+            
+            var stream = compression_stream()
+            guard compression_stream_init(&stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else { return nil }
+            defer { compression_stream_destroy(&stream) }
+            
+            stream.src_ptr = srcBase
+            stream.src_size = payload.count
+            
+            let bufferSize = 32768
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+            defer { buffer.deallocate() }
+            
+            var result = Data()
+            
+            while true {
+                stream.dst_ptr = buffer
+                stream.dst_size = bufferSize
+                
+                let status = compression_stream_process(&stream, 0)
+                
+                if status == COMPRESSION_STATUS_OK || status == COMPRESSION_STATUS_END {
+                    let decodedCount = bufferSize - stream.dst_size
+                    if decodedCount > 0 {
+                        result.append(buffer, count: decodedCount)
+                    }
+                    if status == COMPRESSION_STATUS_END {
+                        return result
+                    }
+                    if stream.dst_size > 0 && stream.src_size == 0 {
+                        // Needed more source data but we are out, stream may be truncated
+                        return nil 
+                    }
+                } else {
+                    return nil
+                }
+            }
+        }
         
-        guard let string = String(data: decompressed, encoding: .utf8) else { return nil }
+        guard let decompressedData = decompressed, let string = String(data: decompressedData, encoding: .utf8) else { return nil }
         
         let groups = string.components(separatedBy: "\u{001D}")
         guard groups.count >= 5 else { return nil }

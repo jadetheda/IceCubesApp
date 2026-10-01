@@ -10,7 +10,7 @@ import Models
       return cached
     }
     let system = await PluraldawnDecoder.decode(from: avatarURL)
-    cache[avatarURL] = system
+    cache[avatarURL] = .some(system)
     return system
   }
 }

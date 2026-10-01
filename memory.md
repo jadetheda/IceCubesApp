@@ -1102,3 +1102,11 @@
   * **Impact**: Ensures that when users tap the "Save Photo" toolbar button in the full-screen media viewer for a boosted post, it properly associates the correct author/metadata to the downloaded photo instead of being empty or failing.
 - 2026-10-01 13:25 UTC: Cleaned up unused postUrl parameter in downloadAllMedia and refactored downloadableMedia to use finalStatus.mediaAttachments instead of manual fallback logic.
 - 2026-10-01 13:24 UTC: Committed the fix to `IceCubesApp+Scene.swift` so that the fullscreen media viewer correctly receives the `exportMetadata` from `QuickLook`, resolving the issue where boosted posts saved the booster's metadata instead of the original author's metadata.
+
+## 🪵 Activity Log Update (2026-10-01)
+- Implemented `PluraldawnDecoder`, `PluraldawnCache`, and `PluraldawnSystem` models to add support for extracting PlDw2 steganography from images.
+- Added strict security whitelisting for Pluraldawn avatar URLs.
+- **2026-10-01T20:33:00Z**:
+  - **Description**: Fixed `PluraldawnDecoder.swift` and `PluraldawnCache.swift` bugs from the initial implementation attempt.
+  - **Fixes**: Replaced high-level `NSData.decompressed(using: .zlib)` with a direct `compression_stream` loop in `PluraldawnDecoder` to properly ignore trailing garbage data which appended to the steganography payload. Modified `PluraldawnCache.swift` to use `.some(system)` when caching `nil` values, preventing the dictionary from accidentally deleting the key.
+  - **Impact**: Ensures accurate and robust steganography extraction without crashing or discarding data due to trailing padding, and prevents cache misses on valid decode failures.
