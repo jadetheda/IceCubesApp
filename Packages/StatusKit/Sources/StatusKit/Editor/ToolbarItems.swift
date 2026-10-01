@@ -261,7 +261,12 @@ extension StatusEditor {
           },
           set: { draft in
             if let draft {
-              focusedStore.insertStatusText(text: draft.content)
+              let currentText = focusedStore.statusText.string.trimmingCharacters(in: .whitespacesAndNewlines)
+              if currentText.isEmpty || draft.content.hasPrefix(currentText) {
+                focusedStore.replaceTextWith(text: draft.content)
+              } else {
+                focusedStore.insertStatusText(text: draft.content)
+              }
             }
           }))
     }
