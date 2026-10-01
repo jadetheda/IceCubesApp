@@ -5,7 +5,7 @@ import Foundation
 import Models
 import NetworkClient
 import SwiftUI
-
+import UIKit
 @MainActor
 public struct StatusRowView: View {
   @Environment(\.openWindow) private var openWindow
@@ -50,6 +50,21 @@ public struct StatusRowView: View {
     return theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons
   }
 
+  private var selectableTextContent: NSAttributedString {
+    viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+      ?? viewModel.status.content.asSafeMarkdownAttributedString
+  }
+
+  private var activeFilter: Filtered? {
+    if viewModel.isFiltered {
+      return viewModel.filter
+    }
+    return nil
+  }
+
+  private var showReblogAndReply: Bool {
+    !isCompact && context != .detail
+  }
 
   public var body: some View {
     HStack(spacing: 0) {
@@ -68,7 +83,7 @@ public struct StatusRowView: View {
         }
       }
       VStack(alignment: .leading, spacing: .statusComponentSpacing) {
-        if viewModel.isFiltered, let filter = viewModel.filter {
+        if let filter = activeFilter {
           switch filter.filter.filterAction {
           case .warn:
             makeFilterView(filter: filter.filter)
@@ -76,7 +91,7 @@ public struct StatusRowView: View {
             EmptyView()
           }
         } else {
-          if !isCompact && context != .detail {
+          if showReblogAndReply {
             Group {
               StatusRowTagView(viewModel: viewModel)
               StatusRowReblogView(viewModel: viewModel)
@@ -88,9 +103,8 @@ public struct StatusRowView: View {
                 ? 0 : AvatarView.FrameConfig.status.width + .statusColumnsSpacing)
           }
           HStack(alignment: .top, spacing: .statusColumnsSpacing) {
-            if !isCompact,
-              theme.avatarPosition == .leading
-            {
+            if !isCompact {
+              if theme.avatarPosition == .leading {
               AvatarView(viewModel.finalStatus.account.avatar)
                 .accessibility(addTraits: .isButton)
                 .contentShape(Circle())
@@ -98,6 +112,7 @@ public struct StatusRowView: View {
                 .onTapGesture {
                   viewModel.navigateToAccountDetail(account: viewModel.finalStatus.account)
                 }
+              }
             }
             VStack(alignment: .leading, spacing: .statusComponentSpacing) {
               if !isCompact {
@@ -110,8 +125,10 @@ public struct StatusRowView: View {
                   viewModel.navigateToDetail()
                 }
                 .accessibilityActions {
-                  if isFocused, viewModel.showActions {
-                    accessibilityActions
+                  if isFocused {
+                    if viewModel.showActions {
+                      accessibilityActions
+                    }
                   }
                 }
               if shouldShowActions {
@@ -122,8 +139,10 @@ public struct StatusRowView: View {
                 .tint(isFocused ? theme.tintColor : .gray)
               }
 
-              if isFocused, !isCompact {
+              if isFocused {
+                if !isCompact {
                 StatusRowDetailView(viewModel: viewModel)
+                }
               }
             }
           }
@@ -193,8 +212,12 @@ public struct StatusRowView: View {
       viewModel.navigateToDetail()
     }
     .accessibilityActions {
-      if !isFocused, viewModel.showActions, accessibilityVoiceOverEnabled {
-        accessibilityActions
+      if !isFocused {
+        if viewModel.showActions {
+          if accessibilityVoiceOverEnabled {
+            accessibilityActions
+          }
+        }
       }
     }
     .background {
@@ -255,10 +278,7 @@ public struct StatusRowView: View {
     }
     .sheet(isPresented: $isShareAsImageSheetPresented, content: makeShareAsImageSheet)
     .sheet(isPresented: $showSelectableText) {
-      let content =
-        viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-        ?? viewModel.status.content.asSafeMarkdownAttributedString
-      StatusRowSelectableTextView(content: content)
+      StatusRowSelectableTextView(content: selectableTextContent)
     }
     .environment(
       StatusDataControllerProvider.shared.dataController(

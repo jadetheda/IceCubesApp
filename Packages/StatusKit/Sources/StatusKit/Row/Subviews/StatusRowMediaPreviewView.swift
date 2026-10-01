@@ -5,7 +5,7 @@ import Models
 import Nuke
 import NukeUI
 import SwiftUI
-
+import UIKit
 @MainActor
 private class MediaLoadTracker { var loadedIds = Set<String>() }
 
@@ -226,10 +226,18 @@ private struct MediaPreview: View {
                 .resizable()
                 .onAppear {
                   onLoaded()
-                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
-                    let ratio = size.width / size.height
-                    DispatchQueue.main.async {
-                      loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                  if isStandalone {
+                    if displayData.standaloneAspectRatio == nil {
+                      if loadedAspectRatio == nil {
+                        if let size = state.imageContainer?.image.size {
+                          if size.height > 0 {
+                            let ratio = size.width / size.height
+                            DispatchQueue.main.async {
+                              loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -378,12 +386,10 @@ struct AltTextButton: View {
   @State private var isDisplayingTranslation = false
 
   var body: some View {
-    if !isInCaptureMode,
-      let text,
-      !text.isEmpty,
-      !isCompact,
-      preferences.showAltTextForMedia
-    {
+    if !isInCaptureMode {
+      if let text, !text.isEmpty {
+        if !isCompact {
+          if preferences.showAltTextForMedia {
       Button {
         isDisplayingAlert = true
       } label: {
@@ -423,6 +429,9 @@ struct AltTextButton: View {
         maxHeight: .infinity,
         alignment: .bottomTrailing
       )
+          }
+        }
+      }
     }
   }
 }
@@ -563,8 +572,9 @@ private struct FeaturedImagePreView: View {
     let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo)
 
     return Group {
-      if let data = displayData, let namespace = quickLook.namespace {
-        _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
+      if let data = displayData {
+        if let namespace = quickLook.namespace {
+          _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
           RoundedRectangle(cornerRadius: 10).fill(Color.gray)
             .overlay {
@@ -605,6 +615,8 @@ private struct FeaturedImagePreView: View {
         )
       }
       .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+      }
     }
     }
   }

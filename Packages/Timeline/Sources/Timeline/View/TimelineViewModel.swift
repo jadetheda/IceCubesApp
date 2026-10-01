@@ -1,4 +1,5 @@
 import Env
+import Foundation
 import Models
 import NetworkClient
 import Observation
@@ -252,9 +253,8 @@ import Nuke
       object: nil,
       queue: .main
     ) { [weak self] _ in
-      guard let self else { return }
-      Task { @MainActor in
-        await self.hideSeenPosts()
+      Task { @MainActor [weak self] in
+        await self?.hideSeenPosts()
       }
     }
     
@@ -263,8 +263,9 @@ import Nuke
       object: nil,
       queue: .main
     ) { [weak self] notification in
-      guard let self, let status = notification.object as? Status else { return }
-      Task { @MainActor in
+      guard let status = notification.object as? Status else { return }
+      Task { @MainActor [weak self] in
+        guard let self else { return }
         guard let originalIndex = await self.datasource.indexOf(statusId: status.id) else { return }
         if status.favourited == true || status.reblogged == true || status.reblog?.favourited == true || status.reblog?.reblogged == true {
           self.exemptFromHideSeen.insert(status.id)

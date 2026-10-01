@@ -1,4 +1,5 @@
 import DesignSystem
+import Foundation
 import Env
 import Models
 import StoreKit
@@ -266,8 +267,8 @@ extension StatusEditor {
           },
           set: { draft in
             if let draft {
-              if !draft.spoilerText.isEmpty {
-                focusedStore.spoilerText = draft.spoilerText
+              if let spoilerText = draft.spoilerText, !spoilerText.isEmpty {
+                focusedStore.spoilerText = spoilerText
                 focusedStore.spoilerOn = true
               }
               let currentText = focusedStore.statusText.string

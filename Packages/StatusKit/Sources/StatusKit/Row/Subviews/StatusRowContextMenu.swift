@@ -41,11 +41,13 @@ struct StatusRowContextMenu: View {
   @Binding var isBlockConfirmationPresented: Bool
   @Binding var isShareAsImageSheetPresented: Bool
     var boostLabel: some View {
-    if viewModel.status.visibility == .priv, viewModel.status.account.id == account.account?.id {
-      if statusDataController.isReblogged {
-        return Label("status.action.unboost", systemImage: "lock.rotation")
+    if viewModel.status.visibility == .priv {
+      if viewModel.status.account.id == account.account?.id {
+        if statusDataController.isReblogged {
+          return Label("status.action.unboost", systemImage: "lock.rotation")
+        }
+        return Label("status.action.boost-to-followers", systemImage: "lock.rotation")
       }
-      return Label("status.action.boost-to-followers", systemImage: "lock.rotation")
     }
 
     return Label("status.action.boost", systemImage: "arrow.2.squarepath")
@@ -66,6 +68,15 @@ struct StatusRowContextMenu: View {
     case .unlisted, .direct:
       return true
     }
+  }
+
+  private func isCurrentRemoteLocal(server: String) -> Bool {
+    if let last = viewModel.routerPath.path.last,
+       case let .remoteLocalTimeline(remoteServer) = last,
+       remoteServer == server {
+      return true
+    }
+    return false
   }
 
   var body: some View {
@@ -174,21 +185,14 @@ Button {
       } label: {
         Label("status.action.view-in-browser", systemImage: "safari")
       }
-      if let server = url.host(),
-         server != viewModel.client.server {
-        let isCurrentRemoteLocal: Bool = {
-          if let last = viewModel.routerPath.path.last,
-             case let .remoteLocalTimeline(remoteServer) = last,
-             remoteServer == server {
-            return true
-          }
-          return false
-        }()
-        if !isCurrentRemoteLocal {
-          Button {
-            viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
-          } label: {
-            Label("View Local Timeline", systemImage: "globe")
+      if let server = url.host() {
+        if server != viewModel.client.server {
+          if !isCurrentRemoteLocal(server: server) {
+            Button {
+              viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
+            } label: {
+              Label("View Local Timeline", systemImage: "globe")
+            }
           }
         }
       }
