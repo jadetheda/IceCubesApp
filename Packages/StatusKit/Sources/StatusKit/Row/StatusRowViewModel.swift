@@ -63,15 +63,21 @@ import SwiftUI
   var pluraldawnMember: PluraldawnMember? = nil
 
   var displayDisplayName: HTMLString {
-    if UserPreferences.shared.pluraldawnSupportEnabled, let member = pluraldawnMember {
-      return .init(stringValue: member.name)
+    let enabled = UserPreferences.shared.pluraldawnSupportEnabled
+    if enabled {
+      if let member = pluraldawnMember {
+        return .init(stringValue: member.name)
+      }
     }
     return finalStatus.account.cachedDisplayName
   }
   
   var displayAvatarURL: URL? {
-    if UserPreferences.shared.pluraldawnSupportEnabled, let member = pluraldawnMember {
-      return member.avatarURL
+    let enabled = UserPreferences.shared.pluraldawnSupportEnabled
+    if enabled {
+      if let member = pluraldawnMember {
+        return member.avatarURL
+      }
     }
     return finalStatus.account.avatar
   }
@@ -410,12 +416,18 @@ import SwiftUI
       for member in system.members {
         var matched = false
         for indicator in member.emoji {
-          if rawText.hasPrefix(indicator) || rawText.hasSuffix(indicator) {
+          let hasPref = rawText.hasPrefix(indicator)
+          let hasSuff = rawText.hasSuffix(indicator)
+          if hasPref || hasSuff {
             matched = true
             break
           }
           for mention in mentions {
-            if rawText.contains("@\(mention.acct) \(indicator)") || rawText.contains("@\(mention.username) \(indicator)") {
+            let str1 = "@" + mention.acct + " " + indicator
+            let str2 = "@" + mention.username + " " + indicator
+            let match1 = rawText.contains(str1)
+            let match2 = rawText.contains(str2)
+            if match1 || match2 {
               matched = true
               break
             }

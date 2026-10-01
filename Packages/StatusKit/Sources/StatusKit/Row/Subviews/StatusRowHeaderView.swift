@@ -91,7 +91,12 @@ struct StatusRowHeaderView: View {
   }
   
   private var shouldShowFullUsername: Bool {
-    (theme.displayFullUsername && theme.avatarPosition == .leading) || theme.avatarPosition == .top
+    let isLeading = theme.avatarPosition == .leading
+    let isTop = theme.avatarPosition == .top
+    let showFull = theme.displayFullUsername
+    if showFull && isLeading { return true }
+    if isTop { return true }
+    return false
   }
 
   private var accountBadgeView: Text? {
