@@ -70,6 +70,7 @@ import Nuke
   private(set) var timelineTask: Task<Void, Never>?
   private var sessionSeenPosts: Set<String> = []
   private var exemptFromHideSeen: Set<String> = []
+  private var seenTimerTasks: [String: Task<Void, Never>] = [:]
 
   var tag: Tag?
 
@@ -720,33 +721,38 @@ extension TimelineViewModel: GapLoadingFetcher {
       }
     }
 
-    Task {
+    seenTimerTasks[status.id]?.cancel()
+    let timerTask = Task { [weak self] in
       let prefs = UserPreferences.shared
       guard prefs.hideSeenPostsEnabled else { return }
       
       let threshold = prefs.hideSeenPostsThreshold
       try? await Task.sleep(nanoseconds: UInt64(threshold * 1_000_000_000))
-      if !Task.isCancelled {
-        if visibleStatuses.contains(where: { $0.id == status.id }) {
-          
-          var idToMark = status.id
-          if prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
-             idToMark = reblog.id
+      guard !Task.isCancelled, let self else { return }
+      if self.visibleStatuses.contains(where: { $0.id == status.id }) {
+        
+        var idToMark = status.id
+        if prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+           idToMark = reblog.id
+        }
+        
+        if !prefs.hideSeenPostsLikedOnly || status.favourited == true || (status.reblog?.favourited == true) {
+          SeenPostsManager.shared.markAsSeen(id: idToMark)
+          if prefs.hideSeenPostsIncludeBoosts {
+            SeenPostsManager.shared.markAsSeen(id: status.id)
           }
-          
-          if !prefs.hideSeenPostsLikedOnly || status.favourited == true || (status.reblog?.favourited == true) {
-            SeenPostsManager.shared.markAsSeen(id: idToMark)
-            if prefs.hideSeenPostsIncludeBoosts {
-              SeenPostsManager.shared.markAsSeen(id: status.id)
-            }
-            pendingStatusesObserver.updateCount()
-          }
+          self.pendingStatusesObserver.updateCount()
         }
       }
+      self.seenTimerTasks.removeValue(forKey: status.id)
     }
+    seenTimerTasks[status.id] = timerTask
   }
 
   func statusDidDisappear(status: Status) {
+    seenTimerTasks[status.id]?.cancel()
+    seenTimerTasks.removeValue(forKey: status.id)
+    
     if let count = visibleStatusesCount[status.id] {
       let newCount = count - 1
       if newCount <= 0 {

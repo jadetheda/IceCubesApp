@@ -67,10 +67,15 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
           context: .timeline
         )
         .onAppear {
-          fetcher.statusDidAppear(status: status)
+          if status.mediaAttachments.isEmpty {
+            fetcher.statusDidAppear(status: status)
+          }
         }
         .onDisappear {
           fetcher.statusDidDisappear(status: status)
+        }
+        .environment(\.statusOnMediaLoaded) {
+          fetcher.statusDidAppear(status: status)
         }
       }
       makeNextPageRow(nextPageState: nextPageState)
@@ -90,10 +95,15 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
               context: .timeline
             )
             .onAppear {
-              fetcher.statusDidAppear(status: status)
+              if status.mediaAttachments.isEmpty {
+                fetcher.statusDidAppear(status: status)
+              }
             }
             .onDisappear {
               fetcher.statusDidDisappear(status: status)
+            }
+            .environment(\.statusOnMediaLoaded) {
+              fetcher.statusDidAppear(status: status)
             }
 
           case .gap(let gap):

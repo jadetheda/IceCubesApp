@@ -1054,3 +1054,9 @@
   * **Description**: Applied DeepInvestigator fixes for ToolbarItems and Draft models.
   * **Fixes**: Replaced a comma-separated `if let` with nested unwraps to fix an AST trap in `languageConfirmationDialog`. Added missing `import UIKit` to `ToolbarItems.swift`. Safely changed `Draft.spoilerText` to an Optional `String?` to prevent SwiftData migration crashes for users upgrading from older versions.
   * **Impact**: Preempts Exit Code 65 compilation failures and ensures a perfectly safe local database schema migration.
+* **2026-10-01 01:25:00 UTC**
+  * **Description**: Localized "Hide Seen Posts" experimental settings.
+  * **Fixes**: Reverted a prior broken attempt that decoupled the threshold slider text, and wrapped the threshold value in `String(format: NSLocalizedString("settings.experimental.hide-seen-posts.threshold", comment: ""), preferences.hideSeenPostsThreshold)` instead to support positional localization parameters. Wrote a python script to inject all missing settings keys into `Localizable.xcstrings`, providing proper translations for multiple languages and setting `needs_review` fallbacks for the rest.
+  * **Impact**: Translators can now safely translate the settings screen, and users will see properly formatted text for their locale without breaking formatting strings.
+
+- 2026-10-01 01:20 UTC: Fixed Ghost Timers & Memory Leak in `TimelineViewModel.swift` by capturing `[weak self]` in the task inside `statusDidAppear`, storing the task in `seenTimerTasks`, and actively cancelling it in `statusDidDisappear`. Implemented Media-Aware Timer by using `@Environment(\.statusOnMediaLoaded)` to pass a callback to `StatusRowMediaPreviewView` without using deep closures, mitigating the AST memory trap (Exit Code 65). This delays the "read" timer start until all media (or fallback timeouts) have fully loaded.
