@@ -63,6 +63,46 @@ struct StatusRowContextMenu: View {
     }
   }
 
+  private var favoriteTitle: LocalizedStringKey {
+    theme.actionIsLike
+      ? (statusDataController.isFavorited ? "Unlike" : "Like")
+      : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite")
+  }
+
+  private var favoriteIcon: String {
+    theme.actionIsLike
+      ? (statusDataController.isFavorited ? "heart.fill" : "heart")
+      : (statusDataController.isFavorited ? "star.fill" : "star")
+  }
+
+  private var statusSafeDisplayName: String {
+    viewModel.status.reblog?.account.safeDisplayName ?? viewModel.status.account.safeDisplayName
+  }
+
+  private var statusRawText: String {
+    viewModel.status.reblog?.content.asRawText ?? viewModel.status.content.asRawText
+  }
+
+  private var postLanguage: String? {
+    preferences.serverPreferences?.postLanguage ?? Locale.current.language.languageCode?.identifier
+  }
+
+  private var statusAccountId: String {
+    viewModel.status.reblog?.account.id ?? viewModel.status.account.id
+  }
+
+  private var statusAccountAcct: String {
+    viewModel.status.reblog?.account.acct ?? viewModel.status.account.acct
+  }
+
+  private var alwaysForceRemoteMedia: Bool {
+    preferences.remoteMediaAlwaysForce
+  }
+
+  private var fallbackOnFailRemoteMedia: Bool {
+    preferences.remoteMediaFallbackOnFail
+  }
+
   private func isCurrentRemoteLocal(server: String) -> Bool {
     if let last = viewModel.routerPath.path.last,
        case let .remoteLocalTimeline(remoteServer) = last,
@@ -104,13 +144,7 @@ struct StatusRowContextMenu: View {
             await statusDataController.toggleFavorite(remoteStatus: nil)
           }
         } label: {
-          let title: LocalizedStringKey = theme.actionIsLike
-            ? (statusDataController.isFavorited ? "Unlike" : "Like")
-            : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite")
-          let icon: String = theme.actionIsLike
-            ? (statusDataController.isFavorited ? "heart.fill" : "heart")
-            : (statusDataController.isFavorited ? "star.fill" : "star")
-          Label(title, systemImage: icon)
+          Label(favoriteTitle, systemImage: favoriteIcon)
         }
 
         Button {
@@ -147,11 +181,8 @@ struct StatusRowContextMenu: View {
       if let url = viewModel.url {
         ShareLink(
           item: url,
-          subject: Text(
-            viewModel.status.reblog?.account.safeDisplayName
-              ?? viewModel.status.account.safeDisplayName),
-          message: Text(
-            viewModel.status.reblog?.content.asRawText ?? viewModel.status.content.asRawText)
+          subject: Text(statusSafeDisplayName),
+          message: Text(statusRawText)
         ) {
           Label("status.action.share", systemImage: "square.and.arrow.up")
         }
@@ -192,8 +223,7 @@ Button {
     }
 
     Button {
-      UIPasteboard.general.string =
-        viewModel.status.reblog?.content.asRawText ?? viewModel.status.content.asRawText
+      UIPasteboard.general.string = statusRawText
     } label: {
       Label("status.action.copy-text", systemImage: "doc.on.doc")
     }
@@ -210,9 +240,7 @@ Button {
       Label("status.action.copy-link", systemImage: "link")
     }
 
-    if let lang = preferences.serverPreferences?.postLanguage
-      ?? Locale.current.language.languageCode?.identifier
-    {
+    if let lang = postLanguage {
       Button {
         Task {
           await viewModel.translate(userLang: lang)
@@ -222,7 +250,7 @@ Button {
       }
     }
 
-    if account.account?.id == viewModel.status.reblog?.account.id ?? viewModel.status.account.id {
+    if account.account?.id == statusAccountId {
       Section("status.action.section.your-post") {
         Button {
           Task {
@@ -267,7 +295,7 @@ Button {
       }
     } else {
       if !viewModel.isRemote {
-        Section(viewModel.status.reblog?.account.acct ?? viewModel.status.account.acct) {
+        Section(statusAccountAcct) {
           if viewModel.authorRelationship?.muting == true {
             Button {
               Task {
@@ -375,11 +403,9 @@ Button {
   @ViewBuilder
   private var downloadMediaButton: some View {
     if downloadableMedia.count > 0 {
-      let alwaysForce = preferences.remoteMediaAlwaysForce
-      let fallbackOnFail = preferences.remoteMediaFallbackOnFail
       Button {
         Task {
-          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail)
+          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForceRemoteMedia, fallbackOnFail: fallbackOnFailRemoteMedia)
           HapticManager.shared.fireHaptic(.notification(.success))
         }
       } label: {
