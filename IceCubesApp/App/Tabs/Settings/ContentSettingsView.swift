@@ -134,7 +134,7 @@ struct ContentSettingsView: View {
         
         Toggle(isOn: $userPreferences.pluraldawnSupportEnabled) {
           VStack(alignment: .leading) {
-            Text("Enable Plural System Support")
+            Text("Enable PluralDawn Support")
             Text("Fetch and display system and member info")
               .font(.footnote)
               .foregroundStyle(.secondary)
