@@ -31,7 +31,8 @@ extension IceCubesApp {
             MediaUIView(
               selectedAttachment: selectedMediaAttachment,
               attachments: quickLook.mediaAttachments,
-              useRemoteMedia: quickLook.useRemoteMedia
+              useRemoteMedia: quickLook.useRemoteMedia,
+              exportMetadata: quickLook.photoMetadata
             )
             .navigationTransition(.zoom(sourceID: selectedMediaAttachment.id, in: namespace))
             .presentationBackground(.black)
