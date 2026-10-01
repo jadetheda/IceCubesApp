@@ -1050,3 +1050,7 @@
   * **Impact**: Users can now import drafts when replying without having redundant mentions prepended to their message.
 
 - 2026-10-01 00:34 UTC: Fixed a bug where importing a draft containing prepopulated mentions resulted in double tags in the editor. Replaced the simple prefix matching logic with a robust mention parsing and merging strategy in `ToolbarItems.swift`. Also fixed a bug where a draft's content warning (`spoilerText`) was not saved or restored by adding `spoilerText` to the `Draft` model and updating `ToolbarItems.swift` to save and restore it into `EditorStore`.
+* **2026-09-30 20:59:00 UTC**
+  * **Description**: Applied DeepInvestigator fixes for ToolbarItems and Draft models.
+  * **Fixes**: Replaced a comma-separated `if let` with nested unwraps to fix an AST trap in `languageConfirmationDialog`. Added missing `import UIKit` to `ToolbarItems.swift`. Safely changed `Draft.spoilerText` to an Optional `String?` to prevent SwiftData migration crashes for users upgrading from older versions.
+  * **Impact**: Preempts Exit Code 65 compilation failures and ensures a perfectly safe local database schema migration.

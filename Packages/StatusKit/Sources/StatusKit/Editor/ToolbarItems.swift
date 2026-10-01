@@ -4,6 +4,7 @@ import Models
 import StoreKit
 import SwiftData
 import SwiftUI
+import UIKit
 
 extension StatusEditor {
   @MainActor
@@ -232,21 +233,25 @@ extension StatusEditor {
 
     @ViewBuilder
     private var languageConfirmationDialog: some View {
-      if let (detected: detected, selected: selected) = mainStore
-        .languageConfirmationDialogLanguages,
-        let detectedLong = Locale.current.localizedString(forLanguageCode: detected),
-        let selectedLong = Locale.current.localizedString(forLanguageCode: selected)
-      {
-        Button("status.editor.language-select.confirmation.detected-\(detectedLong)") {
-          mainStore.selectedLanguage = detected
-          startPosting()
-        }
-        Button("status.editor.language-select.confirmation.selected-\(selectedLong)") {
-          mainStore.selectedLanguage = selected
-          startPosting()
-        }
-        Button("action.cancel", role: .cancel) {
-          mainStore.languageConfirmationDialogLanguages = nil
+      if let (detected: detected, selected: selected) = mainStore.languageConfirmationDialogLanguages {
+        if let detectedLong = Locale.current.localizedString(forLanguageCode: detected) {
+          if let selectedLong = Locale.current.localizedString(forLanguageCode: selected) {
+            Button("status.editor.language-select.confirmation.detected-\(detectedLong)") {
+              mainStore.selectedLanguage = detected
+              startPosting()
+            }
+            Button("status.editor.language-select.confirmation.selected-\(selectedLong)") {
+              mainStore.selectedLanguage = selected
+              startPosting()
+            }
+            Button("action.cancel", role: .cancel) {
+              mainStore.languageConfirmationDialogLanguages = nil
+            }
+          } else {
+            EmptyView()
+          }
+        } else {
+          EmptyView()
         }
       } else {
         EmptyView()
