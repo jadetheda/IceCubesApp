@@ -302,8 +302,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
                 )
                 .id(mediaStatus.id)
                 .padding(.bottom, 4)
-                .onAppear { fetcher.statusDidAppear(status: mediaStatus.status) }
-                .onDisappear { fetcher.statusDidDisappear(status: mediaStatus.status) }
+                .trackStatusVisibility(status: mediaStatus.status, fetcher: fetcher, requiresMediaToLoad: false)
               }
             }
           }

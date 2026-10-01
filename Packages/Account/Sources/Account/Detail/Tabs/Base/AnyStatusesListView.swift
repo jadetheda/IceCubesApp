@@ -56,8 +56,7 @@ struct AnyStatusesListView: View {
               routerPath: routerPath,
               filterContext: .account)
           )
-          .onAppear { fetcher.statusDidAppear(status: status) }
-          .onDisappear { fetcher.statusDidDisappear(status: status) }
+          .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
           .redacted(reason: .placeholder)
           .allowsHitTesting(false)
         }
@@ -87,8 +86,7 @@ struct AnyStatusesListView: View {
               routerPath: routerPath,
               filterContext: .account)
           )
-          .onAppear { fetcher.statusDidAppear(status: status) }
-          .onDisappear { fetcher.statusDidDisappear(status: status) }
+          .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
         }
         
         if nextPageState == .hasNextPage {

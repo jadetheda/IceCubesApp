@@ -66,17 +66,7 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
             filterContext: filterContext),
           context: .timeline
         )
-        .onAppear {
-          if status.mediaAttachments.isEmpty {
-            fetcher.statusDidAppear(status: status)
-          }
-        }
-        .onDisappear {
-          fetcher.statusDidDisappear(status: status)
-        }
-        .environment(\.statusOnMediaLoaded) {
-          fetcher.statusDidAppear(status: status)
-        }
+        .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
       }
       makeNextPageRow(nextPageState: nextPageState)
 
@@ -94,17 +84,7 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
                 filterContext: filterContext),
               context: .timeline
             )
-            .onAppear {
-              if status.mediaAttachments.isEmpty {
-                fetcher.statusDidAppear(status: status)
-              }
-            }
-            .onDisappear {
-              fetcher.statusDidDisappear(status: status)
-            }
-            .environment(\.statusOnMediaLoaded) {
-              fetcher.statusDidAppear(status: status)
-            }
+            .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
 
           case .gap(let gap):
             ZStack {
