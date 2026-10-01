@@ -52,7 +52,7 @@ struct ExploreAlgorithmSettingsView: View {
       .listRowBackground(theme.primaryBackgroundColor)
       #endif
     }
-    .navigationTitle("IceShrimp.net explore algorithm")
+    .navigationTitle("Iceshrimp.NET explore algorithm")
     .onAppear {
       Task { @MainActor in
         if userPreferences.trendingAlgorithm == .mastodon {
