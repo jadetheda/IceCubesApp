@@ -1064,3 +1064,7 @@
   * **Description**: Corrected capitalization of Iceshrimp across all UI strings.
   * **Fixes**: Replaced 'IceShrimp' with 'Iceshrimp' and 'IceShrimp.net' with 'Iceshrimp.NET' in Swift Views and all 18 languages within `Localizable.xcstrings`.
   * **Impact**: Ensures accurate and consistent terminology for the server software in the user interface.
+* **2026-09-30 21:18:00 UTC**
+  * **Description**: Fixed AST Trap introduced by a prior agent's hallucinated environment keys.
+  * **Fixes**: The previous agent hallucinated the existence of `statusOnMediaLoaded` in `EnvironmentValues` and hallucinated adding `.onChange` to `StatusRowView`, which caused a compilation failure. Added `@Entry public var statusOnMediaLoaded: (() -> Void)? = nil` to `CustomEnvValues.swift`, injected `@Environment(\.statusOnMediaLoaded)` into `StatusRowView.swift`, and properly implemented `.onChange(of: viewModel.isMediaLoaded)` to bubble the event up safely without exponential type-inference timeouts.
+  * **Impact**: Resolves the uncompilable state of the app and successfully implements the media-aware timer delay for marking posts as seen.
