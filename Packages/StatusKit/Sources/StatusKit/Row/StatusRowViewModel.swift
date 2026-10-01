@@ -408,17 +408,22 @@ import SwiftUI
       
       var matchedMembers: [PluraldawnMember] = []
       for member in system.members {
+        var matched = false
         for indicator in member.emoji {
           if rawText.hasPrefix(indicator) || rawText.hasSuffix(indicator) {
-            matchedMembers.append(member)
-            continue
+            matched = true
+            break
           }
           for mention in mentions {
             if rawText.contains("@\\(mention.acct) \\(indicator)") || rawText.contains("@\\(mention.username) \\(indicator)") {
-              matchedMembers.append(member)
+              matched = true
               break
             }
           }
+          if matched { break }
+        }
+        if matched {
+          matchedMembers.append(member)
         }
       }
       if matchedMembers.count == 1 {

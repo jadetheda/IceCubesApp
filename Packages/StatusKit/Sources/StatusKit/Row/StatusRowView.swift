@@ -105,8 +105,8 @@ public struct StatusRowView: View {
           HStack(alignment: .top, spacing: .statusColumnsSpacing) {
             if !isCompact {
               if theme.avatarPosition == .leading {
-              AvatarView(viewModel.finalStatus.account.avatar)
-                .accessibility(addTraits: .isButton)
+                AvatarView(viewModel.displayAvatarURL)
+                  .accessibility(addTraits: .isButton)
                 .contentShape(Circle())
                 .hoverEffect()
                 .onTapGesture {
@@ -161,6 +161,13 @@ public struct StatusRowView: View {
         }
       }
     }
+    .task {
+      if !reasons.contains(.placeholder) {
+        if UserPreferences.shared.pluraldawnSupportEnabled {
+          await viewModel.fetchPluraldawnSystemIfNeeded()
+        }
+      }
+    }
     .if(viewModel.url != nil) { $0.draggable(viewModel.url!) }
     .contextMenu {
       contextMenu
@@ -168,7 +175,6 @@ public struct StatusRowView: View {
         .onAppear {
           Task {
             await viewModel.loadAuthorRelationship()
-            await viewModel.fetchPluraldawnSystemIfNeeded()
           }
         }
     }
