@@ -74,9 +74,7 @@ struct StatusRowHeaderView: View {
         }
         if !redactionReasons.contains(.placeholder) {
           if shouldShowFullUsername {
-            Text(
-              "@\(theme.displayFullUsername ? viewModel.finalStatus.account.acct : viewModel.finalStatus.account.username)"
-            )
+            Text(displayHandle)
             .fixedSize(horizontal: false, vertical: true)
             .font(.scaledFootnote)
             .foregroundStyle(.secondary)
@@ -97,6 +95,13 @@ struct StatusRowHeaderView: View {
     if showFull && isLeading { return true }
     if isTop { return true }
     return false
+  }
+
+  private var displayHandle: String {
+    let handle = theme.displayFullUsername ? viewModel.finalStatus.account.acct : viewModel.finalStatus.account.username
+    var text = "@"
+    text.append(handle)
+    return text
   }
 
   private var accountBadgeView: Text? {

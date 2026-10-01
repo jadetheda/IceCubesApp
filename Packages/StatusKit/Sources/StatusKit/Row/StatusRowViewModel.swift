@@ -423,11 +423,23 @@ import SwiftUI
             break
           }
           for mention in mentions {
-            let str1 = "@" + mention.acct + " " + indicator
-            let str2 = "@" + mention.username + " " + indicator
+            var str1 = "@"
+            str1.append(mention.acct)
+            str1.append(" ")
+            str1.append(indicator)
+            
+            var str2 = "@"
+            str2.append(mention.username)
+            str2.append(" ")
+            str2.append(indicator)
+            
             let match1 = rawText.contains(str1)
             let match2 = rawText.contains(str2)
-            if match1 || match2 {
+            if match1 {
+              matched = true
+              break
+            }
+            if match2 {
               matched = true
               break
             }
