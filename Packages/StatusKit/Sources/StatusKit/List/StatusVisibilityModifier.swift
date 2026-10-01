@@ -1,6 +1,8 @@
 import SwiftUI
 import Models
+import Env
 
+@MainActor
 public struct StatusVisibilityModifier: ViewModifier {
   let status: Status
   let fetcher: any StatusesFetcher
@@ -50,8 +52,9 @@ public struct StatusVisibilityModifier: ViewModifier {
   }
 }
 
-extension View {
-  public func trackStatusVisibility(
+public extension View {
+  @MainActor
+  func trackStatusVisibility(
     status: Status, 
     fetcher: any StatusesFetcher, 
     requiresMediaToLoad: Bool = false
