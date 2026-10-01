@@ -6,6 +6,7 @@ import Models
 import DesignSystem
 import Timeline
 
+@MainActor
 struct AnyStatusesListView: View {
   let fetcher: any StatusesFetcher
   let client: FediverseClient
@@ -56,7 +57,6 @@ struct AnyStatusesListView: View {
               routerPath: routerPath,
               filterContext: .account)
           )
-          .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
           .redacted(reason: .placeholder)
           .allowsHitTesting(false)
         }
@@ -102,9 +102,7 @@ struct AnyStatusesListView: View {
           message: "status.error.loading.message",
           buttonTitle: "action.retry"
         ) {
-          Task {
-            await fetcher.fetchNewestStatuses(pullToRefresh: false)
-          }
+          await fetcher.fetchNewestStatuses(pullToRefresh: false)
         }
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowSeparator(.visible, edges: .all)
@@ -120,7 +118,7 @@ struct AnyStatusesListView: View {
         if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
       }
       if contentFilter.hidePostsWithoutMedia {
-        if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
+        if status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true) { return false }
       }
       return true
     }

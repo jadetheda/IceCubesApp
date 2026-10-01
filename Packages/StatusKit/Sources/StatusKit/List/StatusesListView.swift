@@ -146,19 +146,18 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
     }
   }
 
-  @ViewBuilder
-  private func makeBackgroundColorFor(status: Status?) -> some View {
+  private func makeBackgroundColorFor(status: Status?) -> Color {
     if let status {
       if status.visibility == .direct {
-        theme.tintColor.opacity(0.15)
+        return theme.tintColor.opacity(0.15)
       } else if status.mentions.first(where: { $0.id == CurrentAccount.shared.account?.id }) != nil
       {
-        theme.secondaryBackgroundColor
+        return theme.secondaryBackgroundColor
       } else {
-        theme.primaryBackgroundColor
+        return theme.primaryBackgroundColor
       }
     } else {
-      theme.primaryBackgroundColor
+      return theme.primaryBackgroundColor
     }
   }
 }

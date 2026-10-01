@@ -167,7 +167,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
     ForEach(chunkItems(items)) { chunk in
       VStack(spacing: 0) {
-        if chunk.isGap, let gap = chunk.gap {
+        if let gap = chunk.gap {
           if let gapLoader = fetcher as? GapLoadingFetcher {
             TimelineGapView(gap: gap) {
               await gapLoader.loadGap(gap: gap)
@@ -344,6 +344,7 @@ public struct GalleryMediaCell: View {
   @State private var loadTask: Task<Void, Never>? = nil
 
   private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
+  private var shouldAspectFit: Bool { mediaStatus.attachment.aspectRatio == nil && !isSquare }
   
   private var fallback: Bool { UserPreferences.shared.remoteMediaFallbackOnFail }
   private var effectiveUseRemoteMedia: Bool { isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered }
@@ -365,7 +366,7 @@ public struct GalleryMediaCell: View {
         Group {
           switch resolvedType {
           case .image:
-            if mediaStatus.attachment.aspectRatio == nil && !isSquare {
+            if shouldAspectFit {
               LazyImage(url: autoFallbackTriggered ? (fallbackUrl ?? url) : url) { state in
                 if let image = state.image {
                   image
@@ -477,10 +478,10 @@ public struct GalleryMediaCell: View {
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
-          let content =
-            viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-            ?? viewModel.status.content.asSafeMarkdownAttributedString
-          StatusRowSelectableTextView(content: content)
+          StatusRowSelectableTextView(
+            content: viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+              ?? viewModel.status.content.asSafeMarkdownAttributedString
+          )
         }
       }
       .alert(
