@@ -1078,3 +1078,5 @@
   * **Impact**: Prevents future agents from making the same Exit Code 65 mistake.
 
 - 2026-10-01 03:00 UTC: Fixed `cachedPostsCount` bug in `TimelineCache.swift`. Instead of using `.allKeys().count` which incorrectly returned the number of keys rather than the cached posts, it now correctly uses `getItems(for: filter:)?.count ?? 0` to properly count the number of posts in each filter, including "Home".
+
+- 2026-10-01T06:59:42Z - Fixed `cachedPostsCount` in `TimelineCache.swift` to correctly filter by directory. The previous iteration checked for the absence of `sqlite3` suffix but mistakenly included Bodega's `-wal` and `-shm` sidecar files, which triggered filesystem errors and performance drops when treating them as directories. Changing the filter to `(try? storage.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true` fixes the bug and significantly improves settings screen load times.
