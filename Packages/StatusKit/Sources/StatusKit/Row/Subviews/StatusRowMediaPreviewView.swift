@@ -831,6 +831,14 @@ private struct MediaGridCell: View {
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
   }
 
+  private var appliedContentMode: ContentMode {
+    isStandalone ? .fit : .fill
+  }
+
+  private var appliedAspectRatio: CGFloat? {
+    isStandalone ? currentAspectRatio : nil
+  }
+
   var body: some View {
     if let namespace = quickLook.namespace {
       Group {
@@ -880,7 +888,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: isStandalone ? .fit : .fill)
+      .aspectRatio(appliedAspectRatio, contentMode: appliedContentMode)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil

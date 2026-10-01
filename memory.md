@@ -1085,3 +1085,12 @@
 
 - **2026-10-01T07:45:00Z**: Rewrote `StatusVisibilityModifier.swift` in `StatusKit` to fix an existential type crash and missing `#available` checks for `onScrollVisibilityChange`.
 - **2026-10-01T07:46:00Z**: Fixed `StatusVisibilityModifier.swift` compilation OOMs caused by incomplete prior prompt injection. The prior coder blindly copy-pasted a code snippet that missed `import Env` and `@MainActor` isolation. Restored the import to prevent the AST constraint solver from entering an infinite loop over `\.statusOnMediaLoaded`, and restored `@MainActor` to satisfy `any StatusesFetcher` requirements.
+
+* **2026-10-01T09:07:00Z**
+  * **Description**: Applied Grid Gap Investigator fixes to MediaGridCell and StatusRowMediaGridView.
+  * **Fixes**: Removed redundant `.clipShape` on the image content in `MediaGridCell`, appended `.clipped()` on the cell group to prevent bleed, changed `.aspectRatio` contentMode to `.fill`, and restored the grid border on `StatusRowMediaGridView` container.
+  * **Impact**: Eliminates the visual letterboxing/canyon gaps in the media grid while maintaining clean rounded corners.
+* **2026-10-01T09:15:00Z**
+  * **Description**: Fixed AST Constraint Solver timeout trap in MediaGridCell.
+  * **Fixes**: Extracted the dual ternary operators (`isStandalone ? currentAspectRatio : nil` and `isStandalone ? .fit : .fill`) from the `.aspectRatio` modifier into separate `appliedContentMode` and `appliedAspectRatio` computed properties to prevent Swift 5.10 compiler Exit Code 65 (OOM).
+  * **Impact**: Ensures the app successfully compiles after the layout improvements without hitting constraint solver timeouts in GitHub Actions.
