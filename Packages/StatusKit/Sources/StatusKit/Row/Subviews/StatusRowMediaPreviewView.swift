@@ -618,7 +618,6 @@ private struct FeaturedImagePreView: View {
         }
       }
     }
-    }
   }
 
   private struct _Layout: Layout {
