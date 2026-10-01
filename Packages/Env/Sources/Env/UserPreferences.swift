@@ -126,7 +126,7 @@ import SwiftUI
     @AppStorage("custom_emojis_portrait_rows") public var customEmojisPortraitRows: Int = 4
     @AppStorage("custom_emojis_landscape_rows") public var customEmojisLandscapeRows: Int = 3
 
-
+    @AppStorage("pluraldawn_support_enabled") public var pluraldawnSupportEnabled = false
 
     init() {
       prepareTranslationType()
@@ -433,6 +433,20 @@ import SwiftUI
       withMutation(keyPath: \.logErrors) {
         if storage.logErrors != newValue {
           storage.logErrors = newValue
+        }
+      }
+    }
+  }
+
+  public var pluraldawnSupportEnabled: Bool {
+    get {
+      access(keyPath: \.pluraldawnSupportEnabled)
+      return storage.pluraldawnSupportEnabled
+    }
+    set {
+      withMutation(keyPath: \.pluraldawnSupportEnabled) {
+        if storage.pluraldawnSupportEnabled != newValue {
+          storage.pluraldawnSupportEnabled = newValue
         }
       }
     }

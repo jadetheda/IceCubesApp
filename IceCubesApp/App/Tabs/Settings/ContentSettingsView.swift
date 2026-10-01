@@ -131,6 +131,8 @@ struct ContentSettingsView: View {
         Toggle(isOn: $userPreferences.collapseLongPosts) {
           Text("settings.content.collapse-long-posts")
         }
+        
+        Toggle("Enable Plural System Support", isOn: $userPreferences.pluraldawnSupportEnabled)
       } header: {
         Text("settings.content.reading")
       } footer: {
