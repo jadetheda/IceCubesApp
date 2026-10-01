@@ -64,15 +64,35 @@ struct StatusRowContextMenu: View {
   }
 
   private var favoriteTitle: LocalizedStringKey {
-    theme.actionIsLike
-      ? (statusDataController.isFavorited ? "Unlike" : "Like")
-      : (statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite")
+    if theme.actionIsLike {
+      if statusDataController.isFavorited {
+        return "Unlike"
+      } else {
+        return "Like"
+      }
+    } else {
+      if statusDataController.isFavorited {
+        return "status.action.unfavorite"
+      } else {
+        return "status.action.favorite"
+      }
+    }
   }
 
   private var favoriteIcon: String {
-    theme.actionIsLike
-      ? (statusDataController.isFavorited ? "heart.fill" : "heart")
-      : (statusDataController.isFavorited ? "star.fill" : "star")
+    if theme.actionIsLike {
+      if statusDataController.isFavorited {
+        return "heart.fill"
+      } else {
+        return "heart"
+      }
+    } else {
+      if statusDataController.isFavorited {
+        return "star.fill"
+      } else {
+        return "star"
+      }
+    }
   }
 
   private var statusSafeDisplayName: String {
