@@ -132,7 +132,14 @@ struct ContentSettingsView: View {
           Text("settings.content.collapse-long-posts")
         }
         
-        Toggle("Enable Plural System Support", isOn: $userPreferences.pluraldawnSupportEnabled)
+        Toggle(isOn: $userPreferences.pluraldawnSupportEnabled) {
+          VStack(alignment: .leading) {
+            Text("Enable Plural System Support")
+            Text("Fetch and display system and member info")
+              .font(.footnote)
+              .foregroundStyle(.secondary)
+          }
+        }
       } header: {
         Text("settings.content.reading")
       } footer: {

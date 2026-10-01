@@ -1110,3 +1110,4 @@
   - **Description**: Fixed `PluraldawnDecoder.swift` and `PluraldawnCache.swift` bugs from the initial implementation attempt.
   - **Fixes**: Replaced high-level `NSData.decompressed(using: .zlib)` with a direct `compression_stream` loop in `PluraldawnDecoder` to properly ignore trailing garbage data which appended to the steganography payload. Modified `PluraldawnCache.swift` to use `.some(system)` when caching `nil` values, preventing the dictionary from accidentally deleting the key.
   - **Impact**: Ensures accurate and robust steganography extraction without crashing or discarding data due to trailing padding, and prevents cache misses on valid decode failures.
+- 2026-10-01 20:38 UTC: Fixed Pluraldawn UI Toggle in `ContentSettingsView.swift` to match IceCubes UI styling by using a VStack with a descriptive subtitle instead of a raw string literal, as the prior implementation lacked a descriptive subtitle.
