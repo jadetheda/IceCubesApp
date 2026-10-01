@@ -16,7 +16,7 @@ public struct HideSeenPostsSettingsView: View {
         
         if preferences.hideSeenPostsEnabled {
           VStack(alignment: .leading) {
-            Text("settings.experimental.hide-seen-posts.threshold \(String(format: "%.1f", preferences.hideSeenPostsThreshold))s")
+            Text(String(format: NSLocalizedString("settings.experimental.hide-seen-posts.threshold", comment: ""), preferences.hideSeenPostsThreshold))
             Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
           }
           

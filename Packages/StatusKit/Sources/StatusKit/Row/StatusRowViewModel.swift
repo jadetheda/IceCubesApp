@@ -57,6 +57,12 @@ import SwiftUI
   var isLoadingRemoteContent: Bool = false
   var localStatusId: String?
   var localStatus: Status?
+  
+  var isMediaLoaded: Bool = false
+  
+  func markMediaLoaded() {
+    isMediaLoaded = true
+  }
 
   private var scrollToId = nil as Binding<String?>?
 

@@ -9,18 +9,29 @@ struct ExploreAlgorithmSettingsView: View {
   @Environment(Theme.self) private var theme
   @Environment(FediverseClient.self) private var client
 
+  private var effectiveAlgorithm: UserPreferences.TrendingAlgorithm {
+    userPreferences.trendingAlgorithm == .mastodon ? .decayingScore : userPreferences.trendingAlgorithm
+  }
+
+  private var algorithmBinding: Binding<UserPreferences.TrendingAlgorithm> {
+    Binding(
+      get: { effectiveAlgorithm },
+      set: { userPreferences.trendingAlgorithm = $0 }
+    )
+  }
+
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
       Section {
-        Picker("Algorithm", selection: $userPreferences.trendingAlgorithm) {
+        Picker("Algorithm", selection: algorithmBinding) {
           ForEach(UserPreferences.TrendingAlgorithm.localCases) { algorithm in
             Text(algorithm.description).tag(algorithm)
           }
         }
-        if userPreferences.trendingAlgorithm == .simpleScore {
+        if effectiveAlgorithm == .simpleScore {
           Stepper("Posts to search: \(userPreferences.trendingSimpleScoreSearchLimit)", value: $userPreferences.trendingSimpleScoreSearchLimit, in: 20...200, step: 20)
-        } else if userPreferences.trendingAlgorithm == .decayingScore {
+        } else if effectiveAlgorithm == .decayingScore {
           VStack(alignment: .leading) {
             Text("settings.content.iceshrimp.trending-algorithm")
               .font(.footnote)
@@ -41,11 +52,6 @@ struct ExploreAlgorithmSettingsView: View {
       #endif
     }
     .navigationTitle("IceShrimp.net explore algorithm")
-    .onAppear {
-      if userPreferences.trendingAlgorithm == .mastodon {
-        userPreferences.trendingAlgorithm = .decayingScore
-      }
-    }
     #if !os(visionOS)
     .scrollContentBackground(.hidden)
     .background(theme.secondaryBackgroundColor)

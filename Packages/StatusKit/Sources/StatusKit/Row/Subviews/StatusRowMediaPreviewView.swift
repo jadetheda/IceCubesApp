@@ -28,14 +28,16 @@ public struct StatusRowMediaPreviewView: View {
   public let sensitive: Bool
   public let useRemoteMedia: Bool
   public let exportMetadata: PhotoExportMetadata?
+  public var onAllMediaLoaded: (() -> Void)?
 
   @State private var isQuickLookLoading: Bool = false
 
-  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil) {
+  public init(attachments: [MediaAttachment], sensitive: Bool, useRemoteMedia: Bool = false, exportMetadata: PhotoExportMetadata? = nil, onAllMediaLoaded: (() -> Void)? = nil) {
     self.attachments = attachments
     self.sensitive = sensitive
     self.useRemoteMedia = useRemoteMedia
     self.exportMetadata = exportMetadata
+    self.onAllMediaLoaded = onAllMediaLoaded
   }
 
   #if targetEnvironment(macCatalyst)
@@ -110,14 +112,18 @@ public struct StatusRowMediaPreviewView: View {
       }
     }
     .onAppear {
-      if userPreferences.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
-        loadTask = Task {
+      loadTask = Task {
+        if userPreferences.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
           try? await Task.sleep(nanoseconds: UInt64(userPreferences.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
           if !Task.isCancelled {
             if loadTracker.loadedIds.count < attachments.count {
               autoFallbackTriggered = true
             }
           }
+        }
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
+        if !Task.isCancelled {
+          onAllMediaLoaded?()
         }
       }
     }
@@ -133,6 +139,7 @@ public struct StatusRowMediaPreviewView: View {
     loadTracker.loadedIds.insert(id)
     if loadTracker.loadedIds.count == attachments.count {
       loadTask?.cancel()
+      onAllMediaLoaded?()
     }
   }
 
