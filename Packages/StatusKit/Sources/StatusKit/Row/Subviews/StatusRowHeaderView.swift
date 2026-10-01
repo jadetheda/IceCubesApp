@@ -28,9 +28,7 @@ struct StatusRowHeaderView: View {
     }
     .accessibilityElement(children: .combine)
     .accessibilityLabel(
-      Text(
-        "\(viewModel.finalStatus.account.safeDisplayName), \(viewModel.finalStatus.createdAt.relativeFormatted)"
-      )
+      Text(displayAccessibilityLabel)
     )
     .accessibilityAction {
       viewModel.navigateToAccountDetail(account: viewModel.finalStatus.account)
@@ -97,6 +95,13 @@ struct StatusRowHeaderView: View {
     return false
   }
 
+  private var displayAccessibilityLabel: String {
+    var text = viewModel.finalStatus.account.safeDisplayName
+    text.append(", ")
+    text.append(viewModel.finalStatus.createdAt.relativeFormatted)
+    return text
+  }
+
   private var displayHandle: String {
     let handle = theme.displayFullUsername ? viewModel.finalStatus.account.acct : viewModel.finalStatus.account.username
     var text = "@"
@@ -106,9 +111,9 @@ struct StatusRowHeaderView: View {
 
   private var accountBadgeView: Text? {
     if (viewModel.status.reblogAsAsStatus ?? viewModel.status).account.bot {
-      return Text("\(Image(systemName: "poweroutlet.type.b.fill")) ")
+      return Text(Image(systemName: "poweroutlet.type.b.fill")) + Text(" ")
     } else if (viewModel.status.reblogAsAsStatus ?? viewModel.status).account.locked {
-      return Text("\(Image(systemName: "lock.fill")) ")
+      return Text(Image(systemName: "lock.fill")) + Text(" ")
     }
     return nil
   }
@@ -122,9 +127,9 @@ struct StatusRowHeaderView: View {
         .foregroundStyle(.secondary)
         .lineLimit(1)
     } else {
-      Text(
-        "\(Image(systemName: viewModel.finalStatus.visibility.iconName)) ⸱ \(viewModel.finalStatus.createdAt.relativeFormatted)"
-      )
+      Group {
+        Text(Image(systemName: viewModel.finalStatus.visibility.iconName)) + Text(" ⸱ ") + Text(viewModel.finalStatus.createdAt.relativeFormatted)
+      }
       .fixedSize(horizontal: false, vertical: true)
       .font(.scaledFootnote)
       .foregroundStyle(.secondary)
