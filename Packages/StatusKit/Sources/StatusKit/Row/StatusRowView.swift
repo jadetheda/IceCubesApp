@@ -159,12 +159,10 @@ public struct StatusRowView: View {
             }
           }
         }
-      }
-    }
-    .task {
-      if !reasons.contains(.placeholder) {
         if UserPreferences.shared.pluraldawnSupportEnabled {
-          await viewModel.fetchPluraldawnSystemIfNeeded()
+          Task {
+            await viewModel.fetchPluraldawnSystemIfNeeded()
+          }
         }
       }
     }

@@ -415,7 +415,7 @@ import SwiftUI
             break
           }
           for mention in mentions {
-            if rawText.contains("@\\(mention.acct) \\(indicator)") || rawText.contains("@\\(mention.username) \\(indicator)") {
+            if rawText.contains("@\(mention.acct) \(indicator)") || rawText.contains("@\(mention.username) \(indicator)") {
               matched = true
               break
             }

@@ -73,9 +73,7 @@ struct StatusRowHeaderView: View {
           .layoutPriority(1)
         }
         if !redactionReasons.contains(.placeholder) {
-          if (theme.displayFullUsername && theme.avatarPosition == .leading)
-            || theme.avatarPosition == .top
-          {
+          if shouldShowFullUsername {
             Text(
               "@\(theme.displayFullUsername ? viewModel.finalStatus.account.acct : viewModel.finalStatus.account.username)"
             )
@@ -90,6 +88,10 @@ struct StatusRowHeaderView: View {
         }
       }
     }
+  }
+  
+  private var shouldShowFullUsername: Bool {
+    (theme.displayFullUsername && theme.avatarPosition == .leading) || theme.avatarPosition == .top
   }
 
   private var accountBadgeView: Text? {
