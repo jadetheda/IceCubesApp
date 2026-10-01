@@ -35,10 +35,10 @@ public actor TimelineCache {
       let directory = FileManager.Directory.defaultStorageDirectory(appendingPath: client).url
       let content = try FileManager.default.contentsOfDirectory(
         at: directory, includingPropertiesForKeys: nil)
-      var total: Int = await storageFor(client, "Home").allKeys().count
+      var total: Int = await getItems(for: client, filter: "Home")?.count ?? 0
       for storage in content {
         if !storage.lastPathComponent.hasSuffix("sqlite3") {
-          total += await storageFor(client, storage.lastPathComponent).allKeys().count
+          total += await getItems(for: client, filter: storage.lastPathComponent)?.count ?? 0
         }
       }
       return total

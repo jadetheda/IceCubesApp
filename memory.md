@@ -1076,3 +1076,5 @@
   * **Description**: Updated AGENTS.md with Trap 6 (Type Mismatch Implicit Bridging).
   * **Fixes**: Added a new warning about typing `NSAttributedString` when a ViewBuilder expects or provides `AttributedString` causing an AST type-inference infinite loop.
   * **Impact**: Prevents future agents from making the same Exit Code 65 mistake.
+
+- 2026-10-01 03:00 UTC: Fixed `cachedPostsCount` bug in `TimelineCache.swift`. Instead of using `.allKeys().count` which incorrectly returned the number of keys rather than the cached posts, it now correctly uses `getItems(for: filter:)?.count ?? 0` to properly count the number of posts in each filter, including "Home".
