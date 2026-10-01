@@ -206,9 +206,25 @@ private struct MediaPreview: View {
   var onLoaded: () -> Void = {}
 
   @State private var loadedAspectRatio: CGFloat? = nil
+  @State private var cachedImage: Image?
 
   private var currentAspectRatio: CGFloat? {
     return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
+  }
+
+  @ViewBuilder
+  private func styleImage(_ image: Image) -> some View {
+    image
+      .resizable()
+      .aspectRatio(contentMode: .fill)
+      .frame(
+        maxWidth: isStandalone ? .infinity : nil,
+        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
+      )
+      .frame(
+        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
+        height: isStandalone ? nil : imageMaxHeight
+      )
   }
 
   var body: some View {
@@ -218,9 +234,9 @@ private struct MediaPreview: View {
         case .image:
           LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
             if let image = state.image {
-              image
-                .resizable()
+              styleImage(image)
                 .onAppear {
+                  cachedImage = image
                   onLoaded()
                   if isStandalone {
                     if displayData.standaloneAspectRatio == nil {
@@ -237,19 +253,16 @@ private struct MediaPreview: View {
                     }
                   }
                 }
-                .aspectRatio(contentMode: .fill)
-                .frame(
-                  maxWidth: isStandalone ? .infinity : nil,
-                  maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
-                )
-                .frame(
-                  width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
-                  height: isStandalone ? nil : imageMaxHeight
-                )
+            } else if let cached = cachedImage {
+              styleImage(cached)
             } else if state.isLoading {
               RoundedRectangle(cornerRadius: 10)
                 .fill(Color.gray)
             }
+          }
+          .onChange(of: displayData.url) { _, _ in
+            cachedImage = nil
+            loadedAspectRatio = nil
           }
           .clipShape(RoundedRectangle(cornerRadius: 10))
           .overlay(
@@ -547,6 +560,8 @@ private struct FeaturedImagePreView: View {
   let sensitive: Bool
   var onLoaded: () -> Void = {}
 
+  @State private var cachedImage: Image?
+
   @Environment(\.isSecondaryColumn) private var isSecondaryColumn: Bool
   @Environment(QuickLook.self) private var quickLook
   @Environment(Theme.self) private var theme
@@ -575,11 +590,21 @@ private struct FeaturedImagePreView: View {
                   if let image = state.image {
                     image
                       .resizable()
-                      .onAppear { onLoaded() }
+                      .onAppear { 
+                        onLoaded() 
+                        cachedImage = image
+                      }
+                      .scaledToFill()
+                  } else if let cached = cachedImage {
+                    cached
+                      .resizable()
                       .scaledToFill()
                   } else if state.isLoading {
                     RoundedRectangle(cornerRadius: 10).fill(Color.gray)
                   }
+                }
+                .onChange(of: attachment.id) { _, _ in
+                  cachedImage = nil
                 }
               case .av:
                 MediaUIAttachmentVideoView(viewModel: .init(url: data.url, fallbackUrl: data.fallbackUrl, onReady: { onLoaded() }))
@@ -784,9 +809,22 @@ private struct MediaGridCell: View {
   var onLoaded: () -> Void = {}
 
   @State private var loadedAspectRatio: CGFloat? = nil
+  @State private var cachedImage: Image?
 
   private var currentAspectRatio: CGFloat? {
     return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
+  }
+
+  @ViewBuilder
+  private func styleImage(_ image: Image) -> some View {
+    image
+      .resizable()
+      .aspectRatio(contentMode: .fill)
+      .frame(
+        maxWidth: isStandalone ? .infinity : nil,
+        maxHeight: isStandalone ? .infinity : nil
+      )
+      .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
   }
 
   var body: some View {
@@ -796,9 +834,9 @@ private struct MediaGridCell: View {
         case .image:
           LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
             if let image = state.image {
-              image
-                .resizable()
+              styleImage(image)
                 .onAppear {
+                  cachedImage = image
                   onLoaded()
                   if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
                     let ratio = size.width / size.height
@@ -807,16 +845,16 @@ private struct MediaGridCell: View {
                     }
                   }
                 }
-                .aspectRatio(contentMode: .fill)
-                .frame(
-                  maxWidth: isStandalone ? .infinity : nil,
-                  maxHeight: isStandalone ? .infinity : nil
-                )
-                .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
+            } else if let cached = cachedImage {
+              styleImage(cached)
             } else if state.isLoading {
               Rectangle()
                 .fill(Color.gray)
             }
+          }
+          .onChange(of: displayData.url) { _, _ in
+            cachedImage = nil
+            loadedAspectRatio = nil
           }
           .clipShape(RoundedRectangle(cornerRadius: 10))
           .overlay(

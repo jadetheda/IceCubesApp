@@ -82,19 +82,7 @@ public struct LazyResizableImage<Content: View>: View {
     debouncedTask = Task {
       do { try await Task.sleep(for: .milliseconds(200)) } catch { return }
       await MainActor.run {
-        if let currentSize = processorSize {
-          let widthMultiplier = newSize.width / currentSize.width
-          
-          // To prevent visual flashing (load -> unload -> reload) on aspect ratio corrections,
-          // only update the processor size if the view's width expands significantly 
-          // (e.g., device rotation). Height-only expansions (from discovering a tall aspect ratio)
-          // or minor layout shifts should just use the already loaded image.
-          if widthMultiplier > 1.2 {
-            processorSize = newSize
-          }
-        } else {
-          processorSize = newSize
-        }
+        processorSize = newSize
       }
     }
   }
