@@ -838,10 +838,18 @@ private struct MediaGridCell: View {
                 .onAppear {
                   cachedImage = image
                   onLoaded()
-                  if isStandalone, displayData.standaloneAspectRatio == nil, loadedAspectRatio == nil, let size = state.imageContainer?.image.size, size.height > 0 {
-                    let ratio = size.width / size.height
-                    DispatchQueue.main.async {
-                      loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                  if isStandalone {
+                    if displayData.standaloneAspectRatio == nil {
+                      if loadedAspectRatio == nil {
+                        if let size = state.imageContainer?.image.size {
+                          if size.height > 0 {
+                            let ratio = size.width / size.height
+                            DispatchQueue.main.async {
+                              loadedAspectRatio = min(max(ratio, 0.25), 4.0)
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -873,9 +881,7 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .if(isStandalone && currentAspectRatio != nil) { view in
-        view.aspectRatio(currentAspectRatio, contentMode: .fit)
-      }
+      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: .fit)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil
