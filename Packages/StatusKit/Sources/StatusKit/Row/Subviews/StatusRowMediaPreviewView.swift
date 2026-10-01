@@ -777,6 +777,10 @@ private struct StatusRowMediaGridView: View {
       }
     }
     .clipShape(RoundedRectangle(cornerRadius: 10))
+    .overlay(
+      RoundedRectangle(cornerRadius: 10)
+        .stroke(.gray.opacity(0.35), lineWidth: 1)
+    )
     .contentShape(RoundedRectangle(cornerRadius: 10))
   }
 
@@ -864,11 +868,6 @@ private struct MediaGridCell: View {
             cachedImage = nil
             loadedAspectRatio = nil
           }
-          .clipShape(RoundedRectangle(cornerRadius: 10))
-          .overlay(
-            RoundedRectangle(cornerRadius: 10)
-              .stroke(.gray.opacity(0.35), lineWidth: 1)
-          )
           .overlay {
             BlurOverLay(sensitive: sensitive, font: .scaledFootnote)
           }
@@ -881,13 +880,13 @@ private struct MediaGridCell: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: isStandalone ? .fit : .fill)
       .frame(
         maxWidth: isStandalone ? .infinity : nil,
         maxHeight: isStandalone ? .infinity : nil
       )
       .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
-      .clipShape(RoundedRectangle(cornerRadius: 10))
+      .clipped()
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
       .accessibilityLabel(Text(displayData.accessibilityText))
