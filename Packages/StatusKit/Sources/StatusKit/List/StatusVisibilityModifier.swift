@@ -1,53 +1,61 @@
 import SwiftUI
 import Models
-import Env
 
-@MainActor
-public struct StatusVisibilityModifier<Fetcher: StatusesFetcher>: ViewModifier {
-  public let status: Status
-  public let fetcher: Fetcher
-  public let requiresMediaToLoad: Bool
+public struct StatusVisibilityModifier: ViewModifier {
+  let status: Status
+  let fetcher: any StatusesFetcher
+  let requiresMediaToLoad: Bool
 
-  public init(status: Status, fetcher: Fetcher, requiresMediaToLoad: Bool) {
-    self.status = status
-    self.fetcher = fetcher
-    self.requiresMediaToLoad = requiresMediaToLoad
-  }
+  @State private var isVisible: Bool = false
 
   public func body(content: Content) -> some View {
-    content
-      .onScrollVisibilityChange(threshold: 0.1) { isVisible in
-        if isVisible {
-          if requiresMediaToLoad {
-            if status.mediaAttachments.isEmpty {
-              fetcher.statusDidAppear(status: status)
-            }
-          } else {
-            fetcher.statusDidAppear(status: status)
+    Group {
+      if #available(iOS 18.0, visionOS 2.0, macOS 15.0, *) {
+        content
+          .onScrollVisibilityChange(threshold: 0.5) { visible in
+            isVisible = visible
+            handleVisibilityChange(visible: visible)
           }
-        } else {
-          fetcher.statusDidDisappear(status: status)
-        }
+      } else {
+        content
+          .onAppear {
+            isVisible = true
+            handleVisibilityChange(visible: true)
+          }
+          .onDisappear {
+            isVisible = false
+            handleVisibilityChange(visible: false)
+          }
       }
-      .environment(\.statusOnMediaLoaded) {
-        if requiresMediaToLoad {
+    }
+    .environment(\.statusOnMediaLoaded) {
+      if isVisible {
+        fetcher.statusDidAppear(status: status)
+      }
+    }
+  }
+
+  private func handleVisibilityChange(visible: Bool) {
+    if visible {
+      if requiresMediaToLoad {
+        if status.mediaAttachments.isEmpty {
           fetcher.statusDidAppear(status: status)
         }
+      } else {
+        fetcher.statusDidAppear(status: status)
       }
+    } else {
+      fetcher.statusDidDisappear(status: status)
+    }
   }
 }
 
-public extension View {
-  @MainActor
-  func trackStatusVisibility<Fetcher: StatusesFetcher>(
-    status: Status,
-    fetcher: Fetcher,
-    requiresMediaToLoad: Bool
+extension View {
+  public func trackStatusVisibility(
+    status: Status, 
+    fetcher: any StatusesFetcher, 
+    requiresMediaToLoad: Bool = false
   ) -> some View {
-    modifier(StatusVisibilityModifier(
-      status: status,
-      fetcher: fetcher,
-      requiresMediaToLoad: requiresMediaToLoad
-    ))
+    modifier(StatusVisibilityModifier(status: status, fetcher: fetcher, requiresMediaToLoad: requiresMediaToLoad))
   }
 }

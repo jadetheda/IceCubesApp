@@ -1,6 +1,7 @@
 # Aprendizagem
 
 ## 🪵 Activity Log
+- 2026-10-01 07:36 UTC: Implemented the missing `StatusVisibilityModifier` and `trackStatusVisibility` view extension to fix the "Hide Seen Posts" visibility tracking bug triggering prematurely under safe areas. The modifier utilizes iOS 18's `.onScrollVisibilityChange(threshold: 0.1)` to accurately determine when a post is visible within a scroll view. Replaced all raw `.onAppear`, `.onDisappear`, and `.environment(\.statusOnMediaLoaded)` blocks in `StatusesListView`, `AnyStatusesListView`, and `GalleryStatusesListView` with `.trackStatusVisibility` passing the appropriate `requiresMediaToLoad` values. Committed changes locally without triggering a build.
 - 2026-09-25 10:08 UTC: Updated IceCubesApp/Resources/Localization/Localizable.xcstrings with proper human translations for settings.display.custom-emojis-layout.portrait-rows-limit and settings.display.custom-emojis-layout.landscape-rows-limit across 18 supported languages. Cleaned up untracked python scripts and hallucinated unstaged changes.
 - 2026-09-23 23:44 UTC: Fixed async let crash in `AccountDetailView.swift` by completely removing the faulty `do/catch` block and relying purely on `(try? await _) ?? []` for both `relationships` and `featuredTags`, preventing the fallback mechanism from inappropriately discarding valid data. Verified and kept the inverted math fix in `StatusDataController.swift` which correctly restores state (`+= isFavorited ? 1 : -1`) after network failures.
 - 2026-09-18 20:17 UTC: Fixed optional unwrapping of `currentMaxId` and cleaned up unused variables/superfluous awaits in `TimelineViewModel.swift` to resolve Exit Code 65 compilation error.
@@ -1080,3 +1081,5 @@
 - 2026-10-01 03:00 UTC: Fixed `cachedPostsCount` bug in `TimelineCache.swift`. Instead of using `.allKeys().count` which incorrectly returned the number of keys rather than the cached posts, it now correctly uses `getItems(for: filter:)?.count ?? 0` to properly count the number of posts in each filter, including "Home".
 
 - 2026-10-01T06:59:42Z - Fixed `cachedPostsCount` in `TimelineCache.swift` to correctly filter by directory. The previous iteration checked for the absence of `sqlite3` suffix but mistakenly included Bodega's `-wal` and `-shm` sidecar files, which triggered filesystem errors and performance drops when treating them as directories. Changing the filter to `(try? storage.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true` fixes the bug and significantly improves settings screen load times.
+
+- **2026-10-01T07:45:00Z**: Rewrote `StatusVisibilityModifier.swift` in `StatusKit` to fix an existential type crash and missing `#available` checks for `onScrollVisibilityChange`.
