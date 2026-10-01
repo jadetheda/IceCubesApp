@@ -23,14 +23,7 @@ struct StatusRowContextMenu: View {
   @Environment(Theme.self) private var theme
 
   var downloadableMedia: [Models.MediaAttachment] {
-    let baseAttachments: [Models.MediaAttachment]
-    if viewModel.status.mediaAttachments.isEmpty {
-      baseAttachments = viewModel.status.reblog?.mediaAttachments ?? []
-    } else {
-      baseAttachments = viewModel.status.mediaAttachments
-    }
-    
-    return baseAttachments.filter { attachment in
+    return viewModel.finalStatus.mediaAttachments.filter { attachment in
       let type = attachment.supportedType
       return type == .image || type == .video || type == .gifv
     }
@@ -384,10 +377,9 @@ Button {
     if downloadableMedia.count > 0 {
       let alwaysForce = preferences.remoteMediaAlwaysForce
       let fallbackOnFail = preferences.remoteMediaFallbackOnFail
-      let postUrl = viewModel.status.reblog?.url ?? viewModel.status.url
       Button {
         Task {
-          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail, postUrl: postUrl)
+          await downloadAllMedia(attachments: downloadableMedia, alwaysForce: alwaysForce, fallbackOnFail: fallbackOnFail)
           HapticManager.shared.fireHaptic(.notification(.success))
         }
       } label: {
@@ -400,7 +392,7 @@ Button {
     }
   }
 
-  private func downloadAllMedia(attachments: [Models.MediaAttachment], alwaysForce: Bool, fallbackOnFail: Bool, postUrl: String?) async {
+  private func downloadAllMedia(attachments: [Models.MediaAttachment], alwaysForce: Bool, fallbackOnFail: Bool) async {
     for attachment in attachments {
       guard let info = attachment.displayInfo(useRemoteMedia: alwaysForce, fallbackOnFail: fallbackOnFail, neverLoadVideo: false) else { continue }
       

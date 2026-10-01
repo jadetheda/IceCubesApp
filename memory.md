@@ -1095,3 +1095,8 @@
   * **Description**: Fixed AST Constraint Solver timeout trap in MediaGridCell.
   * **Fixes**: Extracted the dual ternary operators (`isStandalone ? currentAspectRatio : nil` and `isStandalone ? .fit : .fill`) from the `.aspectRatio` modifier into separate `appliedContentMode` and `appliedAspectRatio` computed properties to prevent Swift 5.10 compiler Exit Code 65 (OOM).
   * **Impact**: Ensures the app successfully compiles after the layout improvements without hitting constraint solver timeouts in GitHub Actions.
+* **2026-10-01T09:18:00Z**
+  * **Description**: Fixed a bug where downloading media from the full-screen media viewer would use the incorrect metadata for boosted (reblogged) posts.
+  * **Fixes**: Passed `exportMetadata: quickLook.photoMetadata` into the `MediaUIView` initialized in the `IceCubesApp+Scene.swift` `.fullScreenCover(item: $quickLook.selectedMediaAttachment)`. `photoMetadata` naturally targets `status.reblog ?? status` inside `StatusRowViewModel`, but wasn't being forwarded to the viewer during presentation on iOS.
+  * **Impact**: Ensures that when users tap the "Save Photo" toolbar button in the full-screen media viewer for a boosted post, it properly associates the correct author/metadata to the downloaded photo instead of being empty or failing.
+- 2026-10-01 13:25 UTC: Cleaned up unused postUrl parameter in downloadAllMedia and refactored downloadableMedia to use finalStatus.mediaAttachments instead of manual fallback logic.
