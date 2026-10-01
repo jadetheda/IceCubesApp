@@ -168,6 +168,7 @@ public struct StatusRowView: View {
         .onAppear {
           Task {
             await viewModel.loadAuthorRelationship()
+            await viewModel.fetchPluraldawnSystemIfNeeded()
           }
         }
     }

@@ -41,7 +41,7 @@ struct StatusRowHeaderView: View {
   private var accountView: some View {
     HStack(alignment: .center) {
       if theme.avatarPosition == .top {
-        AvatarView(viewModel.finalStatus.account.avatar)
+        AvatarView(viewModel.displayAvatarURL)
           #if targetEnvironment(macCatalyst)
             .accountPopover(viewModel.finalStatus.account)
           #endif
@@ -50,7 +50,7 @@ struct StatusRowHeaderView: View {
         HStack(alignment: .firstTextBaseline, spacing: 2) {
           Group {
             EmojiTextApp(
-              viewModel.finalStatus.account.cachedDisplayName,
+              viewModel.displayDisplayName,
               emojis: viewModel.finalStatus.account.emojis
             )
             .fixedSize(horizontal: false, vertical: true)

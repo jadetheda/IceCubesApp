@@ -60,6 +60,22 @@ import SwiftUI
   
   var isMediaLoaded: Bool = false
   
+  var pluraldawnMember: PluraldawnMember? = nil
+
+  var displayDisplayName: HTMLString {
+    if UserPreferences.shared.pluraldawnSupportEnabled, let member = pluraldawnMember {
+      return .init(stringValue: member.name)
+    }
+    return finalStatus.account.cachedDisplayName
+  }
+  
+  var displayAvatarURL: URL? {
+    if UserPreferences.shared.pluraldawnSupportEnabled, let member = pluraldawnMember {
+      return member.avatarURL
+    }
+    return finalStatus.account.avatar
+  }
+  
   func markMediaLoaded() {
     isMediaLoaded = true
   }
@@ -380,6 +396,35 @@ import SwiftUI
   func delete() async throws {
     StreamWatcher.shared.emmitDeleteEvent(for: status.id)
     _ = try await client.delete(endpoint: Statuses.status(id: status.id))
+  }
+
+  func fetchPluraldawnSystemIfNeeded() async {
+    guard UserPreferences.shared.pluraldawnSupportEnabled,
+          let avatarURL = finalStatus.account.avatar else { return }
+    
+    if let system = await PluraldawnCache.shared.getSystem(for: avatarURL) {
+      let rawText = finalStatus.content.asRawText
+      let mentions = finalStatus.mentions
+      
+      var matchedMembers: [PluraldawnMember] = []
+      for member in system.members {
+        for indicator in member.emoji {
+          if rawText.hasPrefix(indicator) || rawText.hasSuffix(indicator) {
+            matchedMembers.append(member)
+            continue
+          }
+          for mention in mentions {
+            if rawText.contains("@\\(mention.acct) \\(indicator)") || rawText.contains("@\\(mention.username) \\(indicator)") {
+              matchedMembers.append(member)
+              break
+            }
+          }
+        }
+      }
+      if matchedMembers.count == 1 {
+        self.pluraldawnMember = matchedMembers.first
+      }
+    }
   }
 
   func fetchActionsAccounts() async {
