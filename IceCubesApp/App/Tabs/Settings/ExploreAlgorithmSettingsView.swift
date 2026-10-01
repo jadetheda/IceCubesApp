@@ -51,7 +51,7 @@ struct ExploreAlgorithmSettingsView: View {
       .listRowBackground(theme.primaryBackgroundColor)
       #endif
     }
-    .navigationTitle("IceShrimp.net explore algorithm")
+    .navigationTitle("Iceshrimp.NET explore algorithm")
     #if !os(visionOS)
     .scrollContentBackground(.hidden)
     .background(theme.secondaryBackgroundColor)

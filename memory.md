@@ -1060,3 +1060,7 @@
   * **Impact**: Translators can now safely translate the settings screen, and users will see properly formatted text for their locale without breaking formatting strings.
 
 - 2026-10-01 01:20 UTC: Fixed Ghost Timers & Memory Leak in `TimelineViewModel.swift` by capturing `[weak self]` in the task inside `statusDidAppear`, storing the task in `seenTimerTasks`, and actively cancelling it in `statusDidDisappear`. Implemented Media-Aware Timer by using `@Environment(\.statusOnMediaLoaded)` to pass a callback to `StatusRowMediaPreviewView` without using deep closures, mitigating the AST memory trap (Exit Code 65). This delays the "read" timer start until all media (or fallback timeouts) have fully loaded.
+* **2026-09-30 21:15:00 UTC**
+  * **Description**: Corrected capitalization of Iceshrimp across all UI strings.
+  * **Fixes**: Replaced 'IceShrimp' with 'Iceshrimp' and 'IceShrimp.net' with 'Iceshrimp.NET' in Swift Views and all 18 languages within `Localizable.xcstrings`.
+  * **Impact**: Ensures accurate and consistent terminology for the server software in the user interface.

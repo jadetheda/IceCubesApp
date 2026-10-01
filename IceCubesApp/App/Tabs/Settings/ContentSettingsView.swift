@@ -106,7 +106,7 @@ struct ContentSettingsView: View {
       if client.isIceShrimpWorkaroundsEnabled {
         Section {
           NavigationLink(destination: ExploreAlgorithmSettingsView()) {
-            Text("IceShrimp.net explore algorithm")
+            Text("Iceshrimp.NET explore algorithm")
           }
         }
         #if !os(visionOS)
