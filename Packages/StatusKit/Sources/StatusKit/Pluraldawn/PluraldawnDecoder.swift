@@ -16,18 +16,22 @@ public struct PluraldawnDecoder {
     public static func decode(from url: URL) async -> PluraldawnSystem? {
         guard let (data, _) = try? await URLSession.shared.data(from: url) else { return nil }
         
-        guard let dataProvider = CGDataProvider(data: data as CFData),
-              let image = CGImage(jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent) ??
-                          CGImage(pngDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent) else {
-            #if canImport(UIKit)
-            guard let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage else { return nil }
-            return extract(from: cgImage)
-            #else
-            return nil
-            #endif
+        guard let dataProvider = CGDataProvider(data: data as CFData) else { return nil }
+        var optionalImage: CGImage? = CGImage(jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+        if optionalImage == nil {
+            optionalImage = CGImage(pngDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
         }
         
-        return extract(from: image)
+        if let unwrappedImage = optionalImage {
+            return extract(from: unwrappedImage)
+        }
+        
+        #if canImport(UIKit)
+        guard let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage else { return nil }
+        return extract(from: cgImage)
+        #else
+        return nil
+        #endif
     }
     
     private static func extract(from image: CGImage) -> PluraldawnSystem? {
@@ -123,7 +127,9 @@ public struct PluraldawnDecoder {
         let avatars = groups[3].components(separatedBy: "\u{001E}")
         let fonts = groups[4].components(separatedBy: "\u{001E}")
         
-        let count = min(ids.count, names.count, indicators.count, avatars.count, fonts.count)
+        let min1 = min(ids.count, names.count)
+        let min2 = min(indicators.count, avatars.count)
+        let count = min(min(min1, min2), fonts.count)
         var members: [PluraldawnMember] = []
         
         for i in 0..<count {
@@ -131,7 +137,14 @@ public struct PluraldawnDecoder {
             if id.isEmpty { continue }
             let name = names[i]
             let indicatorStr = indicators[i]
-            let emoji = indicatorStr.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            let rawEmojis = indicatorStr.components(separatedBy: ",")
+            var emoji: [String] = []
+            for e in rawEmojis {
+                let trimmed = e.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty {
+                    emoji.append(trimmed)
+                }
+            }
             let avatar = avatars[i]
             let font = fonts[i]
             
@@ -139,8 +152,14 @@ public struct PluraldawnDecoder {
             
             if avatar == "emoji" {
                 members.append(member)
-            } else if let url = member.avatarURL, let host = url.host, whitelistHosts.contains(host) {
-                members.append(member)
+            } else {
+                if let url = member.avatarURL {
+                    if let host = url.host {
+                        if whitelistHosts.contains(host) {
+                            members.append(member)
+                        }
+                    }
+                }
             }
         }
         
