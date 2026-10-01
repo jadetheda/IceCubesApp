@@ -157,6 +157,11 @@ You MUST strictly avoid these patterns inside `body` or any `@ViewBuilder` closu
 * ❌ **Bad:** Using a type or static function from another package (e.g., `MediaCaptionUtils.createCaption` from `MediaUI`) inside a SwiftUI `ViewBuilder` or closure without importing the module at the top of the file. The compiler constraint solver will enter an infinite loop trying to resolve the type, leading to a silent Exit Code 65 instead of a standard syntax error.
 * ✅ **Good:** Always meticulously verify that every external module referenced within a file is explicitly imported. Do not rely on the compiler to throw a clean syntax error if the missing symbol is inside a closure.
 
+**Trap 6: Implicit Type Bridging Mismatch**
+* ❌ **Bad:** `private var text: NSAttributedString { return somethingReturningAttributedString() }`
+* ✅ **Good:** `private var text: AttributedString { return somethingReturningAttributedString() }`
+* **Why:** Attempting to force Swift to implicitly bridge `AttributedString` to `NSAttributedString` inside a ViewBuilder or heavily computed property will cause the AST constraint solver to hang and crash with Exit Code 65 instead of throwing a clean type mismatch error.
+
 ### 3. The "Shifting Weight" Architectural Trap
 * **The Trap:** If you purge AST traps from a heavily nested child view (e.g., `StatusRowContentView`), the compiler often shifts the type-inference evaluation weight directly up to the parent view (e.g., `StatusRowView` or `GalleryStatusesListView`). This causes the *parent* to suddenly OOM instead.
 * **Agent Action:** You cannot fix AST timeouts piecemeal. You must aggressively decouple and purge AST traps from the *entire* view hierarchy concurrently.
