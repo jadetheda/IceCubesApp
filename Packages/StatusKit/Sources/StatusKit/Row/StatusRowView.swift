@@ -12,6 +12,7 @@ public struct StatusRowView: View {
   @Environment(\.isInCaptureMode) private var isInCaptureMode: Bool
   @Environment(\.redactionReasons) private var reasons
   @Environment(\.isCompact) private var isCompact: Bool
+  @Environment(\.statusOnMediaLoaded) private var statusOnMediaLoaded
   @Environment(\.accessibilityVoiceOverEnabled) private var accessibilityVoiceOverEnabled
   @Environment(\.isStatusFocused) private var isFocused
   @Environment(\.indentationLevel) private var indentationLevel
@@ -288,6 +289,11 @@ public struct StatusRowView: View {
       .addTranslateView(
         isPresented: $viewModel.showAppleTranslation, text: viewModel.finalStatus.content.asRawText)
     #endif
+    .onChange(of: viewModel.isMediaLoaded) { _, isLoaded in
+      if isLoaded {
+        statusOnMediaLoaded?()
+      }
+    }
   }
 
   private func handleDelete() {

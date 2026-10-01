@@ -2,6 +2,7 @@ import SwiftUI
 import Env
 import DesignSystem
 import NetworkClient
+import Foundation
 
 @MainActor
 struct ExploreAlgorithmSettingsView: View {
@@ -51,10 +52,18 @@ struct ExploreAlgorithmSettingsView: View {
       .listRowBackground(theme.primaryBackgroundColor)
       #endif
     }
-    .navigationTitle("Iceshrimp.NET explore algorithm")
+    .navigationTitle("IceShrimp.net explore algorithm")
+    .onAppear {
+      Task { @MainActor in
+        if userPreferences.trendingAlgorithm == .mastodon {
+          userPreferences.trendingAlgorithm = .decayingScore
+        }
+      }
+    }
     #if !os(visionOS)
     .scrollContentBackground(.hidden)
     .background(theme.secondaryBackgroundColor)
     #endif
   }
 }
+
