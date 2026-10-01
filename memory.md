@@ -1072,3 +1072,7 @@
   * **Description**: Fixed Exit Code 65 compilation timeout in GitHub Actions.
   * **Fixes**: Corrected an implicit type mismatch trap in `StatusRowView.swift`. The extracted `selectableTextContent` property was mistakenly typed as `NSAttributedString` instead of `AttributedString`, causing the ViewBuilder type-inference engine to exhaust memory and silently crash the GitHub Actions macOS runner.
   * **Impact**: Restores ability to compile the project via CI.
+* **2026-09-30 21:54:30 UTC**
+  * **Description**: Updated AGENTS.md with Trap 6 (Type Mismatch Implicit Bridging).
+  * **Fixes**: Added a new warning about typing `NSAttributedString` when a ViewBuilder expects or provides `AttributedString` causing an AST type-inference infinite loop.
+  * **Impact**: Prevents future agents from making the same Exit Code 65 mistake.

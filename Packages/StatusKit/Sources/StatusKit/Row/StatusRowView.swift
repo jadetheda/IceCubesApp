@@ -152,9 +152,11 @@ public struct StatusRowView: View {
     }
     .onAppear {
       if !reasons.contains(.placeholder) {
-        if !isCompact, viewModel.embeddedStatus == nil {
-          Task {
-            await viewModel.loadEmbeddedStatus()
+        if !isCompact {
+          if viewModel.embeddedStatus == nil {
+            Task {
+              await viewModel.loadEmbeddedStatus()
+            }
           }
         }
       }

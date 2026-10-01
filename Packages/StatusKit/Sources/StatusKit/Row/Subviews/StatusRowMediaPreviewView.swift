@@ -145,11 +145,7 @@ public struct StatusRowMediaPreviewView: View {
 
   @ViewBuilder
   private func makeAttachmentView(_ attachement: MediaAttachment) -> some View {
-    
-    let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = false
-
-    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
+    if let data = DisplayData(from: attachement, useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: userPreferences.remoteMediaFallbackOnFail, neverLoadVideo: false) {
       MediaPreview(
         sensitive: sensitive,
         imageMaxHeight: imageMaxHeight,
@@ -566,13 +562,8 @@ private struct FeaturedImagePreView: View {
   }
 
   var body: some View {
-    
-    let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = false
-    let displayData = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo)
-
-    return Group {
-      if let data = displayData {
+    Group {
+      if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: userPreferences.remoteMediaFallbackOnFail, neverLoadVideo: false) {
         if let namespace = quickLook.namespace {
           _Layout(originalWidth: originalWidth, originalHeight: originalHeight, maxSize: maxSize) {
         Group {
@@ -705,8 +696,11 @@ private struct StatusRowMediaGridView: View {
   let onLoaded: (String) -> Void
   let tabAction: (Int) -> Void
 
+  private var gridHeight: CGFloat {
+    imageMaxHeight == 300 ? 260.0 : imageMaxHeight
+  }
+
   var body: some View {
-    let gridHeight = imageMaxHeight == 300 ? 260.0 : imageMaxHeight
     Group {
       switch attachments.count {
       case 1:
@@ -763,17 +757,12 @@ private struct StatusRowMediaGridView: View {
 
   @ViewBuilder
   private func makeCell(for index: Int, isStandaloneOverride: Bool = false) -> some View {
-    let attachment = attachments[index]
-    
-    let fallback = userPreferences.remoteMediaFallbackOnFail
-    let noVideo = false
-
-    if let data = DisplayData(from: attachment, useRemoteMedia: useRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: noVideo) {
+    if let data = DisplayData(from: attachments[index], useRemoteMedia: useRemoteMedia, fallbackOnFail: userPreferences.remoteMediaFallbackOnFail, neverLoadVideo: false) {
       MediaGridCell(
         sensitive: sensitive,
         displayData: data,
         isStandalone: isStandaloneOverride || attachments.count == 1,
-        onLoaded: { onLoaded(attachment.id) }
+        onLoaded: { onLoaded(attachments[index].id) }
       )
       .id(data.url)
       .onTapGesture {
