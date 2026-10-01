@@ -91,7 +91,7 @@ extension StatusEditor {
                 object: nil)
             }
             Button("status.draft.save") {
-              context.insert(Draft(content: mainStore.statusText.string))
+              context.insert(Draft(content: mainStore.statusText.string, spoilerText: mainStore.spoilerText))
               close()
               NotificationCenter.default.post(
                 name: .shareSheetClose,
@@ -187,7 +187,7 @@ extension StatusEditor {
     private func saveDraftIfNeeded() {
       let content = mainStore.statusText.string.trimmingCharacters(in: .whitespacesAndNewlines)
       guard !content.isEmpty else { return }
-      context.insert(Draft(content: content))
+      context.insert(Draft(content: content, spoilerText: mainStore.spoilerText))
     }
 
     @discardableResult
@@ -261,14 +261,62 @@ extension StatusEditor {
           },
           set: { draft in
             if let draft {
-              let currentText = focusedStore.statusText.string.trimmingCharacters(in: .whitespacesAndNewlines)
-              if currentText.isEmpty || draft.content.hasPrefix(currentText) {
+              if !draft.spoilerText.isEmpty {
+                focusedStore.spoilerText = draft.spoilerText
+                focusedStore.spoilerOn = true
+              }
+              let currentText = focusedStore.statusText.string
+              let (currentMentions, currentRest) = currentText.extractMentionsAndRest()
+              
+              if currentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 focusedStore.replaceTextWith(text: draft.content)
+              } else if currentRest.isEmpty {
+                let (draftMentions, draftRest) = draft.content.extractMentionsAndRest()
+                var mergedMentions = currentMentions
+                for m in draftMentions {
+                  if !mergedMentions.contains(m) {
+                    mergedMentions.append(m)
+                  }
+                }
+                
+                let mentionsStr = mergedMentions.joined(separator: " ")
+                let newText = mentionsStr.isEmpty ? draftRest : (draftRest.isEmpty ? mentionsStr : "\(mentionsStr) \(draftRest)")
+                focusedStore.replaceTextWith(text: newText)
               } else {
-                focusedStore.insertStatusText(text: draft.content)
+                let trimmedCurrent = currentText.trimmingCharacters(in: .whitespacesAndNewlines)
+                if trimmedCurrent.isEmpty || draft.content.hasPrefix(trimmedCurrent) {
+                  focusedStore.replaceTextWith(text: draft.content)
+                } else {
+                  focusedStore.insertStatusText(text: draft.content)
+                }
               }
             }
           }))
     }
+  }
+}
+
+extension String {
+  func extractMentionsAndRest() -> (mentions: [String], rest: String) {
+    var mentions: [String] = []
+    let words = self.components(separatedBy: .whitespacesAndNewlines)
+    var restStartIndex = self.startIndex
+    
+    for word in words {
+      if word.isEmpty {
+        continue
+      }
+      if word.hasPrefix("@") {
+        mentions.append(word)
+        if let range = self[restStartIndex...].range(of: word) {
+          restStartIndex = range.upperBound
+        }
+      } else {
+        break
+      }
+    }
+    
+    let rest = String(self[restStartIndex...]).trimmingCharacters(in: .whitespacesAndNewlines)
+    return (mentions, rest)
   }
 }

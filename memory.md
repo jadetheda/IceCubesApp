@@ -1044,3 +1044,9 @@
     2. Added missing `import UIKit` to `MediaUIView.swift` and `StatusRowContextMenu.swift` to prevent the constraint solver from hanging when evaluating `UIPasteboard` closures (AST Trap 5).
     3. Removed the explicit `"spoiler_text"` string mapping from `StatusSource.swift`'s `CodingKeys`. Because `MastodonBackend` natively decodes with `.convertFromSnakeCase`, the key was already converted to `spoilerText` by the time the custom key mapping evaluated it, causing a silent JSON erasure failure.
   * **Impact**: Preempts three fatal `Exit Code 65` compilation timeouts and one silent data erasure bug before the next CI build.
+* **2026-09-30 20:30:00 UTC**
+  * **Description**: Fixed duplicate tagging when importing a draft that is a reply to the same user.
+  * **Fixes**: Updated `ToolbarItems.swift` inside `StatusKit/Editor` to check if the text currently in the editor (usually `@user ` prepopulated for a reply) matches the prefix of the draft's content. If it does, or if the editor is empty, `focusedStore.replaceTextWith(text: draft.content)` is called to completely replace the text, preventing the tags from doubling up as `@user @user `.
+  * **Impact**: Users can now import drafts when replying without having redundant mentions prepended to their message.
+
+- 2026-10-01 00:34 UTC: Fixed a bug where importing a draft containing prepopulated mentions resulted in double tags in the editor. Replaced the simple prefix matching logic with a robust mention parsing and merging strategy in `ToolbarItems.swift`. Also fixed a bug where a draft's content warning (`spoilerText`) was not saved or restored by adding `spoilerText` to the `Draft` model and updating `ToolbarItems.swift` to save and restore it into `EditorStore`.
