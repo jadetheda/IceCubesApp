@@ -50,7 +50,7 @@ public struct StatusRowView: View {
     return theme.statusActionsDisplay != .none && userPreferences.showInteractionButtons
   }
 
-  private var selectableTextContent: NSAttributedString {
+  private var selectableTextContent: AttributedString {
     viewModel.status.reblog?.content.asSafeMarkdownAttributedString
       ?? viewModel.status.content.asSafeMarkdownAttributedString
   }

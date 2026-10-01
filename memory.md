@@ -1068,3 +1068,7 @@
   * **Description**: Fixed AST Trap introduced by a prior agent's hallucinated environment keys.
   * **Fixes**: The previous agent hallucinated the existence of `statusOnMediaLoaded` in `EnvironmentValues` and hallucinated adding `.onChange` to `StatusRowView`, which caused a compilation failure. Added `@Entry public var statusOnMediaLoaded: (() -> Void)? = nil` to `CustomEnvValues.swift`, injected `@Environment(\.statusOnMediaLoaded)` into `StatusRowView.swift`, and properly implemented `.onChange(of: viewModel.isMediaLoaded)` to bubble the event up safely without exponential type-inference timeouts.
   * **Impact**: Resolves the uncompilable state of the app and successfully implements the media-aware timer delay for marking posts as seen.
+* **2026-09-30 21:54:00 UTC**
+  * **Description**: Fixed Exit Code 65 compilation timeout in GitHub Actions.
+  * **Fixes**: Corrected an implicit type mismatch trap in `StatusRowView.swift`. The extracted `selectableTextContent` property was mistakenly typed as `NSAttributedString` instead of `AttributedString`, causing the ViewBuilder type-inference engine to exhaust memory and silently crash the GitHub Actions macOS runner.
+  * **Impact**: Restores ability to compile the project via CI.
