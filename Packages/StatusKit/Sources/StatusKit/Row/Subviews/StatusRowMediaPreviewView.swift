@@ -89,7 +89,7 @@ public struct StatusRowMediaPreviewView: View {
             tabAction: { index in tabAction(for: index) }
           )
         }
-      } else if userPreferences.statusMediaGridMode && attachments.count <= 4 {
+      } else if useMediaGridMode {
         StatusRowMediaGridView(
           attachments: attachments,
           sensitive: sensitive,
@@ -226,13 +226,17 @@ private struct MediaPreview: View {
         height: isStandalone ? nil : imageMaxHeight
       )
   }
+  
+  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
+    isStandaloneOverride || attachmentsCount == 1
+  }
 
   var body: some View {
     if let namespace = quickLook.namespace {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.safeFallbackUrl) { state in
             if let image = state.image {
               styleImage(image)
                 .onAppear {
@@ -575,6 +579,10 @@ private struct FeaturedImagePreView: View {
   private var originalHeight: CGFloat {
     CGFloat(attachment.meta?.original?.height ?? 300)
   }
+  
+  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
+    isStandaloneOverride || attachmentsCount == 1
+  }
 
   var body: some View {
     Group {
@@ -586,7 +594,7 @@ private struct FeaturedImagePreView: View {
             .overlay {
               switch data.type {
               case .image:
-                LazyResizableImage(url: data.previewUrl, fallbackUrl: data.previewFallbackUrl ?? data.fallbackUrl) { state in
+                LazyResizableImage(url: data.previewUrl, fallbackUrl: data.safeFallbackUrl) { state in
                   if let image = state.image {
                     image
                       .resizable()
@@ -724,6 +732,10 @@ private struct StatusRowMediaGridView: View {
   private var gridHeight: CGFloat {
     imageMaxHeight == 300 ? 260.0 : imageMaxHeight
   }
+  
+  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
+    isStandaloneOverride || attachmentsCount == 1
+  }
 
   var body: some View {
     Group {
@@ -790,7 +802,7 @@ private struct StatusRowMediaGridView: View {
       MediaGridCell(
         sensitive: sensitive,
         displayData: data,
-        isStandalone: isStandaloneOverride || attachments.count == 1,
+        isStandalone: calculateIsStandalone(isStandaloneOverride: isStandaloneOverride, attachmentsCount: attachments.count),
         onLoaded: { onLoaded(attachments[index].id) }
       )
       .id(data.url)
@@ -838,13 +850,17 @@ private struct MediaGridCell: View {
   private var appliedAspectRatio: CGFloat? {
     isStandalone ? currentAspectRatio : nil
   }
+  
+  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
+    isStandaloneOverride || attachmentsCount == 1
+  }
 
   var body: some View {
     if let namespace = quickLook.namespace {
       Group {
         switch displayData.type {
         case .image:
-          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.previewFallbackUrl ?? displayData.fallbackUrl) { state in
+          LazyResizableImage(url: displayData.previewUrl, fallbackUrl: displayData.safeFallbackUrl) { state in
             if let image = state.image {
               styleImage(image)
                 .onAppear {

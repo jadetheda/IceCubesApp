@@ -478,9 +478,11 @@ public struct GalleryMediaCell: View {
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
+          let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+          let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
+          let contentStr = reblogContent ?? statusContent
           StatusRowSelectableTextView(
-            content: viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-              ?? viewModel.status.content.asSafeMarkdownAttributedString
+            content: contentStr
           )
         }
       }
@@ -531,7 +533,9 @@ public struct GalleryMediaCell: View {
           Task {
             do {
               if let viewModel {
-                let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
+                let reblogAcct = viewModel.status.reblog?.account
+                let acct = viewModel.status.account
+                let operationAccount = reblogAcct ?? acct
                 viewModel.authorRelationship = try await client.post(
                   endpoint: Accounts.block(id: operationAccount.id))
               }
