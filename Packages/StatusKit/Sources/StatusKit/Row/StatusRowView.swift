@@ -66,6 +66,13 @@ public struct StatusRowView: View {
     !isCompact && context != .detail
   }
 
+  private var accessibilityLabelState: Text {
+    if isFocused == false && accessibilityVoiceOverEnabled {
+      return StatusRowAccessibilityLabel(viewModel: viewModel).finalLabel()
+    }
+    return Text("")
+  }
+
   public var body: some View {
     HStack(spacing: 0) {
       if !isCompact {
@@ -210,8 +217,7 @@ public struct StatusRowView: View {
     )
     .accessibilityElement(children: isFocused ? .contain : .combine)
     .accessibilityLabel(
-      isFocused == false && accessibilityVoiceOverEnabled
-        ? StatusRowAccessibilityLabel(viewModel: viewModel).finalLabel() : Text("")
+      accessibilityLabelState
     )
     .accessibilityHidden(viewModel.filter?.filter.filterAction == .hide)
     .accessibilityAction {

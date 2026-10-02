@@ -3,6 +3,7 @@ import Env
 import Models
 import NetworkClient
 import SwiftUI
+import EmojiText
 
 @MainActor
 struct StatusRowHeaderView: View {

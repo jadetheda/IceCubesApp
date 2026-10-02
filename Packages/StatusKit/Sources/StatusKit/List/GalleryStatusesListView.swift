@@ -32,6 +32,12 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
   private var placeholderRatios: [CGFloat] { isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3] }
 
+  private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
+    let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+    let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
+    return reblogContent ?? statusContent
+  }
+
   public var body: some View {
     switch fetcher.statusesState {
     case .loading:
@@ -354,6 +360,12 @@ public struct GalleryMediaCell: View {
   private var fallbackUrl: URL? { info?.fallbackUrl }
   private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
+  private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
+    let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+    let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
+    return reblogContent ?? statusContent
+  }
+
   public var body: some View {
     if let url = resolvedUrl {
       Button {
@@ -478,11 +490,8 @@ public struct GalleryMediaCell: View {
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
-          let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-          let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
-          let contentStr = reblogContent ?? statusContent
           StatusRowSelectableTextView(
-            content: contentStr
+            content: getSelectableTextContent(for: viewModel)
           )
         }
       }
