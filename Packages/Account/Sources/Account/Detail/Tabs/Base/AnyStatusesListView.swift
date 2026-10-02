@@ -121,7 +121,8 @@ struct AnyStatusesListView: View {
         if !status.mediaAttachments.isEmpty {
           return false
         }
-        if status.reblog?.mediaAttachments.isEmpty == false {
+        let reblogEmpty = status.reblog?.mediaAttachments.isEmpty ?? true
+        if !reblogEmpty {
           return false
         }
       }

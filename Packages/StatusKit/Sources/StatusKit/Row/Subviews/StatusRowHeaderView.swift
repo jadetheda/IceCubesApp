@@ -111,9 +111,13 @@ struct StatusRowHeaderView: View {
   }
 
   private var accountBadgeView: Text? {
-    if (viewModel.status.reblogAsAsStatus ?? viewModel.status).account.bot {
+    let statusToUse = viewModel.status.reblogAsAsStatus ?? viewModel.status
+    let isBot = statusToUse.account.bot
+    let isLocked = statusToUse.account.locked
+    
+    if isBot {
       return Text(Image(systemName: "poweroutlet.type.b.fill")) + Text(" ")
-    } else if (viewModel.status.reblogAsAsStatus ?? viewModel.status).account.locked {
+    } else if isLocked {
       return Text(Image(systemName: "lock.fill")) + Text(" ")
     }
     return nil
@@ -128,8 +132,10 @@ struct StatusRowHeaderView: View {
         .foregroundStyle(.secondary)
         .lineLimit(1)
     } else {
-      Group {
-        Text(Image(systemName: viewModel.finalStatus.visibility.iconName)) + Text(" ⸱ ") + Text(viewModel.finalStatus.createdAt.relativeFormatted)
+      HStack(spacing: 4) {
+        Image(systemName: viewModel.finalStatus.visibility.iconName)
+        Text("⸱")
+        Text(viewModel.finalStatus.createdAt.relativeFormatted)
       }
       .fixedSize(horizontal: false, vertical: true)
       .font(.scaledFootnote)

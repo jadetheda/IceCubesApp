@@ -44,13 +44,16 @@ public struct PluraldawnDecoder {
         
         var rawData = [UInt8](repeating: 0, count: height * bytesPerRow)
         
+        let alphaInfo = CGImageAlphaInfo.premultipliedLast.rawValue
+        let byteOrder = CGBitmapInfo.byteOrder32Big.rawValue
+        let bitmapInfoValue = alphaInfo | byteOrder
         guard let context = CGContext(data: &rawData,
                                       width: width,
                                       height: height,
                                       bitsPerComponent: 8,
                                       bytesPerRow: bytesPerRow,
                                       space: colorSpace,
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue) else {
+                                      bitmapInfo: bitmapInfoValue) else {
             return nil
         }
         
@@ -129,7 +132,8 @@ public struct PluraldawnDecoder {
         
         let min1 = min(ids.count, names.count)
         let min2 = min(indicators.count, avatars.count)
-        let count = min(min(min1, min2), fonts.count)
+        let min3 = min(min1, min2)
+        let count = min(min3, fonts.count)
         var members: [PluraldawnMember] = []
         
         for i in 0..<count {

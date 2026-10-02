@@ -132,6 +132,20 @@ struct StatusRowContextMenu: View {
     return false
   }
 
+  private var isMisskeyOrPixelfed: Bool {
+    client.isMisskey || client.isPixelfed
+  }
+
+  private var shouldShowEditButton: Bool {
+    client.capabilities.supportsStatusEditing && currentInstance.isEditSupported
+  }
+
+  private func shouldShowRemoteLocalButton(server: String) -> Bool {
+    if server == viewModel.client.server { return false }
+    if isCurrentRemoteLocal(server: server) { return false }
+    return true
+  }
+
   var body: some View {
     if !viewModel.isRemote {
       ControlGroup {
@@ -230,13 +244,11 @@ Button {
         Label("status.action.view-in-browser", systemImage: "safari")
       }
       if let server = url.host() {
-        if server != viewModel.client.server {
-          if !isCurrentRemoteLocal(server: server) {
-            Button {
-              viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
-            } label: {
-              Label("View Local Timeline", systemImage: "globe")
-            }
+        if shouldShowRemoteLocalButton(server: server) {
+          Button {
+            viewModel.routerPath.navigate(to: .remoteLocalTimeline(server: server))
+          } label: {
+            Label("View Local Timeline", systemImage: "globe")
           }
         }
       }
@@ -285,7 +297,7 @@ Button {
             viewModel.isPinned ? "status.action.unpin" : "status.action.pin",
             systemImage: viewModel.isPinned ? "pin.fill" : "pin")
         }
-        if client.capabilities.supportsStatusEditing && currentInstance.isEditSupported {
+        if shouldShowEditButton {
           Button {
             #if targetEnvironment(macCatalyst) || os(visionOS)
               openWindow(
@@ -298,7 +310,7 @@ Button {
           } label: {
             Label("status.action.edit", systemImage: "pencil")
           }
-        } else if client.isMisskey || client.isPixelfed {
+        } else if isMisskeyOrPixelfed {
           Button {
             viewModel.showRedraftAlert = true
           } label: {
