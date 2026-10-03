@@ -64,12 +64,16 @@ public struct AccountDetailView: View {
 
   private func handleScrollToTopTrigger() -> String? {
     guard userPreferences.undoScrollToTopEnabled else { return nil }
-    if let previous = previousScrollPosition, scrollToTopVisible {
-      previousScrollPosition = nil
-      undoTask?.cancel()
-      undoTask = nil
-      return previous
-    } else {
+    if let previous = previousScrollPosition {
+      if scrollToTopVisible {
+        previousScrollPosition = nil
+        undoTask?.cancel()
+        undoTask = nil
+        return previous
+      }
+    }
+    
+    do {
       var topVisibleId: String? = nil
       if let fetcher = tabManager?.currentTabFetcher as? AccountTabFetcher {
         if case .display(let statuses, _) = fetcher.statusesState {

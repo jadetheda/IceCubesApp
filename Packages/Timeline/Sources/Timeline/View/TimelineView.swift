@@ -70,9 +70,13 @@ public struct TimelineView: View {
     if #available(iOS 26.0, *) {
       timelineView
         .safeAreaBar(edge: .top) {
-          if canFilterTimeline, !pinnedFilters.isEmpty, !preferences.timelinePinnedHidden {
-            TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
-              .padding(.horizontal, .layoutPadding)
+          if canFilterTimeline {
+            if !pinnedFilters.isEmpty {
+              if !preferences.timelinePinnedHidden {
+                TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
+                  .padding(.horizontal, .layoutPadding)
+              }
+            }
           }
         }
         .scrollEdgeEffectStyle(.soft, for: .top)
@@ -80,18 +84,26 @@ public struct TimelineView: View {
       timelineView
         .toolbarBackground(toolbarBackgroundVisibility, for: .navigationBar)
         .safeAreaInset(edge: .top, spacing: 0) {
-          if canFilterTimeline, !pinnedFilters.isEmpty, !preferences.timelinePinnedHidden {
-            VStack(spacing: 0) {
-              TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
-                .padding(.vertical, 8)
-                .padding(.horizontal, .layoutPadding)
-                .background(theme.primaryBackgroundColor.opacity(0.30))
-                .background(Material.ultraThin)
-              Divider()
+          if canFilterTimeline {
+            if !pinnedFilters.isEmpty {
+              if !preferences.timelinePinnedHidden {
+                VStack(spacing: 0) {
+                  TimelineQuickAccessPills(pinnedFilters: $pinnedFilters, timeline: $timeline)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, .layoutPadding)
+                    .background(theme.primaryBackgroundColor.opacity(0.30))
+                    .background(Material.ultraThin)
+                  Divider()
+                }
+              }
             }
           }
         }
     }
+  }
+
+  private var isHideSeenPostsEyeVisible: Bool {
+    preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts
   }
 
   @ToolbarContentBuilder
@@ -112,70 +124,82 @@ public struct TimelineView: View {
         .tint(theme.labelColor)
       }
     }
-    if preferences.hideSeenPostsEnabled && preferences.hideSeenPostsShowInHeader {
-      ToolbarItem(placement: .navigationBarTrailing) {
-        Button {
-          if preferences.hideSeenPostsIsToggle {
-            contentFilter.hideSeenPosts.toggle()
-          } else {
-            Task {
-              await viewModel.hideSeenPosts()
+    if preferences.hideSeenPostsEnabled {
+      if preferences.hideSeenPostsShowInHeader {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Button {
+            if preferences.hideSeenPostsIsToggle {
+              contentFilter.hideSeenPosts.toggle()
+            } else {
+              Task {
+                await viewModel.hideSeenPosts()
+              }
             }
+          } label: {
+            Image(systemName: isHideSeenPostsEyeVisible ? "eye" : "eye.slash")
           }
-        } label: {
-          Image(systemName: (preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "eye" : "eye.slash")
+          .tint(theme.labelColor)
+          .accessibilityLabel(isHideSeenPostsEyeVisible ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
         }
-        .tint(theme.labelColor)
-        .accessibilityLabel((preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
       }
     }
     TimelineToolbarTagGroupButton(timeline: $timeline)
     
-    if case .list = timeline, !canFilterTimeline {
-      ToolbarItem(placement: .navigationBarTrailing) {
-        Menu {
-          Toggle(isOn: Binding(
-              get: { 
-                  if case .list(let list) = timeline, preferences.listsGalleryMode.contains(list.id) {
-                      return true
-                  }
-                  return contentFilter.isGalleryMode 
-              },
-              set: { newValue in 
-                  if case .list(let list) = timeline {
-                      if newValue {
-                          if !preferences.listsGalleryMode.contains(list.id) {
-                              preferences.listsGalleryMode.append(list.id)
-                          }
-                      } else {
-                          preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
-                          contentFilter.isGalleryMode = false
-                      }
+    if case .list = timeline {
+      if !canFilterTimeline {
+        ToolbarItem(placement: .navigationBarTrailing) {
+          Menu {
+            Toggle(isOn: Binding(
+                get: { 
+                    if case .list(let list) = timeline {
+                        if preferences.listsGalleryMode.contains(list.id) {
+                            return true
+                        }
+                    }
+                    return contentFilter.isGalleryMode 
+                },
+                set: { newValue in 
+                    if case .list(let list) = timeline {
+                        if newValue {
+                            if !preferences.listsGalleryMode.contains(list.id) {
+                                preferences.listsGalleryMode.append(list.id)
+                            }
+                        } else {
+                            preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
+                            contentFilter.isGalleryMode = false
+                        }
+                    } else {
+                        contentFilter.isGalleryMode = newValue
+                    }
+                }
+            )) {
+              Group {
+                if case .list(let list) = timeline {
+                  if preferences.listsGalleryMode.contains(list.id) {
+                    Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+                  } else if contentFilter.isGalleryMode {
+                    Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
                   } else {
-                      contentFilter.isGalleryMode = newValue
+                    Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
                   }
-              }
-          )) {
-            Group {
-              if case .list(let list) = timeline, preferences.listsGalleryMode.contains(list.id) {
-                Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-              } else if contentFilter.isGalleryMode {
-                Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-              } else {
-                Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
+                } else if contentFilter.isGalleryMode {
+                  Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+                } else {
+                  Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
+                }
               }
             }
-          }
-          
-          Button {
-            routerPath.presentedSheet = .timelineContentFilter
+            
+            Button {
+              routerPath.presentedSheet = .timelineContentFilter
+            } label: {
+              Label("timeline.content-filter.title", systemImage: "line.3.horizontal.decrease")
+            }
           } label: {
-            Label("timeline.content-filter.title", systemImage: "line.3.horizontal.decrease")
+            Image(systemName: "ellipsis")
           }
-        } label: {
-          Image(systemName: "ellipsis")
+          .tint(theme.labelColor)
         }
-        .tint(theme.labelColor)
       }
     }
   }

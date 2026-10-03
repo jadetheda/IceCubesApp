@@ -82,6 +82,13 @@ struct StatusRowSwipeView: View {
     }
   }
 
+  private func isQuoteDisabled() -> Bool {
+    let finalStatus = viewModel.finalStatus
+    if finalStatus.visibility != .pub { return true }
+    if finalStatus.quoteApproval?.currentUser == .denied { return true }
+    return false
+  }
+
   @ViewBuilder
   private func makeSwipeButton(action: StatusAction) -> some View {
     switch action {
@@ -89,13 +96,10 @@ struct StatusRowSwipeView: View {
       makeSwipeButtonForRouterPath(
         action: action, destination: .replyToStatusEditor(status: viewModel.status))
     case .quote:
-      let finalStatus = viewModel.finalStatus
       makeSwipeButtonForRouterPath(
         action: action, destination: .quoteStatusEditor(status: viewModel.status)
       )
-      .disabled(
-        finalStatus.visibility != .pub
-          || finalStatus.quoteApproval?.currentUser == .denied)
+      .disabled(isQuoteDisabled())
     case .favorite:
       makeSwipeButtonForTask(action: action) {
         await statusDataController.toggleFavorite(remoteStatus: nil)
@@ -104,11 +108,7 @@ struct StatusRowSwipeView: View {
       makeSwipeButtonForTask(action: action, privateBoost: privateBoost()) {
         await statusDataController.toggleReblog(remoteStatus: nil)
       }
-      .disabled(
-        viewModel.status.visibility == .direct
-          || viewModel.status.visibility == .priv
-            && viewModel.status.account.id != currentAccount.account?.id
-      )
+      .disabled(isBoostDisabled())
     case .bookmark:
       makeSwipeButtonForTask(action: action) {
         await statusDataController.toggleBookmark(remoteStatus: nil)
