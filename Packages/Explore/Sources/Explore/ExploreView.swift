@@ -66,15 +66,6 @@ public struct ExploreView: View {
     _isSearchPresented = State(initialValue: !searchQuery.isEmpty)
   }
 
-  private var shouldShowEmptyState: Bool {
-    if let r = results[searchQuery] {
-        return r.isEmpty && !isSearching
-    }
-    return false
-  }
-  private var shouldShowTrendingLinks: Bool {
-    client.capabilities.supportsTrendingLinks && !trendingLinks.isEmpty
-  }
   public var body: some View {
     ScrollViewReader { proxy in
       List {
@@ -90,7 +81,7 @@ public struct ExploreView: View {
           loadingView
         } else if !searchQuery.isEmpty {
           if let results = results[searchQuery] {
-            if shouldShowEmptyState {
+            if results.isEmpty, !isSearching {
               PlaceholderView(
                 iconName: "magnifyingglass",
                 title: "explore.search.empty.title",
@@ -149,7 +140,7 @@ public struct ExploreView: View {
           if !trendingStatuses.isEmpty {
             TrendingPostsSection(trendingStatuses: trendingStatuses)
           }
-          if shouldShowTrendingLinks {
+          if client.capabilities.supportsTrendingLinks, !trendingLinks.isEmpty {
             TrendingLinksSection(trendingLinks: trendingLinks)
           }
         }

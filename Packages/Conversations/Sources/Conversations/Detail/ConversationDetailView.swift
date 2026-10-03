@@ -34,9 +34,6 @@ public struct ConversationDetailView: View {
     _viewState = .init(initialValue: .loading)
   }
 
-  private var singleAccount: Account? {
-    conversation.accounts.count == 1 ? conversation.accounts.first : nil
-  }
   public var body: some View {
     ScrollViewReader { proxy in
       ScrollView {

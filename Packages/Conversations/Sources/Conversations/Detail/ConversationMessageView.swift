@@ -22,10 +22,8 @@ struct ConversationMessageView: View {
   @State private var isLiked: Bool = false
   @State private var isBookmarked: Bool = false
 
-  private var isOwnMessage: Bool {
-    message.account.id == currentAccount.account?.id
-  }
   var body: some View {
+    let isOwnMessage = message.account.id == currentAccount.account?.id
     VStack {
       HStack(alignment: .bottom) {
         if isOwnMessage {

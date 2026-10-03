@@ -7,7 +7,6 @@ import StatusKit
 import SwiftUI
 import Timeline
 
-@MainActor
 struct SearchResultsView: View {
   @Environment(Theme.self) private var theme
   @Environment(FediverseClient.self) private var client
@@ -17,7 +16,6 @@ struct SearchResultsView: View {
   let searchScope: SearchScope
   let onNextPage: (Search.EntityType) async -> Void
   
-  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
   var body: some View {
     Group {
       if !results.accounts.isEmpty, searchScope == .all || searchScope == .people {
@@ -135,7 +133,7 @@ struct SearchResultsView: View {
                 .frame(minWidth: 0, maxWidth: .infinity)
               }
             }
-            .padding(.horizontal, horizontalPadding)
+            .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
             .listRowBackground(theme.primaryBackgroundColor)
             .listRowInsets(EdgeInsets())
           } else {

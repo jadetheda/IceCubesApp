@@ -6,7 +6,6 @@ import StatusKit
 import SwiftUI
 import Timeline
 
-@MainActor
 struct TrendingPostsSection: View {
   @Environment(Theme.self) private var theme
   @Environment(FediverseClient.self) private var client
@@ -14,7 +13,6 @@ struct TrendingPostsSection: View {
   
   let trendingStatuses: [Status]
   
-  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
   var body: some View {
     Section("explore.section.trending.posts") {
       let contentFilter = TimelineContentFilter.shared
@@ -74,7 +72,7 @@ struct TrendingPostsSection: View {
             .frame(minWidth: 0, maxWidth: .infinity)
           }
         }
-        .padding(.horizontal, horizontalPadding)
+        .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
       } else {
