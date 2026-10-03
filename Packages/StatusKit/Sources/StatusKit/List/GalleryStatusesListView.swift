@@ -38,6 +38,10 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     return reblogContent ?? statusContent
   }
 
+  private var cornerRadius: CGFloat { UserPreferences.shared.galleryRoundCorners ? 8 : 0 }
+  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
+
+
   public var body: some View {
     switch fetcher.statusesState {
     case .loading:
@@ -45,7 +49,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         ForEach(0..<columns, id: \.self) { colIndex in
           LazyVStack(spacing: 0) {
             ForEach(0..<itemsPerColumn, id: \.self) { rowIndex in
-              RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0)
+              RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(theme.secondaryBackgroundColor)
                 .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
                 .padding(.bottom, 4)
@@ -318,7 +322,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
     .frame(maxWidth: .infinity)
     .clipped()
-    .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+    .padding(.horizontal, horizontalPadding)
   }
 }
 
@@ -360,6 +364,10 @@ public struct GalleryMediaCell: View {
   private var fallbackUrl: URL? { info?.fallbackUrl }
   private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
+  private var resolvedLazyImageUrl: URL? { autoFallbackTriggered ? (fallbackUrl ?? url) : url }
+  private var cornerRadius: CGFloat { UserPreferences.shared.galleryRoundCorners ? 8 : 0 }
+
+
   private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
     let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
     let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
@@ -379,7 +387,7 @@ public struct GalleryMediaCell: View {
           switch resolvedType {
           case .image:
             if shouldAspectFit {
-              LazyImage(url: autoFallbackTriggered ? (fallbackUrl ?? url) : url) { state in
+              LazyImage(url: resolvedLazyImageUrl) { state in
                 if let image = state.image {
                   image
                     .resizable()
@@ -435,11 +443,11 @@ public struct GalleryMediaCell: View {
         }
         .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio))
         .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
-        .contentShape(RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
       }
       .buttonStyle(.borderless)
-      .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: UserPreferences.shared.galleryRoundCorners ? 8 : 0))
+      .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: cornerRadius))
       .contextMenu {
         if let viewModel {
           StatusRowContextMenu(

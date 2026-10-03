@@ -62,6 +62,26 @@ public struct StatusRowView: View {
     return nil
   }
 
+  private var leadingPadding: CGFloat {
+    theme.avatarPosition == .top ? 0 : AvatarView.FrameConfig.status.width + .statusColumnsSpacing
+  }
+
+  private var compactPadding: EdgeInsets {
+    .init(top: isCompact ? 6 : 12, leading: 0, bottom: isFocused ? 12 : 6, trailing: 0)
+  }
+
+  private func indentationOpacity(level: Int) -> Double {
+    (indentationLevel == level + 1) ? 1 : 0.15
+  }
+
+  private var focusedTint: Color {
+    isFocused ? theme.tintColor : .gray
+  }
+
+  private var focusAccessibilityElement: AccessibilityChildBehavior {
+    isFocused ? .contain : .combine
+  }
+
   private var showReblogAndReply: Bool {
     !isCompact && context != .detail
   }
@@ -82,7 +102,7 @@ public struct StatusRowView: View {
               .fill(theme.tintColor)
               .frame(width: 2)
               .accessibilityHidden(true)
-              .opacity((indentationLevel == level + 1) ? 1 : 0.15)
+              .opacity(indentationOpacity(level: level))
           }
         }
         if indentationLevel > 0 {
@@ -104,10 +124,7 @@ public struct StatusRowView: View {
               StatusRowReblogView(viewModel: viewModel)
               StatusRowReplyView(viewModel: viewModel)
             }
-            .padding(
-              .leading,
-              theme.avatarPosition == .top
-                ? 0 : AvatarView.FrameConfig.status.width + .statusColumnsSpacing)
+            .padding(.leading, leadingPadding)
           }
           HStack(alignment: .top, spacing: .statusColumnsSpacing) {
             if !isCompact {
@@ -143,7 +160,7 @@ public struct StatusRowView: View {
                   isBlockConfirmationPresented: $isBlockConfirmationPresented,
                   viewModel: viewModel
                 )
-                .tint(isFocused ? theme.tintColor : .gray)
+                .tint(focusedTint)
               }
 
               if isFocused {
@@ -155,7 +172,7 @@ public struct StatusRowView: View {
           }
         }
       }
-      .padding(.init(top: isCompact ? 6 : 12, leading: 0, bottom: isFocused ? 12 : 6, trailing: 0))
+      .padding(compactPadding)
     }
     .onAppear {
       if !reasons.contains(.placeholder) {
@@ -215,7 +232,7 @@ public struct StatusRowView: View {
         bottom: 0,
         trailing: .layoutPadding)
     )
-    .accessibilityElement(children: isFocused ? .contain : .combine)
+    .accessibilityElement(children: focusAccessibilityElement)
     .accessibilityLabel(
       accessibilityLabelState
     )
