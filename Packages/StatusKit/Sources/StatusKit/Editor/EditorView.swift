@@ -54,7 +54,7 @@ extension StatusEditor {
       self.isMain = isMain
     }
 
-    private var backgroundMaterial: SwiftUI.Color { presentationDetent == .large ? theme.primaryBackgroundColor : .clear }
+  private var backgroundMaterial: SwiftUI.Color { presentationDetent == .large ? theme.primaryBackgroundColor : .clear }
   var body: some View {
       HStack(spacing: 0) {
         if !isMain {

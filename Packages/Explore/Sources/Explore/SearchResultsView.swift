@@ -7,6 +7,7 @@ import StatusKit
 import SwiftUI
 import Timeline
 
+@MainActor
 struct SearchResultsView: View {
   @Environment(Theme.self) private var theme
   @Environment(FediverseClient.self) private var client

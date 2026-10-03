@@ -104,6 +104,7 @@ private class StatusesTabFetcher: AccountTabFetcher {
   }
 }
 
+@MainActor
 private struct StatusesTabView: View {
   let fetcher: StatusesTabFetcher
   let client: FediverseClient
