@@ -1,0 +1,18 @@
+--- Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift
++++ Packages/StatusKit/Sources/StatusKit/Row/StatusRowView.swift
+@@ -159,12 +159,8 @@
+             Task {
+               await viewModel.loadEmbeddedStatus()
+             }
+           }
+         }
+-      }
+-    }
+-    .task {
+-      if !reasons.contains(.placeholder) {
+         if UserPreferences.shared.pluraldawnSupportEnabled {
+-          await viewModel.fetchPluraldawnSystemIfNeeded()
++          Task {
++            await viewModel.fetchPluraldawnSystemIfNeeded()
++          }
+         }

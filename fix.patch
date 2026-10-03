@@ -1,0 +1,7 @@
+--- Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
++++ Packages/StatusKit/Sources/StatusKit/Row/StatusRowViewModel.swift
+@@ -417,3 +417,3 @@
+           for mention in mentions {
+-            if rawText.contains("@\\(mention.acct) \\(indicator)") || rawText.contains("@\\(mention.username) \\(indicator)") {
++            if rawText.contains("@\(mention.acct) \(indicator)") || rawText.contains("@\(mention.username) \(indicator)") {
+               matchedMembers.append(member)

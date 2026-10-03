@@ -32,39 +32,53 @@ struct StatusRowSwipeView: View {
     }
   }
 
+  private func isBoostDisabled() -> Bool {
+    if viewModel.status.visibility == .direct { return true }
+    if viewModel.status.visibility == .priv && viewModel.status.account.id != currentAccount.account?.id { return true }
+    return false
+  }
+
   @ViewBuilder
   private var trailingSwipeActions: some View {
-    if preferences.swipeActionsStatusTrailingRight != StatusAction.none, !viewModel.isRemote {
+    if preferences.swipeActionsStatusTrailingRight != StatusAction.none {
+      if !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusTrailingRight)
         .tint(
           preferences.swipeActionsStatusTrailingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
             outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
+      }
     }
-    if preferences.swipeActionsStatusTrailingLeft != StatusAction.none, !viewModel.isRemote {
+    if preferences.swipeActionsStatusTrailingLeft != StatusAction.none {
+      if !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusTrailingLeft)
         .tint(
           preferences.swipeActionsStatusTrailingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
             outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
+      }
     }
   }
 
   @ViewBuilder
   private var leadingSwipeActions: some View {
-    if preferences.swipeActionsStatusLeadingLeft != StatusAction.none, !viewModel.isRemote {
+    if preferences.swipeActionsStatusLeadingLeft != StatusAction.none {
+      if !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusLeadingLeft)
         .tint(
           preferences.swipeActionsStatusLeadingLeft.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
             outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
+      }
     }
-    if preferences.swipeActionsStatusLeadingRight != StatusAction.none, !viewModel.isRemote {
+    if preferences.swipeActionsStatusLeadingRight != StatusAction.none {
+      if !viewModel.isRemote {
       makeSwipeButton(action: preferences.swipeActionsStatusLeadingRight)
         .tint(
           preferences.swipeActionsStatusLeadingRight.color(
             themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
             outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
+      }
     }
   }
 
