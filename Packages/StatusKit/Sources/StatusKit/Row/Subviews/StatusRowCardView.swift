@@ -50,7 +50,9 @@ public struct StatusRowCardView: View {
   }
 
   public var body: some View {
-    Button {
+    let backgroundMaterial: Color = isCompact ? .clear : theme.secondaryBackgroundColor
+    let cardCornerRadius: CGFloat = isCompact ? 0 : 10
+    return Button {
       if let url = URL(string: card.url) {
         openURL(url)
       }
@@ -83,9 +85,9 @@ public struct StatusRowCardView: View {
           )
           .hoverEffect()
         #else
-          .background(isCompact ? .clear : theme.secondaryBackgroundColor)
+          .background(backgroundMaterial)
         #endif
-        .cornerRadius(isCompact ? 0 : 10)
+        .cornerRadius(cardCornerRadius)
         .overlay {
           if !isCompact {
             RoundedRectangle(cornerRadius: 10)

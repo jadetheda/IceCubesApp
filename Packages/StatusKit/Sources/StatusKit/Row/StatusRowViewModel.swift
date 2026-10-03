@@ -405,54 +405,17 @@ import SwiftUI
   }
 
   func fetchPluraldawnSystemIfNeeded() async {
-    guard UserPreferences.shared.pluraldawnSupportEnabled,
-          let avatarURL = finalStatus.account.avatar else { return }
+    let enabled = UserPreferences.shared.pluraldawnSupportEnabled
+    guard enabled else { return }
+    guard let avatarURL = finalStatus.account.avatar else { return }
     
-    if let system = await PluraldawnCache.shared.getSystem(for: avatarURL) {
-      let rawText = finalStatus.content.asRawText
-      let mentions = finalStatus.mentions
-      
-      var matchedMembers: [PluraldawnMember] = []
-      for member in system.members {
-        var matched = false
-        for indicator in member.emoji {
-          let hasPref = rawText.hasPrefix(indicator)
-          let hasSuff = rawText.hasSuffix(indicator)
-          if hasPref || hasSuff {
-            matched = true
-            break
-          }
-          for mention in mentions {
-            var str1 = "@"
-            str1.append(mention.acct)
-            str1.append(" ")
-            str1.append(indicator)
-            
-            var str2 = "@"
-            str2.append(mention.username)
-            str2.append(" ")
-            str2.append(indicator)
-            
-            let match1 = rawText.contains(str1)
-            let match2 = rawText.contains(str2)
-            if match1 {
-              matched = true
-              break
-            }
-            if match2 {
-              matched = true
-              break
-            }
-          }
-          if matched { break }
-        }
-        if matched {
-          matchedMembers.append(member)
-        }
-      }
-      if matchedMembers.count == 1 {
-        self.pluraldawnMember = matchedMembers.first
-      }
+    let system = await PluraldawnCache.shared.getSystem(for: avatarURL)
+    if let system = system {
+      self.pluraldawnMember = PluraldawnSystemMatcher.findMatch(
+        rawText: finalStatus.content.asRawText,
+        mentions: finalStatus.mentions,
+        members: system.members
+      )
     }
   }
 

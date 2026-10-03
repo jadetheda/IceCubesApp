@@ -55,7 +55,8 @@ extension StatusEditor {
     }
 
     var body: some View {
-      HStack(spacing: 0) {
+      let backgroundMaterial: Color = presentationDetent == .large ? theme.primaryBackgroundColor : .clear
+      return HStack(spacing: 0) {
         if !isMain {
           Rectangle()
             .fill(theme.tintColor)
@@ -80,7 +81,7 @@ extension StatusEditor {
         }
       }
       #if !os(visionOS)
-        .background(presentationDetent == .large ? theme.primaryBackgroundColor : .clear)
+        .background(backgroundMaterial)
       #endif
       .focused($editorFocusState, equals: assignedFocusState)
       .onAppear {
