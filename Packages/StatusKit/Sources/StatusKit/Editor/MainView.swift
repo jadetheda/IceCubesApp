@@ -42,8 +42,7 @@ extension StatusEditor {
       _mainStore = State(initialValue: EditorStore(mode: mode))
     }
 
-  private var bottomPadding: CGFloat { isMediaPanelPresented ? 0 : 8 }
-  public var body: some View {
+    public var body: some View {
       @Bindable var focusedStore = focusedStore
 
       NavigationStack {
@@ -199,7 +198,7 @@ extension StatusEditor {
 
     @ViewBuilder
     private func bottomInset(focusedStore: EditorStore) -> some View {
-      if isLargeOrMediumDetent {
+      if presentationDetent == .large || presentationDetent == .medium {
         if #available(iOS 26.0, *) {
           GlassEffectContainer(spacing: 10) {
             VStack(spacing: 10) {
@@ -210,7 +209,7 @@ extension StatusEditor {
                 followUpStores: $followUpStores,
                 isMediaPanelPresented: $isMediaPanelPresented
               )
-              .padding(.bottom, bottomPadding)
+              .padding(.bottom, isMediaPanelPresented ? 0 : 8)
 
               if isMediaPanelPresented {
                 MediaPickerPanelView(store: focusedStore)

@@ -49,7 +49,6 @@ public struct StatusRowCardView: View {
     return 200
   }
 
-  private var backgroundMaterial: SwiftUI.Color { isCompact ? .clear : theme.secondaryBackgroundColor }
   public var body: some View {
     Button {
       if let url = URL(string: card.url) {
@@ -84,7 +83,7 @@ public struct StatusRowCardView: View {
           )
           .hoverEffect()
         #else
-          .background(backgroundMaterial)
+          .background(isCompact ? .clear : theme.secondaryBackgroundColor)
         #endif
         .cornerRadius(isCompact ? 0 : 10)
         .overlay {

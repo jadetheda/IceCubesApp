@@ -54,8 +54,7 @@ extension StatusEditor {
       self.isMain = isMain
     }
 
-  private var backgroundMaterial: SwiftUI.Color { presentationDetent == .large ? theme.primaryBackgroundColor : .clear }
-  var body: some View {
+    var body: some View {
       HStack(spacing: 0) {
         if !isMain {
           Rectangle()
@@ -81,7 +80,7 @@ extension StatusEditor {
         }
       }
       #if !os(visionOS)
-        .background(backgroundMaterial)
+        .background(presentationDetent == .large ? theme.primaryBackgroundColor : .clear)
       #endif
       .focused($editorFocusState, equals: assignedFocusState)
       .onAppear {
