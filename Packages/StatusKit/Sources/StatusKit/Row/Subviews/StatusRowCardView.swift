@@ -4,6 +4,7 @@ import Models
 import Nuke
 import NukeUI
 import SwiftUI
+import EmojiText
 
 @MainActor
 public struct StatusRowCardView: View {
@@ -51,6 +52,15 @@ public struct StatusRowCardView: View {
 
   private var backgroundMaterial: Color { isCompact ? .clear : theme.secondaryBackgroundColor }
   private var cardCornerRadius: CGFloat { isCompact ? 0 : 10 }
+  private var historyUses: Int {
+    guard let history = card.history else { return 0 }
+    return history.compactMap { Int($0.accounts) }.reduce(0, +)
+  }
+  private var isDesktopOrPadIdiom: Bool {
+    UIDevice.current.userInterfaceIdiom == .pad ||
+    UIDevice.current.userInterfaceIdiom == .mac ||
+    UIDevice.current.userInterfaceIdiom == .vision
+  }
 
   public var body: some View {
     Button {
@@ -58,19 +68,24 @@ public struct StatusRowCardView: View {
         openURL(url)
       }
     } label: {
-      if let title = card.title, let url = URL(string: card.url) {
-        VStack(alignment: .leading, spacing: 0) {
+      if let title = card.title {
+        if let url = URL(string: card.url) {
+          VStack(alignment: .leading, spacing: 0) {
           let sitesWithIcons = [
             "apps.apple.com", "music.apple.com", "podcasts.apple.com", "open.spotify.com",
           ]
           if isCompact {
             compactLinkPreview(title, url)
-          } else if UIDevice.current.userInterfaceIdiom == .pad
-            || UIDevice.current.userInterfaceIdiom == .mac
-            || UIDevice.current.userInterfaceIdiom == .vision,
-            let host = url.host(), sitesWithIcons.contains(host)
-          {
-            iconLinkPreview(title, url)
+          } else if isDesktopOrPadIdiom {
+            if let host = url.host() {
+              if sitesWithIcons.contains(host) {
+                iconLinkPreview(title, url)
+              } else {
+                defaultLinkPreview(title, url)
+              }
+            } else {
+              defaultLinkPreview(title, url)
+            }
           } else {
             defaultLinkPreview(title, url)
           }
@@ -115,6 +130,7 @@ public struct StatusRowCardView: View {
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isLink)
         .accessibilityRemoveTraits(.isStaticText)
+        }
       }
     }
     .buttonStyle(.plain)
@@ -131,11 +147,13 @@ public struct StatusRowCardView: View {
       Text(title)
         .font(.scaledHeadline)
         .lineLimit(2)
-      if let description = card.description, !description.isEmpty {
-        Text(description)
-          .font(.scaledFootnote)
-          .foregroundStyle(.secondary)
-          .lineLimit(3)
+      if let description = card.description {
+        if !description.isEmpty {
+          Text(description)
+            .font(.scaledFootnote)
+            .foregroundStyle(.secondary)
+            .lineLimit(3)
+        }
       }
       Text(url.host() ?? url.absoluteString)
         .font(.scaledFootnote)
@@ -194,14 +212,15 @@ public struct StatusRowCardView: View {
           .lineLimit(3)
         if let account = card.authors?.first?.account {
           moreFromAccountView(account, divider: false)
-        } else if let authorName = card.authorName, !authorName.isEmpty {
-          Text("by \(authorName)")
-            .font(.scaledFootnote)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
+        } else if let authorName = card.authorName {
+          if !authorName.isEmpty {
+            Text("by \(authorName)")
+              .font(.scaledFootnote)
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+          }
         }
         if let history = card.history {
-          let uses = history.compactMap { Int($0.accounts) }.reduce(0, +)
           HStack(spacing: 4) {
             Button {
               if currentInstance.isLinkTimelineSupported {
@@ -210,7 +229,7 @@ public struct StatusRowCardView: View {
             } label: {
               HStack(spacing: 4) {
                 Image(systemName: "bubble.left.and.text.bubble.right")
-                Text("trending-tag-people-talking \(uses)")
+                Text("trending-tag-people-talking \(historyUses)")
                 if currentInstance.isLinkTimelineSupported {
                   Image(systemName: "chevron.right")
                 }
@@ -266,11 +285,13 @@ public struct StatusRowCardView: View {
         Text(title)
           .font(.scaledHeadline)
           .lineLimit(3)
-        if let description = card.description, !description.isEmpty {
-          Text(description)
-            .font(.scaledBody)
-            .foregroundStyle(.secondary)
-            .lineLimit(3)
+        if let description = card.description {
+          if !description.isEmpty {
+            Text(description)
+              .font(.scaledBody)
+              .foregroundStyle(.secondary)
+              .lineLimit(3)
+          }
         }
         Text(url.host() ?? url.absoluteString)
           .font(.scaledFootnote)

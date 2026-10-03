@@ -198,9 +198,13 @@ extension StatusEditor {
       .scrollTargetLayout()
     }
 
+    private var isLargeOrMediumDetent: Bool {
+      presentationDetent == .large || presentationDetent == .medium
+    }
+
     @ViewBuilder
     private func bottomInset(focusedStore: EditorStore) -> some View {
-      if presentationDetent == .large || presentationDetent == .medium {
+      if isLargeOrMediumDetent {
         if #available(iOS 26.0, *) {
           GlassEffectContainer(spacing: 10) {
             VStack(spacing: 10) {

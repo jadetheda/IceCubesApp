@@ -105,44 +105,46 @@ extension StatusEditor {
 
     @ViewBuilder
     private var accountHeaderView: some View {
-      if let account = currentAccount.account, !store.mode.isEditing {
-        HStack {
-          if store.mode.isInShareExtension {
-            AppAccountsSelectorView(
-              transition: transition,
-              routerPath: RouterPath(),
-              accountCreationEnabled: false,
-              avatarConfig: .status)
-          } else {
-            AvatarView(account.avatar, config: AvatarView.FrameConfig.status)
-              .environment(theme)
-              .accessibilityHidden(true)
-          }
+      if let account = currentAccount.account {
+        if !store.mode.isEditing {
+          HStack {
+            if store.mode.isInShareExtension {
+              AppAccountsSelectorView(
+                transition: transition,
+                routerPath: RouterPath(),
+                accountCreationEnabled: false,
+                avatarConfig: .status)
+            } else {
+              AvatarView(account.avatar, config: AvatarView.FrameConfig.status)
+                .environment(theme)
+                .accessibilityHidden(true)
+            }
 
-          VStack(alignment: .leading, spacing: 4) {
-            PrivacyMenu(
-              visibility: $store.visibility, tint: isMain ? theme.tintColor : .secondary
-            )
-            .disabled(!isMain)
+            VStack(alignment: .leading, spacing: 4) {
+              PrivacyMenu(
+                visibility: $store.visibility, tint: isMain ? theme.tintColor : .secondary
+              )
+              .disabled(!isMain)
 
-            Text("@\(account.acct)@\(appAccounts.currentClient.server)")
-              .font(.scaledFootnote)
-              .foregroundStyle(.secondary)
-          }
+              Text("@\(account.acct)@\(appAccounts.currentClient.server)")
+                .font(.scaledFootnote)
+                .foregroundStyle(.secondary)
+            }
 
-          Spacer()
+            Spacer()
 
-          if case .followUp(let id) = assignedFocusState {
-            Button {
-              followUpStores.removeAll { $0.id == id }
-            } label: {
-              HStack {
-                Image(systemName: "minus.circle.fill").foregroundStyle(.red)
+            if case .followUp(let id) = assignedFocusState {
+              Button {
+                followUpStores.removeAll { $0.id == id }
+              } label: {
+                HStack {
+                  Image(systemName: "minus.circle.fill").foregroundStyle(.red)
+                }
               }
             }
           }
+          .padding(.horizontal, .layoutPadding)
         }
-        .padding(.horizontal, .layoutPadding)
       }
     }
 
@@ -264,14 +266,18 @@ extension StatusEditor {
       .accessibilityLabel("accessibility.editor.button.spoiler")
     }
 
+    private var currentMaxCharacters: Int {
+      currentInstance.instance?.configuration?.statuses.maxCharacters ?? 500
+    }
+    private var characterCountValue: Int {
+      currentMaxCharacters + store.statusTextCharacterLength
+    }
+
     @ViewBuilder
     private var characterCount: some View {
-      let value =
-        (currentInstance.instance?.configuration?.statuses.maxCharacters ?? 500)
-        + store.statusTextCharacterLength
-      Text("\(value)")
-        .contentTransition(.numericText(value: Double(value)))
-        .foregroundColor(value < 0 ? .red : .secondary)
+      Text("\(characterCountValue)")
+        .contentTransition(.numericText(value: Double(characterCountValue)))
+        .foregroundColor(characterCountValue < 0 ? .red : .secondary)
         .font(.callout.monospacedDigit())
         .accessibilityLabel("accessibility.editor.button.characters-remaining")
         .accessibilityValue("\(value)")
