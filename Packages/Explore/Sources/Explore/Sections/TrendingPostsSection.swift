@@ -13,6 +13,7 @@ struct TrendingPostsSection: View {
   
   let trendingStatuses: [Status]
   
+  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
   var body: some View {
     Section("explore.section.trending.posts") {
       let contentFilter = TimelineContentFilter.shared
@@ -72,7 +73,7 @@ struct TrendingPostsSection: View {
             .frame(minWidth: 0, maxWidth: .infinity)
           }
         }
-        .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+        .padding(.horizontal, horizontalPadding)
         .listRowBackground(theme.primaryBackgroundColor)
         .listRowInsets(EdgeInsets())
       } else {

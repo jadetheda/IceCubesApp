@@ -117,6 +117,7 @@ private struct StatusesTabView: View {
     contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia
   }
 
+  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
   var body: some View {
     Group {
       if case .display = fetcher.statusesState {
@@ -240,7 +241,7 @@ private struct StatusesTabView: View {
           .frame(minWidth: 0, maxWidth: .infinity)
         }
       }
-      .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+      .padding(.horizontal, horizontalPadding)
       .listRowBackground(theme.primaryBackgroundColor)
       .listRowInsets(EdgeInsets())
     } else {

@@ -42,7 +42,8 @@ extension StatusEditor {
       _mainStore = State(initialValue: EditorStore(mode: mode))
     }
 
-    public var body: some View {
+    private var bottomPadding: CGFloat { isMediaPanelPresented ? 0 : 8 }
+  public var body: some View {
       @Bindable var focusedStore = focusedStore
 
       NavigationStack {
@@ -209,7 +210,7 @@ extension StatusEditor {
                 followUpStores: $followUpStores,
                 isMediaPanelPresented: $isMediaPanelPresented
               )
-              .padding(.bottom, isMediaPanelPresented ? 0 : 8)
+              .padding(.bottom, bottomPadding)
 
               if isMediaPanelPresented {
                 MediaPickerPanelView(store: focusedStore)
