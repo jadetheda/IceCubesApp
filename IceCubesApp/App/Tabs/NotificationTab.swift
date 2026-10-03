@@ -60,15 +60,17 @@ struct NotificationsTab: View {
       clearNotifications()
     }
     .onChange(of: pushNotificationsService.handledNotification) { _, newValue in
-      if let newValue, let type = newValue.notification.supportedType {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-          switch type {
-          case .follow, .follow_request:
-            routerPath.navigate(
-              to: .accountDetailWithAccount(account: newValue.notification.account))
-          default:
-            if let status = newValue.notification.status {
-              routerPath.navigate(to: .statusDetailWithStatus(status: status))
+      if let newValue {
+        if let type = newValue.notification.supportedType {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            switch type {
+            case .follow, .follow_request:
+              routerPath.navigate(
+                to: .accountDetailWithAccount(account: newValue.notification.account))
+            default:
+              if let status = newValue.notification.status {
+                routerPath.navigate(to: .statusDetailWithStatus(status: status))
+              }
             }
           }
         }
@@ -89,10 +91,10 @@ struct NotificationsTab: View {
 
   private func clearNotifications() {
     if selectedTab == .notifications || isSecondaryColumn {
-      if let token = appAccount.currentAccount.oauthToken,
-        userPreferences.notificationsCount[token] ?? 0 > 0
-      {
-        userPreferences.notificationsCount[token] = 0
+      if let token = appAccount.currentAccount.oauthToken {
+        if userPreferences.notificationsCount[token] ?? 0 > 0 {
+          userPreferences.notificationsCount[token] = 0
+        }
       }
     }
   }

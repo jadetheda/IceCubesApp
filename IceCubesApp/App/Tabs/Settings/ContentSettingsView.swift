@@ -17,6 +17,20 @@ struct ContentSettingsView: View {
 
   @State private var contentFilter = TimelineContentFilter.shared
 
+  private var showTextPostsBinding: Binding<Bool> {
+    Binding(
+      get: { !contentFilter.hidePostsWithoutMedia },
+      set: { contentFilter.hidePostsWithoutMedia = !$0 }
+    )
+  }
+
+  private var showMediaPostsBinding: Binding<Bool> {
+    Binding(
+      get: { !contentFilter.hidePostsWithMedia },
+      set: { contentFilter.hidePostsWithMedia = !$0 }
+    )
+  }
+
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
@@ -202,18 +216,12 @@ struct ContentSettingsView: View {
         Toggle(isOn: $contentFilter.showQuotePosts) {
           Label("timeline.filter.show-quote", systemImage: "quote.bubble")
         }
-        Toggle(isOn: Binding(
-            get: { !contentFilter.hidePostsWithoutMedia },
-            set: { contentFilter.hidePostsWithoutMedia = !$0 }
-        )) {
+        Toggle(isOn: showTextPostsBinding) {
           Label("Show text posts", systemImage: "text.alignleft")
         }
         .disabled(contentFilter.isGalleryMode)
         
-        Toggle(isOn: Binding(
-            get: { !contentFilter.hidePostsWithMedia },
-            set: { contentFilter.hidePostsWithMedia = !$0 }
-        )) {
+        Toggle(isOn: showMediaPostsBinding) {
           Label("Show media posts", systemImage: "photo")
         }
         
