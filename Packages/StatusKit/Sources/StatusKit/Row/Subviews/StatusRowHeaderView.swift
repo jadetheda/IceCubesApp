@@ -64,9 +64,11 @@ struct StatusRowHeaderView: View {
             #endif
 
             if !redactionReasons.contains(.placeholder) {
-              accountBadgeView
-                .fixedSize(horizontal: false, vertical: true)
-                .font(.footnote)
+              if let badge = accountBadgeView {
+                badge
+                  .fixedSize(horizontal: false, vertical: true)
+                  .font(.footnote)
+              }
             }
           }
           .layoutPriority(1)
