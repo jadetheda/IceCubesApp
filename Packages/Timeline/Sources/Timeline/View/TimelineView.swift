@@ -106,6 +106,58 @@ public struct TimelineView: View {
     preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts
   }
 
+  private var galleryModeBinding: Binding<Bool> {
+    Binding(
+      get: { 
+        if case .list(let list) = timeline {
+            if preferences.listsGalleryMode.contains(list.id) {
+                return true
+            }
+        }
+        return contentFilter.isGalleryMode 
+      },
+      set: { newValue in 
+        if case .list(let list) = timeline {
+            if newValue {
+                if !preferences.listsGalleryMode.contains(list.id) {
+                    preferences.listsGalleryMode.append(list.id)
+                }
+            } else {
+                preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
+                contentFilter.isGalleryMode = false
+            }
+        } else {
+            contentFilter.isGalleryMode = newValue
+        }
+      }
+    )
+  }
+
+  @ViewBuilder
+  private var galleryModeLabel: some View {
+    if case .list(let list) = timeline {
+      if preferences.listsGalleryMode.contains(list.id) {
+        Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+      } else if contentFilter.isGalleryMode {
+        Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+      } else {
+        Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
+      }
+    } else if contentFilter.isGalleryMode {
+      Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
+    } else {
+      Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
+    }
+  }
+
+  private var streamingIcon: String {
+    viewModel.isStreamingTimeline ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash"
+  }
+
+  private var hideSeenPostsAccessibilityLabel: String {
+    isHideSeenPostsEyeVisible ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: "")
+  }
+
   @ToolbarContentBuilder
   private var timelineToolbar: some ToolbarContent {
     TimelineToolbarTitleView(timeline: $timeline, canFilterTimeline: canFilterTimeline)
@@ -117,9 +169,7 @@ public struct TimelineView: View {
         Button {
           viewModel.isStreamingTimeline.toggle()
         } label: {
-          Image(
-            systemName: viewModel.isStreamingTimeline
-              ? "antenna.radiowaves.left.and.right" : "antenna.radiowaves.left.and.right.slash")
+          Image(systemName: streamingIcon)
         }
         .tint(theme.labelColor)
       }
@@ -139,7 +189,7 @@ public struct TimelineView: View {
             Image(systemName: isHideSeenPostsEyeVisible ? "eye" : "eye.slash")
           }
           .tint(theme.labelColor)
-          .accessibilityLabel(isHideSeenPostsEyeVisible ? NSLocalizedString("timeline.filter.show-seen-posts", comment: "") : NSLocalizedString("timeline.filter.hide-seen-posts", comment: ""))
+          .accessibilityLabel(hideSeenPostsAccessibilityLabel)
         }
       }
     }
@@ -149,45 +199,8 @@ public struct TimelineView: View {
       if !canFilterTimeline {
         ToolbarItem(placement: .navigationBarTrailing) {
           Menu {
-            Toggle(isOn: Binding(
-                get: { 
-                    if case .list(let list) = timeline {
-                        if preferences.listsGalleryMode.contains(list.id) {
-                            return true
-                        }
-                    }
-                    return contentFilter.isGalleryMode 
-                },
-                set: { newValue in 
-                    if case .list(let list) = timeline {
-                        if newValue {
-                            if !preferences.listsGalleryMode.contains(list.id) {
-                                preferences.listsGalleryMode.append(list.id)
-                            }
-                        } else {
-                            preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
-                            contentFilter.isGalleryMode = false
-                        }
-                    } else {
-                        contentFilter.isGalleryMode = newValue
-                    }
-                }
-            )) {
-              Group {
-                if case .list(let list) = timeline {
-                  if preferences.listsGalleryMode.contains(list.id) {
-                    Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-                  } else if contentFilter.isGalleryMode {
-                    Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-                  } else {
-                    Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
-                  }
-                } else if contentFilter.isGalleryMode {
-                  Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-                } else {
-                  Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
-                }
-              }
+            Toggle(isOn: galleryModeBinding) {
+              galleryModeLabel
             }
             
             Button {

@@ -118,10 +118,18 @@ struct TimelineTab: View {
     .environment(routerPath)
   }
 
+  private func getGroupIcon(_ group: TagGroup) -> String {
+    group.symbolName.isEmpty ? "number" : group.symbolName
+  }
+
+  private var shouldShowHideSeenPostsMenu: Bool {
+    preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader
+  }
+
   @ViewBuilder
   private var timelineFilterButton: some View {
     headerGroup
-    if preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader {
+    if shouldShowHideSeenPostsMenu {
       Button {
         if preferences.hideSeenPostsIsToggle {
           contentFilter.hideSeenPosts.toggle()
@@ -254,12 +262,15 @@ struct TimelineTab: View {
     }
   }
 
+  private var pinnedFilterIndex: Int? {
+    pinnedFilters.firstIndex(where: { $0.id == timeline.id })
+  }
+
   @ViewBuilder
   private var pinButton: some View {
-    let index = pinnedFilters.firstIndex(where: { $0.id == timeline.id })
     Button {
       withAnimation {
-        if let index {
+        if let index = pinnedFilterIndex {
           let timeline = pinnedFilters.remove(at: index)
           Telemetry.signal("timeline.pin.removed", parameters: ["timeline": timeline.rawValue])
         } else {
@@ -351,8 +362,7 @@ struct TimelineTab: View {
           timeline = .tagGroup(title: group.title, tags: group.tags, symbolName: group.symbolName)
         } label: {
           VStack {
-            let icon = group.symbolName.isEmpty ? "number" : group.symbolName
-            Label(group.title, systemImage: icon)
+            Label(group.title, systemImage: getGroupIcon(group))
           }
         }
       }

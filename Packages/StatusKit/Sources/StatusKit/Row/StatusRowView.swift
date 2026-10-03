@@ -82,6 +82,10 @@ public struct StatusRowView: View {
     isFocused ? .contain : .combine
   }
 
+  private var spoilerButtonTitle: LocalizedStringKey {
+    viewModel.displaySpoiler ? "status.show-more" : "status.show-less"
+  }
+
   private var showReblogAndReply: Bool {
     !isCompact && context != .detail
   }
@@ -416,7 +420,7 @@ public struct StatusRowView: View {
       }
     }
 
-    Button(viewModel.displaySpoiler ? "status.show-more" : "status.show-less") {
+    Button(spoilerButtonTitle) {
       withAnimation {
         viewModel.displaySpoiler.toggle()
       }
