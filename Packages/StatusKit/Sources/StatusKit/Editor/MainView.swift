@@ -42,9 +42,10 @@ extension StatusEditor {
       _mainStore = State(initialValue: EditorStore(mode: mode))
     }
 
+    private var bottomPadding: CGFloat { isMediaPanelPresented ? 0 : 8 }
+
     public var body: some View {
       @Bindable var focusedStore = focusedStore
-      let bottomPadding: CGFloat = isMediaPanelPresented ? 0 : 8
 
       NavigationStack {
         mainContent(focusedStore: focusedStore)

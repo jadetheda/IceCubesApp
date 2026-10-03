@@ -1112,3 +1112,7 @@
   - **Impact**: Ensures accurate and robust steganography extraction without crashing or discarding data due to trailing padding, and prevents cache misses on valid decode failures.
 - 2026-10-01 20:38 UTC: Fixed Pluraldawn UI Toggle in `ContentSettingsView.swift` to match IceCubes UI styling by using a VStack with a descriptive subtitle instead of a raw string literal, as the prior implementation lacked a descriptive subtitle.
 \n- 2026-10-01 20:41 UTC: Fixed regression where the PluralDawn UI toggle in ContentSettingsView.swift lost its 'Enable PluralDawn Support' name-drop after a UI refactor. Updated the VStack text to explicitly name-drop PluralDawn.
+- **2026-10-03T01:10:00Z**:
+  - **Description**: Fixed the "Shifting Weight" downstream AST Traps in `Account` and `Explore`.
+  - **Fixes**: Reverted `StatusesTab.swift`, `SearchResultsView.swift`, `TrendingPostsSection.swift`, and `ConversationDetailView.swift` to their `e8b430fa` state. The global regex had mistakenly extracted simple inline ternaries (`.padding(.horizontal, UserPreferences.shared... ? 4 : 0)`) into computed properties. This triggered `@MainActor` isolation inference errors, which we then incorrectly "fixed" by slapping `@MainActor` on the structs, causing the AST constraint solver to OOM crash during downstream compilation, masking the fact that `StatusKit` had actually compiled successfully.
+  - **Impact**: Restores downstream compilation stability. When combined with the Pluraldawn matcher and StatusKit `let` extractions, the app should now fully compile.

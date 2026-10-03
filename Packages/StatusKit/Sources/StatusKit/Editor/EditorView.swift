@@ -54,9 +54,10 @@ extension StatusEditor {
       self.isMain = isMain
     }
 
+    private var backgroundMaterial: Color { presentationDetent == .large ? theme.primaryBackgroundColor : .clear }
+
     var body: some View {
-      let backgroundMaterial: Color = presentationDetent == .large ? theme.primaryBackgroundColor : .clear
-      return HStack(spacing: 0) {
+      HStack(spacing: 0) {
         if !isMain {
           Rectangle()
             .fill(theme.tintColor)

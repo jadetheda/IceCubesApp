@@ -49,10 +49,11 @@ public struct StatusRowCardView: View {
     return 200
   }
 
+  private var backgroundMaterial: Color { isCompact ? .clear : theme.secondaryBackgroundColor }
+  private var cardCornerRadius: CGFloat { isCompact ? 0 : 10 }
+
   public var body: some View {
-    let backgroundMaterial: Color = isCompact ? .clear : theme.secondaryBackgroundColor
-    let cardCornerRadius: CGFloat = isCompact ? 0 : 10
-    return Button {
+    Button {
       if let url = URL(string: card.url) {
         openURL(url)
       }
