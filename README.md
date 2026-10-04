@@ -36,6 +36,7 @@ It has a dedicated UI with a sidebar on macOS and iPadOS.
 * **Enhanced Timeline Content Filters** now support toggling on/off media/text posts, posts by *you*, and sensitive posts, all on the fly
 * **Profile tabs now respect global Timeline Content Filters** (with visual warnings for hidden posts)
 - **Content Filter support for Notifications**
+- **Quick profile switching:** Double tap your profile picture to switch to the previous profile
 * **Custom .otf and .ttf font loading**
 * **Inter font** built-in
 * **Bluesky theme set**
