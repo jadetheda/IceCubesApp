@@ -280,11 +280,11 @@ extension StatusEditor {
         .foregroundColor(characterCountValue < 0 ? .red : .secondary)
         .font(.callout.monospacedDigit())
         .accessibilityLabel("accessibility.editor.button.characters-remaining")
-        .accessibilityValue("\(value)")
+        .accessibilityValue("\(characterCountValue)")
         .accessibilityRemoveTraits(.isStaticText)
         .accessibilityAddTraits(.updatesFrequently)
         .accessibilityRespondsToUserInteraction(false)
-        .animation(.smooth, value: value)
+        .animation(.smooth, value: characterCountValue)
     }
 
     private func setupStore() {

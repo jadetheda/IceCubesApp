@@ -364,7 +364,7 @@ public struct GalleryMediaCell: View {
   private var fallbackUrl: URL? { info?.fallbackUrl }
   private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
-  private var resolvedLazyImageUrl: URL? { autoFallbackTriggered ? (fallbackUrl ?? url) : url }
+  private var resolvedLazyImageUrl: URL? { autoFallbackTriggered ? (fallbackUrl ?? resolvedUrl) : resolvedUrl }
   private var cornerRadius: CGFloat { UserPreferences.shared.galleryRoundCorners ? 8 : 0 }
 
 

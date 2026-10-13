@@ -363,11 +363,23 @@ extension MisskeyFile {
             type = "gifv"
         }
 
+        var aspect: Double? = nil
+        if let w = self.properties?.width, let h = self.properties?.height, h > 0 {
+            aspect = Double(w) / Double(h)
+        }
+
         let meta = MediaAttachment.MetaContainer(
             original: MediaAttachment.MetaContainer.Meta(
                 width: self.properties?.width,
                 height: self.properties?.height,
-                aspect: nil,
+                aspect: aspect,
+                duration: nil,
+                frameRate: nil
+            ),
+            small: MediaAttachment.MetaContainer.Meta(
+                width: self.properties?.width,
+                height: self.properties?.height,
+                aspect: aspect,
                 duration: nil,
                 frameRate: nil
             )

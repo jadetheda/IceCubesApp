@@ -61,6 +61,10 @@ public struct StatusRowMediaPreviewView: View {
     return 300
   }
 
+  private var useMediaGridMode: Bool {
+    userPreferences.statusMediaGridMode && attachments.count <= 4
+  }
+
   public var body: some View {
     Group {
       if attachments.count == 1 {
@@ -212,18 +216,49 @@ private struct MediaPreview: View {
     return displayData.standaloneAspectRatio ?? loadedAspectRatio ?? 1.0
   }
 
+  private var carouselWidth: CGFloat {
+    if let ratio = displayData.standaloneAspectRatio ?? loadedAspectRatio {
+      let clamped = min(max(ratio, 0.4), 2.5)
+      return imageMaxHeight * clamped
+    }
+    if displayData.isLandscape {
+      return imageMaxHeight * 1.2
+    }
+    return imageMaxHeight / 1.5
+  }
+
+  private var previewFrameWidth: CGFloat? {
+    isStandalone ? nil : carouselWidth
+  }
+
+  private var previewFrameHeight: CGFloat? {
+    isStandalone ? nil : imageMaxHeight
+  }
+
+  private var previewFrameMaxWidth: CGFloat? {
+    isStandalone ? .infinity : nil
+  }
+
+  private var previewFrameMaxHeight: CGFloat? {
+    isStandalone ? (imageMaxHeight * 2.5) : nil
+  }
+
+  private var appliedAspectRatio: CGFloat? {
+    isStandalone ? currentAspectRatio : nil
+  }
+
   @ViewBuilder
   private func styleImage(_ image: Image) -> some View {
     image
       .resizable()
       .aspectRatio(contentMode: .fill)
       .frame(
-        maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
+        maxWidth: previewFrameMaxWidth,
+        maxHeight: previewFrameMaxHeight
       )
       .frame(
-        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
-        height: isStandalone ? nil : imageMaxHeight
+        width: previewFrameWidth,
+        height: previewFrameHeight
       )
   }
   
@@ -242,15 +277,13 @@ private struct MediaPreview: View {
                 .onAppear {
                   cachedImage = image
                   onLoaded()
-                  if isStandalone {
-                    if displayData.standaloneAspectRatio == nil {
-                      if loadedAspectRatio == nil {
-                        if let size = state.imageContainer?.image.size {
-                          if size.height > 0 {
-                            let ratio = size.width / size.height
-                            DispatchQueue.main.async {
-                              loadedAspectRatio = min(max(ratio, 0.25), 4.0)
-                            }
+                  if displayData.standaloneAspectRatio == nil {
+                    if loadedAspectRatio == nil {
+                      if let size = state.imageContainer?.image.size {
+                        if size.height > 0 {
+                          let ratio = size.width / size.height
+                          DispatchQueue.main.async {
+                            loadedAspectRatio = min(max(ratio, 0.25), 4.0)
                           }
                         }
                       }
@@ -285,14 +318,14 @@ private struct MediaPreview: View {
         }
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
-      .aspectRatio(isStandalone ? currentAspectRatio : nil, contentMode: .fit)
+      .aspectRatio(appliedAspectRatio, contentMode: .fit)
       .frame(
-        maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? (imageMaxHeight * 2.5) : nil
+        maxWidth: previewFrameMaxWidth,
+        maxHeight: previewFrameMaxHeight
       )
       .frame(
-        width: isStandalone ? nil : (displayData.isLandscape ? imageMaxHeight * 1.2 : imageMaxHeight / 1.5),
-        height: isStandalone ? nil : imageMaxHeight
+        width: previewFrameWidth,
+        height: previewFrameHeight
       )
       .clipShape(RoundedRectangle(cornerRadius: 10))
       // #965: do not create overlapping tappable areas, when multiple images are shown
@@ -463,6 +496,10 @@ private struct DisplayData: Identifiable, Hashable {
   let standaloneAspectRatio: CGFloat?
   let aspectRatio: CGFloat?
 
+  var safeFallbackUrl: URL? {
+    previewFallbackUrl ?? fallbackUrl
+  }
+
   init?(from attachment: MediaAttachment, useRemoteMedia: Bool, fallbackOnFail: Bool = false, neverLoadVideo: Bool = false) {
     guard let info = attachment.displayInfo(useRemoteMedia: useRemoteMedia, fallbackOnFail: fallbackOnFail, neverLoadVideo: neverLoadVideo) else { return nil }
 
@@ -474,13 +511,14 @@ private struct DisplayData: Identifiable, Hashable {
     type = DisplayType(from: info.type)
     description = attachment.description
     accessibilityText = Self.getAccessibilityString(from: attachment)
-    isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
-    clampedAspectRatio = attachment.clampedAspectRatio
     if let ratio = attachment.aspectRatio {
+      isLandscape = ratio > 1.0
       standaloneAspectRatio = min(max(ratio, 0.25), 4.0)
     } else {
+      isLandscape = (attachment.meta?.original?.width ?? 0) > (attachment.meta?.original?.height ?? 0)
       standaloneAspectRatio = nil
     }
+    clampedAspectRatio = attachment.clampedAspectRatio
     aspectRatio = attachment.aspectRatio
   }
 
