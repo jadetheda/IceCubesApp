@@ -332,6 +332,7 @@ import SwiftUI
 
     do {
       isEmbedLoading = true
+      var embed: Status? = nil
       if url.absoluteString.contains(client.server) {
         if let id = Int(url.lastPathComponent) {
           embed = try await client.get(endpoint: Statuses.status(id: String(id)))

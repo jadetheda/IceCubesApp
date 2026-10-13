@@ -40,16 +40,19 @@ public struct PluraldawnDecoder {
             guard let baseAddress = srcPointer.baseAddress else { return nil }
             let srcBase = baseAddress.assumingMemoryBound(to: UInt8.self)
             
-            var stream = compression_stream()
-            guard compression_stream_init(&stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else { return nil }
-            defer { compression_stream_destroy(&stream) }
-            
-            stream.src_ptr = srcBase
-            stream.src_size = payload.count
-            
             let bufferSize = 32768
             let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
             defer { buffer.deallocate() }
+            
+            var stream = compression_stream(
+                dst_ptr: buffer,
+                dst_size: bufferSize,
+                src_ptr: srcBase,
+                src_size: payload.count,
+                state: nil
+            )
+            guard compression_stream_init(&stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else { return nil }
+            defer { compression_stream_destroy(&stream) }
             
             var result = Data()
             

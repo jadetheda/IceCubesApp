@@ -70,7 +70,7 @@ public struct StatusRowView: View {
     .init(top: isCompact ? 6 : 12, leading: 0, bottom: isFocused ? 12 : 6, trailing: 0)
   }
 
-  private func indentationOpacity(level: Int) -> Double {
+  private func indentationOpacity(level: UInt) -> Double {
     (indentationLevel == level + 1) ? 1 : 0.15
   }
 
