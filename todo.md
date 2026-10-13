@@ -11,7 +11,7 @@
   - Likely cause: in `MediaPreview` (`StatusRowMediaPreviewView.swift`), the outer `.aspectRatio(appliedAspectRatio, contentMode: .fit)` gets `nil` for carousel items. With `nil`, SwiftUI falls back to the child's ideal size. The child is `LazyResizableImage`, which is a `GeometryReader`, and its ideal size is square (10x10). So the content is forced 1:1 and then centered inside the `frame(width: carouselWidth, height: imageMaxHeight)`.
   - The numbers line up. Portrait: frame is ~213x300, the square is 213x213, leaving vertical gaps. Landscape: frame is ~533x300, the square is 300x300, leaving ~116pt on each side. Before the fix, Misskey images had no size metadata, so every card was 200 wide and the gap was too small to notice.
   - Verified against history: upstream IceCubes has no outer `.aspectRatio` on carousel items. It came in with fork commit `12c0eb9f` (July, single-image layouts), which passed `nil` for carousel items. The bug predates the `carouselWidth` change. That change only widened the frames, which made the gap visible.
-  - Fix applied: `appliedAspectRatio` now returns `carouselWidth / imageMaxHeight` for carousel items, so the content fills its frame the way upstream does. The grid (`MediaGridCell`) and single-image paths are untouched. Leave this unchecked until it's confirmed on device.
+  - Fix applied: `appliedAspectRatio` now returns `carouselWidth / imageMaxHeight` for carousel items, so the content fills its frame the way upstream does. The grid (`MediaGridCell`) and single-image paths are untouched. Built successfully in CI run #38390591341. Leave this unchecked until it's confirmed on device.
 
 ### Features
 
