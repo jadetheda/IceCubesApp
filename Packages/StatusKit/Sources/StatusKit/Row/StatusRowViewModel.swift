@@ -76,6 +76,14 @@ import SwiftUI
     let enabled = UserPreferences.shared.pluraldawnSupportEnabled
     if enabled {
       if let member = pluraldawnMember {
+        if member.avatar == "emoji" {
+          for rawIndicator in member.emoji {
+            let indicator = rawIndicator.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
+            if let emoji = finalStatus.emojis.first(where: { $0.shortcode == indicator }) ?? finalStatus.account.emojis.first(where: { $0.shortcode == indicator }) {
+              return emoji.url
+            }
+          }
+        }
         return member.avatarURL
       }
     }
@@ -422,11 +430,21 @@ import SwiftUI
     
     let system = await PluraldawnCache.shared.getSystem(for: avatarURL)
     if let system = system {
-      self.pluraldawnMember = PluraldawnSystemMatcher.findMatch(
-        rawText: finalStatus.content.asRawText,
+      let contentText = finalStatus.content.asRawText
+      let spoiler = finalStatus.spoilerText.asRawText
+      var textToSearch = contentText
+      if !spoiler.isEmpty {
+        textToSearch = "\(spoiler)\n\(contentText)"
+      }
+      
+      let matched = PluraldawnSystemMatcher.findMatch(
+        rawText: textToSearch,
         mentions: finalStatus.mentions,
         members: system.members
       )
+      if let matched = matched {
+        self.pluraldawnMember = matched
+      }
     }
   }
 
