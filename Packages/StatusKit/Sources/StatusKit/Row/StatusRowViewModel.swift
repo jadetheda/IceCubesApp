@@ -79,8 +79,12 @@ import SwiftUI
         if member.avatar == "emoji" {
           for rawIndicator in member.emoji {
             let indicator = rawIndicator.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
-            if let emoji = finalStatus.emojis.first(where: { $0.shortcode == indicator }) ?? finalStatus.account.emojis.first(where: { $0.shortcode == indicator }) {
-              return emoji.url
+            let statusEmoji = finalStatus.emojis.first(where: { $0.shortcode == indicator })
+            let accountEmoji = finalStatus.account.emojis.first(where: { $0.shortcode == indicator })
+            if let emoji = statusEmoji ?? accountEmoji {
+              if let url = URL(string: emoji.url) {
+                return url
+              }
             }
           }
         }

@@ -1151,5 +1151,7 @@
   - **Impact**: Eliminates 1:1 square collapse, horizontal whitespace canyons on landscape cards, and vertical letterboxing on portrait cards. Verified mathematically and passed AST safety audit.
 - **2026-10-13T11:43:00Z**:
   - **Description**: Production CI Build #38390591341 succeeded completely (All stages passed, unsigned IPA generated).
-  - **Milestone**: Successfully compiled the full IceCubes iOS app with carousel aspect ratio sizing fixes and Pluraldawn support in 12m27s. Clean IPA artifact (`IceCubesApp-Unsigned-IPA`) uploaded and ready for device testing.
-
+- **2026-10-13T12:05:00Z**:
+  - **Description**: Boost Code & AST Safety Audit for Pluraldawn updates in commit `b6190a9a` (`PluraldawnDecoder`, `PluraldawnSystem`, `PluraldawnCache`, `StatusRowViewModel`).
+  - **Fixes**: In `StatusRowViewModel.swift`, fixed fatal type mismatch in `displayAvatarURL` where `return emoji.url` attempted to return `String` instead of `URL?`, wrapping it in `URL(string: emoji.url)` and decoupling chained `??` operator into separate `statusEmoji` and `accountEmoji` lookups for Swift 5.10 AST constraint solver safety. In `PluraldawnDecoder.swift`, added support for PlDon (v1) pixel packing `((r & 3) << 6) | ((g & 7) << 3) | (b & 7)` when PlDw2 header is not found; guarded `readGroup` DLE handling with `prefixes != nil` so prefix-less groups do not consume `0x10`; normalized Data slice `startIndex` in `decodePNGPixels` and `parsePlDon`; added Adam7 interlacing fallback check; and added zero-progress guard in `decompressPayload`.
+  - **Impact**: Prevents an immediate compile failure in `StatusRowViewModel`, restores PlDon (v1) decoding compatibility, and ensures zero AST solver traps (Exit Code 65) or memory/bounds violations exist prior to CI execution.

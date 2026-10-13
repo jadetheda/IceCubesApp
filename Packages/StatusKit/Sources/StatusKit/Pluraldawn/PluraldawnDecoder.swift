@@ -101,6 +101,7 @@ public struct PluraldawnDecoder {
     // without any color profile conversion, ensuring LSB data remains intact.
     private static func decodePNGPixels(from data: Data) -> (pixels: [UInt8], bpp: Int)? {
         guard data.count > 8 else { return nil }
+        let data = data.startIndex == 0 ? data : Data(data)
         let pngHeader: [UInt8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
         for idx in 0..<8 {
             if data[idx] != pngHeader[idx] { return nil }
@@ -114,29 +115,35 @@ public struct PluraldawnDecoder {
         
         while pos + 8 <= data.count {
             let length = Int(UInt32(data[pos]) << 24 | UInt32(data[pos+1]) << 16 | UInt32(data[pos+2]) << 8 | UInt32(data[pos+3]))
+            if length < 0 || length > data.count - pos - 4 { break }
             let chunkType = data.subdata(in: (pos + 4)..<(pos + 8))
             pos += 8
             
-            if pos + length > data.count { break }
             let chunkData = data.subdata(in: pos..<(pos + length))
             pos += length + 4 // skip CRC
             
             if chunkType == "IHDR".data(using: .ascii) {
-                guard chunkData.count >= 10 else { return nil }
+                guard chunkData.count >= 13 else { return nil }
                 width = Int(UInt32(chunkData[0]) << 24 | UInt32(chunkData[1]) << 16 | UInt32(chunkData[2]) << 8 | UInt32(chunkData[3]))
                 height = Int(UInt32(chunkData[4]) << 24 | UInt32(chunkData[5]) << 16 | UInt32(chunkData[6]) << 8 | UInt32(chunkData[7]))
                 let bitDepth = chunkData[8]
                 colorType = chunkData[9]
+                let compressionMethod = chunkData[10]
+                let filterMethod = chunkData[11]
+                let interlaceMethod = chunkData[12]
                 if bitDepth != 8 { return nil }
                 if colorType != 2 && colorType != 6 { return nil }
+                if compressionMethod != 0 || filterMethod != 0 { return nil }
+                if interlaceMethod != 0 { return nil } // Fall back to CGImage decode for Adam7
             } else if chunkType == "IDAT".data(using: .ascii) {
+                if idat.count > 10 * 1024 * 1024 { return nil }
                 idat.append(chunkData)
             } else if chunkType == "IEND".data(using: .ascii) {
                 break
             }
         }
         
-        guard width > 0, height > 0, !idat.isEmpty else { return nil }
+        guard width > 0, height > 0, width <= 10000, height <= 10000, !idat.isEmpty else { return nil }
         guard let raw = decompressPayload(idat) else { return nil }
         
         let bpp = colorType == 6 ? 4 : 3
@@ -228,23 +235,23 @@ public struct PluraldawnDecoder {
     }
 
     private static func extractFromPixels(_ pixels: [UInt8], bpp: Int) -> PluraldawnSystem? {
-        var extractedBytes = [UInt8]()
-        extractedBytes.reserveCapacity(pixels.count / bpp)
+        guard bpp >= 3, pixels.count >= bpp else { return nil }
         
+        // 1. Try PlDw2 format (v2 pixel packing: 3 red, 2 green, 3 blue)
+        var v2Bytes = [UInt8]()
+        v2Bytes.reserveCapacity(pixels.count / bpp)
         for i in stride(from: pixels.count - bpp, through: 0, by: -bpp) {
             let r = pixels[i]
             let g = pixels[i + 1]
             let b = pixels[i + 2]
             let byte = ((r & 7) << 5) | ((g & 3) << 3) | (b & 7)
-            extractedBytes.append(byte)
+            v2Bytes.append(byte)
         }
         
-        let extractedData = Data(extractedBytes)
-        
-        // 1. Try PlDw2 format
+        let v2Data = Data(v2Bytes)
         if let magic = "PlDw2".data(using: .utf8),
-           let magicRange = extractedData.range(of: magic) {
-            let payload = extractedData.subdata(in: magicRange.upperBound..<extractedData.count)
+           let magicRange = v2Data.range(of: magic) {
+            let payload = v2Data.subdata(in: magicRange.upperBound..<v2Data.count)
             if let decompressed = decompressPayload(payload) {
                 if let system = parsePlDw2(decompressed) {
                     return system
@@ -252,14 +259,25 @@ public struct PluraldawnDecoder {
             }
         }
         
-        // 2. Try PlDon format (v1 JSON)
+        // 2. Try PlDon format (v1 pixel packing: 2 red, 3 green, 3 blue)
+        var v1Bytes = [UInt8]()
+        v1Bytes.reserveCapacity(pixels.count / bpp)
+        for i in stride(from: pixels.count - bpp, through: 0, by: -bpp) {
+            let r = pixels[i]
+            let g = pixels[i + 1]
+            let b = pixels[i + 2]
+            let byte = ((r & 3) << 6) | ((g & 7) << 3) | (b & 7)
+            v1Bytes.append(byte)
+        }
+        
+        let v1Data = Data(v1Bytes)
         if let magic = "PlDon".data(using: .utf8),
-           let magicRange = extractedData.range(of: magic) {
-            let payload = extractedData.subdata(in: magicRange.upperBound..<extractedData.count)
+           let magicRange = v1Data.range(of: magic) {
+            let payload = v1Data.subdata(in: magicRange.upperBound..<v1Data.count)
             let nullByte: UInt8 = 0
             let jsonPayload: Data
             if let nullIdx = payload.firstIndex(of: nullByte) {
-                jsonPayload = payload.subdata(in: 0..<nullIdx)
+                jsonPayload = payload.subdata(in: payload.startIndex..<nullIdx)
             } else {
                 jsonPayload = payload
             }
@@ -336,7 +354,7 @@ public struct PluraldawnDecoder {
                 if b == 0x1D {
                     break
                 }
-            } else if buffer.isEmpty && b == 0x10 { // Data Link Escape (0x10)
+            } else if prefixes != nil && buffer.isEmpty && b == 0x10 { // Data Link Escape (0x10)
                 guard offset < data.count else { return nil }
                 let prefixIndex = Int(data[offset])
                 offset += 1
@@ -434,6 +452,7 @@ public struct PluraldawnDecoder {
             while true {
                 stream.dst_ptr = buffer
                 stream.dst_size = bufferSize
+                let prevSrcSize = stream.src_size
                 
                 let status = compression_stream_process(&stream, 0)
                 
@@ -445,6 +464,9 @@ public struct PluraldawnDecoder {
                     }
                     if status == COMPRESSION_STATUS_END {
                         return result
+                    }
+                    if decodedCount == 0 && stream.src_size == prevSrcSize {
+                        return nil
                     }
                     if stream.dst_size > 0 && stream.src_size == 0 {
                         return nil 
