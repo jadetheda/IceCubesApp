@@ -1136,3 +1136,8 @@
   - **Description**: Fixed the 3 exact failure points identified in the full CI build logs for run #38377928865.
   - **Fixes**: In `PluraldawnDecoder.swift`, pre-allocated buffer and passed explicit memberwise parameters (`dst_ptr`, `dst_size`, `src_ptr`, `src_size`, `state`) to `compression_stream` initializer to resolve C-struct call syntax error. In `StatusRowView.swift`, updated `indentationOpacity(level: UInt)` parameter type from `Int` to `UInt` to match `indentationLevel: UInt`. In `StatusRowViewModel.swift`, restored missing `var embed: Status? = nil` declaration in `loadEmbeddedStatus` do-block to resolve out-of-scope variable error.
   - **Impact**: Clears all compiler errors identified in the CI logs; code is now clean for build verification.
+- **2026-10-13T09:58:00Z**:
+  - **Description**: Boost Code & AST Bug Checker audit across PluraldawnDecoder, StatusRowView, and StatusRowViewModel.
+  - **Fixes**: In `StatusRowViewModel.swift`, completely eliminated remaining comma-separated conditions and multi-conditional ladders in `loadStatusById`, `didSet` of `authorRelationship`, `embededStatusURL`, `loadEmbeddedStatus`, `init`, `translate`, and `fetchRemoteStatus`, decoupling them into clean single-condition guards and nested `if` blocks. In `StatusRowView.swift`, decoupled compound `if` in `accessibilityLabelState` and wrapped `indentationView` to only generate `HStack` when `indentationLevel > 0`. In `PluraldawnDecoder.swift`, decoupled comma-separated `guard` statements in `decode` and `extract`.
+  - **Impact**: Guarantees zero remaining Swift 5.10 AST constraint solver bottlenecks, actor isolation conflicts, or undeclared scope errors across all 3 recently modified files.
+

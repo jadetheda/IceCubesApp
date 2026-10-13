@@ -91,8 +91,10 @@ public struct StatusRowView: View {
   }
 
   private var accessibilityLabelState: Text {
-    if isFocused == false && accessibilityVoiceOverEnabled {
-      return StatusRowAccessibilityLabel(viewModel: viewModel).finalLabel()
+    if isFocused == false {
+      if accessibilityVoiceOverEnabled {
+        return StatusRowAccessibilityLabel(viewModel: viewModel).finalLabel()
+      }
     }
     return Text("")
   }
@@ -100,16 +102,16 @@ public struct StatusRowView: View {
   @ViewBuilder
   private var indentationView: some View {
     if !isCompact {
-      HStack(spacing: 3) {
-        ForEach(0..<indentationLevel, id: \.self) { level in
-          Rectangle()
-            .fill(theme.tintColor)
-            .frame(width: 2)
-            .accessibilityHidden(true)
-            .opacity(indentationOpacity(level: level))
-        }
-      }
       if indentationLevel > 0 {
+        HStack(spacing: 3) {
+          ForEach(0..<indentationLevel, id: \.self) { level in
+            Rectangle()
+              .fill(theme.tintColor)
+              .frame(width: 2)
+              .accessibilityHidden(true)
+              .opacity(indentationOpacity(level: level))
+          }
+        }
         Spacer(minLength: 8)
       }
     }

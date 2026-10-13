@@ -27,7 +27,8 @@ public struct PluraldawnDecoder {
         }
         
         #if canImport(UIKit)
-        guard let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage else { return nil }
+        guard let uiImage = UIImage(data: data) else { return nil }
+        guard let cgImage = uiImage.cgImage else { return nil }
         return extract(from: cgImage)
         #else
         return nil
@@ -128,7 +129,8 @@ public struct PluraldawnDecoder {
         // Decompress using Compression framework to gracefully handle trailing garbage
         let decompressed = decompressPayload(payload)
         
-        guard let decompressedData = decompressed, let string = String(data: decompressedData, encoding: .utf8) else { return nil }
+        guard let decompressedData = decompressed else { return nil }
+        guard let string = String(data: decompressedData, encoding: .utf8) else { return nil }
         
         let groups = string.components(separatedBy: "\u{001D}")
         guard groups.count >= 5 else { return nil }

@@ -92,10 +92,10 @@ import SwiftUI
   var authorRelationship: Relationship? {
     didSet {
       // if we are newly blocking or muting the author, force collapse post so it goes away
-      if let relationship = authorRelationship,
-        relationship.blocking || relationship.muting
-      {
-        lineLimit = 0
+      if let relationship = authorRelationship {
+        if relationship.blocking || relationship.muting {
+          lineLimit = 0
+        }
       }
     }
   }
@@ -235,20 +235,26 @@ import SwiftUI
 
     isFiltered = filter != nil
 
-    if let url = embededStatusURL(),
-      let embed = StatusEmbedCache.shared.get(url: url)
-    {
-      isEmbedLoading = false
-      embeddedStatus = embed
-    } else if let quotedStatus = finalStatus.quote?.quotedStatus,
-      finalStatus.quote?.state == .accepted
-    {
-      embeddedStatus = quotedStatus
-    } else if let id = finalStatus.quote?.quotedStatusId,
-      let embed = StatusEmbedCache.shared.get(id: id)
-    {
-      isEmbedLoading = false
-      embeddedStatus = embed
+    if let url = embededStatusURL() {
+      if let embed = StatusEmbedCache.shared.get(url: url) {
+        isEmbedLoading = false
+        embeddedStatus = embed
+      }
+    }
+    if embeddedStatus == nil {
+      if let quotedStatus = finalStatus.quote?.quotedStatus {
+        if finalStatus.quote?.state == .accepted {
+          embeddedStatus = quotedStatus
+        }
+      }
+    }
+    if embeddedStatus == nil {
+      if let id = finalStatus.quote?.quotedStatusId {
+        if let embed = StatusEmbedCache.shared.get(id: id) {
+          isEmbedLoading = false
+          embeddedStatus = embed
+        }
+      }
     }
 
     collapseLongPosts = UserPreferences.shared.collapseLongPosts
@@ -298,13 +304,11 @@ import SwiftUI
 
   private func embededStatusURL() -> URL? {
     guard finalStatus.quote == nil else { return nil }
-    let content = finalStatus.content
-    if !content.statusesURLs.isEmpty,
-      let url = content.statusesURLs.first,
-      !StatusEmbedCache.shared.badStatusesURLs.contains(url),
-      client.hasConnection(with: url)
-    {
-      return url
+    guard let url = finalStatus.content.statusesURLs.first else { return nil }
+    if !StatusEmbedCache.shared.badStatusesURLs.contains(url) {
+      if client.hasConnection(with: url) {
+        return url
+      }
     }
     return nil
   }
@@ -315,9 +319,8 @@ import SwiftUI
       return
     }
 
-    guard embeddedStatus == nil,
-      let url = embededStatusURL()
-    else {
+    guard embeddedStatus == nil else { return }
+    guard let url = embededStatusURL() else {
       if isEmbedLoading {
         isEmbedLoading = false
       }
@@ -364,22 +367,23 @@ import SwiftUI
   }
 
   private func loadStatusById() async -> Bool {
-    if embeddedStatus == nil,
-      let id = finalStatus.quote?.quotedStatusId,
-      finalStatus.quote?.quotedStatus == nil
-    {
-      isEmbedLoading = true
-      if let embed = StatusEmbedCache.shared.get(id: id) {
-        embeddedStatus = embed
-        isEmbedLoading = false
-        return true
-      } else if let embed: Status = try? await client.get(endpoint: Statuses.status(id: id)) {
-        StatusEmbedCache.shared.set(id: id, status: embed)
-        embeddedStatus = embed
-        isEmbedLoading = false
-        return true
+    if embeddedStatus == nil {
+      if let id = finalStatus.quote?.quotedStatusId {
+        if finalStatus.quote?.quotedStatus == nil {
+          isEmbedLoading = true
+          if let embed = StatusEmbedCache.shared.get(id: id) {
+            embeddedStatus = embed
+            isEmbedLoading = false
+            return true
+          } else if let embed: Status = try? await client.get(endpoint: Statuses.status(id: id)) {
+            StatusEmbedCache.shared.set(id: id, status: embed)
+            embeddedStatus = embed
+            isEmbedLoading = false
+            return true
+          }
+          return false
+        }
       }
-      return false
     }
     return false
   }
@@ -488,21 +492,21 @@ import SwiftUI
 
     var hasShown = false
     #if canImport(_Translation_SwiftUI)
-      if translation == nil,
-        #available(iOS 17.4, *)
-      {
-        showAppleTranslation = true
-        hasShown = true
+      if translation == nil {
+        if #available(iOS 17.4, *) {
+          showAppleTranslation = true
+          hasShown = true
+        }
       }
     #endif
 
-    if !hasShown,
-      translation == nil
-    {
-      if preferredTranslationType == .useDeepl {
-        deeplTranslationError = true
-      } else {
-        instanceTranslationError = true
+    if !hasShown {
+      if translation == nil {
+        if preferredTranslationType == .useDeepl {
+          deeplTranslationError = true
+        } else {
+          instanceTranslationError = true
+        }
       }
     }
   }
@@ -559,7 +563,8 @@ import SwiftUI
   }
 
   func fetchRemoteStatus() async -> Bool {
-    guard isRemote, let remoteStatusURL = URL(string: finalStatus.url ?? "") else { return false }
+    guard isRemote else { return false }
+    guard let remoteStatusURL = URL(string: finalStatus.url ?? "") else { return false }
     isLoadingRemoteContent = true
     let results: SearchResults? = try? await client.get(
       endpoint: Search.search(
