@@ -39,7 +39,28 @@ public struct PluraldawnDecoder {
 
     public static func decode(from url: URL) async -> PluraldawnSystem? {
         let resolvedURL = resolveOriginalAvatarURL(url)
-        guard let (data, _) = try? await URLSession.shared.data(from: resolvedURL) else { return nil }
+        var downloadedData: Data? = nil
+        if let (data, response) = try? await URLSession.shared.data(from: resolvedURL) {
+            if let http = response as? HTTPURLResponse {
+                if http.statusCode == 200 {
+                    downloadedData = data
+                }
+            } else {
+                downloadedData = data
+            }
+        }
+        if downloadedData == nil && resolvedURL != url {
+            if let (data, response) = try? await URLSession.shared.data(from: url) {
+                if let http = response as? HTTPURLResponse {
+                    if http.statusCode == 200 {
+                        downloadedData = data
+                    }
+                } else {
+                    downloadedData = data
+                }
+            }
+        }
+        guard let data = downloadedData else { return nil }
         
         // 1. Try bit-exact PNG chunk decode first to bypass CoreGraphics gamma/color alteration
         if let (pixels, bpp) = decodePNGPixels(from: data) {
@@ -69,9 +90,40 @@ public struct PluraldawnDecoder {
     }
     
     private static func resolveOriginalAvatarURL(_ url: URL) -> URL {
-        let str = url.absoluteString
+        var currentURL = url
+        // 1. If it's a proxy with an encoded original URL in query parameters (?url=https%3A%2F%2F...)
+        // (Used by Misskey, IceShrimp, Sharkey, Firefish, etc.)
+        if let components = URLComponents(url: currentURL, resolvingAgainstBaseURL: false) {
+            if let queryItems = components.queryItems {
+                for item in queryItems {
+                    if item.name == "url", let targetStr = item.value, let targetURL = URL(string: targetStr) {
+                        if targetURL != currentURL {
+                            currentURL = targetURL
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        
+        let str = currentURL.absoluteString
         if str.contains("/proxy/avatar.webp") {
             if let newUrl = URL(string: str.replacingOccurrences(of: "/proxy/avatar.webp", with: "/proxy/avatar.png")) {
+                return newUrl
+            }
+        }
+        if str.contains("/avatar.webp") {
+            if let newUrl = URL(string: str.replacingOccurrences(of: "/avatar.webp", with: "/avatar.png")) {
+                return newUrl
+            }
+        }
+        if str.contains("/proxy/image.webp") {
+            if let newUrl = URL(string: str.replacingOccurrences(of: "/proxy/image.webp", with: "/proxy/image.png")) {
+                return newUrl
+            }
+        }
+        if str.contains("/image.webp") {
+            if let newUrl = URL(string: str.replacingOccurrences(of: "/image.webp", with: "/image.png")) {
                 return newUrl
             }
         }
@@ -86,6 +138,20 @@ public struct PluraldawnDecoder {
                 return newUrl
             }
         }
+        if str.contains("/accounts/avatars/") {
+            if str.contains("/small/") {
+                let replaced = str.replacingOccurrences(of: "/small/", with: "/original/")
+                if let newUrl = URL(string: replaced) {
+                    return newUrl
+                }
+            }
+            if str.hasSuffix("/small.png") {
+                let replaced = str.replacingOccurrences(of: "/small.png", with: "/original.png")
+                if let newUrl = URL(string: replaced) {
+                    return newUrl
+                }
+            }
+        }
         if str.contains("/api/v2/cache/avatar/") {
             if !str.contains("format=original") {
                 let separator = str.contains("?") ? "&" : "?"
@@ -94,7 +160,7 @@ public struct PluraldawnDecoder {
                 }
             }
         }
-        return url
+        return currentURL
     }
     
     // Direct PNG chunk pixel decoder: uncompresses IDAT scanlines and reverses PNG filters

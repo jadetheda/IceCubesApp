@@ -87,8 +87,12 @@ import SwiftUI
               }
             }
           }
+          return finalStatus.account.avatar
         }
-        return member.avatarURL
+        if let avatarURL = member.avatarURL, avatarURL.scheme != nil {
+          return avatarURL
+        }
+        return finalStatus.account.avatar
       }
     }
     return finalStatus.account.avatar
@@ -436,16 +440,21 @@ import SwiftUI
     if let system = system {
       let contentText = finalStatus.content.asRawText
       let spoiler = finalStatus.spoilerText.asRawText
-      var textToSearch = contentText
-      if !spoiler.isEmpty {
-        textToSearch = "\(spoiler)\n\(contentText)"
-      }
       
-      let matched = PluraldawnSystemMatcher.findMatch(
-        rawText: textToSearch,
+      var matched = PluraldawnSystemMatcher.findMatch(
+        rawText: contentText,
         mentions: finalStatus.mentions,
         members: system.members
       )
+      if matched == nil {
+        if !spoiler.isEmpty {
+          matched = PluraldawnSystemMatcher.findMatch(
+            rawText: spoiler,
+            mentions: finalStatus.mentions,
+            members: system.members
+          )
+        }
+      }
       if let matched = matched {
         self.pluraldawnMember = matched
       }
