@@ -1,6 +1,7 @@
 import Foundation
+import Models
 
-public struct PluraldawnMember: Codable, Equatable {
+public struct PluraldawnMember: Codable, Equatable, Sendable {
   public let id: String
   public let name: String
   public let emoji: [String]
@@ -12,12 +13,11 @@ public struct PluraldawnMember: Codable, Equatable {
   }
 }
 
-public struct PluraldawnSystem: Codable, Equatable {
+public struct PluraldawnSystem: Codable, Equatable, Sendable {
   public let members: [PluraldawnMember]
 }
-import Models
 
-public struct PluraldawnSystemMatcher {
+public struct PluraldawnSystemMatcher: Sendable {
   public static func findMatch(rawText: String, mentions: [Mention], members: [PluraldawnMember]) -> PluraldawnMember? {
     var matchedMembers: [PluraldawnMember] = []
     

@@ -63,6 +63,7 @@ public struct PluraldawnDecoder {
                     let decodedCount = bufferSize - stream.dst_size
                     if decodedCount > 0 {
                         result.append(buffer, count: decodedCount)
+                        if result.count > 5 * 1024 * 1024 { return nil }
                     }
                     if status == COMPRESSION_STATUS_END {
                         return result

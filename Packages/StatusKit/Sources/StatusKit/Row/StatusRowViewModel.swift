@@ -256,25 +256,29 @@ import SwiftUI
   }
 
   func navigateToDetail() {
-    if isRemote, let url = URL(string: finalStatus.url ?? "") {
-      routerPath.navigate(to: .remoteStatusDetail(url: url))
-    } else {
-      routerPath.navigate(to: .statusDetailWithStatus(status: status.reblogAsAsStatus ?? status))
+    if isRemote {
+      if let url = URL(string: finalStatus.url ?? "") {
+        routerPath.navigate(to: .remoteStatusDetail(url: url))
+        return
+      }
     }
+    routerPath.navigate(to: .statusDetailWithStatus(status: status.reblogAsAsStatus ?? status))
   }
 
   func navigateToAccountDetail(account: Account) {
-    if isRemote, let url = account.url {
-      withAnimation {
-        isLoadingRemoteContent = true
+    if isRemote {
+      if let url = account.url {
+        withAnimation {
+          isLoadingRemoteContent = true
+        }
+        Task {
+          await routerPath.navigateToAccountFrom(url: url)
+          isLoadingRemoteContent = false
+        }
+        return
       }
-      Task {
-        await routerPath.navigateToAccountFrom(url: url)
-        isLoadingRemoteContent = false
-      }
-    } else {
-      routerPath.navigate(to: .accountDetailWithAccount(account: account))
     }
+    routerPath.navigate(to: .accountDetailWithAccount(account: account))
   }
 
   func goToParent() {
@@ -328,10 +332,12 @@ import SwiftUI
 
     do {
       isEmbedLoading = true
-      var embed: Status?
-      if url.absoluteString.contains(client.server), let id = Int(url.lastPathComponent) {
-        embed = try await client.get(endpoint: Statuses.status(id: String(id)))
-      } else {
+      if url.absoluteString.contains(client.server) {
+        if let id = Int(url.lastPathComponent) {
+          embed = try await client.get(endpoint: Statuses.status(id: String(id)))
+        }
+      }
+      if embed == nil {
         let results: SearchResults = try await client.get(
           endpoint: Search.search(
             query: url.absoluteString,
@@ -429,11 +435,12 @@ import SwiftUI
         endpoint: Statuses.favoritedBy(id: status.id, maxId: nil))
       let rebloggers: [Account] = try await client.get(
         endpoint: Statuses.rebloggedBy(id: status.id, maxId: nil))
-      var quoters: [Account] = []
-      if finalStatus.quotesCount ?? 0 > 0, CurrentAccount.shared.account?.id == status.account.id {
-        let statuses: [Status] = try await client.get(
-          endpoint: Statuses.quotesBy(id: status.id, maxId: nil))
-        quoters = statuses.map { $0.account }
+      if (finalStatus.quotesCount ?? 0) > 0 {
+        if CurrentAccount.shared.account?.id == status.account.id {
+          let statuses: [Status] = try await client.get(
+            endpoint: Statuses.quotesBy(id: status.id, maxId: nil))
+          quoters = statuses.map { $0.account }
+        }
       }
       withAnimation(.smooth) {
         self.favoriters = favoriters

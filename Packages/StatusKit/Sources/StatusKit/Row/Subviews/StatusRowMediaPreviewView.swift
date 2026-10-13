@@ -431,52 +431,56 @@ struct AltTextButton: View {
   @State private var isDisplayingAlert = false
   @State private var isDisplayingTranslation = false
 
+  private var shouldShowButton: Bool {
+    if isInCaptureMode { return false }
+    if isCompact { return false }
+    if !preferences.showAltTextForMedia { return false }
+    guard let text else { return false }
+    return !text.isEmpty
+  }
+
   var body: some View {
-    if !isInCaptureMode {
-      if let text, !text.isEmpty {
-        if !isCompact {
-          if preferences.showAltTextForMedia {
-      Button {
-        isDisplayingAlert = true
-      } label: {
-        ZStack {
-          // use to sync button with show/hide content button
-          Image(systemName: "eye.slash").opacity(0)
-          Text("status.image.alt-text.abbreviation")
+    if shouldShowButton {
+      if let text {
+        Button {
+          isDisplayingAlert = true
+        } label: {
+          ZStack {
+            // use to sync button with show/hide content button
+            Image(systemName: "eye.slash").opacity(0)
+            Text("status.image.alt-text.abbreviation")
+          }
         }
-      }
-      .buttonStyle(.borderless)
-      .padding(EdgeInsets(top: 5, leading: 7, bottom: 5, trailing: 7))
-      .background(.thinMaterial)
-      #if canImport(_Translation_SwiftUI)
-        .addTranslateView(isPresented: $isDisplayingTranslation, text: text)
-      #endif
-      #if os(visionOS)
-        .clipShape(Capsule())
-      #endif
-      .cornerRadius(4)
-      .padding(theme.statusDisplayStyle == .compact ? 0 : 10)
-      .alert(
-        "status.editor.media.image-description",
-        isPresented: $isDisplayingAlert
-      ) {
-        Button("alert.button.ok", action: {})
-        Button("status.action.copy-text", action: { UIPasteboard.general.string = text })
+        .buttonStyle(.borderless)
+        .padding(EdgeInsets(top: 5, leading: 7, bottom: 5, trailing: 7))
+        .background(.thinMaterial)
         #if canImport(_Translation_SwiftUI)
-          if #available(iOS 17.4, *) {
-            Button("status.action.translate", action: { isDisplayingTranslation = true })
-          }
+          .addTranslateView(isPresented: $isDisplayingTranslation, text: text)
         #endif
-      } message: {
-        Text(text)
-      }
-      .frame(
-        maxWidth: .infinity,
-        maxHeight: .infinity,
-        alignment: .bottomTrailing
-      )
-          }
+        #if os(visionOS)
+          .clipShape(Capsule())
+        #endif
+        .cornerRadius(4)
+        .padding(theme.statusDisplayStyle == .compact ? 0 : 10)
+        .alert(
+          "status.editor.media.image-description",
+          isPresented: $isDisplayingAlert
+        ) {
+          Button("alert.button.ok", action: {})
+          Button("status.action.copy-text", action: { UIPasteboard.general.string = text })
+          #if canImport(_Translation_SwiftUI)
+            if #available(iOS 17.4, *) {
+              Button("status.action.translate", action: { isDisplayingTranslation = true })
+            }
+          #endif
+        } message: {
+          Text(text)
         }
+        .frame(
+          maxWidth: .infinity,
+          maxHeight: .infinity,
+          alignment: .bottomTrailing
+        )
       }
     }
   }
