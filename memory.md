@@ -1144,3 +1144,8 @@
   - **Description**: Production CI Build #38380212767 succeeded completely (All stages passed, unsigned IPA generated).
   - **Milestone**: Successfully compiled the full IceCubes iOS app with both Pluraldawn support and horizontal carousel dynamic aspect ratio sizing in 10m31s. Both features, all AST constraint solver decoupling refactors, and Misskey attachment translations are fully integrated and verified in a production IPA build.
 
+- **2026-10-13T11:14:00Z**:
+  - **Description**: Real fix for carousel cards rendering square with empty space around them (most visible on Misskey posts).
+  - **Cause**: `MediaPreview` passed `nil` to the outer `.aspectRatio(_, contentMode: .fit)` for carousel items. With `nil`, SwiftUI uses the child's ideal size. `LazyResizableImage` is a `GeometryReader`, whose ideal size is square, so every card was forced to 1:1 and centered in its frame. Upstream has no such modifier. It was added in fork commit `12c0eb9f`. The earlier `carouselWidth` change only made the frames wider, which made the gap obvious on landscape posts.
+  - **Fix**: `appliedAspectRatio` returns `carouselWidth / imageMaxHeight` for carousel items. Single-image and grid paths unchanged.
+  - **Impact**: Needs on-device confirmation.

@@ -243,8 +243,15 @@ private struct MediaPreview: View {
     isStandalone ? (imageMaxHeight * 2.5) : nil
   }
 
+  // Carousel items must not pass nil here: with nil, .fit uses the child's
+  // ideal size, and LazyResizableImage is a GeometryReader (square ideal size),
+  // which forced every carousel card to 1:1 inside its frame.
   private var appliedAspectRatio: CGFloat? {
-    isStandalone ? currentAspectRatio : nil
+    if isStandalone {
+      return currentAspectRatio
+    }
+    guard imageMaxHeight > 0 else { return 1.0 }
+    return carouselWidth / imageMaxHeight
   }
 
   @ViewBuilder
