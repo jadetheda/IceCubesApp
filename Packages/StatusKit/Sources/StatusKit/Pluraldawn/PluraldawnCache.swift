@@ -1,7 +1,7 @@
 import Foundation
 import Models
 
-@globalActor public actor PluraldawnCache {
+public actor PluraldawnCache {
   public static let shared = PluraldawnCache()
   private var cache: [URL: PluraldawnSystem?] = [:]
 

@@ -35,8 +35,10 @@ public struct PluraldawnDecoder {
     }
     
     private static func decompressPayload(_ payload: Data) -> Data? {
-        payload.withUnsafeBytes { srcPointer -> Data? in
-            guard let srcBase = srcPointer.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        guard !payload.isEmpty else { return nil }
+        return payload.withUnsafeBytes { (srcPointer: UnsafeRawBufferPointer) -> Data? in
+            guard let baseAddress = srcPointer.baseAddress else { return nil }
+            let srcBase = baseAddress.assumingMemoryBound(to: UInt8.self)
             
             var stream = compression_stream()
             guard compression_stream_init(&stream, COMPRESSION_STREAM_DECODE, COMPRESSION_ZLIB) == COMPRESSION_STATUS_OK else { return nil }

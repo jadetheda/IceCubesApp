@@ -407,7 +407,7 @@ import SwiftUI
   func fetchPluraldawnSystemIfNeeded() async {
     let enabled = UserPreferences.shared.pluraldawnSupportEnabled
     guard enabled else { return }
-    guard let avatarURL = finalStatus.account.avatar else { return }
+    let avatarURL = finalStatus.account.avatar
     
     let system = await PluraldawnCache.shared.getSystem(for: avatarURL)
     if let system = system {

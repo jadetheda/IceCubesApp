@@ -97,22 +97,27 @@ public struct StatusRowView: View {
     return Text("")
   }
 
-  public var body: some View {
-    HStack(spacing: 0) {
-      if !isCompact {
-        HStack(spacing: 3) {
-          ForEach(0..<indentationLevel, id: \.self) { level in
-            Rectangle()
-              .fill(theme.tintColor)
-              .frame(width: 2)
-              .accessibilityHidden(true)
-              .opacity(indentationOpacity(level: level))
-          }
-        }
-        if indentationLevel > 0 {
-          Spacer(minLength: 8)
+  @ViewBuilder
+  private var indentationView: some View {
+    if !isCompact {
+      HStack(spacing: 3) {
+        ForEach(0..<indentationLevel, id: \.self) { level in
+          Rectangle()
+            .fill(theme.tintColor)
+            .frame(width: 2)
+            .accessibilityHidden(true)
+            .opacity(indentationOpacity(level: level))
         }
       }
+      if indentationLevel > 0 {
+        Spacer(minLength: 8)
+      }
+    }
+  }
+
+  public var body: some View {
+    HStack(spacing: 0) {
+      indentationView
       VStack(alignment: .leading, spacing: .statusComponentSpacing) {
         if let filter = activeFilter {
           switch filter.filter.filterAction {
