@@ -49,14 +49,16 @@ public struct PluraldawnDecoder {
                 downloadedData = data
             }
         }
-        if downloadedData == nil && resolvedURL != url {
-            if let (data, response) = try? await URLSession.shared.data(from: url) {
-                if let http = response as? HTTPURLResponse {
-                    if http.statusCode == 200 {
+        if downloadedData == nil {
+            if resolvedURL != url {
+                if let (data, response) = try? await URLSession.shared.data(from: url) {
+                    if let http = response as? HTTPURLResponse {
+                        if http.statusCode == 200 {
+                            downloadedData = data
+                        }
+                    } else {
                         downloadedData = data
                     }
-                } else {
-                    downloadedData = data
                 }
             }
         }
@@ -89,76 +91,77 @@ public struct PluraldawnDecoder {
         #endif
     }
     
-    private static func resolveOriginalAvatarURL(_ url: URL) -> URL {
+    static func resolveOriginalAvatarURL(_ url: URL) -> URL {
         var currentURL = url
         // 1. If it's a proxy with an encoded original URL in query parameters (?url=https%3A%2F%2F...)
         // (Used by Misskey, IceShrimp, Sharkey, Firefish, etc.)
         if let components = URLComponents(url: currentURL, resolvingAgainstBaseURL: false) {
             if let queryItems = components.queryItems {
                 for item in queryItems {
-                    if item.name == "url", let targetStr = item.value, let targetURL = URL(string: targetStr) {
-                        if targetURL != currentURL {
-                            currentURL = targetURL
-                            break
+                    if item.name == "url" {
+                        if let targetStr = item.value {
+                            if let targetURL = URL(string: targetStr) {
+                                if targetURL.scheme != nil {
+                                    if targetURL != currentURL {
+                                        currentURL = targetURL
+                                        break
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
         
-        let str = currentURL.absoluteString
-        if str.contains("/proxy/avatar.webp") {
-            if let newUrl = URL(string: str.replacingOccurrences(of: "/proxy/avatar.webp", with: "/proxy/avatar.png")) {
-                return newUrl
-            }
-        }
-        if str.contains("/avatar.webp") {
-            if let newUrl = URL(string: str.replacingOccurrences(of: "/avatar.webp", with: "/avatar.png")) {
-                return newUrl
-            }
-        }
-        if str.contains("/proxy/image.webp") {
-            if let newUrl = URL(string: str.replacingOccurrences(of: "/proxy/image.webp", with: "/proxy/image.png")) {
-                return newUrl
-            }
-        }
-        if str.contains("/image.webp") {
-            if let newUrl = URL(string: str.replacingOccurrences(of: "/image.webp", with: "/image.png")) {
-                return newUrl
-            }
-        }
+        var str = currentURL.absoluteString
+        
+        // Upgrade thumbnails / small variants to original full-resolution
         if str.contains("/attachment/small/") {
-            let replaced = str.replacingOccurrences(of: "/attachment/small/", with: "/attachment/original/")
-            if replaced.hasSuffix(".webp") {
-                if let newUrl = URL(string: replaced.replacingOccurrences(of: ".webp", with: ".png")) {
-                    return newUrl
-                }
-            }
-            if let newUrl = URL(string: replaced) {
-                return newUrl
-            }
+            str = str.replacingOccurrences(of: "/attachment/small/", with: "/attachment/original/")
         }
+        
         if str.contains("/accounts/avatars/") {
             if str.contains("/small/") {
-                let replaced = str.replacingOccurrences(of: "/small/", with: "/original/")
-                if let newUrl = URL(string: replaced) {
-                    return newUrl
-                }
+                str = str.replacingOccurrences(of: "/small/", with: "/original/")
             }
             if str.hasSuffix("/small.png") {
-                let replaced = str.replacingOccurrences(of: "/small.png", with: "/original.png")
-                if let newUrl = URL(string: replaced) {
-                    return newUrl
-                }
+                str = str.replacingOccurrences(of: "/small.png", with: "/original.png")
+            }
+            if str.hasSuffix("/small.webp") {
+                str = str.replacingOccurrences(of: "/small.webp", with: "/original.png")
             }
         }
+        
+        // Replace webp proxies and endpoints with lossless png
+        if str.contains("/proxy/avatar.webp") {
+            str = str.replacingOccurrences(of: "/proxy/avatar.webp", with: "/proxy/avatar.png")
+        } else if str.contains("/avatar.webp") {
+            str = str.replacingOccurrences(of: "/avatar.webp", with: "/avatar.png")
+        }
+        
+        if str.contains("/proxy/image.webp") {
+            str = str.replacingOccurrences(of: "/proxy/image.webp", with: "/proxy/image.png")
+        } else if str.contains("/image.webp") {
+            str = str.replacingOccurrences(of: "/image.webp", with: "/image.png")
+        }
+        
+        if str.contains("/attachment/original/") {
+            if str.hasSuffix(".webp") {
+                str = String(str.dropLast(5)) + ".png"
+            }
+        }
+        
+        // Mastodon v2 cache API original format request
         if str.contains("/api/v2/cache/avatar/") {
             if !str.contains("format=original") {
                 let separator = str.contains("?") ? "&" : "?"
-                if let newUrl = URL(string: str + separator + "format=original") {
-                    return newUrl
-                }
+                str = str + separator + "format=original"
             }
+        }
+        
+        if let newUrl = URL(string: str) {
+            return newUrl
         }
         return currentURL
     }
@@ -181,7 +184,7 @@ public struct PluraldawnDecoder {
         
         while pos + 8 <= data.count {
             let length = Int(UInt32(data[pos]) << 24 | UInt32(data[pos+1]) << 16 | UInt32(data[pos+2]) << 8 | UInt32(data[pos+3]))
-            if length < 0 || length > data.count - pos - 4 { break }
+            if length < 0 || length > data.count - pos - 12 { break }
             let chunkType = data.subdata(in: (pos + 4)..<(pos + 8))
             pos += 8
             
@@ -209,7 +212,11 @@ public struct PluraldawnDecoder {
             }
         }
         
-        guard width > 0, height > 0, width <= 10000, height <= 10000, !idat.isEmpty else { return nil }
+        guard width > 0 else { return nil }
+        guard height > 0 else { return nil }
+        guard width <= 10000 else { return nil }
+        guard height <= 10000 else { return nil }
+        guard !idat.isEmpty else { return nil }
         guard let raw = decompressPayload(idat) else { return nil }
         
         let bpp = colorType == 6 ? 4 : 3
@@ -278,6 +285,11 @@ public struct PluraldawnDecoder {
     private static func extractFromCGImage(_ image: CGImage) -> PluraldawnSystem? {
         let width = image.width
         let height = image.height
+        guard width > 0 else { return nil }
+        guard height > 0 else { return nil }
+        guard width <= 10000 else { return nil }
+        guard height <= 10000 else { return nil }
+        
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bytesPerPixel = 4
         let bytesPerRow = bytesPerPixel * width
@@ -384,9 +396,11 @@ public struct PluraldawnDecoder {
             
             if avatar == "emoji" {
                 members.append(member)
-            } else if let url = member.avatarURL, let host = url.host {
-                if whitelistHosts.contains(host) {
-                    members.append(member)
+            } else if let url = member.avatarURL {
+                if let host = url.host {
+                    if whitelistHosts.contains(host) {
+                        members.append(member)
+                    }
                 }
             }
         }
@@ -475,17 +489,20 @@ public struct PluraldawnDecoder {
         
         var members: [PluraldawnMember] = []
         for m in rawMembers {
-            guard let id = m.id, !id.isEmpty,
-                  let name = m.name,
-                  let avatar = m.avatar else { continue }
+            guard let id = m.id else { continue }
+            guard !id.isEmpty else { continue }
+            guard let name = m.name else { continue }
+            guard let avatar = m.avatar else { continue }
             let emoji = m.emoji?.list ?? []
             let font = m.font ?? "normal"
             let member = PluraldawnMember(id: id, name: name, emoji: emoji, avatar: avatar, font: font)
             if avatar == "emoji" {
                 members.append(member)
-            } else if let url = member.avatarURL, let host = url.host {
-                if whitelistHosts.contains(host) {
-                    members.append(member)
+            } else if let url = member.avatarURL {
+                if let host = url.host {
+                    if whitelistHosts.contains(host) {
+                        members.append(member)
+                    }
                 }
             }
         }

@@ -41,18 +41,26 @@ public struct PluraldawnSystemMatcher: Sendable {
     
     // Strip leading MFM tags for Misskey and IceShrimp (e.g. $[x2 ...)
     var mfmCleanedStart = textWithoutMentions
+    var mfmTagCount = 0
     while mfmCleanedStart.hasPrefix("$[") {
-      if let firstSpace = mfmCleanedStart.firstIndex(of: " ") {
-        mfmCleanedStart = String(mfmCleanedStart[mfmCleanedStart.index(after: firstSpace)...]).trimmingCharacters(in: .whitespaces)
+      if let firstSpace = mfmCleanedStart.firstIndex(where: { $0.isWhitespace }) {
+        mfmCleanedStart = String(mfmCleanedStart[mfmCleanedStart.index(after: firstSpace)...]).trimmingCharacters(in: .whitespacesAndNewlines)
+        mfmTagCount += 1
       } else {
         break
       }
     }
     
-    // Strip trailing MFM tags/brackets (e.g. ...])
+    // Strip trailing MFM closing brackets corresponding to opened MFM tags
     var mfmCleanedEnd = cleanText
-    while mfmCleanedEnd.hasSuffix("]") {
-      mfmCleanedEnd = String(mfmCleanedEnd.dropLast()).trimmingCharacters(in: .whitespaces)
+    var closedMfmCount = 0
+    while closedMfmCount < mfmTagCount {
+      if mfmCleanedEnd.hasSuffix("]") {
+        mfmCleanedEnd = String(mfmCleanedEnd.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        closedMfmCount += 1
+      } else {
+        break
+      }
     }
     
     var matchedMembers: [PluraldawnMember] = []
@@ -68,13 +76,31 @@ public struct PluraldawnSystemMatcher: Sendable {
         guard !indicator.isEmpty else { continue }
         
         // 1. Prefix match (standard, reply after mentions, or MFM-wrapped)
-        if cleanText.hasPrefix(indicator) || textWithoutMentions.hasPrefix(indicator) || mfmCleanedStart.hasPrefix(indicator) {
+        if cleanText.hasPrefix(indicator) {
+          matched = true
+          break
+        }
+        if textWithoutMentions.hasPrefix(indicator) {
+          matched = true
+          break
+        }
+        if mfmCleanedStart.hasPrefix(indicator) {
+          matched = true
+          break
+        }
+        let trimmedLeadingDashes = mfmCleanedStart
+          .trimmingCharacters(in: CharacterSet(charactersIn: "-–— \t\n\r"))
+        if trimmedLeadingDashes.hasPrefix(indicator) {
           matched = true
           break
         }
         
         // 2. Suffix match (standard or MFM-wrapped)
-        if cleanText.hasSuffix(indicator) || mfmCleanedEnd.hasSuffix(indicator) {
+        if cleanText.hasSuffix(indicator) {
+          matched = true
+          break
+        }
+        if mfmCleanedEnd.hasSuffix(indicator) {
           matched = true
           break
         }
@@ -92,7 +118,19 @@ public struct PluraldawnSystemMatcher: Sendable {
           let pat2 = "@\(mention.username) \(indicator)"
           let pat3 = "@\(mention.acct): \(indicator)"
           let pat4 = "@\(mention.username): \(indicator)"
-          if cleanText.contains(pat1) || cleanText.contains(pat2) || cleanText.contains(pat3) || cleanText.contains(pat4) {
+          if cleanText.contains(pat1) {
+            matched = true
+            break
+          }
+          if cleanText.contains(pat2) {
+            matched = true
+            break
+          }
+          if cleanText.contains(pat3) {
+            matched = true
+            break
+          }
+          if cleanText.contains(pat4) {
             matched = true
             break
           }
