@@ -63,20 +63,24 @@ public final class ConversationDetailDataSource {
 
   public func postMessage(
     client: FediverseClient,
+    currentAccountId: String? = nil,
     messageText: String
   ) async throws -> PostMessageResult {
-    if client.capabilities.supportsNativeMessaging,
-       let recipient = conversation.accounts.first
-    {
-      let status: Status = try await client.post(
-        endpoint: Conversations.send(userId: recipient.id, text: messageText)
-      )
-      appendNewStatus(status: status)
-      return PostMessageResult(messages: messages, conversation: conversation, success: true)
+    let targetAccounts = conversation.targetAccounts(for: currentAccountId)
+    if client.capabilities.supportsNativeMessaging {
+      if let recipient = targetAccounts.first {
+        let status: Status = try await client.post(
+          endpoint: Conversations.send(userId: recipient.id, text: messageText)
+        )
+        appendNewStatus(status: status)
+        return PostMessageResult(messages: messages, conversation: conversation, success: true)
+      }
     }
 
-    var finalText = conversation.accounts.map { "@\($0.acct)" }.joined(separator: " ")
-    finalText += " "
+    var finalText = ""
+    if !targetAccounts.isEmpty {
+      finalText = targetAccounts.map { "@\($0.acct)" }.joined(separator: " ") + " "
+    }
     finalText += messageText
 
     let data = StatusData(

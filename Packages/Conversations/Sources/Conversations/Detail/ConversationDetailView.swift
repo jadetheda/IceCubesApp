@@ -83,18 +83,7 @@ public struct ConversationDetailView: View {
     .toolbar {
       ToolbarItem(placement: .principal) {
         if case .display(_, let conversation) = viewState {
-          if conversation.accounts.count == 1,
-            let account = conversation.accounts.first
-          {
-            EmojiTextApp(.init(stringValue: account.safeDisplayName), emojis: account.emojis)
-              .font(.scaledHeadline)
-              .foregroundColor(theme.labelColor)
-              .emojiText.size(Font.scaledHeadlineFont.emojiSize)
-              .emojiText.baselineOffset(Font.scaledHeadlineFont.emojiBaselineOffset)
-          } else {
-            Text("Direct message with \(conversation.accounts.count) people")
-              .font(.scaledHeadline)
-          }
+          toolbarTitle(for: conversation)
         }
       }
     }
@@ -176,6 +165,7 @@ public struct ConversationDetailView: View {
     do {
       let result = try await dataSource.postMessage(
         client: client,
+        currentAccountId: currentAccount.account?.id,
         messageText: newMessageText
       )
 
@@ -194,6 +184,32 @@ public struct ConversationDetailView: View {
     } catch {
       isSendingMessage = false
     }
+  }
+
+  @ViewBuilder
+  private func toolbarTitle(for conversation: Conversation) -> some View {
+    if let account = singleTargetAccount(for: conversation) {
+      EmojiTextApp(.init(stringValue: account.safeDisplayName), emojis: account.emojis)
+        .font(.scaledHeadline)
+        .foregroundColor(theme.labelColor)
+        .emojiText.size(Font.scaledHeadlineFont.emojiSize)
+        .emojiText.baselineOffset(Font.scaledHeadlineFont.emojiBaselineOffset)
+    } else {
+      Text("Direct message with \(conversationTargetsCount(for: conversation)) people")
+        .font(.scaledHeadline)
+    }
+  }
+
+  private func singleTargetAccount(for conversation: Conversation) -> Account? {
+    let targets = conversation.targetAccounts(for: currentAccount.account?.id)
+    if targets.count == 1 {
+      return targets.first
+    }
+    return nil
+  }
+
+  private func conversationTargetsCount(for conversation: Conversation) -> Int {
+    conversation.targetAccounts(for: currentAccount.account?.id).count
   }
 
   private func handleStreamEvent(_ event: any StreamEvent) async {

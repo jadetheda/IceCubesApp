@@ -22,14 +22,15 @@ struct ConversationsListRow: View {
   var body: some View {
     VStack(alignment: .leading) {
       HStack(alignment: .top, spacing: 8) {
-        AvatarView(conversation.accounts.first!.avatar)
-          .accessibilityHidden(true)
+        if let avatar = displayAvatar {
+          AvatarView(avatar)
+            .accessibilityHidden(true)
+        }
         VStack(alignment: .leading, spacing: 4) {
           HStack {
             EmojiTextApp(
-              .init(
-                stringValue: conversation.accounts.map(\.safeDisplayName).joined(separator: ", ")),
-              emojis: conversation.accounts.flatMap(\.emojis)
+              .init(stringValue: displayNames),
+              emojis: displayEmojis
             )
             .font(.scaledSubheadline)
             .foregroundColor(theme.labelColor)
@@ -256,5 +257,21 @@ struct ConversationsListRow: View {
         }
       }
     }
+  }
+
+  private var displayAccounts: [Account] {
+    conversation.targetAccounts(for: currentAccount.account?.id)
+  }
+
+  private var displayAvatar: URL? {
+    displayAccounts.first?.avatar
+  }
+
+  private var displayNames: String {
+    displayAccounts.map(\.safeDisplayName).joined(separator: ", ")
+  }
+
+  private var displayEmojis: [Emoji] {
+    displayAccounts.flatMap(\.emojis)
   }
 }

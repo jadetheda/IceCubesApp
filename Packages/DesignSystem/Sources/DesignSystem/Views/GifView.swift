@@ -15,21 +15,27 @@ public struct GifView: UIViewRepresentable {
 
   let animatedView = GIFImageView()
   var data: Data
+  var forceAnimate: Bool
 
-  public init(data: Data) {
+  public init(data: Data, forceAnimate: Bool = false) {
     self.data = data
+    self.forceAnimate = forceAnimate
   }
 
   public func makeUIView(context: UIViewRepresentableContext<GifView>) -> UIView {
     let view = UIView()
+    view.isUserInteractionEnabled = false
 
     animatedView.prepareForAnimation(withGIFData: data)
     animatedView.contentMode = .scaleAspectFit
+    animatedView.isUserInteractionEnabled = false
 
     animatedView.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(animatedView)
 
-    if theme.avatarAnimated {
+    if forceAnimate {
+      animatedView.startAnimatingGIF()
+    } else if theme.avatarAnimated {
       animatedView.startAnimatingGIF()
     }
 

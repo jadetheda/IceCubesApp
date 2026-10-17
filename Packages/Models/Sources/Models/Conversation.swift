@@ -24,6 +24,26 @@ public struct Conversation: Identifiable, Decodable, Hashable, Equatable {
       .placeholder(), .placeholder(), .placeholder(), .placeholder(), .placeholder(),
     ]
   }
+
+  public func targetAccounts(for currentAccountId: String?) -> [Account] {
+    let filtered = accounts.filter { account in
+      if let currentAccountId {
+        return account.id != currentAccountId
+      }
+      return true
+    }
+    if !filtered.isEmpty {
+      return filtered
+    }
+    if let lastStatus {
+      if let currentAccountId {
+        if lastStatus.account.id != currentAccountId {
+          return [lastStatus.account]
+        }
+      }
+    }
+    return accounts
+  }
 }
 
 extension Conversation: Sendable {}
