@@ -1202,3 +1202,7 @@
   - **Description**: Fixed duplicate `let self` unwrap syntax error in `TimelineViewModel.swift` after threshold sleep.
   - **Details**: In `TimelineViewModel.startSeenTimer`, `self` was already unwrapped into scope at line 751. The second `guard !Task.isCancelled, let self else { return }` at line 762 triggered Swift compiler error `initializer for conditional binding must have Optional type, not 'TimelineViewModel'`. Decoupled and removed the redundant `let self` while maintaining Task cancellation and active tab guards.
   - **Impact**: Clears the Exit Code 65 syntax compilation error in GitHub Actions.
+
+- **2026-10-17T08:26:00Z**:
+  - **Description**: Production CI Build #39016590427 succeeded completely (All stages passed, unsigned IPA generated).
+  - **Milestone**: Successfully compiled and archived the IceCubes iOS app for version `3.1.7` in 11m23s. All features—version 3.1.7 bump, seen posts startup delay, active tab lifecycle timer cancellation, and filter suppression for hidden/collapsed posts—are fully verified in a production IPA build. Unsigned IPA artifact published.
