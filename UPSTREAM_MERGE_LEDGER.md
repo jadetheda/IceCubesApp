@@ -23,26 +23,26 @@ Every upstream commit reviewed must be logged here with its true status:
 
 | Commit SHA | Author | Title / Area | Status | Target Files | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `5b52eb97` | Ivan Magda | Stop posting progress timer | `MERGED` | `EditorStore.swift`, `EditorStoreTests.swift` | Assigns `postingTimer` so `defer` invalidates the 20 Hz tick. |
-| `ddadbfc8` | Ivan Magda | Next-page cursor for block/mute | `MERGED` | `Accounts.swift`, `AccountsListViewModel.swift`, `AccountsPaginationTests.swift` | Passes `maxId` query param to unstick pagination past page 1. |
-| `7c7d3926` | Thomas Ricouard | Fix composer sheet freeze | `MERGED` | `AccessoryView.swift` | Adds `ViewThatFits(in: .horizontal)` to prevent layout loop. |
-| `5782d683` | Thomas Ricouard | Filter trailing-dot server aliases | `MERGED` | `InstanceSocialClient.swift`, `InstanceSocialClientTests.swift` | Filters entries like `mastodon.social.` from login suggestions. |
-| `6d6b954f` | Nas | Restore `%@` in Polish & Catalan | `MERGED` | `Localizable.xcstrings` | Restores missing placeholder tokens. |
-| `cb4ca916` | Joe Barbere | Collections notifications | `MERGED` | `Models/Notification.swift`, `NotificationsListDataSource.swift`, `NotificationRowCollectionView.swift`, `CollectionNotificationTests.swift` | Adapted: preserved `nonisolated` label methods and decoupled view hierarchy. |
-| `26a86b6e` | Thomas Ricouard | Compact tab order on iPhone | `MERGED` | `AppView.swift` | Adapted: preserved `availableTabs(for:)` backend capability filter for Misskey/IceShrimp. |
-| `0eb5f335` | Thomas Ricouard | Catalyst avatar button style | `MERGED` | `ToolbarTab.swift` | Uses `.buttonStyle(.plain)` for Mac Catalyst avatar button. |
-| `12c21ed8` | Thomas Ricouard | Catalyst navigation bar blur | `MERGED` | `Tabs.swift`, `NotificationTab.swift`, `TimelineView.swift` | Preserves navigation material. Manually applied around TimelineView masonry. |
-| `b558bd09` | jadetheda | Custom server emojis in headers | `REDUNDANT` | `AccountSettingView.swift`, `AccountDetailToolbar.swift` | User's upstream PR #2496; already present across 8 views in fork. |
-| `fb232d3d` | Thomas Ricouard | Bump SwiftSoup to 2.13.9 | `MERGED` | `Package.resolved` | SPM dependency bump. |
-| `61ce3cc7` | Thomas Ricouard | Bump LRUCache to 1.3.0 | `MERGED` | `Package.resolved` | SPM dependency bump. |
-| `c3a852fd` | Thomas Ricouard | Bump swiftui-introspect to 26.0.2 | `MERGED` | `Package.resolved`, `Timeline/Package.swift` | SPM dependency bump. |
-| `9bea9659` | Thomas Ricouard | Bump purchases-ios-spm to 5.89.0 | `MERGED` | `Package.resolved` | RevenueCat SDK dependency bump. |
-| `0bfbf47a` | Thomas Ricouard | Bump wishkit-ios to 5.2.1 | `MERGED` | `Package.resolved` | SPM dependency bump. |
-| `2ad6e689` | Thomas Ricouard | Bump version to 2.1.5 | `MERGED` | `project.pbxproj` | Superseded by 2.1.7. |
-| `f2ec6c1c` | Thomas Ricouard | Bump version to 2.1.6 | `MERGED` | `project.pbxproj` | Superseded by 2.1.7. |
-| `98098b9c` | Thomas Ricouard | Bump version to 2.1.7 | `MERGED` | `project.pbxproj` | Marketing version updated to 2.1.7. |
-| `9efcb16e` | Thomas Ricouard | Adaptive sidebar on unfolded Duo | `EXCLUDED` | `AppView.swift` | Relies on `defaultTabBarPlacement(...)`. Fails compilation on Xcode SDK (Exit Code 65). |
-| `5c91bd28` | Thomas Ricouard | Duo vertical toolbar alignment | `EXCLUDED` | `ToolbarTab.swift` | Relies on `.axisBehavior(.verticalPreferred)` and `\.toolbarVerticalEdge`. Fails compilation on Xcode SDK (Exit Code 65). |
+| `5b52eb97` | Ivan Magda | Stop posting progress timer | `[x] MERGED` | `EditorStore.swift`, `EditorStoreTests.swift` | Assigns `postingTimer` so `defer` invalidates the 20 Hz tick. |
+| `ddadbfc8` | Ivan Magda | Next-page cursor for block/mute | `[x] MERGED` | `Accounts.swift`, `AccountsListViewModel.swift`, `AccountsPaginationTests.swift` | Passes `maxId` query param to unstick pagination past page 1. |
+| `7c7d3926` | Thomas Ricouard | Fix composer sheet freeze | `[x] MERGED` | `AccessoryView.swift` | Adds `ViewThatFits(in: .horizontal)` to prevent layout loop. |
+| `5782d683` | Thomas Ricouard | Filter trailing-dot server aliases | `[x] MERGED` | `InstanceSocialClient.swift`, `InstanceSocialClientTests.swift` | Filters entries like `mastodon.social.` from login suggestions. |
+| `6d6b954f` | Nas | Restore `%@` in Polish & Catalan | `[x] MERGED` | `Localizable.xcstrings` | Restores missing placeholder tokens. |
+| `cb4ca916` | Joe Barbere | Collections notifications | `[x] MERGED` | `Models/Notification.swift`, `NotificationsListDataSource.swift`, `NotificationRowCollectionView.swift`, `CollectionNotificationTests.swift` | Adapted: preserved `nonisolated` label methods and decoupled view hierarchy. |
+| `26a86b6e` | Thomas Ricouard | Compact tab order on iPhone | `[x] MERGED` | `AppView.swift` | Adapted: preserved `availableTabs(for:)` backend capability filter for Misskey/IceShrimp. |
+| `0eb5f335` | Thomas Ricouard | Catalyst avatar button style | `[x] MERGED` | `ToolbarTab.swift` | Uses `.buttonStyle(.plain)` for Mac Catalyst avatar button. |
+| `12c21ed8` | Thomas Ricouard | Catalyst navigation bar blur | `[x] MERGED` | `Tabs.swift`, `NotificationTab.swift`, `TimelineView.swift` | Preserves navigation material. Manually applied around TimelineView masonry. |
+| `b558bd09` | jadetheda | Custom server emojis in headers | `[-] REDUNDANT` | `AccountSettingView.swift`, `AccountDetailToolbar.swift` | User's upstream PR #2496; already present across 8 views in fork. |
+| `fb232d3d` | Thomas Ricouard | Bump SwiftSoup to 2.13.9 | `[x] MERGED` | `Package.resolved` | SPM dependency bump. |
+| `61ce3cc7` | Thomas Ricouard | Bump LRUCache to 1.3.0 | `[x] MERGED` | `Package.resolved` | SPM dependency bump. |
+| `c3a852fd` | Thomas Ricouard | Bump swiftui-introspect to 26.0.2 | `[x] MERGED` | `Package.resolved`, `Timeline/Package.swift` | SPM dependency bump. |
+| `9bea9659` | Thomas Ricouard | Bump purchases-ios-spm to 5.89.0 | `[x] MERGED` | `Package.resolved` | RevenueCat SDK dependency bump. |
+| `0bfbf47a` | Thomas Ricouard | Bump wishkit-ios to 5.2.1 | `[x] MERGED` | `Package.resolved` | SPM dependency bump. |
+| `2ad6e689` | Thomas Ricouard | Bump version to 2.1.5 | `[x] MERGED` | `project.pbxproj` | Superseded by 2.1.7. |
+| `f2ec6c1c` | Thomas Ricouard | Bump version to 2.1.6 | `[x] MERGED` | `project.pbxproj` | Superseded by 2.1.7. |
+| `98098b9c` | Thomas Ricouard | Bump version to 2.1.7 | `[x] MERGED` | `project.pbxproj` | Marketing version updated to 2.1.7. |
+| `9efcb16e` | Thomas Ricouard | Adaptive sidebar on unfolded Duo | `[ ] NOT MERGED` | `AppView.swift` | Excluded. Relies on `defaultTabBarPlacement(...)`. Fails compilation on Xcode SDK (Exit Code 65). |
+| `5c91bd28` | Thomas Ricouard | Duo vertical toolbar alignment | `[ ] NOT MERGED` | `ToolbarTab.swift` | Excluded. Relies on `.axisBehavior(.verticalPreferred)` and `\.toolbarVerticalEdge`. Fails compilation on Xcode SDK (Exit Code 65). |
 
 ---
 

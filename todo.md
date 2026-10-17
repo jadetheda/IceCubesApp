@@ -46,6 +46,27 @@
 
 # Completed
 
+## Upstream Merges (Batch v2.1.5 - v2.1.7)
+
+- [x] `5b52eb97`: Stop posting progress timer leak in `EditorStore.swift` (with `EditorStoreTests.swift`)
+- [x] `ddadbfc8`: Next-page cursor pagination for block/mute in `Accounts.swift` and `AccountsListViewModel.swift` (with `AccountsPaginationTests.swift`)
+- [x] `7c7d3926`: Composer accessory sheet freeze fix via `ViewThatFits(in: .horizontal)` in `AccessoryView.swift`
+- [x] `5782d683`: Trailing-dot server alias filter in `InstanceSocialClient.swift` (with `InstanceSocialClientTests.swift`)
+- [x] `6d6b954f`: Polish & Catalan `%@` string format specifier fixes in `Localizable.xcstrings`
+- [x] `cb4ca916`: Collections notifications models, data source, filter views, and `NotificationRowCollectionView.swift` (with `CollectionNotificationTests.swift`)
+- [x] `26a86b6e`: Configured compact tab ordering in `AppView.swift` (with backend capability filtering preserved)
+- [x] `0eb5f335`: Mac Catalyst toolbar avatar plain button style in `ToolbarTab.swift`
+- [x] `12c21ed8`: Mac Catalyst navigation bar blur preservation via `rootTabScrollEdgeEffect`
+- [x] `b558bd09`: Custom server emojis in headers (user PR #2496; already authored and implemented in fork)
+- [x] `fb232d3d`: SPM dependency bump `SwiftSoup` to 2.13.9
+- [x] `61ce3cc7`: SPM dependency bump `LRUCache` to 1.3.0
+- [x] `c3a852fd`: SPM dependency bump `swiftui-introspect` to 26.0.2 in `Timeline/Package.swift`
+- [x] `9bea9659`: SPM dependency bump `purchases-ios-spm` to 5.89.0
+- [x] `0bfbf47a`: SPM dependency bump `wishkit-ios` to 5.2.1
+- [x] `2ad6e689` / `f2ec6c1c` / `98098b9c`: App marketing version bumped to 2.1.7 in `project.pbxproj`
+- [ ] `9efcb16e`: Adaptive sidebar on unfolded Duo screens — **NOT MERGED / EXCLUDED** (relies on unreleased `defaultTabBarPlacement`, breaks public SDK compilation)
+- [ ] `5c91bd28`: Duo vertical toolbar alignment — **NOT MERGED / EXCLUDED** (relies on unreleased `.axisBehavior` and `toolbarVerticalEdge`, breaks public SDK compilation)
+
 ## Bugs & Corrections
 
 - [x] **Bug:** Navigating away from a video that fell back to a remote URL and returning causes it to permanently error out because the view lifecycle blindly resets to the dead primary URL.
