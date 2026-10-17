@@ -59,6 +59,7 @@ Every upstream commit reviewed must be logged here with its true status:
 - **Root Cause:** Uses `defaultTabBarPlacement(preferredTabBarPlacement)` with `preferredTabBarPlacement: AdaptableTabBarPlacement`. Although wrapped in `#available(iOS 27.0, visionOS 27.0, *)`, Swift resolves symbol names at compile time. The public Apple SDKs provided on GitHub Actions runners (Xcode 15 / 16) do not contain `defaultTabBarPlacement` or `AdaptableTabBarPlacement`.
 - **Action Taken:** Removed the `.defaultTabBarPlacement` modifier and the helper property from `AppView.swift`. Retained standard `.tabViewStyle(.sidebarAdaptable)`.
 - **Status:** `EXCLUDED`. Not counted as merged.
+- **Re-evaluation Trigger:** Re-evaluate and merge once Apple publicly releases the iOS 27 SDK symbols in Xcode and GitHub Actions macOS runners.
 
 ### `5c91bd28` — Duo vertical toolbar alignment
 - **Upstream Commit:** `5c91bd283c8ae99d14ea1743a4928e4e7ee87796`
@@ -72,6 +73,7 @@ Every upstream commit reviewed must be logged here with its true status:
 - **Root Cause:** Applies `.axisBehavior(.verticalPreferred)` and uses `@Environment(\.toolbarVerticalEdge)` inside a custom `ToolbarAvatarAlignment` modifier guarded by `#available(iOS 27.1, *)`. These SDK members are unreleased internal/future APIs not present in public Xcode releases.
 - **Action Taken:** Removed `.axisBehavior` and the `ToolbarAvatarAlignment` modifier. Preserved standard iOS `.offset(x: -12)` and Catalyst plain button style.
 - **Status:** `EXCLUDED`. Not counted as merged.
+- **Re-evaluation Trigger:** Re-evaluate and merge once Apple publicly releases the iOS 27.1 SDK symbols in Xcode and GitHub Actions macOS runners.
 
 ---
 

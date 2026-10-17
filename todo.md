@@ -32,6 +32,11 @@
 
 - [ ] Figure out where *the second home* of the various **Experimental Settings** should be once they're finished
 
+### Future Upstream Adoption (Blocked on Apple SDK Releases)
+
+- [ ] **Upstream Duo Adaptive Sidebar (`9efcb16e`):** Re-evaluate adopting `.defaultTabBarPlacement(...)` in `AppView.swift` once public Xcode releases on GitHub Actions runners include the iOS 27 SDK symbols.
+- [ ] **Upstream Duo Vertical Toolbar Alignment (`5c91bd28`):** Re-evaluate adopting `.axisBehavior(.verticalPreferred)` and `@Environment(\.toolbarVerticalEdge)` in `ToolbarTab.swift` once public Xcode releases include the iOS 27.1 SDK symbols.
+
 ### Stretch goals
 - [ ] **Bluesky AT Protocol (Petrel) Support**: Implement native Bluesky integration via the Petrel Swift lexicon library. This requires massive architectural modifications including: creating `BlueskyBackend.swift` to translate raw XRPC responses into fake Mastodon models (`Status`, `Account`, etc.), heavily rewriting `LoginView` and `AppAccount` to handle ATProtocol DID/App Password authentication flows, and fundamentally rewriting `StreamWatcher` to support the Bluesky WebSocket firehose instead of Mastodon's streaming API.
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.

@@ -31,6 +31,11 @@
 
 - [ ] ~~Figure out where *the second home* of the various **Experimental Settings** should be once they're finished~~ Needs review; not entirely happy with the sorting right now
 
+### Future Upstream Adoption (Blocked on Apple SDK Releases)
+
+- [ ] **Upstream Duo Adaptive Sidebar (`9efcb16e`):** Re-evaluate adopting `.defaultTabBarPlacement(...)` in `AppView.swift` once public Xcode releases on GitHub Actions runners include the iOS 27 SDK symbols.
+- [ ] **Upstream Duo Vertical Toolbar Alignment (`5c91bd28`):** Re-evaluate adopting `.axisBehavior(.verticalPreferred)` and `@Environment(\.toolbarVerticalEdge)` in `ToolbarTab.swift` once public Xcode releases include the iOS 27.1 SDK symbols.
+
 ### Stretch goals
 - [ ] **New feature:** Japanese auto-translate. Detect when a post contains more than **5 Japanese or Chinese characters**, and if the user has configured the **DeepL API**, automatically trigger translation for the post.
 - [ ] If I load a user's profile and it comes back completely empty, we should fetch the profile content directly from the instance they belong to. **Phanpy does this, we should investigate how.**
