@@ -1188,3 +1188,13 @@
       - In `TimelineView`, hooked `isTabSelected` and `scenePhase` lifecycle handlers to cancel running seen timers when switching away from the timeline tab or backgrounding the app, preventing unviewed posts from being marked as seen if the user opens the app to tap Search or Messages.
       - Added `"settings.experimental.hide-seen-posts.startup-delay"` translations across 19 languages in `Localizable.xcstrings`.
   - **Impact**: Completely eliminates false-positive seen marking on startup when navigating to Search or other tabs; establishes the `3.1.7` version departure. Passed Boost AST constraint solver and actor isolation safety audit with zero traps.
+
+- **2026-10-17T08:05:00Z**:
+  - **Description**: Prevented posts hidden or collapsed by filters from being erroneously marked as Seen.
+  - **Details**:
+    - **Filter Suppression in `StatusVisibilityModifier`**: Added `rowViewModel: StatusRowViewModel? = nil` to `StatusVisibilityModifier` and `trackStatusVisibility`. Computed `isHiddenByFilter` checking `rowViewModel?.isFiltered`, `status.isHidden`, `status.reblog?.isHidden`, and `.hide` filter actions in `filtered` arrays. Aborts visibility tracking and media-loaded triggers while filtered.
+    - **Reactive "Show Anyway" Tracking**: Added `.onChange(of: rowViewModel?.isFiltered)` so when a user unveils a warning-collapsed post (`.warn`) by tapping "Show anyway" (`viewModel.isFiltered = false`), visibility tracking initiates and marks the post as seen only after actual viewing.
+    - **AST Optimization in `StatusesListView`**: Extracted `@MainActor private struct StatusRowContainer: View` to encapsulate `StatusRowViewModel` and connect it to `StatusRowView` and `trackStatusVisibility`, drastically reducing ViewBuilder expression complexity.
+    - **Defense-in-Depth in `TimelineViewModel` & `TimelineDatasource`**: Added `isStatusFilteredOut` in `TimelineViewModel` to guard `startSeenTimer`, and updated `TimelineDatasource.shouldShowStatus` with early returns for `isHidden` and `isReblogHidden`.
+  - **Impact**: Resolves the bug where posts completely hidden by keyword/server filters or collapsed behind warning cards were falsely marked as Seen in `SeenPostsManager`. Passed Boost Code & AST Safety Audit with zero traps.
+

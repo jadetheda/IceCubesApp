@@ -730,6 +730,7 @@ extension TimelineViewModel: GapLoadingFetcher {
     guard isTimelineTabActive else { return }
     let prefs = UserPreferences.shared
     guard prefs.hideSeenPostsEnabled else { return }
+    guard !isStatusFilteredOut(status) else { return }
 
     seenTimerTasks[status.id]?.cancel()
     let timerTask = Task { [weak self] in
@@ -793,6 +794,38 @@ extension TimelineViewModel: GapLoadingFetcher {
     for status in visibleStatuses {
       startSeenTimer(for: status)
     }
+  }
+
+  private func isStatusFilteredOut(_ status: Status) -> Bool {
+    if status.isHidden {
+      return true
+    }
+    if let reblog = status.reblog {
+      if reblog.isHidden {
+        return true
+      }
+    }
+    if let filterContext = timeline.filterContext {
+      if status.isHidden(in: filterContext) {
+        return true
+      }
+      if let reblog = status.reblog {
+        if reblog.isHidden(in: filterContext) {
+          return true
+        }
+      }
+    }
+    if let filtered = status.filtered {
+      if filtered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    if let reblogFiltered = status.reblog?.filtered {
+      if reblogFiltered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    return false
   }
 
   func statusDidDisappear(status: Status) {

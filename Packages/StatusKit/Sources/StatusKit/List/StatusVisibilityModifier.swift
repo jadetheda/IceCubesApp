@@ -6,9 +6,49 @@ import Env
 public struct StatusVisibilityModifier: ViewModifier {
   let status: Status
   let fetcher: any StatusesFetcher
+  let rowViewModel: StatusRowViewModel?
   let requiresMediaToLoad: Bool
 
   @State private var isVisible: Bool = false
+
+  public init(
+    status: Status,
+    fetcher: any StatusesFetcher,
+    rowViewModel: StatusRowViewModel? = nil,
+    requiresMediaToLoad: Bool = false
+  ) {
+    self.status = status
+    self.fetcher = fetcher
+    self.rowViewModel = rowViewModel
+    self.requiresMediaToLoad = requiresMediaToLoad
+  }
+
+  private var isHiddenByFilter: Bool {
+    if let rowViewModel {
+      if rowViewModel.isFiltered {
+        return true
+      }
+    }
+    if status.isHidden {
+      return true
+    }
+    if let reblog = status.reblog {
+      if reblog.isHidden {
+        return true
+      }
+    }
+    if let filtered = status.filtered {
+      if filtered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    if let reblogFiltered = status.reblog?.filtered {
+      if reblogFiltered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    return false
+  }
 
   public func body(content: Content) -> some View {
     Group {
@@ -32,13 +72,27 @@ public struct StatusVisibilityModifier: ViewModifier {
     }
     .environment(\.statusOnMediaLoaded) {
       if isVisible {
-        fetcher.statusDidAppear(status: status)
+        if !isHiddenByFilter {
+          fetcher.statusDidAppear(status: status)
+        }
+      }
+    }
+    .onChange(of: rowViewModel?.isFiltered) { _, isFiltered in
+      if isVisible {
+        if isFiltered == false {
+          handleVisibilityChange(visible: true)
+        } else {
+          fetcher.statusDidDisappear(status: status)
+        }
       }
     }
   }
 
   private func handleVisibilityChange(visible: Bool) {
     if visible {
+      if isHiddenByFilter {
+        return
+      }
       if requiresMediaToLoad {
         if status.mediaAttachments.isEmpty {
           fetcher.statusDidAppear(status: status)
@@ -57,8 +111,14 @@ public extension View {
   func trackStatusVisibility(
     status: Status, 
     fetcher: any StatusesFetcher, 
+    rowViewModel: StatusRowViewModel? = nil,
     requiresMediaToLoad: Bool = false
   ) -> some View {
-    modifier(StatusVisibilityModifier(status: status, fetcher: fetcher, requiresMediaToLoad: requiresMediaToLoad))
+    modifier(StatusVisibilityModifier(
+      status: status,
+      fetcher: fetcher,
+      rowViewModel: rowViewModel,
+      requiresMediaToLoad: requiresMediaToLoad
+    ))
   }
 }

@@ -57,16 +57,14 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
 
     case .display(let statuses, let nextPageState):
       ForEach(statuses) { status in
-        StatusRowView(
-          viewModel: StatusRowViewModel(
-            status: status,
-            client: client,
-            routerPath: routerPath,
-            isRemote: isRemote,
-            filterContext: filterContext),
-          context: .timeline
+        StatusRowContainer(
+          status: status,
+          client: client,
+          routerPath: routerPath,
+          isRemote: isRemote,
+          filterContext: filterContext,
+          fetcher: fetcher
         )
-        .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
       }
       makeNextPageRow(nextPageState: nextPageState)
 
@@ -75,16 +73,14 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
         ZStack {
           switch item {
           case .status(let status):
-            StatusRowView(
-              viewModel: StatusRowViewModel(
-                status: status,
-                client: client,
-                routerPath: routerPath,
-                isRemote: isRemote,
-                filterContext: filterContext),
-              context: .timeline
+            StatusRowContainer(
+              status: status,
+              client: client,
+              routerPath: routerPath,
+              isRemote: isRemote,
+              filterContext: filterContext,
+              fetcher: fetcher
             )
-            .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
 
           case .gap(let gap):
             ZStack {
@@ -161,3 +157,49 @@ public struct StatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
     }
   }
 }
+
+@MainActor
+private struct StatusRowContainer: View {
+  let status: Status
+  let client: FediverseClient
+  let routerPath: RouterPath
+  let isRemote: Bool
+  let filterContext: Filter.Context?
+  let fetcher: any StatusesFetcher
+
+  @State private var viewModel: StatusRowViewModel
+
+  init(
+    status: Status,
+    client: FediverseClient,
+    routerPath: RouterPath,
+    isRemote: Bool,
+    filterContext: Filter.Context?,
+    fetcher: any StatusesFetcher
+  ) {
+    self.status = status
+    self.client = client
+    self.routerPath = routerPath
+    self.isRemote = isRemote
+    self.filterContext = filterContext
+    self.fetcher = fetcher
+    _viewModel = State(initialValue: StatusRowViewModel(
+      status: status,
+      client: client,
+      routerPath: routerPath,
+      isRemote: isRemote,
+      filterContext: filterContext
+    ))
+  }
+
+  var body: some View {
+    StatusRowView(viewModel: viewModel, context: .timeline)
+      .trackStatusVisibility(
+        status: status,
+        fetcher: fetcher,
+        rowViewModel: viewModel,
+        requiresMediaToLoad: true
+      )
+  }
+}
+

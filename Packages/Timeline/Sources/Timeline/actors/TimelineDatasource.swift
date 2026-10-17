@@ -251,6 +251,15 @@ actor TimelineDatasource {
     } else {
       status.isHidden
     }
+    if isHidden { return false }
+
+    let isReblogHidden = if let filterContext {
+      status.reblog?.isHidden(in: filterContext) ?? false
+    } else {
+      status.reblog?.isHidden ?? false
+    }
+    if isReblogHidden { return false }
+
     let showReplies = filter.showReplies
     let showBoosts = filter.showBoosts
     let showThreads = filter.showThreads
@@ -320,7 +329,6 @@ actor TimelineDatasource {
       hasMedia = true
     }
 
-    if isHidden { return false }
     if hideDueToLanguage { return false }
     if !showReplies, status.inReplyToId != nil, status.inReplyToAccountId != status.account.id { return false }
     if !showBoosts, status.reblog != nil { return false }
