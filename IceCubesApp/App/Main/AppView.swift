@@ -99,6 +99,19 @@ struct AppView: View {
     }
   }
 
+  private var activeIosTabs: [AppTab] {
+    availableTabs(for: iosTabs.tabs)
+  }
+
+  private func tabRole(for tab: AppTab, in tabs: [AppTab]) -> TabRole? {
+    if tab == .explore {
+      if tabs.last == .explore {
+        return .search
+      }
+    }
+    return .none
+  }
+
   @ViewBuilder
   var tabBarView: some View {
     TabView(
@@ -112,9 +125,10 @@ struct AppView: View {
     ) {
       ForEach(availableSections) { section in
         if section == .iosTabs {
-          // Sidebar placement and the search role can override the user's tab order.
-          ForEach(availableTabs(for: iosTabs.tabs)) { tab in
-            Tab(value: tab) {
+          // Detach Search as a floating action button only if the user placed it last in their tabs.
+          // Otherwise, preserve the exact user-configured order without allowing iOS to hijack it to the end.
+          ForEach(activeIosTabs) { tab in
+            Tab(value: tab, role: tabRole(for: tab, in: activeIosTabs)) {
               makeTabContent(for: tab)
             } label: {
               tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
