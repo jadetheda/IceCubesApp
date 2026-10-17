@@ -1198,3 +1198,7 @@
     - **Defense-in-Depth in `TimelineViewModel` & `TimelineDatasource`**: Added `isStatusFilteredOut` in `TimelineViewModel` to guard `startSeenTimer`, and updated `TimelineDatasource.shouldShowStatus` with early returns for `isHidden` and `isReblogHidden`.
   - **Impact**: Resolves the bug where posts completely hidden by keyword/server filters or collapsed behind warning cards were falsely marked as Seen in `SeenPostsManager`. Passed Boost Code & AST Safety Audit with zero traps.
 
+- **2026-10-17T08:15:00Z**:
+  - **Description**: Fixed duplicate `let self` unwrap syntax error in `TimelineViewModel.swift` after threshold sleep.
+  - **Details**: In `TimelineViewModel.startSeenTimer`, `self` was already unwrapped into scope at line 751. The second `guard !Task.isCancelled, let self else { return }` at line 762 triggered Swift compiler error `initializer for conditional binding must have Optional type, not 'TimelineViewModel'`. Decoupled and removed the redundant `let self` while maintaining Task cancellation and active tab guards.
+  - **Impact**: Clears the Exit Code 65 syntax compilation error in GitHub Actions.

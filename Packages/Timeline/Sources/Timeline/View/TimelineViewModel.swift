@@ -748,7 +748,8 @@ extension TimelineViewModel: GapLoadingFetcher {
           }
         }
       }
-      guard !Task.isCancelled, let self else { return }
+      guard !Task.isCancelled else { return }
+      guard let self else { return }
       guard self.isTimelineTabActive else { return }
       guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
 
@@ -759,7 +760,7 @@ extension TimelineViewModel: GapLoadingFetcher {
           try? await Task.sleep(nanoseconds: sleepNanos)
         }
       }
-      guard !Task.isCancelled, let self else { return }
+      guard !Task.isCancelled else { return }
       guard self.isTimelineTabActive else { return }
       guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
 
