@@ -40,8 +40,10 @@ public struct GifView: UIViewRepresentable {
     }
 
     NSLayoutConstraint.activate([
-      animatedView.heightAnchor.constraint(equalTo: view.heightAnchor),
-      animatedView.widthAnchor.constraint(equalTo: view.widthAnchor),
+      animatedView.topAnchor.constraint(equalTo: view.topAnchor),
+      animatedView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      animatedView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      animatedView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
     ])
 
     return view

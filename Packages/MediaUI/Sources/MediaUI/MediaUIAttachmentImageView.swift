@@ -3,6 +3,7 @@ import Models
 import Nuke
 import NukeUI
 import SwiftUI
+import UIKit
 
 public struct MediaUIAttachmentImageView: View {
   public let url: URL
@@ -115,8 +116,7 @@ public struct MediaUIAttachmentImageView: View {
   @ViewBuilder
   private func contentView(for state: LazyImageState) -> some View {
     if let gifData = extractGifData(from: state) {
-      GifView(data: gifData, forceAnimate: true)
-        .scaledToFit()
+      makeGifView(data: gifData, state: state)
     } else if let image = state.image {
       image
         .resizable()
@@ -127,6 +127,65 @@ public struct MediaUIAttachmentImageView: View {
     } else if hasFailed {
       failureView
     }
+  }
+
+  private func makeGifView(data: Data, state: LazyImageState) -> some View {
+    GifView(data: data, forceAnimate: true)
+      .aspectRatio(gifAspectRatio(from: state, data: data), contentMode: .fit)
+  }
+
+  private func gifAspectRatio(from state: LazyImageState, data: Data) -> CGFloat? {
+    if let container = state.imageContainer {
+      let size = container.image.size
+      if size.width > 0 {
+        if size.height > 0 {
+          let aspect = size.width / size.height
+          if aspect > 0 {
+            if aspect.isFinite {
+              return aspect
+            }
+          }
+        }
+      }
+    }
+    if data.count >= 10 {
+      let start = data.startIndex
+      let b0 = data[start]
+      let b1 = data[start + 1]
+      let b2 = data[start + 2]
+      if b0 == 0x47 {
+        if b1 == 0x49 {
+          if b2 == 0x46 {
+            let w = UInt16(data[start + 6]) | (UInt16(data[start + 7]) << 8)
+            let h = UInt16(data[start + 8]) | (UInt16(data[start + 9]) << 8)
+            if w > 0 {
+              if h > 0 {
+                let aspect = CGFloat(w) / CGFloat(h)
+                if aspect > 0 {
+                  if aspect.isFinite {
+                    return aspect
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if let uiImage = UIImage(data: data) {
+      let size = uiImage.size
+      if size.width > 0 {
+        if size.height > 0 {
+          let aspect = size.width / size.height
+          if aspect > 0 {
+            if aspect.isFinite {
+              return aspect
+            }
+          }
+        }
+      }
+    }
+    return nil
   }
 
   @ViewBuilder
