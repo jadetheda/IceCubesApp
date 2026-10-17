@@ -24,6 +24,19 @@ public struct NotificationsContentFilterView: View {
     case .update: return $filter.showUpdate
     case .quote: return $filter.showQuote
     case .quoted_update: return $filter.showQuotedUpdate
+    case .added_to_collection: return $filter.showAddedToCollection
+    case .collection_update: return $filter.showCollectionUpdate
+    }
+  }
+
+  private var filterableTypes: [Models.Notification.NotificationType] {
+    Models.Notification.NotificationType.allCases.filter { type in
+      switch type {
+      case .added_to_collection, .collection_update:
+        CurrentInstance.shared.isCollectionsSupported
+      default:
+        true
+      }
     }
   }
 
@@ -31,7 +44,7 @@ public struct NotificationsContentFilterView: View {
     NavigationStack {
       Form {
         Section {
-          ForEach(Models.Notification.NotificationType.allCases, id: \.self) { type in
+          ForEach(filterableTypes, id: \.self) { type in
             Toggle(isOn: binding(for: type)) {
               Label {
                 Text(type.menuTitle())

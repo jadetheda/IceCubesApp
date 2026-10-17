@@ -502,7 +502,7 @@
         "pl": {
           "stringUnit": {
             "state": "translated",
-            "value": "już istnieje"
+            "value": "%@ już istnieje"
           }
         },
         "pt-BR": {
@@ -34146,7 +34146,7 @@
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "% publicacions"
+            "value": "%@ publicacions"
           }
         },
         "de": {
@@ -96738,6 +96738,242 @@
           "stringUnit": {
             "state": "needs_review",
             "value": "Display as a Toggle"
+          }
+        }
+      }
+    },
+    "settings.content.pluraldawn.title": {
+      "localizations": {
+        "be": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уключыць падтрымку PluralDawn (няспраўна)"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa la compatibilitat amb PluralDawn (no funciona)"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PluralDawn-Unterstützung aktivieren (Fehlerhaft)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable PluralDawn Support (Broken)"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable PluralDawn Support (Broken)"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar compatibilidad con PluralDawn (no funciona)"
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gaitu PluralDawn euskarria (akastuna)"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer la prise en charge de PluralDawn (défectueux)"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abilita supporto a PluralDawn (non funzionante)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PluralDawnのサポートを有効化 (不具合あり)"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PluralDawn 지원 활성화 (오류 있음)"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiver støtte for PluralDawn (feilende)"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PluralDawn-ondersteuning inschakelen (werkt niet goed)"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Włącz obsługę PluralDawn (błędna)"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar suporte ao PluralDawn (com falhas)"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PluralDawn Desteğini Etkinleştir (Bozuk)"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкнути підтримку PluralDawn (не працює)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启用 PluralDawn 支持（有缺陷）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟用 PluralDawn 支援（存在問題）"
+          }
+        }
+      }
+    },
+    "settings.content.pluraldawn.subtitle": {
+      "localizations": {
+        "be": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вядомыя праблемы з дэкадаваннем аватараў на некаторых серверах. У распрацоўцы."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problemes coneguts amb la descodificació d'avatars en alguns servidors. En desenvolupament."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bekannte Probleme bei der Avatar-Dekodierung auf einigen Servern. In Arbeit."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Known issues with avatar decoding on some servers. Work in progress."
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Known issues with avatar decoding on some servers. Work in progress."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problemas conocidos al decodificar avatares en algunos servidores. En desarrollo."
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zenbait zerbitzaritan avatarrak deskodetzeko arazo ezagunak. Garapenean."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problèmes connus de décodage d'avatar sur certains serveurs. En cours de développement."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problemi noti con la decodifica dell'avatar su alcuni server. In lavorazione."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一部のサーバーでアバターのデコードに不具合が発生しています。開発中。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "일부 서버에서 아바타 디코딩 문제가 알려져 있습니다. 개발 중."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kjente problemer med avatardekoding på enkelte tjenere. Under utvikling."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bekende problemen met avatardecodering op sommige servers. In ontwikkeling."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Znane problemy z dekodowaniem awatarów na niektórych serwerach. Trwają prace."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problemas conhecidos com a decodificação de avatares em alguns servidores. Em desenvolvimento."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bazı sunucularda profil resmi kod çözme sorunları bilinmektedir. Geliştirme aşamasında."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відомі проблеми з декодуванням аватарів на деяких серверах. У розробці."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已知某些服务器上存在头像解码问题。开发中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已知某些伺服器上存在頭像解碼問題。正在開發中。"
           }
         }
       }

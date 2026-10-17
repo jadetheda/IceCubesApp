@@ -14,6 +14,7 @@ public struct ConsolidatedNotification: Identifiable {
   public let accounts: [Account]
   public let status: Status?
   public let mostRecentNotificationId: String
+  public let collection: AccountCollection?
 
   public var id: String { groupKey ?? mostRecentNotificationId }
   
@@ -27,6 +28,7 @@ public struct ConsolidatedNotification: Identifiable {
     createdAt: ServerDate,
     accounts: [Account],
     status: Status?,
+    collection: AccountCollection? = nil,
     groupKey: String? = nil
   ) {
     self.notifications = notifications
@@ -34,6 +36,7 @@ public struct ConsolidatedNotification: Identifiable {
     self.createdAt = createdAt
     self.accounts = accounts
     self.status = status ?? nil
+    self.collection = collection
     self.groupKey = groupKey
     self.mostRecentNotificationId = mostRecentNotificationId
   }

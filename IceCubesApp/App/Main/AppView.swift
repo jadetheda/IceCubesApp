@@ -27,7 +27,7 @@ struct AppView: View {
   @Binding var selectedTab: AppTab
   @Binding var appRouterPath: RouterPath
 
-  @State var iosTabs = iOSTabs.shared
+  @State private var iosTabs = iOSTabs.shared
   @State private var errorService = ErrorService.shared
   @State var selectedTabScrollToTop: Int = -1
   @State var timeline: TimelineFilter = .home
@@ -46,17 +46,30 @@ struct AppView: View {
       return true
     }
   }
-  
+
+  private var showSecondaryColumn: Bool {
+    let isRegular = horizontalSizeClass == .regular
+    let isPadOrMac = UIDevice.current.userInterfaceIdiom == .pad || UIDevice.current.userInterfaceIdiom == .mac
+    return isRegular && isPadOrMac && appAccountsManager.currentClient.isAuth && userPreferences.showiPadSecondaryColumn
+  }
+
+  @available(iOS 27.0, visionOS 27.0, *)
+  private var preferredTabBarPlacement: AdaptableTabBarPlacement {
+    horizontalSizeClass == .regular ? .sidebar : .automatic
+  }
+
   var body: some View {
     HStack(spacing: 0) {
-      tabBarView
-        .tabViewStyle(.sidebarAdaptable)
-      if horizontalSizeClass == .regular
-        && (UIDevice.current.userInterfaceIdiom == .pad
-          || UIDevice.current.userInterfaceIdiom == .mac),
-        appAccountsManager.currentClient.isAuth,
-        userPreferences.showiPadSecondaryColumn
-      {
+      Group {
+        if #available(iOS 27.0, visionOS 27.0, *) {
+          tabBarView
+            .defaultTabBarPlacement(preferredTabBarPlacement)
+        } else {
+          tabBarView
+        }
+      }
+      .tabViewStyle(.sidebarAdaptable)
+      if showSecondaryColumn {
         Divider().edgesIgnoringSafeArea(.all)
         notificationsSecondaryColumn
       }
@@ -67,7 +80,7 @@ struct AppView: View {
     guard appAccountsManager.currentClient.isAuth else {
       return [SidebarSections.loggedOutTabs]
     }
-    if UIDevice.current.userInterfaceIdiom == .phone || horizontalSizeClass == .compact {
+    if horizontalSizeClass == .compact {
       return [SidebarSections.iosTabs]
     } else if UIDevice.current.userInterfaceIdiom == .vision {
       return [SidebarSections.visionOSTabs]
@@ -83,6 +96,22 @@ struct AppView: View {
     return sections
   }
 
+  private var localTimelineTabs: [AppTab] {
+    localTimelines.map { timeline in
+      AppTab.anyTimelineFilter(filter: .remoteLocal(server: timeline.instance, filter: .local))
+    }
+  }
+
+  private var tagGroupTabs: [AppTab] {
+    tagGroups.map { tagGroup in
+      AppTab.anyTimelineFilter(
+        filter: TimelineFilter.tagGroup(
+          title: tagGroup.title,
+          tags: tagGroup.tags,
+          symbolName: tagGroup.symbolName))
+    }
+  }
+
   @ViewBuilder
   var tabBarView: some View {
     TabView(
@@ -95,45 +124,50 @@ struct AppView: View {
         })
     ) {
       ForEach(availableSections) { section in
-        TabSection(section.title) {
-          if section == .localTimeline {
-            ForEach(localTimelines) { timeline in
-              let tab = AppTab.anyTimelineFilter(
-                filter: .remoteLocal(server: timeline.instance, filter: .local))
-              Tab(value: tab) {
-                makeTabContent(for: tab)
-              } label: {
-                tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
-              }
-              .tabPlacement(tab.tabPlacement)
+        if section == .iosTabs {
+          // Sidebar placement and the search role can override the user's tab order.
+          ForEach(availableTabs(for: iosTabs.tabs)) { tab in
+            Tab(value: tab) {
+              makeTabContent(for: tab)
+            } label: {
+              tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
             }
-          } else if section == .tagGroup {
-            ForEach(tagGroups) { tagGroup in
-              let tab = AppTab.anyTimelineFilter(
-                filter: TimelineFilter.tagGroup(
-                  title: tagGroup.title,
-                  tags: tagGroup.tags,
-                  symbolName: tagGroup.symbolName))
-              Tab(value: tab) {
-                makeTabContent(for: tab)
-              } label: {
-                tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
+            .badge(badgeFor(tab: tab))
+          }
+        } else {
+          TabSection(section.title) {
+            if section == .localTimeline {
+              ForEach(localTimelineTabs) { tab in
+                Tab(value: tab) {
+                  makeTabContent(for: tab)
+                } label: {
+                  tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
+                }
+                .tabPlacement(tab.tabPlacement)
               }
-              .tabPlacement(tab.tabPlacement)
-            }
-          } else {
-            ForEach(availableTabs(for: section.tabs)) { tab in
-              Tab(value: tab, role: tab == .explore ? .search : .none) {
-                makeTabContent(for: tab)
-              } label: {
-                tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
+            } else if section == .tagGroup {
+              ForEach(tagGroupTabs) { tab in
+                Tab(value: tab) {
+                  makeTabContent(for: tab)
+                } label: {
+                  tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
+                }
+                .tabPlacement(tab.tabPlacement)
               }
-              .tabPlacement(tab.tabPlacement)
-              .badge(badgeFor(tab: tab))
+            } else {
+              ForEach(availableTabs(for: section.tabs)) { tab in
+                Tab(value: tab, role: tab == .explore ? .search : .none) {
+                  makeTabContent(for: tab)
+                } label: {
+                  tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
+                }
+                .tabPlacement(tab.tabPlacement)
+                .badge(badgeFor(tab: tab))
+              }
             }
           }
+          .tabPlacement(.sidebarOnly)
         }
-        .tabPlacement(.sidebarOnly)
       }
     }
     .id(appAccountsManager.currentClient.id)

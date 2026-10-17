@@ -40,21 +40,36 @@ struct NotificationRowContentView: View {
             .environment(\.isMediaCompact, true)
           }
 
-          if notification.type == .quote,
-            status.quote?.state == .accepted,
-            let quotedStatus = status.quote?.quotedStatus
-          {
-            StatusEmbeddedView(
-              status: quotedStatus,
-              client: client,
-              routerPath: routerPath
-            )
-            .padding(.bottom, 8)
+          if notification.type == .quote {
+            if status.quote?.state == .accepted {
+              if let quotedStatus = status.quote?.quotedStatus {
+                StatusEmbeddedView(
+                  status: quotedStatus,
+                  client: client,
+                  routerPath: routerPath
+                )
+                .padding(.bottom, 8)
+              }
+            }
           }
         }
         Spacer()
       }
       .environment(\.isCompact, true)
+    } else if let collection = notification.collection {
+      VStack(alignment: .leading, spacing: 6) {
+        if let account = notification.accounts.first {
+          Text("@\(account.acct)")
+            .font(.scaledCallout)
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+            .onTapGesture {
+              routerPath.navigate(to: .accountDetailWithAccount(account: account))
+            }
+        }
+        NotificationRowCollectionView(collection: collection, routerPath: routerPath)
+      }
+      .frame(maxWidth: .infinity, alignment: .leading)
     } else {
       Group {
         Text("@\(notification.accounts[0].acct)")

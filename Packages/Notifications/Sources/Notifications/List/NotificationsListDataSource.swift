@@ -372,6 +372,7 @@ public final class NotificationsListDataSource {
       createdAt: event.notification.createdAt,
       accounts: [event.notification.account],
       status: event.notification.status,
+      collection: event.notification.collection,
       groupKey: groupKey
     )
 
@@ -424,6 +425,7 @@ public final class NotificationsListDataSource {
             createdAt: newGroup.createdAt,
             accounts: updatedAccounts,
             status: existingGroup.status,
+            collection: newGroup.collection ?? existingGroup.collection,
             groupKey: groupKey
           )
 
@@ -488,6 +490,7 @@ public final class NotificationsListDataSource {
             createdAt: group.latestPageNotificationAt,
             accounts: accounts,
             status: status,
+            collection: group.collection,
             groupKey: group.groupKey
           ))
       }

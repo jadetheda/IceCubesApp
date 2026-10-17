@@ -18,6 +18,8 @@ import Models
     @AppStorage("notifications_show_update") var showUpdate: Bool = true
     @AppStorage("notifications_show_quote") var showQuote: Bool = true
     @AppStorage("notifications_show_quotedupdate") var showQuotedUpdate: Bool = true
+    @AppStorage("notifications_show_added_to_collection") var showAddedToCollection: Bool = true
+    @AppStorage("notifications_show_collection_update") var showCollectionUpdate: Bool = true
   }
 
   private let storage = Storage()
@@ -163,6 +165,36 @@ import Models
     }
   }
 
+  @ObservationIgnored
+  private var _showAddedToCollection: Bool = true
+  public var showAddedToCollection: Bool {
+    get {
+      access(keyPath: \.showAddedToCollection)
+      return _showAddedToCollection
+    }
+    set {
+      withMutation(keyPath: \.showAddedToCollection) {
+        _showAddedToCollection = newValue
+        storage.showAddedToCollection = newValue
+      }
+    }
+  }
+
+  @ObservationIgnored
+  private var _showCollectionUpdate: Bool = true
+  public var showCollectionUpdate: Bool {
+    get {
+      access(keyPath: \.showCollectionUpdate)
+      return _showCollectionUpdate
+    }
+    set {
+      withMutation(keyPath: \.showCollectionUpdate) {
+        _showCollectionUpdate = newValue
+        storage.showCollectionUpdate = newValue
+      }
+    }
+  }
+
   private init() {
     _showFollow = storage.showFollow
     _showFollowRequest = storage.showFollowRequest
@@ -174,6 +206,8 @@ import Models
     _showUpdate = storage.showUpdate
     _showQuote = storage.showQuote
     _showQuotedUpdate = storage.showQuotedUpdate
+    _showAddedToCollection = storage.showAddedToCollection
+    _showCollectionUpdate = storage.showCollectionUpdate
   }
 
   public func isTypeEnabled(_ type: Models.Notification.NotificationType?) -> Bool {
@@ -189,6 +223,8 @@ import Models
     case .update: return showUpdate
     case .quote: return showQuote
     case .quoted_update: return showQuotedUpdate
+    case .added_to_collection: return showAddedToCollection
+    case .collection_update: return showCollectionUpdate
     }
   }
 }

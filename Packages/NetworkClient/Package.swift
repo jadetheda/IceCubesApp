@@ -31,7 +31,10 @@ let package = Package(
     ),
     .testTarget(
       name: "NetworkClientTests",
-      dependencies: ["NetworkClient"]
+      dependencies: [
+        "NetworkClient",
+        .product(name: "Models", package: "Models"),
+      ]
     ),
   ]
 )

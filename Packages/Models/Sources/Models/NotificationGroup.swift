@@ -10,6 +10,7 @@ public struct NotificationGroup: Codable, Identifiable, Sendable {
   public let latestPageNotificationAt: ServerDate
   public let sampleAccountIds: [String]
   public let statusId: String?
+  public let collection: AccountCollection?
   
   public var id: String { groupKey }
 }
