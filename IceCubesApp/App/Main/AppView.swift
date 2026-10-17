@@ -52,23 +52,10 @@ struct AppView: View {
     let isPadOrMac = UIDevice.current.userInterfaceIdiom == .pad || UIDevice.current.userInterfaceIdiom == .mac
     return isRegular && isPadOrMac && appAccountsManager.currentClient.isAuth && userPreferences.showiPadSecondaryColumn
   }
-
-  @available(iOS 27.0, visionOS 27.0, *)
-  private var preferredTabBarPlacement: AdaptableTabBarPlacement {
-    horizontalSizeClass == .regular ? .sidebar : .automatic
-  }
-
   var body: some View {
     HStack(spacing: 0) {
-      Group {
-        if #available(iOS 27.0, visionOS 27.0, *) {
-          tabBarView
-            .defaultTabBarPlacement(preferredTabBarPlacement)
-        } else {
-          tabBarView
-        }
-      }
-      .tabViewStyle(.sidebarAdaptable)
+      tabBarView
+        .tabViewStyle(.sidebarAdaptable)
       if showSecondaryColumn {
         Divider().edgesIgnoringSafeArea(.all)
         notificationsSecondaryColumn
@@ -241,10 +228,10 @@ struct AppView: View {
   }
 
   private func badgeFor(tab: AppTab) -> Int {
-    if tab == .notifications, selectedTab != tab,
-      let token = appAccountsManager.currentAccount.oauthToken
-    {
-      return userPreferences.notificationsCount[token] ?? 0
+    if tab == .notifications && selectedTab != tab {
+      if let token = appAccountsManager.currentAccount.oauthToken {
+        return userPreferences.notificationsCount[token] ?? 0
+      }
     }
     return 0
   }

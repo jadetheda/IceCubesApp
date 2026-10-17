@@ -254,6 +254,10 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: In Swift, attempting to create a new `PHAssetCreationRequest` by calling `PHAssetCreationRequest.forAsset()` compiles successfully but will instantly crash the app at runtime with an `unrecognized selector` exception because it resolves to a missing Objective-C method (`+forAsset`). This occurs because the Swift compiler often forces you to replace the older `.creationRequestForAsset()` API with `.forAsset()`, which is a trap.
 - **Solution**: Completely avoid `PHAssetCreationRequest`. Instead, write your image/video `Data` to a temporary file URL (`FileManager.default.temporaryDirectory`), and then use the safe, built-in change requests: `PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL:)` or `PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL:)`. Don't forget to delete the temporary file after the `performChanges` block completes.
 
+**Unreleased Apple SDK APIs in Upstream Commits**
+- **Root Cause**: Upstream commits (e.g., `9efcb16e`, `5c91bd28`) guarded APIs like `.defaultTabBarPlacement(...)`, `.axisBehavior(.verticalPreferred)`, and `@Environment(\.toolbarVerticalEdge)` with `#available(iOS 27.0, *)` or `#available(iOS 27.1, *)`. While `#available` prevents runtime execution on older OS versions, the Swift compiler STILL performs compile-time symbol resolution against the active Xcode SDK. On public runners (Xcode 15 / 16), these unreleased members do not exist, causing Exit Code 65 compile failures (`has no member 'defaultTabBarPlacement'`, `has no member 'axisBehavior'`).
+- **Solution**: Never adopt unreleased future OS APIs from upstream that rely on nonexistent SDK symbols. Omit or replace them with standard SwiftUI modifier chains (e.g. standard `offset(x: -12)` and `.tabViewStyle(.sidebarAdaptable)`).
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides

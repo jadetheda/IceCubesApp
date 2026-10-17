@@ -33,16 +33,7 @@ struct ToolbarTab: ToolbarContent {
           visibility: userPreferences.postVisibility)
       }
       if #available(iOS 26.0, *) {
-        #if os(iOS) && !targetEnvironment(macCatalyst)
-          if #available(iOS 27.1, *) {
-            accountToolbarItem
-              .axisBehavior(.verticalPreferred)
-          } else {
-            accountToolbarItem
-          }
-        #else
-          accountToolbarItem
-        #endif
+        accountToolbarItem
       } else {
         ToolbarItem(placement: .navigationBarLeading) {
           accountSelector
@@ -66,14 +57,6 @@ struct ToolbarTab: ToolbarContent {
     ToolbarItem(placement: .navigationBarLeading) {
       #if targetEnvironment(macCatalyst)
         accountSelector
-      #elseif os(iOS)
-        if #available(iOS 27.1, *) {
-          accountSelector
-            .modifier(ToolbarAvatarAlignment())
-        } else {
-          accountSelector
-            .offset(x: -12)
-        }
       #else
         accountSelector
           .offset(x: -12)
@@ -93,19 +76,3 @@ struct ToolbarTab: ToolbarContent {
       #endif
   }
 }
-
-#if os(iOS) && !targetEnvironment(macCatalyst)
-@available(iOS 27.1, *)
-private struct ToolbarAvatarAlignment: ViewModifier {
-  @Environment(\.toolbarVerticalEdge) private var toolbarVerticalEdge
-
-  private var xOffset: CGFloat {
-    toolbarVerticalEdge == nil ? -12 : 0
-  }
-
-  func body(content: Content) -> some View {
-    // The horizontal bar's inset correction would shift the avatar off-center in a vertical bar.
-    content.offset(x: xOffset)
-  }
-}
-#endif
