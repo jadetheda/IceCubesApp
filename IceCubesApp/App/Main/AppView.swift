@@ -103,9 +103,9 @@ struct AppView: View {
     availableTabs(for: iosTabs.tabs)
   }
 
-  private func tabRole(for tab: AppTab, in tabs: [AppTab]) -> TabRole? {
+  private func tabRole(for tab: AppTab) -> TabRole? {
     if tab == .explore {
-      if tabs.last == .explore {
+      if iosTabs.tabs.last == .explore {
         return .search
       }
     }
@@ -128,7 +128,7 @@ struct AppView: View {
           // Detach Search as a floating action button only if the user placed it last in their tabs.
           // Otherwise, preserve the exact user-configured order without allowing iOS to hijack it to the end.
           ForEach(activeIosTabs) { tab in
-            Tab(value: tab, role: tabRole(for: tab, in: activeIosTabs)) {
+            Tab(value: tab, role: tabRole(for: tab)) {
               makeTabContent(for: tab)
             } label: {
               tab.label.environment(\.symbolVariants, tab == selectedTab ? .fill : .none)
