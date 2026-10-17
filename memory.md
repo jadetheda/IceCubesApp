@@ -1177,9 +1177,9 @@
   - **Milestone**: Full IceCubes iOS app compiled with complete Pluraldawn fediverse multi-platform support (Misskey, IceShrimp, Sharkey, GoToSocial, Mastodon) and dynamic aspect ratio media carousels in 13m32s. Unsigned IPA artifact `IceCubesApp-Unsigned-IPA` verified and published.
 
 - **2026-10-17T07:35:00Z**:
-  - **Description**: Bumped application marketing version to `3.0.7` and engineered startup delay with active-tab tracking for seen posts marking.
+  - **Description**: Bumped application marketing version to `3.1.7` and engineered startup delay with active-tab tracking for seen posts marking.
   - **Details**:
-    - **Version Bump**: Updated all 10 `MARKETING_VERSION` configurations in `IceCubesApp.xcodeproj/project.pbxproj` from `2.1.7` to `3.0.7` to clearly mark departure from upstream while preserving `.7`.
+    - **Version Bump**: Updated all 10 `MARKETING_VERSION` configurations in `IceCubesApp.xcodeproj/project.pbxproj` from `2.1.7` to `3.1.7` to clearly mark departure from upstream while preserving `.7`.
     - **Startup Delay & Tab Lifecycle for Seen Posts**:
       - Added `startupDate: Date` and `updateStartupDate()` to `SeenPostsManager` (updated on launch and `scenePhase == .active`).
       - Added `hideSeenPostsStartupDelay` (`@AppStorage`, default 5.0s, slider 0.0s–15.0s) to `UserPreferences` and `HideSeenPostsSettingsView`.
@@ -1187,4 +1187,4 @@
       - In `TimelineViewModel`, introduced `isTimelineTabActive`, `startSeenTimer(for: status)` with startup delay and active-tab guards, `cancelAllSeenTimers()`, and `resumeSeenTimersForVisibleStatuses()`. Hardened nanosecond sleep calculation with `max(0, ...)`.
       - In `TimelineView`, hooked `isTabSelected` and `scenePhase` lifecycle handlers to cancel running seen timers when switching away from the timeline tab or backgrounding the app, preventing unviewed posts from being marked as seen if the user opens the app to tap Search or Messages.
       - Added `"settings.experimental.hide-seen-posts.startup-delay"` translations across 19 languages in `Localizable.xcstrings`.
-  - **Impact**: Completely eliminates false-positive seen marking on startup when navigating to Search or other tabs; establishes the `3.0.7` version departure. Passed Boost AST constraint solver and actor isolation safety audit with zero traps.
+  - **Impact**: Completely eliminates false-positive seen marking on startup when navigating to Search or other tabs; establishes the `3.1.7` version departure. Passed Boost AST constraint solver and actor isolation safety audit with zero traps.
