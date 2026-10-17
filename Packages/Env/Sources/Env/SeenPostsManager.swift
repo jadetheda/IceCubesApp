@@ -8,6 +8,12 @@ import SwiftUI
 public class SeenPostsManager {
   public static let shared = SeenPostsManager()
   
+  public private(set) static var startupDate: Date = Date()
+
+  public static func updateStartupDate() {
+    startupDate = Date()
+  }
+
   private let userDefaultsKey = "seen_posts_ids"
   private let maxSeenPosts = 5000
   

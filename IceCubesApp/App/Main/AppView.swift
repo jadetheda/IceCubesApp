@@ -212,6 +212,7 @@ struct AppView: View {
       ToastOverlayView()
     }
     .environment(\.currentTabId, tab.id)
+    .environment(\.isTabSelected, tab == selectedTab)
   }
 
   private func updateTab(with newTab: AppTab) {

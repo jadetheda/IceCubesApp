@@ -28,6 +28,7 @@ struct ContentFilterOnChangeModifier: ViewModifier {
 @MainActor
 public struct TimelineView: View {
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.isTabSelected) private var isTabSelected: Bool
 
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var account
@@ -245,6 +246,10 @@ public struct TimelineView: View {
     }
     .navigationBarTitleDisplayMode(.inline)
     .onAppear {
+      viewModel.isTimelineTabActive = isTabSelected
+      if isTabSelected {
+        viewModel.resumeSeenTimersForVisibleStatuses()
+      }
       viewModel.canFilterTimeline = canFilterTimeline
 
       if viewModel.client == nil {
@@ -264,6 +269,7 @@ public struct TimelineView: View {
       viewModel.timeline = timeline
     }
     .onDisappear {
+      viewModel.cancelAllSeenTimers()
       viewModel.saveMarker()
     }
     .refreshable {
@@ -331,6 +337,14 @@ public struct TimelineView: View {
     .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
       refreshContentFilter()
     }
+    .onChange(of: isTabSelected) { _, isSelected in
+      viewModel.isTimelineTabActive = isSelected
+      if !isSelected {
+        viewModel.cancelAllSeenTimers()
+      } else {
+        viewModel.resumeSeenTimersForVisibleStatuses()
+      }
+    }
     .onChange(of: scenePhase) { _, newValue in
       switch newValue {
       case .active:
@@ -338,8 +352,12 @@ public struct TimelineView: View {
           wasBackgrounded = false
           viewModel.refreshTimeline()
         }
+        if isTabSelected {
+          viewModel.resumeSeenTimersForVisibleStatuses()
+        }
       case .background:
         wasBackgrounded = true
+        viewModel.cancelAllSeenTimers()
         viewModel.saveMarker()
 
       default:

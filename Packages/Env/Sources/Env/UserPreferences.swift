@@ -103,6 +103,7 @@ import SwiftUI
     @AppStorage("embed_post_text_in_media") public var embedPostTextInMedia: Bool = false
     @AppStorage("embed_post_tags_in_media") public var embedPostTagsInMedia: Bool = false
     @AppStorage("hide_seen_posts_threshold") public var hideSeenPostsThreshold: Double = 1.0
+    @AppStorage("hide_seen_posts_startup_delay") public var hideSeenPostsStartupDelay: Double = 5.0
     @AppStorage("hide_seen_posts_liked_only") public var hideSeenPostsLikedOnly: Bool = false
     @AppStorage("hide_seen_posts_show_in_header") public var hideSeenPostsShowInHeader: Bool = false
     @AppStorage("hide_seen_posts_include_boosts") public var hideSeenPostsIncludeBoosts: Bool = true
@@ -614,6 +615,12 @@ import SwiftUI
     }
   }
 
+  public var hideSeenPostsStartupDelay: Double {
+    didSet {
+      storage.hideSeenPostsStartupDelay = hideSeenPostsStartupDelay
+    }
+  }
+
   public var hideSeenPostsLikedOnly: Bool {
     didSet {
       storage.hideSeenPostsLikedOnly = hideSeenPostsLikedOnly
@@ -964,6 +971,7 @@ import SwiftUI
     embedPostTagsInMedia = storage.embedPostTagsInMedia
     hideSeenPostsEnabled = storage.hideSeenPostsEnabled
     hideSeenPostsThreshold = storage.hideSeenPostsThreshold
+    hideSeenPostsStartupDelay = storage.hideSeenPostsStartupDelay
     hideSeenPostsLikedOnly = storage.hideSeenPostsLikedOnly
     hideSeenPostsShowInHeader = storage.hideSeenPostsShowInHeader
     hideSeenPostsIncludeBoosts = storage.hideSeenPostsIncludeBoosts

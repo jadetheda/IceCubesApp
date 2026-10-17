@@ -96977,6 +96977,125 @@
           }
         }
       }
+    },
+    "settings.experimental.hide-seen-posts.startup-delay": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "启动延迟：%1$.1fs"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "起動時の待機時間: %1$.1f秒"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Ritardo all'avvio: %1$.1fs"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startverzögerung: %1$.1fs"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Retardo de inicio: %1$.1fs"
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "啟動延遲：%1$.1fs"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Délai de démarrage : %1$.1fs"
+          }
+        },
+        "be": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Startup delay: %1$.1fs"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

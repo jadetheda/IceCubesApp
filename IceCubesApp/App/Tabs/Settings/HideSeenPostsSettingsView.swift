@@ -20,6 +20,11 @@ public struct HideSeenPostsSettingsView: View {
             Text(String(format: NSLocalizedString("settings.experimental.hide-seen-posts.threshold", comment: ""), preferences.hideSeenPostsThreshold))
             Slider(value: $preferences.hideSeenPostsThreshold, in: 0.1...5.0, step: 0.1)
           }
+
+          VStack(alignment: .leading) {
+            Text(String(format: NSLocalizedString("settings.experimental.hide-seen-posts.startup-delay", comment: ""), preferences.hideSeenPostsStartupDelay))
+            Slider(value: $preferences.hideSeenPostsStartupDelay, in: 0.0...15.0, step: 0.5)
+          }
           
           Toggle("settings.experimental.hide-seen-posts.liked-only", isOn: $preferences.hideSeenPostsLikedOnly)
           Toggle("settings.experimental.hide-seen-posts.include-boosts", isOn: $preferences.hideSeenPostsIncludeBoosts)

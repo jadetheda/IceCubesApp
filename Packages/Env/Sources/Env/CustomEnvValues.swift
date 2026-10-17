@@ -17,5 +17,6 @@ extension EnvironmentValues {
   @Entry public var currentTabId: Int? = nil
   // Set to true when rendering inside the Notifications tab
   @Entry public var isNotificationsTab: Bool = false
+  @Entry public var isTabSelected: Bool = true
   @Entry public var statusOnMediaLoaded: (() -> Void)? = nil
 }

@@ -72,6 +72,7 @@ import Nuke
   private var sessionSeenPosts: Set<String> = []
   private var exemptFromHideSeen: Set<String> = []
   private var seenTimerTasks: [String: Task<Void, Never>] = [:]
+  var isTimelineTabActive: Bool = true
 
   var tag: Tag?
 
@@ -722,32 +723,76 @@ extension TimelineViewModel: GapLoadingFetcher {
       }
     }
 
+    startSeenTimer(for: status)
+  }
+
+  func startSeenTimer(for status: Status) {
+    guard isTimelineTabActive else { return }
+    let prefs = UserPreferences.shared
+    guard prefs.hideSeenPostsEnabled else { return }
+
     seenTimerTasks[status.id]?.cancel()
     let timerTask = Task { [weak self] in
       let prefs = UserPreferences.shared
       guard prefs.hideSeenPostsEnabled else { return }
-      
-      let threshold = prefs.hideSeenPostsThreshold
-      try? await Task.sleep(nanoseconds: UInt64(threshold * 1_000_000_000))
-      guard !Task.isCancelled, let self else { return }
-      if self.visibleStatuses.contains(where: { $0.id == status.id }) {
-        
-        var idToMark = status.id
-        if prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
-           idToMark = reblog.id
-        }
-        
-        if !prefs.hideSeenPostsLikedOnly || status.favourited == true || (status.reblog?.favourited == true) {
-          SeenPostsManager.shared.markAsSeen(id: idToMark)
-          if prefs.hideSeenPostsIncludeBoosts {
-            SeenPostsManager.shared.markAsSeen(id: status.id)
+
+      let startupDelay = prefs.hideSeenPostsStartupDelay
+      if startupDelay > 0 {
+        let elapsed = Date().timeIntervalSince(SeenPostsManager.startupDate)
+        if elapsed < startupDelay {
+          let remaining = max(0, startupDelay - elapsed)
+          let sleepNanos = UInt64(remaining * 1_000_000_000)
+          if sleepNanos > 0 {
+            try? await Task.sleep(nanoseconds: sleepNanos)
           }
-          self.pendingStatusesObserver.updateCount()
         }
+      }
+      guard !Task.isCancelled, let self else { return }
+      guard self.isTimelineTabActive else { return }
+      guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
+
+      let threshold = prefs.hideSeenPostsThreshold
+      if threshold > 0 {
+        let sleepNanos = UInt64(max(0, threshold) * 1_000_000_000)
+        if sleepNanos > 0 {
+          try? await Task.sleep(nanoseconds: sleepNanos)
+        }
+      }
+      guard !Task.isCancelled, let self else { return }
+      guard self.isTimelineTabActive else { return }
+      guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
+
+      var idToMark = status.id
+      if prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
+        idToMark = reblog.id
+      }
+
+      if !prefs.hideSeenPostsLikedOnly || status.favourited == true || (status.reblog?.favourited == true) {
+        SeenPostsManager.shared.markAsSeen(id: idToMark)
+        if prefs.hideSeenPostsIncludeBoosts {
+          SeenPostsManager.shared.markAsSeen(id: status.id)
+        }
+        self.pendingStatusesObserver.updateCount()
       }
       self.seenTimerTasks.removeValue(forKey: status.id)
     }
     seenTimerTasks[status.id] = timerTask
+  }
+
+  func cancelAllSeenTimers() {
+    for task in seenTimerTasks.values {
+      task.cancel()
+    }
+    seenTimerTasks.removeAll()
+  }
+
+  func resumeSeenTimersForVisibleStatuses() {
+    guard isTimelineTabActive else { return }
+    let prefs = UserPreferences.shared
+    guard prefs.hideSeenPostsEnabled else { return }
+    for status in visibleStatuses {
+      startSeenTimer(for: status)
+    }
   }
 
   func statusDidDisappear(status: Status) {
