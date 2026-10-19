@@ -62,7 +62,8 @@ struct AccountSettingsView: View {
       Section {
         Label(
           "settings.account.cached-posts-\(String(cachedPostsCount))", systemImage: "internaldrive")
-        Label("Cached Emojis: \(String(cachedEmojisCount))", systemImage: "face.smiling")
+        Label(
+          "settings.account.cached-emojis-\(String(cachedEmojisCount))", systemImage: "face.smiling")
           .environment(\.symbolVariants, .none)
         Button("settings.account.action.delete-cache", role: .destructive) {
           Task {

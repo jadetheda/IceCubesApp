@@ -56009,7 +56009,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Enable Animated Emojis"
+            "value": "Enable animated emojis"
           }
         },
         "es": {
@@ -95677,115 +95677,115 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "eu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "be": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
+            "value": "Custom emoji picker"
           }
         },
         "en-GB": {
           "stringUnit": {
             "state": "translated",
-            "value": "Custom Emojis Layout"
+            "value": "Custom emoji picker"
           }
         },
-        "ja": {
+        "be": {
           "stringUnit": {
             "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Custom Emojis Layout"
+            "value": "Выбар уласных эмодзі"
           }
         },
         "ca": {
           "stringUnit": {
             "state": "translated",
-            "value": "Custom Emojis Layout"
+            "value": "Selector d'emojis personalitzats"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auswahl für eigene Emojis"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selector de emojis personalizados"
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instantziaren emojien hautatzailea"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sélecteur d'emojis personnalisés"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selettore emoji personalizzate"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カスタム絵文字ピッカー"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "커스텀 이모지 선택기"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Egendefinert emoji-velger"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kiezer voor aangepaste emoji’s"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybór własnych emotikonów"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seletor de emojis customizados"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Özel emoji seçici"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вибір власних емоджі"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定义表情选择器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自定表情符號選擇器"
           }
         }
       }
@@ -97093,6 +97093,244 @@
           "stringUnit": {
             "state": "needs_review",
             "value": "Startup delay: %1$.1fs"
+          }
+        }
+      }
+    },
+    "settings.display.custom-emojis-layout.footer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust the number of rows displayed in the custom emoji picker while composing a post."
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust the number of rows displayed in the custom emoji picker while composing a post."
+          }
+        },
+        "be": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Наладзьце колькасць радкоў, якія адлюстроўваюцца ў выбары ўласных эмодзі пры напісанні допісу."
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajusta el nombre de files que es mostren al selector d'emojis personalitzats en redactar una publicació."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Passen Sie die Anzahl der Zeilen an, die bei der Beitragserstellung in der Auswahl für eigene Emojis angezeigt werden."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajusta la cantidad de filas que se muestran en el selector de emojis personalizados al redactar una publicación."
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Doitu argitalpen bat idaztean instantziaren emojien hautatzailean bistaratutako errenkada kopurua."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajustez le nombre de lignes affichées dans le sélecteur d'emojis personnalisés lors de la rédaction d'un message."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regola il numero di righe mostrate nel selettore di emoji personalizzate durante la composizione di un post."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "投稿の作成時にカスタム絵文字ピッカーに表示される行数を調整します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "게시물을 작성할 때 커스텀 이모지 선택기에 표시되는 행 수를 조정합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Juster antall rader som vises i den egendefinerte emoji-velgeren når du skriver et innlegg."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pas het aantal rijen aan dat wordt weergegeven in de kiezer voor aangepaste emoji’s tijdens het opstellen van een bericht."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dostosuj liczbę wierszy wyświetlanych w menu wyboru własnych emotikonów podczas tworzenia wpisu."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajuste o número de linhas exibidas no seletor de emojis customizados ao compor uma publicação."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir gönderi yazarken özel emoji seçicide gösterilen satır sayısını ayarlayın."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Налаштуйте кількість рядків, які відображаються у виборі власних емоджі під час створення допису."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调整撰写帖子时在自定义表情选择器中显示的行数。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "調整撰寫貼文時在自定表情符號選擇器中顯示的列數。"
+          }
+        }
+      }
+    },
+    "settings.account.cached-emojis-%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cached emojis: %@"
+          }
+        },
+        "en-GB": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cached emojis: %@"
+          }
+        },
+        "be": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кэшаваныя эмодзі: %@"
+          }
+        },
+        "ca": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emojis en la memòria cau: %@"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emojis im Cache: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emojis en caché: %@"
+          }
+        },
+        "eu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kacheatutako emojiak: %@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emojis en cache : %@"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji nella cache: %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュされた絵文字: %@"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "캐시된 이모지: %@"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hurtigbufrede emojier: %@"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji’s in cache: %@"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emotikony w pamięci podręcznej: %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emojis no cache: %@"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Önbelleğe alınan emojiler: %@"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Кешовані емоджі: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已缓存表情：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快取的表情符號：%@"
           }
         }
       }

@@ -1206,3 +1206,12 @@
 - **2026-10-17T08:26:00Z**:
   - **Description**: Production CI Build #39016590427 succeeded completely (All stages passed, unsigned IPA generated).
   - **Milestone**: Successfully compiled and archived the IceCubes iOS app for version `3.1.7` in 11m23s. All features—version 3.1.7 bump, seen posts startup delay, active tab lifecycle timer cancellation, and filter suppression for hidden/collapsed posts—are fully verified in a production IPA build. Unsigned IPA artifact published.
+
+- **2026-10-19T01:46:00Z**:
+  - **Description**: Standardized and refined custom emoji settings labels and descriptions in accordance with `settings_analysis.md` and upstream conventions.
+  - **Details**:
+    - **Display Settings & Navigation**: Updated `"settings.display.custom-emojis-layout"` from Title Case `"Custom Emojis Layout"` to sentence-case `"Custom emoji picker"` with native localizations across all 19 supported languages in `Localizable.xcstrings`.
+    - **Contextual Footer**: Added an explanatory footer (`"settings.display.custom-emojis-layout.footer"`) to `CustomEmojisLayoutSettingsView` explaining that row limits configure the custom emoji picker in the post composer.
+    - **Account Settings Localized Label**: Migrated the hardcoded `"Cached Emojis: <N>"` label in `AccountSettingView.swift` to use localized, sentence-cased `"settings.account.cached-emojis-%@"` (`"Cached emojis: %@"`).
+    - **Content Settings Formatting**: Converted `"settings.other.animate-emojis"` from Title Case `"Enable Animated Emojis"` to sentence case `"Enable animated emojis"`.
+  - **Impact**: Eliminates UX ambiguity and Title Case violations in Settings while bringing all custom emoji labels in full harmony with `settings_analysis.md` and upstream terminology.
