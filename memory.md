@@ -1219,9 +1219,9 @@
 - **2026-10-19T01:51:00Z**:
   - **Description**: Implemented native search capability in the custom emoji picker sheet (`CustomEmojisView`).
   - **Details**:
-    - **Real-Time Filtering**: Added instant search filtering matching both emoji shortcodes (handling spaces and underscores) and optional category names with fallback lookup for immediate responsiveness.
+    - **Real-Time Filtering**: Added instant search filtering matching both emoji shortcodes (handling spaces, underscores, and leading/trailing colons like `:blob:`) and optional category names with fallback lookup for immediate responsiveness.
     - **Native iOS Search Integration**: Attached `.searchable(text: $searchText, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("status.editor.emojis.search-placeholder"))`.
-    - **Adaptive Sheet & Keyboard Handling**: Automatically expands presentation detent from `.medium` to `.large` when the search field is focused, and enabled `.scrollDismissesKeyboard(.interactively)` for seamless dragging.
+    - **Adaptive Sheet & Keyboard Handling**: Automatically expands presentation detent from `.medium` to `.large` when the search field is focused or text is entered, stabilized `ScrollViewReader` across query transitions, and enabled `.scrollDismissesKeyboard(.interactively)` for seamless dragging.
     - **Category & Empty State UI**: Automatically hides category navigation pills during active search to maximize vertical canvas, rendering search results in the native adaptive grid or displaying a friendly empty state when no matches are found.
     - **Localization**: Added `"status.editor.emojis.search-placeholder"` and `"status.editor.emojis.no-results"` translations across all 19 supported languages in `Localizable.xcstrings`.
-  - **Impact**: Provides full feature parity with the native iOS emoji keyboard, allowing users to rapidly search through thousands of server custom emojis by name or category.
+  - **Impact**: Provides full feature parity with the native iOS emoji keyboard, allowing users to rapidly search through thousands of server custom emojis by name or category with zero AST traps.

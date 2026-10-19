@@ -58,20 +58,21 @@ extension StatusEditor {
 
     private var filteredEmojis: [Emoji] {
       let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-      if trimmed.isEmpty {
+      let stripped = trimmed.trimmingCharacters(in: CharacterSet(charactersIn: ":"))
+      if stripped.isEmpty {
         return []
       }
-      let queryWithUnderscores = trimmed.replacingOccurrences(of: " ", with: "_")
+      let queryWithUnderscores = stripped.replacingOccurrences(of: " ", with: "_")
       return emojisToSearch.filter { emoji in
         let code = emoji.shortcode.lowercased()
-        if code.contains(trimmed) {
+        if code.contains(stripped) {
           return true
         }
         if code.contains(queryWithUnderscores) {
           return true
         }
         if let category = emoji.category?.lowercased() {
-          if category.contains(trimmed) {
+          if category.contains(stripped) {
             return true
           }
         }
@@ -253,12 +254,12 @@ extension StatusEditor {
             }
           }
           ScrollView {
-            if searchText.isEmpty {
-              ScrollViewReader { (proxy: ScrollViewProxy) in
+            ScrollViewReader { (proxy: ScrollViewProxy) in
+              if searchText.isEmpty {
                 normalContent(proxy: proxy)
+              } else {
+                searchResultsSection
               }
-            } else {
-              searchResultsSection
             }
           }
           .scrollDismissesKeyboard(.interactively)
@@ -278,6 +279,11 @@ extension StatusEditor {
       .presentationDetents([.medium, .large], selection: $selectedDetent)
       .onChange(of: isSearchPresented) { _, isSearching in
         if isSearching {
+          selectedDetent = .large
+        }
+      }
+      .onChange(of: searchText) { _, newValue in
+        if !newValue.isEmpty {
           selectedDetent = .large
         }
       }
