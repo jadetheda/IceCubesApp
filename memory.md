@@ -1215,3 +1215,13 @@
     - **Account Settings Localized Label**: Migrated the hardcoded `"Cached Emojis: <N>"` label in `AccountSettingView.swift` to use localized, sentence-cased `"settings.account.cached-emojis-%@"` (`"Cached emojis: %@"`).
     - **Content Settings Formatting**: Converted `"settings.other.animate-emojis"` from Title Case `"Enable Animated Emojis"` to sentence case `"Enable animated emojis"`.
   - **Impact**: Eliminates UX ambiguity and Title Case violations in Settings while bringing all custom emoji labels in full harmony with `settings_analysis.md` and upstream terminology.
+
+- **2026-10-19T01:51:00Z**:
+  - **Description**: Implemented native search capability in the custom emoji picker sheet (`CustomEmojisView`).
+  - **Details**:
+    - **Real-Time Filtering**: Added instant search filtering matching both emoji shortcodes (handling spaces and underscores) and optional category names with fallback lookup for immediate responsiveness.
+    - **Native iOS Search Integration**: Attached `.searchable(text: $searchText, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: Text("status.editor.emojis.search-placeholder"))`.
+    - **Adaptive Sheet & Keyboard Handling**: Automatically expands presentation detent from `.medium` to `.large` when the search field is focused, and enabled `.scrollDismissesKeyboard(.interactively)` for seamless dragging.
+    - **Category & Empty State UI**: Automatically hides category navigation pills during active search to maximize vertical canvas, rendering search results in the native adaptive grid or displaying a friendly empty state when no matches are found.
+    - **Localization**: Added `"status.editor.emojis.search-placeholder"` and `"status.editor.emojis.no-results"` translations across all 19 supported languages in `Localizable.xcstrings`.
+  - **Impact**: Provides full feature parity with the native iOS emoji keyboard, allowing users to rapidly search through thousands of server custom emojis by name or category.
