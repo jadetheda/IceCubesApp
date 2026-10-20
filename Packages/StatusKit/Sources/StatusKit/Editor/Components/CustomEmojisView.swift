@@ -28,15 +28,19 @@ extension StatusEditor {
 
     @State private var cachedEmojiMap: [String: Emoji] = [:]
     @State private var allEmojis: [Emoji] = []
+    @State private var sessionRecentShortcodes: [String]? = nil
     @State private var searchText: String = ""
     @State private var isSearchPresented: Bool = false
     @State private var selectedDetent: PresentationDetent = .medium
 
     private var recentEmojis: [Emoji] {
-      if !cachedEmojiMap.isEmpty {
-        return preferences.recentlyUsedCustomEmojis.compactMap { cachedEmojiMap[$0] }
+      if cachedEmojiMap.isEmpty {
+        return []
       }
-      return []
+      if let sessionRecentShortcodes {
+        return sessionRecentShortcodes.compactMap { cachedEmojiMap[$0] }
+      }
+      return preferences.recentlyUsedCustomEmojis.compactMap { cachedEmojiMap[$0] }
     }
 
     private var emojisToSearch: [Emoji] {
@@ -287,6 +291,11 @@ extension StatusEditor {
           selectedDetent = .large
         }
       }
+      .onAppear {
+        if sessionRecentShortcodes == nil {
+          sessionRecentShortcodes = preferences.recentlyUsedCustomEmojis
+        }
+      }
       .task(id: store.customEmojiContainer) {
         var map: [String: Emoji] = [:]
         var all: [Emoji] = []
@@ -300,6 +309,9 @@ extension StatusEditor {
         }
         cachedEmojiMap = map
         allEmojis = all
+        if sessionRecentShortcodes == nil {
+          sessionRecentShortcodes = preferences.recentlyUsedCustomEmojis
+        }
       }
     }
   }

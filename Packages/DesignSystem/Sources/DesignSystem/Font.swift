@@ -120,8 +120,7 @@ extension UIFont {
   }
 
   public var emojiSize: CGFloat {
-    // Apple Color Emoji glyphs fill ~1.35x of font pointSize (matching line height + optical bleed)
-    round(pointSize * 1.35)
+    pointSize
   }
 
   public var emojiBaselineOffset: CGFloat {
