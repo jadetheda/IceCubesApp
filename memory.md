@@ -1229,3 +1229,11 @@
 - **2026-10-19T02:04:00Z**:
   - **Description**: Production CI Build #39187537299 succeeded completely (All stages passed, unsigned IPA generated).
   - **Milestone**: Successfully compiled and archived the IceCubes iOS app for commit `8141050c` in 8m19s. Custom emoji search with real-time filtering, adaptive detents, colon-stripping, interactive keyboard dismiss, and settings labels normalization are fully verified in a production IPA build. Unsigned IPA artifact published.
+
+- **2026-10-20T08:08:00Z**:
+  - **Description**: Standardized and localized the VisionKit OCR alternate alt text button label in `Localizable.xcstrings`.
+  - **Details**:
+    - Updated `status.editor.media.copy-text` from misleading `"🤖 Copy text from image"` to `"Extract text from image"`, accurately describing the action of transcribing text into the ALT description field while eliminating the robot emoji from on-device Apple OCR.
+    - Added native translations across all 19 supported languages in `Localizable.xcstrings`.
+    - Preserved upstream's original `status.editor.media.generate-description` ("🤖 Generate description") button untouched.
+  - **Impact**: Resolves user ambiguity regarding the alternate ALT text action and completes missing localizations for 17 languages.
