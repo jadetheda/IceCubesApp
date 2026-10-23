@@ -83,7 +83,7 @@ extension Font {
   }
 
   public static var scaledCalloutFont: UIFont {
-    customUIFont(size: userScaledFontSize(baseSize: body))
+    customUIFont(size: userScaledFontSize(baseSize: callout))
   }
 
   public static var scaledSubheadline: Font {
