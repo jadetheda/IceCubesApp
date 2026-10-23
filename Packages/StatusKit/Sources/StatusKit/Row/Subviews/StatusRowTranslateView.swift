@@ -2,6 +2,9 @@ import DesignSystem
 import Env
 import Models
 import SwiftUI
+#if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+import Translation
+#endif
 
 @MainActor
 struct StatusRowTranslateView: View {
@@ -12,18 +15,23 @@ struct StatusRowTranslateView: View {
 
   var viewModel: StatusRowViewModel
 
+  #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+  @State private var translationConfig: TranslationSession.Configuration?
+  #endif
+
   private var shouldShowTranslateButton: Bool {
     let statusLang = viewModel.getStatusLang()
 
-    if     let userLang = preferences.serverPreferences?.postLanguage,
-    preferences.showTranslateButton,
-    !viewModel.finalStatus.content.asRawText.isEmpty,
-      viewModel.translation == nil
-    {
-      return userLang != statusLang
-    } else {
-      return false
+    if let userLang = preferences.serverPreferences?.postLanguage {
+      if preferences.showTranslateButton {
+        if !viewModel.finalStatus.content.asRawText.isEmpty {
+          if viewModel.translation == nil {
+            return userLang != statusLang
+          }
+        }
+      }
     }
+    return false
   }
 
   private func getLocalizedString(langCode: String, provider: String) -> String {
@@ -37,23 +45,25 @@ struct StatusRowTranslateView: View {
 
   @ViewBuilder
   var translateButton: some View {
-    if !isInCaptureMode,
-      !isCompact,
-      let userLang = preferences.serverPreferences?.postLanguage,
-      shouldShowTranslateButton
-    {
-      Button {
-        Task {
-          await viewModel.translate(userLang: userLang)
-        }
-      } label: {
-        if viewModel.isLoadingTranslation {
-          ProgressView()
-        } else {
-          Text("status.action.translate")
+    if !isInCaptureMode {
+      if !isCompact {
+        if let userLang = preferences.serverPreferences?.postLanguage {
+          if shouldShowTranslateButton {
+            Button {
+              Task {
+                await viewModel.translate(userLang: userLang)
+              }
+            } label: {
+              if viewModel.isLoadingTranslation {
+                ProgressView()
+              } else {
+                Text("status.action.translate")
+              }
+            }
+            .buttonStyle(.borderless)
+          }
         }
       }
-      .buttonStyle(.borderless)
     }
   }
 
@@ -71,9 +81,9 @@ struct StatusRowTranslateView: View {
           }
         }
 
-      if let translation = viewModel.translation {
-        if !viewModel.isLoadingTranslation {
-          if preferences.preferredTranslationType != .useApple {
+      if preferences.translationDisplayStyle == .card {
+        if let translation = viewModel.translation {
+          if !viewModel.isLoadingTranslation {
             GroupBox {
               VStack(alignment: .leading, spacing: 4) {
                 Text(translation.content.asSafeMarkdownAttributedString)
@@ -105,6 +115,47 @@ struct StatusRowTranslateView: View {
         }
       }
     }
+    #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+    .onChange(of: viewModel.triggerAppleInlineTranslation) { _, shouldTrigger in
+      if shouldTrigger {
+        if translationConfig == nil {
+          let targetLang = preferences.serverPreferences?.postLanguage.map { Locale.Language(identifier: $0) }
+          let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
+          translationConfig = .init(source: sourceLang, target: targetLang)
+        } else {
+          translationConfig?.invalidate()
+        }
+      }
+    }
+    .translationTask(translationConfig) { session in
+      let text = await MainActor.run { viewModel.finalStatus.content.asRawText }
+      let sourceLang = await MainActor.run { viewModel.getStatusLang() ?? "" }
+      let statusId = await MainActor.run { viewModel.finalStatus.id }
+      do {
+        let response = try await session.translate(text)
+        let translation = Translation(
+          content: response.targetText,
+          detectedSourceLanguage: sourceLang,
+          provider: "Apple"
+        )
+        await MainActor.run {
+          withAnimation {
+            viewModel.translation = translation
+            viewModel.isLoadingTranslation = false
+            viewModel.triggerAppleInlineTranslation = false
+          }
+          StatusTranslationCache.shared.set(statusId: statusId, translation: translation)
+        }
+      } catch {
+        await MainActor.run {
+          withAnimation {
+            viewModel.isLoadingTranslation = false
+            viewModel.triggerAppleInlineTranslation = false
+          }
+        }
+      }
+    }
+    #endif
     #if !os(visionOS)
     .onScrollVisibilityChange(threshold: 0.5) { visible in
       if visible {

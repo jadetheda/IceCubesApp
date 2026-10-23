@@ -34,6 +34,8 @@ import SwiftUI
 
   var translation: Translation?
   var userDismissedTranslation: Bool = false
+  var showOriginalText: Bool = false
+  var triggerAppleInlineTranslation: Bool = false
   var isLoadingTranslation: Bool = false
   var showDeleteAlert: Bool = false
   var showRedraftAlert: Bool = false
@@ -43,6 +45,8 @@ import SwiftUI
       if oldValue != preferredTranslationType {
         translation = nil
         showAppleTranslation = false
+        triggerAppleInlineTranslation = false
+        showOriginalText = false
       }
     }
   }
@@ -510,9 +514,17 @@ import SwiftUI
 
   func translate(userLang: String) async {
     userDismissedTranslation = false
+    showOriginalText = false
     updatePreferredTranslation()
     if preferredTranslationType == .useApple {
-      showAppleTranslation = true
+      #if targetEnvironment(macCatalyst) || os(visionOS)
+        showAppleTranslation = true
+      #else
+        withAnimation {
+          isLoadingTranslation = true
+          triggerAppleInlineTranslation = true
+        }
+      #endif
       return
     }
 
@@ -596,7 +608,9 @@ import SwiftUI
     guard UserPreferences.shared.autoTranslateForeignPosts else { return }
     guard !userDismissedTranslation else { return }
     updatePreferredTranslation()
+    #if targetEnvironment(macCatalyst) || os(visionOS)
     guard preferredTranslationType != .useApple else { return }
+    #endif
     guard let statusLang = getStatusLang(), !statusLang.isEmpty, statusLang != userLang else { return }
     guard translation == nil, !isLoadingTranslation else { return }
 
@@ -627,6 +641,8 @@ import SwiftUI
   func dismissTranslation() {
     userDismissedTranslation = true
     translation = nil
+    showOriginalText = false
+    triggerAppleInlineTranslation = false
   }
 
   private func getDeepLClient() -> DeepLClient {

@@ -1,4 +1,5 @@
 import Combine
+import Env
 import SwiftUI
 import CoreText
 import CoreGraphics
@@ -394,6 +395,9 @@ public final class Theme {
     compactLayoutPadding = themeStorage.compactLayoutPadding
     avatarAnimated = themeStorage.avatarAnimated
     selectedSet = storedSet
+    if selectedSet == .nemesisDark || selectedSet == .nemesisLight {
+      UserPreferences.shared.applyThemeTranslationDefault(.inline)
+    }
     computeContrastingTintColor()
     registerCustomFonts()
   }
@@ -553,6 +557,11 @@ public final class Theme {
     actionBookmarkColor = colorSet.bookmarkColor
     if !setBySystem {
       actionIsLike = colorSet.isLikeAction
+      if name == .nemesisDark || name == .nemesisLight {
+        UserPreferences.shared.applyThemeTranslationDefault(.inline)
+      } else {
+        UserPreferences.shared.applyThemeTranslationDefault(.card)
+      }
     }
     storedSet = name
   }

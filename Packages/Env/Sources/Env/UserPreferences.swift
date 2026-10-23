@@ -38,6 +38,8 @@ import SwiftUI
     @AppStorage("user_deepl_api_free") public var userDeeplAPIFree = true
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
     @AppStorage("auto_translate_foreign_posts") public var autoTranslateForeignPosts = false
+    @AppStorage("translation_display_style") public var translationDisplayStyle: TranslationDisplayStyle = .card
+    @AppStorage("translation_display_style_user_customized") public var translationDisplayStyleUserCustomized: Bool = false
 
     @AppStorage("hide_interaction_buttons") public var hideInteractionButtons = false
     @AppStorage("show_error_popups") public var showErrorPopups = false
@@ -337,6 +339,29 @@ import SwiftUI
   public var autoTranslateForeignPosts: Bool {
     didSet {
       storage.autoTranslateForeignPosts = autoTranslateForeignPosts
+    }
+  }
+
+  public var translationDisplayStyle: TranslationDisplayStyle {
+    didSet {
+      storage.translationDisplayStyle = translationDisplayStyle
+      storage.translationDisplayStyleUserCustomized = true
+      translationDisplayStyleUserCustomized = true
+    }
+  }
+
+  public var translationDisplayStyleUserCustomized: Bool {
+    didSet {
+      storage.translationDisplayStyleUserCustomized = translationDisplayStyleUserCustomized
+    }
+  }
+
+  public func applyThemeTranslationDefault(_ style: TranslationDisplayStyle) {
+    if !storage.translationDisplayStyleUserCustomized {
+      storage.translationDisplayStyle = style
+      translationDisplayStyle = style
+      storage.translationDisplayStyleUserCustomized = false
+      translationDisplayStyleUserCustomized = false
     }
   }
 
@@ -937,6 +962,8 @@ import SwiftUI
     userDeeplAPIFree = storage.userDeeplAPIFree
     autoDetectPostLanguage = storage.autoDetectPostLanguage
     autoTranslateForeignPosts = storage.autoTranslateForeignPosts
+    translationDisplayStyle = storage.translationDisplayStyle
+    translationDisplayStyleUserCustomized = storage.translationDisplayStyleUserCustomized
     galleryColumns = storage.galleryColumns
     galleryCropToSquare = storage.galleryCropToSquare
     galleryAddThinMargins = storage.galleryAddThinMargins

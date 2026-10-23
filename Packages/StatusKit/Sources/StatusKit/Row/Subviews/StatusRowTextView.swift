@@ -14,11 +14,88 @@ struct StatusRowTextView: View {
 
   var viewModel: StatusRowViewModel
 
+  private var isInlineTranslationActive: Bool {
+    if userPreferences.translationDisplayStyle == .inline {
+      if viewModel.translation != nil {
+        if !viewModel.isLoadingTranslation {
+          return true
+        }
+      }
+    }
+    return false
+  }
+
+  private var displayedContent: HTMLString {
+    if isInlineTranslationActive {
+      if !viewModel.showOriginalText {
+        if let translatedContent = viewModel.translation?.content {
+          return translatedContent
+        }
+      }
+    }
+    return statusDataController.content
+  }
+
+  private var translatedFromText: String {
+    guard let translation = viewModel.translation else { return "" }
+    let rawLang = translation.detectedSourceLanguage.isEmpty ? (viewModel.getStatusLang() ?? "") : translation.detectedSourceLanguage
+    if let localizedName = Locale.current.localizedString(forLanguageCode: rawLang) {
+      let format = NSLocalizedString("status.action.translated-from-%@", comment: "")
+      if format != "status.action.translated-from-%@" {
+        return String.localizedStringWithFormat(format, localizedName)
+      } else {
+        return "Translated from \(localizedName)"
+      }
+    } else if !rawLang.isEmpty {
+      return "Translated from \(rawLang)"
+    } else {
+      return "Translated"
+    }
+  }
+
+  @ViewBuilder
+  private var inlineTranslationHeader: some View {
+    if isInlineTranslationActive {
+      HStack(spacing: 5) {
+        Image(systemName: "translate")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Text(translatedFromText)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+        Button {
+          withAnimation(.easeInOut(duration: 0.15)) {
+            viewModel.showOriginalText.toggle()
+          }
+        } label: {
+          Text(viewModel.showOriginalText ? "Show translation" : "Show original")
+            .font(.footnote)
+            .foregroundStyle(theme.tintColor)
+        }
+        .buttonStyle(.plain)
+        Spacer()
+        Button {
+          withAnimation {
+            viewModel.dismissTranslation()
+          }
+        } label: {
+          Image(systemName: "xmark")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("status.show-less")
+      }
+      .padding(.bottom, 2)
+    }
+  }
+
   var body: some View {
-    VStack {
+    VStack(alignment: .leading, spacing: 2) {
+      inlineTranslationHeader
       HStack {
         EmojiTextApp(
-          statusDataController.content,
+          displayedContent,
           emojis: viewModel.finalStatus.emojis,
           language: viewModel.finalStatus.language,
           lineLimit: isNotificationsTab

@@ -12,6 +12,7 @@ struct TranslationSettingsView: View {
   var body: some View {
     Form {
       translationSelector
+      displayStyleSection
       if preferences.preferredTranslationType == .useDeepl {
         Section("settings.translation.user-api-key") {
           deepLPicker
@@ -53,10 +54,30 @@ struct TranslationSettingsView: View {
   @ViewBuilder
   private var translationSelector: some View {
     @Bindable var preferences = preferences
-    Picker("Translation Service", selection: $preferences.preferredTranslationType) {
+    Picker("Translation service", selection: $preferences.preferredTranslationType) {
       ForEach(allTTCases, id: \.self) { type in
         Text(type.description).tag(type)
       }
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
+  }
+
+  @ViewBuilder
+  private var displayStyleSection: some View {
+    @Bindable var preferences = preferences
+    Section {
+      Picker("Display style", selection: $preferences.translationDisplayStyle) {
+        ForEach(TranslationDisplayStyle.allCases, id: \.self) { style in
+          Text(style.description).tag(style)
+        }
+      }
+      .pickerStyle(.segmented)
+    } header: {
+      Text("Display style")
+    } footer: {
+      Text("Choose whether translations replace the post text inline or appear as a card below the post.")
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
@@ -104,8 +125,12 @@ struct TranslationSettingsView: View {
     #endif
   }
 
-  private var isAppleTranslation: Bool {
-    preferences.preferredTranslationType == .useApple
+  private var isAutoTranslateDisabled: Bool {
+    #if targetEnvironment(macCatalyst) || os(visionOS)
+      return preferences.preferredTranslationType == .useApple
+    #else
+      return false
+    #endif
   }
 
   @ViewBuilder
@@ -113,12 +138,12 @@ struct TranslationSettingsView: View {
     @Bindable var preferences = preferences
     Section {
       Toggle(isOn: $preferences.autoTranslateForeignPosts) {
-        Text("Auto-Translate on Scroll")
+        Text("Auto-translate on scroll")
       }
-      .disabled(isAppleTranslation)
+      .disabled(isAutoTranslateDisabled)
     } footer: {
-      if isAppleTranslation {
-        Text("Auto-translate on scroll is not supported with Apple Translate because Apple requires displaying a modal translation sheet. Switch to DeepL or Instance to use this feature.")
+      if isAutoTranslateDisabled {
+        Text("Auto-translate on scroll is not supported for Apple Translate on this platform because a modal sheet is required. Switch to DeepL or Instance to use this feature.")
       } else {
         Text("Automatically translates foreign language posts when they stay visible on your screen for more than half a second. Rapid scrolling will not consume translation quota.")
       }
@@ -130,27 +155,27 @@ struct TranslationSettingsView: View {
 
   @ViewBuilder
   private var backgroundAPIKey: some View {
-    if preferences.preferredTranslationType != .useDeepl,
-      !apiKey.isEmpty
-    {
-      Section {
-        Text("The DeepL API Key is still stored!")
-        if preferences.preferredTranslationType == .useServerIfPossible {
-          Text(
-            "It can however still be used as a fallback for your instance's translation service.")
-        }
-        Button(role: .destructive) {
-          withAnimation {
-            writeNewValue(value: "")
-            readValue()
+    if preferences.preferredTranslationType != .useDeepl {
+      if !apiKey.isEmpty {
+        Section {
+          Text("The DeepL API Key is still stored!")
+          if preferences.preferredTranslationType == .useServerIfPossible {
+            Text(
+              "It can however still be used as a fallback for your instance's translation service.")
           }
-        } label: {
-          Text("action.delete")
+          Button(role: .destructive) {
+            withAnimation {
+              writeNewValue(value: "")
+              readValue()
+            }
+          } label: {
+            Text("action.delete")
+          }
         }
+        #if !os(visionOS)
+          .listRowBackground(theme.primaryBackgroundColor)
+        #endif
       }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
     }
   }
 
