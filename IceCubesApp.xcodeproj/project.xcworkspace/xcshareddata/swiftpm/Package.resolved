@@ -22,10 +22,10 @@
     {
       "identity" : "emojitext",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Dimillian/EmojiText",
+      "location" : "https://github.com/jadetheda/EmojiText",
       "state" : {
         "branch" : "fix-ios26",
-        "revision" : "3b11459a19c9406176a08b0f0599b98f88113296"
+        "revision" : "a8abf7a5a41d3d4905afcf3986beaff252ec22ec"
       }
     },
     {
