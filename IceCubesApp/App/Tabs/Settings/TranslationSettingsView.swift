@@ -36,6 +36,7 @@ struct TranslationSettingsView: View {
       }
       backgroundAPIKey
       autoDetectSection
+      autoTranslateSection
     }
     .navigationTitle("settings.translation.navigation-title")
     #if !os(visionOS)
@@ -97,6 +98,30 @@ struct TranslationSettingsView: View {
       }
     } footer: {
       Text("settings.translation.auto-detect-post-language-footer")
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
+  }
+
+  private var isAppleTranslation: Bool {
+    preferences.preferredTranslationType == .useApple
+  }
+
+  @ViewBuilder
+  private var autoTranslateSection: some View {
+    @Bindable var preferences = preferences
+    Section {
+      Toggle(isOn: $preferences.autoTranslateForeignPosts) {
+        Text("Auto-Translate on Scroll")
+      }
+      .disabled(isAppleTranslation)
+    } footer: {
+      if isAppleTranslation {
+        Text("Auto-translate on scroll is not supported with Apple Translate because Apple requires displaying a modal translation sheet. Switch to DeepL or Instance to use this feature.")
+      } else {
+        Text("Automatically translates foreign language posts when they stay visible on your screen for more than half a second. Rapid scrolling will not consume translation quota.")
+      }
     }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)

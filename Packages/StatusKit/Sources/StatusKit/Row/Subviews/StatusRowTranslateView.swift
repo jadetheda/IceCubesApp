@@ -63,29 +63,70 @@ struct StatusRowTranslateView: View {
   }
 
   var body: some View {
-    generalTranslateButton
-      .onChange(of: preferences.preferredTranslationType) { _, _ in
-        withAnimation {
-          viewModel.updatePreferredTranslation()
+    VStack(alignment: .leading, spacing: 0) {
+      generalTranslateButton
+        .onChange(of: preferences.preferredTranslationType) { _, _ in
+          withAnimation {
+            viewModel.updatePreferredTranslation()
+          }
         }
-      }
 
-    if let translation = viewModel.translation, !viewModel.isLoadingTranslation,
-      preferences.preferredTranslationType != .useApple
-    {
-      GroupBox {
-        VStack(alignment: .leading, spacing: 4) {
-          Text(translation.content.asSafeMarkdownAttributedString)
-            .font(.scaledBody)
-          Text(
-            getLocalizedString(
-              langCode: translation.detectedSourceLanguage, provider: translation.provider)
-          )
-          .font(.footnote)
-          .foregroundStyle(.secondary)
+      if let translation = viewModel.translation {
+        if !viewModel.isLoadingTranslation {
+          if preferences.preferredTranslationType != .useApple {
+            GroupBox {
+              VStack(alignment: .leading, spacing: 4) {
+                Text(translation.content.asSafeMarkdownAttributedString)
+                  .font(.scaledBody)
+                HStack {
+                  Text(
+                    getLocalizedString(
+                      langCode: translation.detectedSourceLanguage, provider: translation.provider)
+                  )
+                  .font(.footnote)
+                  .foregroundStyle(.secondary)
+                  Spacer()
+                  Button {
+                    withAnimation {
+                      viewModel.dismissTranslation()
+                    }
+                  } label: {
+                    Image(systemName: "xmark")
+                      .font(.footnote)
+                      .foregroundStyle(.secondary)
+                  }
+                  .buttonStyle(.borderless)
+                  .accessibilityLabel("status.show-less")
+                }
+              }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+          }
         }
       }
-      .fixedSize(horizontal: false, vertical: true)
+    }
+    #if !os(visionOS)
+    .onScrollVisibilityChange(threshold: 0.5) { visible in
+      if visible {
+        triggerAutoTranslate()
+      } else {
+        viewModel.cancelAutoTranslate()
+      }
+    }
+    #endif
+    .onAppear {
+      triggerAutoTranslate()
+    }
+    .onDisappear {
+      viewModel.cancelAutoTranslate()
+    }
+  }
+
+  private func triggerAutoTranslate() {
+    if !isInCaptureMode {
+      if let userLang = preferences.serverPreferences?.postLanguage {
+        viewModel.autoTranslateIfNeeded(userLang: userLang)
+      }
     }
   }
 }

@@ -37,6 +37,7 @@ import SwiftUI
       .useServerIfPossible
     @AppStorage("user_deepl_api_free") public var userDeeplAPIFree = true
     @AppStorage("auto_detect_post_language") public var autoDetectPostLanguage = true
+    @AppStorage("auto_translate_foreign_posts") public var autoTranslateForeignPosts = false
 
     @AppStorage("hide_interaction_buttons") public var hideInteractionButtons = false
     @AppStorage("show_error_popups") public var showErrorPopups = false
@@ -330,6 +331,12 @@ import SwiftUI
   public var autoDetectPostLanguage: Bool {
     didSet {
       storage.autoDetectPostLanguage = autoDetectPostLanguage
+    }
+  }
+
+  public var autoTranslateForeignPosts: Bool {
+    didSet {
+      storage.autoTranslateForeignPosts = autoTranslateForeignPosts
     }
   }
 
@@ -929,6 +936,7 @@ import SwiftUI
     preferredTranslationType = storage.preferredTranslationType
     userDeeplAPIFree = storage.userDeeplAPIFree
     autoDetectPostLanguage = storage.autoDetectPostLanguage
+    autoTranslateForeignPosts = storage.autoTranslateForeignPosts
     galleryColumns = storage.galleryColumns
     galleryCropToSquare = storage.galleryCropToSquare
     galleryAddThinMargins = storage.galleryAddThinMargins

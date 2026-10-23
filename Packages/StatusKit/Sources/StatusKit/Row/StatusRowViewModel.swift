@@ -33,6 +33,7 @@ import SwiftUI
   var isFiltered: Bool = false
 
   var translation: Translation?
+  var userDismissedTranslation: Bool = false
   var isLoadingTranslation: Bool = false
   var showDeleteAlert: Bool = false
   var showRedraftAlert: Bool = false
@@ -235,6 +236,9 @@ import SwiftUI
       isPinned = reblog.pinned == true
     } else {
       isPinned = status.pinned == true
+    }
+    if let cached = StatusTranslationCache.shared.get(statusId: finalStatus.id) {
+      translation = cached
     }
     if UserPreferences.shared.autoExpandSpoilers {
       displaySpoiler = false
@@ -505,6 +509,7 @@ import SwiftUI
   }
 
   func translate(userLang: String) async {
+    userDismissedTranslation = false
     updatePreferredTranslation()
     if preferredTranslationType == .useApple {
       showAppleTranslation = true
@@ -561,6 +566,9 @@ import SwiftUI
       self.translation = translation
       isLoadingTranslation = false
     }
+    if let translation {
+      StatusTranslationCache.shared.set(statusId: finalStatus.id, translation: translation)
+    }
   }
 
   func translateWithInstance(userLang: String) async {
@@ -577,6 +585,48 @@ import SwiftUI
       self.translation = translation
       isLoadingTranslation = false
     }
+    if let translation {
+      StatusTranslationCache.shared.set(statusId: finalStatus.id, translation: translation)
+    }
+  }
+
+  private var autoTranslateTask: Task<Void, Never>?
+
+  func autoTranslateIfNeeded(userLang: String) {
+    guard UserPreferences.shared.autoTranslateForeignPosts else { return }
+    guard !userDismissedTranslation else { return }
+    updatePreferredTranslation()
+    guard preferredTranslationType != .useApple else { return }
+    guard let statusLang = getStatusLang(), !statusLang.isEmpty, statusLang != userLang else { return }
+    guard translation == nil, !isLoadingTranslation else { return }
+
+    if let cached = StatusTranslationCache.shared.get(statusId: finalStatus.id) {
+      self.translation = cached
+      return
+    }
+
+    autoTranslateTask?.cancel()
+    autoTranslateTask = Task { @MainActor [weak self] in
+      do {
+        try await Task.sleep(nanoseconds: 600_000_000)
+        guard !Task.isCancelled else { return }
+        guard let self else { return }
+        guard self.translation == nil else { return }
+        await self.translate(userLang: userLang)
+      } catch {
+        // Cancelled before dwell elapsed
+      }
+    }
+  }
+
+  func cancelAutoTranslate() {
+    autoTranslateTask?.cancel()
+    autoTranslateTask = nil
+  }
+
+  func dismissTranslation() {
+    userDismissedTranslation = true
+    translation = nil
   }
 
   private func getDeepLClient() -> DeepLClient {
