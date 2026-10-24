@@ -262,6 +262,10 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: In Swift 6 mode with `.defaultIsolation(MainActor.self)` (such as in `StatusKit`), SwiftUI closures like `.translationTask` inherit `@MainActor` isolation. Calling nonisolated async instance methods on Apple SDK classes that are not annotated with `Sendable` in the SDK (specifically `TranslationSession.translate(_:)`) causes the compiler to flag `error: sending 'session' risks causing data races: sending main actor-isolated 'session' to nonisolated instance method 'translate' risks causing data races`.
 - **Solution**: Use `@preconcurrency import Translation` alongside `extension TranslationSession: @unchecked @retroactive Sendable {}` guarded by `#if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)`. This marks `TranslationSession` as Sendable across actor boundaries, allowing safe nonisolated calls from MainActor closures.
 
+**Swift 6 Default MainActor Isolation on Struct Methods Called from Background Actors**
+- **Root Cause**: When a Swift package target is configured with `.swiftLanguageMode(.v6)` and `.defaultIsolation(MainActor.self)` (e.g. `Timeline`), all unannotated types and methods default to `@MainActor`. Even if a struct conforms to `Sendable` (e.g. `TimelineContentFilter.Snapshot`), its instance methods implicitly inherit `@MainActor` isolation. Calling those synchronous methods from a background `actor` (e.g. `TimelineDatasource`) causes an Exit Code 65 compilation error: `call to main actor-isolated instance method 'isStatusFilteredOut(...)' in a synchronous actor-isolated context`.
+- **Solution**: Explicitly annotate synchronous helper methods and initializers on `Sendable` structs as `public nonisolated` (e.g., `public nonisolated func isStatusFilteredOut(...)`). This ensures they remain callable synchronously across actor boundaries without triggering implicit async hops or actor isolation errors.
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides
