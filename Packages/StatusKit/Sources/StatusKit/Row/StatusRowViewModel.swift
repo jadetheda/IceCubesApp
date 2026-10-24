@@ -509,6 +509,27 @@ import SwiftUI
     }
   }
 
+  var translationText: String {
+    var text = finalStatus.content.asRawText
+    for link in finalStatus.content.links {
+      if link.type == .url {
+        let urlString = link.url.absoluteString
+        if !text.contains(urlString) {
+          if text.contains(link.displayString) {
+            if link.displayString.hasSuffix("…") || link.displayString.hasSuffix("...") {
+              text = text.replacingOccurrences(of: link.displayString, with: urlString)
+            } else {
+              text = text.replacingOccurrences(of: link.displayString, with: "\(link.displayString) (\(urlString))")
+            }
+          } else {
+            text += "\n\(urlString)"
+          }
+        }
+      }
+    }
+    return text
+  }
+
   func getStatusLang() -> String? {
     if let lang = finalStatus.language {
       if !lang.isEmpty {
@@ -587,7 +608,8 @@ import SwiftUI
     let deepLClient = getDeepLClient()
     let translation = try? await deepLClient.request(
       target: userLang,
-      text: finalStatus.content.asRawText)
+      text: translationText,
+      originalLinks: finalStatus.content.links)
     withAnimation {
       self.translation = translation
       isLoadingTranslation = false

@@ -170,3 +170,54 @@ func testHTMLStringInit_trailingHashtags() throws {
   #expect("Here are some Github tags\n\nSwift Tags" == htmlString6.asRawText)
   #expect(false == htmlString6.hadTrailingTags) // It should not be removed!
 }
+
+@Test
+func testHTMLStringInit_stringValueAutolinking() throws {
+  let content = "Visit https://example.com for more info."
+  let htmlString = HTMLString(stringValue: content, parseMarkdown: true)
+  #expect("Visit [https://example.com](https://example.com) for more info." == htmlString.asMarkdown)
+  #expect(1 == htmlString.links.count)
+  #expect("https://example.com" == htmlString.links[0].url.absoluteString)
+  #expect("https://example.com" == htmlString.links[0].displayString)
+  #expect(htmlString.asSafeMarkdownAttributedString.runs.contains(where: { run in
+    run.link?.absoluteString == "https://example.com"
+  }))
+}
+
+@Test
+func testHTMLStringInit_stringValueWithOriginalLinks() throws {
+  guard let aliceUrl = URL(string: "https://mastodon.social/@alice"),
+        let swiftUrl = URL(string: "https://mastodon.social/tags/swift") else {
+    Issue.record("Failed to create test URLs")
+    return
+  }
+  let originalLinks = [
+    HTMLString.Link(aliceUrl, displayString: "@alice"),
+    HTMLString.Link(swiftUrl, displayString: "#swift")
+  ]
+  let content = "Hello @alice check #swift at https://swift.org!"
+  let htmlString = HTMLString(stringValue: content, parseMarkdown: true, originalLinks: originalLinks)
+  #expect("Hello [@alice](https://mastodon.social/@alice) check [#swift](https://mastodon.social/tags/swift) at [https://swift.org](https://swift.org)!" == htmlString.asMarkdown)
+  #expect(3 == htmlString.links.count)
+  #expect(htmlString.links.contains(where: { $0.url.absoluteString == "https://mastodon.social/@alice" && $0.type == .mention }))
+  #expect(htmlString.links.contains(where: { $0.url.absoluteString == "https://mastodon.social/tags/swift" && $0.type == .hashtag }))
+  #expect(htmlString.links.contains(where: { $0.url.absoluteString == "https://swift.org" && $0.type == .url }))
+}
+
+@Test
+func testHTMLStringInit_stringValuePreservesExistingMarkdownLinks() throws {
+  let content = "Check [Google](https://google.com) and bare https://apple.com"
+  let htmlString = HTMLString(stringValue: content, parseMarkdown: true)
+  #expect("Check [Google](https://google.com) and bare [https://apple.com](https://apple.com)" == htmlString.asMarkdown)
+  #expect(2 == htmlString.links.count)
+  #expect(htmlString.links.contains(where: { $0.url.absoluteString == "https://google.com" && $0.displayString == "Google" }))
+  #expect(htmlString.links.contains(where: { $0.url.absoluteString == "https://apple.com" && $0.displayString == "https://apple.com" }))
+}
+
+@Test
+func testHTMLStringInit_statusURLDetected() throws {
+  let content = "Check status https://mastodon.social/@user/1123456789"
+  let htmlString = HTMLString(stringValue: content, parseMarkdown: true)
+  #expect(1 == htmlString.statusesURLs.count)
+  #expect("https://mastodon.social/@user/1123456789" == htmlString.statusesURLs[0].absoluteString)
+}

@@ -122,6 +122,11 @@ struct StatusRowTranslateView: View {
                 }
               }
             }
+            .environment(
+              \.openURL,
+              OpenURLAction { url in
+                viewModel.routerPath.handleStatus(status: viewModel.finalStatus, url: url)
+              })
             .fixedSize(horizontal: false, vertical: true)
           }
         }
@@ -163,7 +168,7 @@ struct StatusRowTranslateView: View {
   }
 
   private func performAppleTranslation(session: TranslationSession) async {
-    let text = viewModel.finalStatus.content.asRawText
+    let text = viewModel.translationText
     let sourceLang = viewModel.getStatusLang() ?? ""
     let statusId = viewModel.finalStatus.id
     guard !text.isEmpty else {
@@ -179,7 +184,8 @@ struct StatusRowTranslateView: View {
       let translation = Translation(
         content: response.targetText,
         detectedSourceLanguage: detectedLang,
-        provider: "Apple"
+        provider: "Apple",
+        originalLinks: viewModel.finalStatus.content.links
       )
       withAnimation {
         viewModel.translation = translation

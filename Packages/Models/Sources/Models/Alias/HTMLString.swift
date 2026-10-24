@@ -38,60 +38,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     }
 
     if !alreadyDecoded {
-      // https://daringfireball.net/projects/markdown/syntax
-      // Pre-escape \ ` _ * ~ and [ as these are the only
-      // characters the markdown parser uses when it renders
-      // to attributed text. Note that ~ for strikethrough is
-      // not documented in the syntax docs but is used by
-      // AttributedString.
-      main_regex = try? NSRegularExpression(
-        pattern: "([\\*\\`\\~\\[\\\\])", options: .caseInsensitive)
-      // don't escape underscores that are between colons, they are most likely custom emoji
-      underscore_regex = try? NSRegularExpression(
-        pattern: "(?!\\B:[^:]*)(_)(?![^:]*:\\B)", options: .caseInsensitive)
-
-      asMarkdown = ""
-      do {
-        let document: SwiftSoup.Document = try SwiftSoup.parse(htmlValue)
-        var listCounters: [Int] = []
-        handleNode(node: document, listCounters: &listCounters)
-
-        document.outputSettings(OutputSettings().prettyPrint(pretty: false))
-        try document.select("p.quote-inline").remove()
-        try document.select("br").after("\n")
-        try document.select("p").after("\n\n")
-        let html = try document.html()
-        var text =
-          try SwiftSoup.clean(
-            html, "", Whitelist.none(), OutputSettings().prettyPrint(pretty: false)) ?? ""
-        // Remove the two last line break added after the last paragraph.
-        if text.hasSuffix("\n\n") {
-          _ = text.removeLast()
-          _ = text.removeLast()
-        }
-        asRawText = (try? Entities.unescape(text)) ?? text
-
-        if asMarkdown.hasPrefix("\n") {
-          _ = asMarkdown.removeFirst()
-        }
-
-        // Remove trailing hashtags
-        removeTrailingTags(doc: document)
-
-        // Regenerate attributed string after extracting tags
-        do {
-          let options = AttributedString.MarkdownParsingOptions(
-            allowsExtendedAttributes: true,
-            interpretedSyntax: .inlineOnlyPreservingWhitespace)
-          asSafeMarkdownAttributedString = try AttributedString(
-            markdown: asMarkdown, options: options)
-        } catch {
-          asSafeMarkdownAttributedString = AttributedString(stringLiteral: asMarkdown)
-        }
-
-      } catch {
-        asRawText = htmlValue
-      }
+      parseHTML(htmlValue)
     } else {
       do {
         let options = AttributedString.MarkdownParsingOptions(
@@ -105,13 +52,64 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     }
   }
 
-  public init(stringValue: String, parseMarkdown: Bool = false) {
-    htmlValue = stringValue
-    asMarkdown = stringValue
-    asRawText = stringValue
-    statusesURLs = []
+  private mutating func parseHTML(_ html: String) {
+    // https://daringfireball.net/projects/markdown/syntax
+    // Pre-escape \ ` _ * ~ and [ as these are the only
+    // characters the markdown parser uses when it renders
+    // to attributed text. Note that ~ for strikethrough is
+    // not documented in the syntax docs but is used by
+    // AttributedString.
+    main_regex = try? NSRegularExpression(
+      pattern: "([\\*\\`\\~\\[\\\\])", options: .caseInsensitive)
+    // don't escape underscores that are between colons, they are most likely custom emoji
+    underscore_regex = try? NSRegularExpression(
+      pattern: "(?!\\B:[^:]*)(_)(?![^:]*:\\B)", options: .caseInsensitive)
 
-    if parseMarkdown {
+    asMarkdown = ""
+    do {
+      let document: SwiftSoup.Document = try SwiftSoup.parse(html)
+      var listCounters: [Int] = []
+      handleNode(node: document, listCounters: &listCounters)
+
+      document.outputSettings(OutputSettings().prettyPrint(pretty: false))
+      try document.select("p.quote-inline").remove()
+      try document.select("br").after("\n")
+      try document.select("p").after("\n\n")
+      let cleanHtml = try document.html()
+      var text =
+        try SwiftSoup.clean(
+          cleanHtml, "", Whitelist.none(), OutputSettings().prettyPrint(pretty: false)) ?? ""
+      // Remove the two last line break added after the last paragraph.
+      if text.hasSuffix("\n\n") {
+        _ = text.removeLast()
+        _ = text.removeLast()
+      }
+      asRawText = (try? Entities.unescape(text)) ?? text
+
+      if asMarkdown.hasPrefix("\n") {
+        _ = asMarkdown.removeFirst()
+      }
+
+      // Remove trailing hashtags
+      removeTrailingTags(doc: document)
+
+      // Autolink any bare URLs that were not wrapped in <a> tags
+      let autolinkResult = Self.autolink(text: asMarkdown)
+      if autolinkResult.markdown != asMarkdown {
+        asMarkdown = autolinkResult.markdown
+        for l in autolinkResult.links {
+          if !links.contains(where: { $0.url == l.url }) {
+            links.append(l)
+          }
+        }
+        for u in autolinkResult.statusesURLs {
+          if !statusesURLs.contains(u) {
+            statusesURLs.append(u)
+          }
+        }
+      }
+
+      // Regenerate attributed string after extracting tags
       do {
         let options = AttributedString.MarkdownParsingOptions(
           allowsExtendedAttributes: true,
@@ -119,7 +117,201 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
         asSafeMarkdownAttributedString = try AttributedString(
           markdown: asMarkdown, options: options)
       } catch {
-        asSafeMarkdownAttributedString = AttributedString(stringLiteral: htmlValue)
+        asSafeMarkdownAttributedString = AttributedString(stringLiteral: asMarkdown)
+      }
+
+    } catch {
+      asRawText = html
+    }
+  }
+
+  public static func autolink(
+    text: String,
+    originalLinks: [Link] = []
+  ) -> (markdown: String, links: [Link], statusesURLs: [URL]) {
+    guard !text.isEmpty else {
+      return ("", [], [])
+    }
+
+    var result = text
+    var discoveredLinks: [Link] = []
+    var discoveredStatusesURLs: [URL] = []
+
+    func registerStatusURLIfNeeded(_ url: URL) {
+      if Int(url.lastPathComponent) != nil {
+        if !discoveredStatusesURLs.contains(url) {
+          discoveredStatusesURLs.append(url)
+        }
+      } else if url.host == "www.threads.net" || url.host == "threads.net" {
+        if url.pathComponents.count == 4 {
+          if url.pathComponents[2] == "post" {
+            if !discoveredStatusesURLs.contains(url) {
+              discoveredStatusesURLs.append(url)
+            }
+          }
+        }
+      }
+    }
+
+    // Step 1: Detect existing Markdown links: [display](url)
+    var protectedRanges: [Range<String.Index>] = []
+    if let mdRegex = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#) {
+      let nsString = result as NSString
+      let matches = mdRegex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+      for match in matches {
+        if let fullRange = Range(match.range, in: result) {
+          protectedRanges.append(fullRange)
+        }
+        let displayStr = nsString.substring(with: match.range(at: 1))
+        let urlStr = nsString.substring(with: match.range(at: 2))
+        var url = URL(string: urlStr)
+        if url == nil {
+          url = URL(string: urlStr, encodePath: true)
+        }
+        if let url {
+          let link = Link(url, displayString: displayStr)
+          if !discoveredLinks.contains(where: { $0.url == url }) {
+            discoveredLinks.append(link)
+          }
+          registerStatusURLIfNeeded(url)
+        }
+      }
+    }
+
+    // Step 2: Match mentions and hashtags from originalLinks
+    for origLink in originalLinks {
+      if origLink.type == .mention || origLink.type == .hashtag {
+        let target = origLink.displayString
+        if !target.isEmpty {
+          let escaped = NSRegularExpression.escapedPattern(for: target)
+          let pattern = #"(?:^|[\s\(\[\{])("# + escaped + #")(?=$|[\s\)\]\}\.\,\!\?\;\:])"#
+          if let regex = try? NSRegularExpression(pattern: pattern) {
+            let nsString = result as NSString
+            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length)).reversed()
+            for match in matches {
+              let targetNSRange = match.range(at: 1)
+              guard let targetRange = Range(targetNSRange, in: result) else { continue }
+              let overlaps = protectedRanges.contains { protected in
+                targetRange.lowerBound < protected.upperBound && targetRange.upperBound > protected.lowerBound
+              }
+              if !overlaps {
+                let replacement = "[\(target)](\(origLink.url.absoluteString))"
+                result.replaceSubrange(targetRange, with: replacement)
+                if !discoveredLinks.contains(where: { $0.url == origLink.url }) {
+                  discoveredLinks.append(origLink)
+                }
+                registerStatusURLIfNeeded(origLink.url)
+              }
+            }
+            // Re-scan protected ranges
+            protectedRanges.removeAll()
+            if let mdRegex = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#) {
+              let rescanned = mdRegex.matches(in: result, options: [], range: NSRange(location: 0, length: (result as NSString).length))
+              for m in rescanned {
+                if let r = Range(m.range, in: result) {
+                  protectedRanges.append(r)
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Step 3: Autolink bare URLs
+    let urlPattern = #"https?://[^\s<>"{}|\\^`]+"#
+    if let urlRegex = try? NSRegularExpression(pattern: urlPattern, options: [.caseInsensitive]) {
+      let nsString = result as NSString
+      let matches = urlRegex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length)).reversed()
+      for match in matches {
+        let matchNSRange = match.range
+        guard let matchRange = Range(matchNSRange, in: result) else { continue }
+        let overlaps = protectedRanges.contains { protected in
+          matchRange.lowerBound < protected.upperBound && matchRange.upperBound > protected.lowerBound
+        }
+        if overlaps { continue }
+
+        var rawCandidate = String(result[matchRange])
+        while let lastChar = rawCandidate.last, ".!?,;:\"'>".contains(lastChar) {
+          rawCandidate.removeLast()
+        }
+        while rawCandidate.hasSuffix(")") {
+          let openCount = rawCandidate.filter({ $0 == "(" }).count
+          let closeCount = rawCandidate.filter({ $0 == ")" }).count
+          if closeCount > openCount {
+            rawCandidate.removeLast()
+          } else {
+            break
+          }
+        }
+        while rawCandidate.hasSuffix("]") {
+          let openCount = rawCandidate.filter({ $0 == "[" }).count
+          let closeCount = rawCandidate.filter({ $0 == "]" }).count
+          if closeCount > openCount {
+            rawCandidate.removeLast()
+          } else {
+            break
+          }
+        }
+
+        guard !rawCandidate.isEmpty else { continue }
+        var validUrl = URL(string: rawCandidate)
+        if validUrl == nil {
+          validUrl = URL(string: rawCandidate, encodePath: true)
+        }
+        guard let validUrl, let scheme = validUrl.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+          continue
+        }
+
+        let candidateLen = rawCandidate.utf16.count
+        let candidateNSRange = NSRange(location: matchNSRange.location, length: candidateLen)
+        guard let candidateRange = Range(candidateNSRange, in: result) else { continue }
+
+        let replacement = "[\(rawCandidate)](\(validUrl.absoluteString))"
+        result.replaceSubrange(candidateRange, with: replacement)
+
+        let link = Link(validUrl, displayString: rawCandidate)
+        if !discoveredLinks.contains(where: { $0.url == validUrl }) {
+          discoveredLinks.append(link)
+        }
+        registerStatusURLIfNeeded(validUrl)
+      }
+    }
+
+    return (markdown: result, links: discoveredLinks, statusesURLs: discoveredStatusesURLs)
+  }
+
+  public init(
+    stringValue: String,
+    parseMarkdown: Bool = false,
+    originalLinks: [Link] = []
+  ) {
+    htmlValue = stringValue
+    asMarkdown = stringValue
+    asRawText = stringValue
+    statusesURLs = []
+    links = []
+
+    if parseMarkdown {
+      let hasHTML = stringValue.contains("<p") || stringValue.contains("<a ") || stringValue.contains("<br") || stringValue.contains("<div>")
+      if hasHTML {
+        parseHTML(stringValue)
+      } else {
+        let autolinkResult = Self.autolink(text: stringValue, originalLinks: originalLinks)
+        asMarkdown = autolinkResult.markdown
+        links = autolinkResult.links
+        statusesURLs = autolinkResult.statusesURLs
+        asRawText = stringValue
+
+        do {
+          let options = AttributedString.MarkdownParsingOptions(
+            allowsExtendedAttributes: true,
+            interpretedSyntax: .inlineOnlyPreservingWhitespace)
+          asSafeMarkdownAttributedString = try AttributedString(
+            markdown: asMarkdown, options: options)
+        } catch {
+          asSafeMarkdownAttributedString = AttributedString(stringLiteral: asMarkdown)
+        }
       }
     } else {
       asSafeMarkdownAttributedString = AttributedString(stringLiteral: htmlValue)
@@ -395,7 +587,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     public let type: LinkType
     public let title: String
 
-    init(_ url: URL, displayString: String) {
+    public init(_ url: URL, displayString: String) {
       self.url = url
       self.displayString = displayString
 

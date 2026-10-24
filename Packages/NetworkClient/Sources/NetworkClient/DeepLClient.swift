@@ -36,7 +36,11 @@ public struct DeepLClient: Sendable {
     deeplUserAPIFree = userAPIFree
   }
 
-  public func request(target: String, text: String) async throws -> Translation {
+  public func request(
+    target: String,
+    text: String,
+    originalLinks: [HTMLString.Link] = []
+  ) async throws -> Translation {
     var components = URLComponents(string: endpoint)!
     var queryItems: [URLQueryItem] = []
     queryItems.append(.init(name: "text", value: text))
@@ -52,7 +56,8 @@ public struct DeepLClient: Sendable {
       return .init(
         content: translation.text,
         detectedSourceLanguage: translation.detectedSourceLanguage,
-        provider: "DeepL.com")
+        provider: "DeepL.com",
+        originalLinks: originalLinks)
     }
     throw DeepLError.notFound
   }
