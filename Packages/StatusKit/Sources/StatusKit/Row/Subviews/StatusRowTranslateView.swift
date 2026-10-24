@@ -3,7 +3,9 @@ import Env
 import Models
 import SwiftUI
 #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
-import Translation
+@preconcurrency import Translation
+
+extension TranslationSession: @unchecked @retroactive Sendable {}
 #endif
 
 @MainActor
@@ -128,9 +130,9 @@ struct StatusRowTranslateView: View {
       }
     }
     .translationTask(translationConfig) { session in
-      let text = await MainActor.run { viewModel.finalStatus.content.asRawText }
-      let sourceLang = await MainActor.run { viewModel.getStatusLang() ?? "" }
-      let statusId = await MainActor.run { viewModel.finalStatus.id }
+      let text = viewModel.finalStatus.content.asRawText
+      let sourceLang = viewModel.getStatusLang() ?? ""
+      let statusId = viewModel.finalStatus.id
       do {
         let response = try await session.translate(text)
         let translation = Translation(
@@ -138,20 +140,16 @@ struct StatusRowTranslateView: View {
           detectedSourceLanguage: sourceLang,
           provider: "Apple"
         )
-        await MainActor.run {
-          withAnimation {
-            viewModel.translation = translation
-            viewModel.isLoadingTranslation = false
-            viewModel.triggerAppleInlineTranslation = false
-          }
-          StatusTranslationCache.shared.set(statusId: statusId, translation: translation)
+        withAnimation {
+          viewModel.translation = translation
+          viewModel.isLoadingTranslation = false
+          viewModel.triggerAppleInlineTranslation = false
         }
+        StatusTranslationCache.shared.set(statusId: statusId, translation: translation)
       } catch {
-        await MainActor.run {
-          withAnimation {
-            viewModel.isLoadingTranslation = false
-            viewModel.triggerAppleInlineTranslation = false
-          }
+        withAnimation {
+          viewModel.isLoadingTranslation = false
+          viewModel.triggerAppleInlineTranslation = false
         }
       }
     }

@@ -258,6 +258,10 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: Upstream commits (e.g., `9efcb16e`, `5c91bd28`) guarded APIs like `.defaultTabBarPlacement(...)`, `.axisBehavior(.verticalPreferred)`, and `@Environment(\.toolbarVerticalEdge)` with `#available(iOS 27.0, *)` or `#available(iOS 27.1, *)`. While `#available` prevents runtime execution on older OS versions, the Swift compiler STILL performs compile-time symbol resolution against the active Xcode SDK. On public runners (Xcode 15 / 16), these unreleased members do not exist, causing Exit Code 65 compile failures (`has no member 'defaultTabBarPlacement'`, `has no member 'axisBehavior'`).
 - **Solution**: Never adopt unreleased future OS APIs from upstream that rely on nonexistent SDK symbols. Omit or replace them with standard SwiftUI modifier chains (e.g. standard `offset(x: -12)` and `.tabViewStyle(.sidebarAdaptable)`).
 
+**Swift 6 TranslationSession Concurrency Data Race**
+- **Root Cause**: In Swift 6 mode with `.defaultIsolation(MainActor.self)` (such as in `StatusKit`), SwiftUI closures like `.translationTask` inherit `@MainActor` isolation. Calling nonisolated async instance methods on Apple SDK classes that are not annotated with `Sendable` in the SDK (specifically `TranslationSession.translate(_:)`) causes the compiler to flag `error: sending 'session' risks causing data races: sending main actor-isolated 'session' to nonisolated instance method 'translate' risks causing data races`.
+- **Solution**: Use `@preconcurrency import Translation` alongside `extension TranslationSession: @unchecked @retroactive Sendable {}` guarded by `#if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)`. This marks `TranslationSession` as Sendable across actor boundaries, allowing safe nonisolated calls from MainActor closures.
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides

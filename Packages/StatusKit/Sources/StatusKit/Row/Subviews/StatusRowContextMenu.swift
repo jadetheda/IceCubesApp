@@ -473,7 +473,6 @@ Button {
           do {
             let type = attachment.supportedType
             let isVideo = type == .video || type == .gifv
-            let resourceType: PHAssetResourceType = isVideo ? .video : .photo
             
             if isVideo {
               let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mp4")
