@@ -34,11 +34,10 @@ struct ContentSettingsView: View {
   var body: some View {
     @Bindable var userPreferences = userPreferences
     Form {
-      Section(header: Text("Language Text Post Filters"), footer: Text("Enabling these filters will hide text-only posts in chosen languages from your timeline, while preserving posts with media attachments.")) {
+      Section(header: Text("Language text post filters"), footer: Text("Enabling these filters will hide text-only posts in chosen languages from your timeline, while preserving posts with media attachments.")) {
         Toggle(isOn: $userPreferences.showLanguageFilters) {
           Text("Show language filters in timeline options")
         }
-        
       }
       #if !os(visionOS)
         .listRowBackground(theme.primaryBackgroundColor)

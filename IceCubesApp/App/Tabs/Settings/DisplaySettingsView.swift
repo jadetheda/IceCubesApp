@@ -129,7 +129,7 @@ struct DisplaySettingsView: View {
     @Bindable var theme = theme
     Section {
       Toggle("settings.display.theme.systemColor", isOn: $theme.followSystemColorScheme)
-      Toggle("Like instead of Favorite", isOn: $theme.actionIsLike)
+      Toggle("Like instead of favorite", isOn: $theme.actionIsLike)
       themeSelectorButton
       Group {
         ColorPicker("settings.display.theme.tint", selection: $localValues.tintColor)
@@ -139,10 +139,10 @@ struct DisplaySettingsView: View {
           "settings.display.theme.secondary-background",
           selection: $localValues.secondaryBackgroundColor)
         ColorPicker("settings.display.theme.text-color", selection: $localValues.labelColor)
-        ColorPicker("Favorite Color", selection: $localValues.actionFavoriteColor)
-        ColorPicker("Like Color", selection: $localValues.actionLikeColor)
-        ColorPicker("Boost Color", selection: $localValues.actionBoostColor)
-        ColorPicker("Bookmark Color", selection: $localValues.actionBookmarkColor)
+        ColorPicker("Favorite color", selection: $localValues.actionFavoriteColor)
+        ColorPicker("Like color", selection: $localValues.actionLikeColor)
+        ColorPicker("Boost color", selection: $localValues.actionBoostColor)
+        ColorPicker("Bookmark color", selection: $localValues.actionBookmarkColor)
       }
       .disabled(theme.followSystemColorScheme)
       .opacity(theme.followSystemColorScheme ? 0.5 : 1.0)
@@ -281,7 +281,7 @@ struct DisplaySettingsView: View {
           }
         }
         Toggle("Use grid layout for multiple images", isOn: $userPreferences.statusMediaGridMode)
-        Toggle("Crop Image Aspect Ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
+        Toggle("Crop image aspect ratio", isOn: $userPreferences.cropStatusMediaOnTimeline)
         Toggle("settings.display.translate-button", isOn: $userPreferences.showTranslateButton)
       }
       Group {
