@@ -215,26 +215,31 @@ public final class Theme {
 
   public var actionFavoriteColor: Color {
     didSet {
+      guard oldValue != actionFavoriteColor else { return }
       themeStorage.actionFavoriteColor = actionFavoriteColor
     }
   }
   public var actionLikeColor: Color {
     didSet {
+      guard oldValue != actionLikeColor else { return }
       themeStorage.actionLikeColor = actionLikeColor
     }
   }
   public var actionBoostColor: Color {
     didSet {
+      guard oldValue != actionBoostColor else { return }
       themeStorage.actionBoostColor = actionBoostColor
     }
   }
   public var actionBookmarkColor: Color {
     didSet {
+      guard oldValue != actionBookmarkColor else { return }
       themeStorage.actionBookmarkColor = actionBookmarkColor
     }
   }
   public var actionIsLike: Bool {
     didSet {
+      guard oldValue != actionIsLike else { return }
       themeStorage.actionIsLike = actionIsLike
     }
   }

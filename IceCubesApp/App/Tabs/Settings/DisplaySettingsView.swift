@@ -126,22 +126,7 @@ struct DisplaySettingsView: View {
 
   @ViewBuilder
   private var favoriteStylePicker: some View {
-    @Bindable var theme = theme
-    VStack(alignment: .leading, spacing: 6) {
-      Text("Favorite style")
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
-      Picker("Favorite style", selection: $theme.actionIsLike) {
-        Image(systemName: "star")
-          .tag(false)
-          .accessibilityLabel("Star (Favorite)")
-        Image(systemName: "heart")
-          .tag(true)
-          .accessibilityLabel("Heart (Like)")
-      }
-      .pickerStyle(.segmented)
-    }
-    .padding(.vertical, 4)
+    FavoriteStylePicker()
   }
 
   @ViewBuilder
@@ -400,6 +385,42 @@ struct DisplaySettingsView: View {
         Text("settings.display.section.theme")
         Spacer()
         Text(theme.selectedSet.rawValue)
+      }
+    }
+  }
+}
+
+@MainActor
+private struct FavoriteStylePicker: View {
+  @Environment(Theme.self) private var theme
+  @State private var selectedStyle: Bool = false
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Favorite style")
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+      Picker("Favorite style", selection: $selectedStyle) {
+        Image(systemName: "star")
+          .tag(false)
+          .accessibilityLabel("Star (Favorite)")
+        Image(systemName: "heart")
+          .tag(true)
+          .accessibilityLabel("Heart (Like)")
+      }
+      .pickerStyle(.segmented)
+    }
+    .padding(.vertical, 4)
+    .onAppear {
+      selectedStyle = theme.actionIsLike
+    }
+    .onChange(of: selectedStyle) { _, newValue in
+      guard theme.actionIsLike != newValue else { return }
+      theme.actionIsLike = newValue
+    }
+    .onChange(of: theme.actionIsLike) { _, newValue in
+      if selectedStyle != newValue {
+        selectedStyle = newValue
       }
     }
   }
