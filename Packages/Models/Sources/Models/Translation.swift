@@ -6,7 +6,7 @@ public struct Translation: Decodable {
   public let provider: String
 
   public init(content: String, detectedSourceLanguage: String, provider: String) {
-    self.content = .init(stringValue: content)
+    self.content = .init(stringValue: content, parseMarkdown: true)
     self.detectedSourceLanguage = detectedSourceLanguage
     self.provider = provider
   }

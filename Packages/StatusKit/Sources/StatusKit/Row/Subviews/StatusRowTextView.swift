@@ -36,6 +36,18 @@ struct StatusRowTextView: View {
     return statusDataController.content
   }
 
+  private var displayedLanguage: String? {
+    if isInlineTranslationActive {
+      if !viewModel.showOriginalText {
+        if let targetLang = userPreferences.serverPreferences?.postLanguage {
+          return targetLang
+        }
+        return Locale.current.language.languageCode?.identifier
+      }
+    }
+    return viewModel.finalStatus.language
+  }
+
   private var translatedFromText: String {
     guard let translation = viewModel.translation else { return "" }
     let rawLang = translation.detectedSourceLanguage.isEmpty ? (viewModel.getStatusLang() ?? "") : translation.detectedSourceLanguage
@@ -53,40 +65,49 @@ struct StatusRowTextView: View {
     }
   }
 
+  private var showOriginalToggleTitle: String {
+    if viewModel.showOriginalText {
+      let localized = NSLocalizedString("status.action.show-translation", comment: "")
+      if localized != "status.action.show-translation" {
+        return localized
+      }
+      return "Show translation"
+    } else {
+      let localized = NSLocalizedString("status.action.show-original", comment: "")
+      if localized != "status.action.show-original" {
+        return localized
+      }
+      return "Show original"
+    }
+  }
+
   @ViewBuilder
   private var inlineTranslationHeader: some View {
     if isInlineTranslationActive {
-      HStack(spacing: 5) {
+      HStack(alignment: .center, spacing: 5) {
         Image(systemName: "translate")
           .font(.footnote)
           .foregroundStyle(.secondary)
         Text(translatedFromText)
           .font(.footnote)
           .foregroundStyle(.secondary)
+          .lineLimit(1)
         Button {
           withAnimation(.easeInOut(duration: 0.15)) {
             viewModel.showOriginalText.toggle()
           }
         } label: {
-          Text(viewModel.showOriginalText ? "Show translation" : "Show original")
+          Text(showOriginalToggleTitle)
             .font(.footnote)
             .foregroundStyle(theme.tintColor)
         }
         .buttonStyle(.plain)
+        .layoutPriority(1)
+        .fixedSize(horizontal: true, vertical: false)
         Spacer()
-        Button {
-          withAnimation {
-            viewModel.dismissTranslation()
-          }
-        } label: {
-          Image(systemName: "xmark")
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("status.show-less")
       }
       .padding(.bottom, 2)
+      .accessibilityElement(children: .combine)
     }
   }
 
@@ -97,11 +118,13 @@ struct StatusRowTextView: View {
         EmojiTextApp(
           displayedContent,
           emojis: viewModel.finalStatus.emojis,
-          language: viewModel.finalStatus.language,
+          language: displayedLanguage,
           lineLimit: isNotificationsTab
             ? (userPreferences.notificationsTruncateStatusContent ? 2 : nil)
             : (viewModel.textDisabled ? 3 : viewModel.lineLimit)
         )
+        .contentTransition(.opacity)
+        .animation(.easeInOut(duration: 0.15), value: viewModel.showOriginalText)
         .fixedSize(horizontal: false, vertical: true)
         .font(isFocused ? .scaledBodyFocused : .scaledBody)
         .lineSpacing(CGFloat(theme.lineSpacing))

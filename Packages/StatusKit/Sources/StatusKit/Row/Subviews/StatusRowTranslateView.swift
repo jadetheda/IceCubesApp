@@ -135,9 +135,10 @@ struct StatusRowTranslateView: View {
       let statusId = viewModel.finalStatus.id
       do {
         let response = try await session.translate(text)
+        let detectedLang = response.sourceLanguage.languageCode?.identifier ?? sourceLang
         let translation = Translation(
           content: response.targetText,
-          detectedSourceLanguage: sourceLang,
+          detectedSourceLanguage: detectedLang,
           provider: "Apple"
         )
         withAnimation {

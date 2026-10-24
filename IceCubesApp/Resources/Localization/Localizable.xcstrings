@@ -97674,6 +97674,39 @@
           }
         }
       }
+    },
+    "status.action.show-original": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show original"
+          }
+        }
+      }
+    },
+    "status.action.show-translation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show translation"
+          }
+        }
+      }
+    },
+    "status.action.translated-from-%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translated from %@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
