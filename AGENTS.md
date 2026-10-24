@@ -270,6 +270,14 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: `Locale.LanguageCode.identifier` in Apple's Foundation framework is a non-optional `String`. Writing `languageCode?.identifier?.lowercased()` causes a compiler error: `cannot use optional chaining on non-optional value of type 'String'` (Exit Code 65).
 - **Solution**: Access the property without optional chaining on the identifier (`languageCode?.identifier.lowercased()`).
 
+**Binary Operator '??' on ReblogStatus? and Status**
+- **Root Cause**: `status.reblog` is of concrete type `ReblogStatus?` while `status` is of concrete type `Status`. Attempting to nil-coalesce them with `status.reblog ?? status` fails type inference with `binary operator '??' cannot be applied to operands of type 'ReblogStatus?' and 'Status'` (Exit Code 65) even though both conform to `AnyStatus`.
+- **Solution**: Use `let targetStatus: any AnyStatus = if let reblog = status.reblog { reblog } else { status }` or `status.reblogAsAsStatus ?? status`.
+
+**Foundation String.CompareOptions Contextual Member Inference**
+- **Root Cause**: In Swift 6 with strict concurrency and Foundation extensions, passing `.regularExpression` shorthand to `String.range(of:options:)` can fail type inference with `cannot infer contextual base in reference to member 'regularExpression'` (Exit Code 65).
+- **Solution**: Explicitly qualify the type as `String.CompareOptions.regularExpression`.
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides

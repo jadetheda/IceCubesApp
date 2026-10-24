@@ -53,7 +53,11 @@ public nonisolated func isStatusHiddenByLanguage(
 ) -> Bool {
   guard !hiddenLanguages.isEmpty else { return false }
 
-  let targetStatus = status.reblog ?? status
+  let targetStatus: any AnyStatus = if let reblog = status.reblog {
+    reblog
+  } else {
+    status
+  }
 
   // Preserve posts with media attachments according to "Language Text Post Filters" specification
   let hasMedia = !status.mediaAttachments.isEmpty || !(targetStatus.mediaAttachments.isEmpty)
@@ -81,12 +85,12 @@ public nonisolated func isStatusHiddenByLanguage(
   let text = targetStatus.content.asRawText.isEmpty ? status.content.asRawText : targetStatus.content.asRawText
   if !text.isEmpty {
     if normalizedHidden.contains("ja") {
-      if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+      if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: String.CompareOptions.regularExpression) != nil {
         return true
       }
     }
     if normalizedHidden.contains("zh") {
-      if text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+      if text.range(of: "[\\u4E00-\\u9FFF]", options: String.CompareOptions.regularExpression) != nil {
         return true
       }
     }
