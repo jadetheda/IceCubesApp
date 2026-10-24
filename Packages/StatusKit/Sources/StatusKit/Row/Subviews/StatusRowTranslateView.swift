@@ -21,15 +21,25 @@ struct StatusRowTranslateView: View {
   @State private var translationConfig: TranslationSession.Configuration?
   #endif
 
-  private var shouldShowTranslateButton: Bool {
-    let statusLang = viewModel.getStatusLang()
+  private var effectiveUserLang: String {
+    preferences.serverPreferences?.postLanguage
+      ?? Locale.current.language.languageCode?.identifier
+      ?? "en"
+  }
 
-    if let userLang = preferences.serverPreferences?.postLanguage {
-      if preferences.showTranslateButton {
-        if !viewModel.finalStatus.content.asRawText.isEmpty {
-          if viewModel.translation == nil {
-            return userLang != statusLang
-          }
+  private func isLanguageForeign(statusLang: String?) -> Bool {
+    guard let statusLang, !statusLang.isEmpty else { return false }
+    let userPrefix = Locale.Language(identifier: effectiveUserLang).languageCode?.identifier?.lowercased() ?? effectiveUserLang.prefix(2).lowercased()
+    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier?.lowercased() ?? statusLang.prefix(2).lowercased()
+    return userPrefix != statusPrefix
+  }
+
+  private var shouldShowTranslateButton: Bool {
+    if preferences.showTranslateButton {
+      if !viewModel.finalStatus.content.asRawText.isEmpty {
+        if viewModel.translation == nil {
+          let statusLang = viewModel.getStatusLang()
+          return isLanguageForeign(statusLang: statusLang)
         }
       }
     }
@@ -49,21 +59,19 @@ struct StatusRowTranslateView: View {
   var translateButton: some View {
     if !isInCaptureMode {
       if !isCompact {
-        if let userLang = preferences.serverPreferences?.postLanguage {
-          if shouldShowTranslateButton {
-            Button {
-              Task {
-                await viewModel.translate(userLang: userLang)
-              }
-            } label: {
-              if viewModel.isLoadingTranslation {
-                ProgressView()
-              } else {
-                Text("status.action.translate")
-              }
+        if shouldShowTranslateButton {
+          Button {
+            Task {
+              await viewModel.translate(userLang: effectiveUserLang)
             }
-            .buttonStyle(.borderless)
+          } label: {
+            if viewModel.isLoadingTranslation {
+              ProgressView()
+            } else {
+              Text("status.action.translate")
+            }
           }
+          .buttonStyle(.borderless)
         }
       }
     }
@@ -120,19 +128,23 @@ struct StatusRowTranslateView: View {
     #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
     .onChange(of: viewModel.triggerAppleInlineTranslation) { _, shouldTrigger in
       if shouldTrigger {
-        if translationConfig == nil {
-          let targetLang = preferences.serverPreferences?.postLanguage.map { Locale.Language(identifier: $0) }
-          let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
-          translationConfig = .init(source: sourceLang, target: targetLang)
-        } else {
-          translationConfig?.invalidate()
-        }
+        let targetLang = Locale.Language(identifier: effectiveUserLang)
+        let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
+        translationConfig?.invalidate()
+        translationConfig = .init(source: sourceLang, target: targetLang)
       }
     }
     .translationTask(translationConfig) { session in
       let text = viewModel.finalStatus.content.asRawText
       let sourceLang = viewModel.getStatusLang() ?? ""
       let statusId = viewModel.finalStatus.id
+      guard !text.isEmpty else {
+        withAnimation {
+          viewModel.isLoadingTranslation = false
+          viewModel.triggerAppleInlineTranslation = false
+        }
+        return
+      }
       do {
         let response = try await session.translate(text)
         let detectedLang = response.sourceLanguage.languageCode?.identifier ?? sourceLang
@@ -174,9 +186,7 @@ struct StatusRowTranslateView: View {
 
   private func triggerAutoTranslate() {
     if !isInCaptureMode {
-      if let userLang = preferences.serverPreferences?.postLanguage {
-        viewModel.autoTranslateIfNeeded(userLang: userLang)
-      }
+      viewModel.autoTranslateIfNeeded(userLang: effectiveUserLang)
     }
   }
 }

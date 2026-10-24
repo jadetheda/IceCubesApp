@@ -509,7 +509,12 @@ import SwiftUI
   }
 
   func getStatusLang() -> String? {
-    finalStatus.language
+    if let lang = finalStatus.language {
+      if !lang.isEmpty {
+        return lang
+      }
+    }
+    return detectLanguage(text: finalStatus.content.asRawText)
   }
 
   func translate(userLang: String) async {
@@ -547,10 +552,18 @@ import SwiftUI
     var hasShown = false
     #if canImport(_Translation_SwiftUI)
       if translation == nil {
-        if #available(iOS 17.4, *) {
-          showAppleTranslation = true
+        #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+          withAnimation {
+            isLoadingTranslation = true
+            triggerAppleInlineTranslation = true
+          }
           hasShown = true
-        }
+        #else
+          if #available(iOS 17.4, *) {
+            showAppleTranslation = true
+            hasShown = true
+          }
+        #endif
       }
     #endif
 
@@ -611,7 +624,12 @@ import SwiftUI
     #if targetEnvironment(macCatalyst) || os(visionOS)
     guard preferredTranslationType != .useApple else { return }
     #endif
-    guard let statusLang = getStatusLang(), !statusLang.isEmpty, statusLang != userLang else { return }
+    guard let statusLang = getStatusLang(), !statusLang.isEmpty else { return }
+
+    let userPrefix = Locale.Language(identifier: userLang).languageCode?.identifier?.lowercased() ?? userLang.prefix(2).lowercased()
+    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier?.lowercased() ?? statusLang.prefix(2).lowercased()
+    guard userPrefix != statusPrefix else { return }
+
     guard translation == nil, !isLoadingTranslation else { return }
 
     if let cached = StatusTranslationCache.shared.get(statusId: finalStatus.id) {
@@ -622,7 +640,7 @@ import SwiftUI
     autoTranslateTask?.cancel()
     autoTranslateTask = Task { @MainActor [weak self] in
       do {
-        try await Task.sleep(nanoseconds: 600_000_000)
+        try await Task.sleep(nanoseconds: 300_000_000)
         guard !Task.isCancelled else { return }
         guard let self else { return }
         guard self.translation == nil else { return }

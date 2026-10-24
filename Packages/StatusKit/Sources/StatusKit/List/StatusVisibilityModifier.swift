@@ -12,6 +12,13 @@ public struct StatusVisibilityModifier: ViewModifier {
 
   @State private var isVisible: Bool = false
   @AppStorage("timeline_hidden_languages") private var hiddenLanguages: [String] = []
+  @Environment(UserPreferences.self) private var preferences
+
+  private var effectiveUserLang: String {
+    preferences.serverPreferences?.postLanguage
+      ?? Locale.current.language.languageCode?.identifier
+      ?? "en"
+  }
 
   public init(
     status: Status,
@@ -140,8 +147,12 @@ public struct StatusVisibilityModifier: ViewModifier {
       } else {
         fetcher.statusDidAppear(status: status)
       }
+      if let rowViewModel {
+        rowViewModel.autoTranslateIfNeeded(userLang: effectiveUserLang)
+      }
     } else {
       fetcher.statusDidDisappear(status: status)
+      rowViewModel?.cancelAutoTranslate()
     }
   }
 }
