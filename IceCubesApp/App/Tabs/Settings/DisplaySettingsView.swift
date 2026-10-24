@@ -132,8 +132,12 @@ struct DisplaySettingsView: View {
         .font(.subheadline)
         .foregroundStyle(.secondary)
       Picker("Favorite style", selection: $theme.actionIsLike) {
-        Text("Star (Favorite)").tag(false)
-        Text("Heart (Like)").tag(true)
+        Image(systemName: "star")
+          .tag(false)
+          .accessibilityLabel("Star (Favorite)")
+        Image(systemName: "heart")
+          .tag(true)
+          .accessibilityLabel("Heart (Like)")
       }
       .pickerStyle(.segmented)
     }
