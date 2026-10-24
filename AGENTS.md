@@ -266,6 +266,10 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: When a Swift package target is configured with `.swiftLanguageMode(.v6)` and `.defaultIsolation(MainActor.self)` (e.g. `Timeline`), all unannotated types and methods default to `@MainActor`. Even if a struct conforms to `Sendable` (e.g. `TimelineContentFilter.Snapshot`), its instance methods implicitly inherit `@MainActor` isolation. Calling those synchronous methods from a background `actor` (e.g. `TimelineDatasource`) causes an Exit Code 65 compilation error: `call to main actor-isolated instance method 'isStatusFilteredOut(...)' in a synchronous actor-isolated context`.
 - **Solution**: Explicitly annotate synchronous helper methods and initializers on `Sendable` structs as `public nonisolated` (e.g., `public nonisolated func isStatusFilteredOut(...)`). This ensures they remain callable synchronously across actor boundaries without triggering implicit async hops or actor isolation errors.
 
+**Redundant Optional Chaining on Locale.LanguageCode.identifier**
+- **Root Cause**: `Locale.LanguageCode.identifier` in Apple's Foundation framework is a non-optional `String`. Writing `languageCode?.identifier?.lowercased()` causes a compiler error: `cannot use optional chaining on non-optional value of type 'String'` (Exit Code 65).
+- **Solution**: Access the property without optional chaining on the identifier (`languageCode?.identifier.lowercased()`).
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides

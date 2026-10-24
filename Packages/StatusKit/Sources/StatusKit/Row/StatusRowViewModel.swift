@@ -1,3 +1,4 @@
+import Foundation
 import Combine
 import DesignSystem
 import Env
@@ -624,13 +625,15 @@ import SwiftUI
     #if targetEnvironment(macCatalyst) || os(visionOS)
     guard preferredTranslationType != .useApple else { return }
     #endif
-    guard let statusLang = getStatusLang(), !statusLang.isEmpty else { return }
+    guard let statusLang = getStatusLang() else { return }
+    guard !statusLang.isEmpty else { return }
 
-    let userPrefix = Locale.Language(identifier: userLang).languageCode?.identifier?.lowercased() ?? userLang.prefix(2).lowercased()
-    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier?.lowercased() ?? statusLang.prefix(2).lowercased()
+    let userPrefix = Locale.Language(identifier: userLang).languageCode?.identifier.lowercased() ?? userLang.prefix(2).lowercased()
+    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier.lowercased() ?? statusLang.prefix(2).lowercased()
     guard userPrefix != statusPrefix else { return }
 
-    guard translation == nil, !isLoadingTranslation else { return }
+    guard translation == nil else { return }
+    guard !isLoadingTranslation else { return }
 
     if let cached = StatusTranslationCache.shared.get(statusId: finalStatus.id) {
       self.translation = cached

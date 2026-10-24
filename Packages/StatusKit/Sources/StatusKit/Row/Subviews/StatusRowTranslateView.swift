@@ -1,3 +1,4 @@
+import Foundation
 import DesignSystem
 import Env
 import Models
@@ -28,9 +29,10 @@ struct StatusRowTranslateView: View {
   }
 
   private func isLanguageForeign(statusLang: String?) -> Bool {
-    guard let statusLang, !statusLang.isEmpty else { return false }
-    let userPrefix = Locale.Language(identifier: effectiveUserLang).languageCode?.identifier?.lowercased() ?? effectiveUserLang.prefix(2).lowercased()
-    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier?.lowercased() ?? statusLang.prefix(2).lowercased()
+    guard let statusLang else { return false }
+    guard !statusLang.isEmpty else { return false }
+    let userPrefix = Locale.Language(identifier: effectiveUserLang).languageCode?.identifier.lowercased() ?? effectiveUserLang.prefix(2).lowercased()
+    let statusPrefix = Locale.Language(identifier: statusLang).languageCode?.identifier.lowercased() ?? statusLang.prefix(2).lowercased()
     return userPrefix != statusPrefix
   }
 
@@ -127,44 +129,10 @@ struct StatusRowTranslateView: View {
     }
     #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
     .onChange(of: viewModel.triggerAppleInlineTranslation) { _, shouldTrigger in
-      if shouldTrigger {
-        let targetLang = Locale.Language(identifier: effectiveUserLang)
-        let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
-        translationConfig?.invalidate()
-        translationConfig = .init(source: sourceLang, target: targetLang)
-      }
+      handleAppleTranslationTrigger(shouldTrigger)
     }
     .translationTask(translationConfig) { session in
-      let text = viewModel.finalStatus.content.asRawText
-      let sourceLang = viewModel.getStatusLang() ?? ""
-      let statusId = viewModel.finalStatus.id
-      guard !text.isEmpty else {
-        withAnimation {
-          viewModel.isLoadingTranslation = false
-          viewModel.triggerAppleInlineTranslation = false
-        }
-        return
-      }
-      do {
-        let response = try await session.translate(text)
-        let detectedLang = response.sourceLanguage.languageCode?.identifier ?? sourceLang
-        let translation = Translation(
-          content: response.targetText,
-          detectedSourceLanguage: detectedLang,
-          provider: "Apple"
-        )
-        withAnimation {
-          viewModel.translation = translation
-          viewModel.isLoadingTranslation = false
-          viewModel.triggerAppleInlineTranslation = false
-        }
-        StatusTranslationCache.shared.set(statusId: statusId, translation: translation)
-      } catch {
-        withAnimation {
-          viewModel.isLoadingTranslation = false
-          viewModel.triggerAppleInlineTranslation = false
-        }
-      }
+      await performAppleTranslation(session: session)
     }
     #endif
     #if !os(visionOS)
@@ -183,6 +151,50 @@ struct StatusRowTranslateView: View {
       viewModel.cancelAutoTranslate()
     }
   }
+
+  #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+  private func handleAppleTranslationTrigger(_ shouldTrigger: Bool) {
+    if shouldTrigger {
+      let targetLang = Locale.Language(identifier: effectiveUserLang)
+      let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
+      translationConfig?.invalidate()
+      translationConfig = .init(source: sourceLang, target: targetLang)
+    }
+  }
+
+  private func performAppleTranslation(session: TranslationSession) async {
+    let text = viewModel.finalStatus.content.asRawText
+    let sourceLang = viewModel.getStatusLang() ?? ""
+    let statusId = viewModel.finalStatus.id
+    guard !text.isEmpty else {
+      withAnimation {
+        viewModel.isLoadingTranslation = false
+        viewModel.triggerAppleInlineTranslation = false
+      }
+      return
+    }
+    do {
+      let response = try await session.translate(text)
+      let detectedLang = response.sourceLanguage.languageCode?.identifier ?? sourceLang
+      let translation = Translation(
+        content: response.targetText,
+        detectedSourceLanguage: detectedLang,
+        provider: "Apple"
+      )
+      withAnimation {
+        viewModel.translation = translation
+        viewModel.isLoadingTranslation = false
+        viewModel.triggerAppleInlineTranslation = false
+      }
+      StatusTranslationCache.shared.set(statusId: statusId, translation: translation)
+    } catch {
+      withAnimation {
+        viewModel.isLoadingTranslation = false
+        viewModel.triggerAppleInlineTranslation = false
+      }
+    }
+  }
+  #endif
 
   private func triggerAutoTranslate() {
     if !isInCaptureMode {
