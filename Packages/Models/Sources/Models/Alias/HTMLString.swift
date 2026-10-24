@@ -232,25 +232,32 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
         if overlaps { continue }
 
         var rawCandidate = String(result[matchRange])
-        while let lastChar = rawCandidate.last, ".!?,;:\"'>".contains(lastChar) {
-          rawCandidate.removeLast()
-        }
-        while rawCandidate.hasSuffix(")") {
-          let openCount = rawCandidate.filter({ $0 == "(" }).count
-          let closeCount = rawCandidate.filter({ $0 == ")" }).count
-          if closeCount > openCount {
+        var didTrim = true
+        while didTrim && !rawCandidate.isEmpty {
+          didTrim = false
+          while let lastChar = rawCandidate.last, ".!?,;:\"'>".contains(lastChar) {
             rawCandidate.removeLast()
-          } else {
-            break
+            didTrim = true
           }
-        }
-        while rawCandidate.hasSuffix("]") {
-          let openCount = rawCandidate.filter({ $0 == "[" }).count
-          let closeCount = rawCandidate.filter({ $0 == "]" }).count
-          if closeCount > openCount {
-            rawCandidate.removeLast()
-          } else {
-            break
+          while rawCandidate.hasSuffix(")") {
+            let openCount = rawCandidate.filter({ $0 == "(" }).count
+            let closeCount = rawCandidate.filter({ $0 == ")" }).count
+            if closeCount > openCount {
+              rawCandidate.removeLast()
+              didTrim = true
+            } else {
+              break
+            }
+          }
+          while rawCandidate.hasSuffix("]") {
+            let openCount = rawCandidate.filter({ $0 == "[" }).count
+            let closeCount = rawCandidate.filter({ $0 == "]" }).count
+            if closeCount > openCount {
+              rawCandidate.removeLast()
+              didTrim = true
+            } else {
+              break
+            }
           }
         }
 
@@ -580,7 +587,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     } catch {}
   }
 
-  public struct Link: Codable, Hashable, Identifiable {
+  public struct Link: Codable, Hashable, Identifiable, Sendable {
     public var id: Int { hashValue }
     public let url: URL
     public let displayString: String
@@ -608,7 +615,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
       }
     }
 
-    public enum LinkType: String, Codable {
+    public enum LinkType: String, Codable, Sendable {
       case url
       case mention
       case hashtag

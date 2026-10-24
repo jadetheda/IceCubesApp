@@ -515,11 +515,16 @@ import SwiftUI
       if link.type == .url {
         let urlString = link.url.absoluteString
         if !text.contains(urlString) {
-          if text.contains(link.displayString) {
-            if link.displayString.hasSuffix("…") || link.displayString.hasSuffix("...") {
-              text = text.replacingOccurrences(of: link.displayString, with: urlString)
+          let trimmedDisplay = link.displayString.trimmingCharacters(in: .whitespacesAndNewlines)
+          if !trimmedDisplay.isEmpty {
+            if text.contains(link.displayString) {
+              if link.displayString.hasSuffix("…") || link.displayString.hasSuffix("...") {
+                text = text.replacingOccurrences(of: link.displayString, with: urlString)
+              } else {
+                text = text.replacingOccurrences(of: link.displayString, with: "\(link.displayString) (\(urlString))")
+              }
             } else {
-              text = text.replacingOccurrences(of: link.displayString, with: "\(link.displayString) (\(urlString))")
+              text += "\n\(urlString)"
             }
           } else {
             text += "\n\(urlString)"
