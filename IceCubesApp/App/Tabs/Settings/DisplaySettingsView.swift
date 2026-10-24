@@ -125,11 +125,27 @@ struct DisplaySettingsView: View {
   }
 
   @ViewBuilder
+  private var favoriteStylePicker: some View {
+    @Bindable var theme = theme
+    VStack(alignment: .leading, spacing: 6) {
+      Text("Favorite style")
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+      Picker("Favorite style", selection: $theme.actionIsLike) {
+        Text("Star (Favorite)").tag(false)
+        Text("Heart (Like)").tag(true)
+      }
+      .pickerStyle(.segmented)
+    }
+    .padding(.vertical, 4)
+  }
+
+  @ViewBuilder
   private var themeSection: some View {
     @Bindable var theme = theme
     Section {
       Toggle("settings.display.theme.systemColor", isOn: $theme.followSystemColorScheme)
-      Toggle("Like instead of favorite", isOn: $theme.actionIsLike)
+      favoriteStylePicker
       themeSelectorButton
       Group {
         ColorPicker("settings.display.theme.tint", selection: $localValues.tintColor)

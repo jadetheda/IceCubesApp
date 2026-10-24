@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Env
+import Models
 
 @MainActor
 @Observable public class TimelineContentFilter {
@@ -285,5 +286,169 @@ import Env
       hideSeenPostsEnabled: UserPreferences.shared.hideSeenPostsEnabled,
       hideSeenPostsIncludeBoosts: UserPreferences.shared.hideSeenPostsIncludeBoosts
     )
+  }
+
+  public func isLanguageHidden(status: Status) -> Bool {
+    snapshot().isLanguageHidden(status: status)
+  }
+
+  public func isStatusFilteredOut(
+    status: Status,
+    filterContext: Filter.Context? = nil,
+    currentAccountId: String? = nil,
+    isGalleryModeOverride: Bool? = nil
+  ) -> Bool {
+    snapshot().isStatusFilteredOut(
+      status: status,
+      filterContext: filterContext,
+      currentAccountId: currentAccountId,
+      isGalleryModeOverride: isGalleryModeOverride
+    )
+  }
+}
+
+extension TimelineContentFilter.Snapshot {
+  public func isLanguageHidden(status: Status) -> Bool {
+    guard !hiddenLanguages.isEmpty else { return false }
+    if let lang = status.language ?? status.reblog?.language {
+      if hiddenLanguages.contains(lang) {
+        return true
+      }
+    }
+    if hiddenLanguages.contains("ja") || hiddenLanguages.contains("zh") {
+      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      if isTextOnly {
+        let text = status.reblog?.content.asRawText ?? status.content.asRawText
+        if hiddenLanguages.contains("ja") {
+          if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+            return true
+          }
+        }
+        if hiddenLanguages.contains("zh") {
+          if text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  public func isStatusFilteredOut(
+    status: Status,
+    filterContext: Filter.Context? = nil,
+    currentAccountId: String? = nil,
+    isGalleryModeOverride: Bool? = nil
+  ) -> Bool {
+    let isHidden = if let filterContext {
+      status.isHidden(in: filterContext)
+    } else {
+      status.isHidden
+    }
+    if isHidden { return true }
+
+    let isReblogHidden = if let filterContext {
+      status.reblog?.isHidden(in: filterContext) ?? false
+    } else {
+      status.reblog?.isHidden ?? false
+    }
+    if isReblogHidden { return true }
+
+    if let filtered = status.filtered {
+      if filtered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    if let reblogFiltered = status.reblog?.filtered {
+      if reblogFiltered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+
+    if hideSensitivePosts {
+      if status.sensitive || status.reblog?.sensitive == true {
+        return true
+      }
+    }
+
+    if isLanguageHidden(status: status) {
+      return true
+    }
+
+    let hasQuote = status.quote?.quotedStatusId != nil
+      || status.quote?.quotedStatus != nil
+      || status.reblog?.quote?.quotedStatusId != nil
+      || status.reblog?.quote?.quotedStatus != nil
+    let hasLegacyQuoteLink = !status.content.statusesURLs.isEmpty
+      || !(status.reblog?.content.statusesURLs.isEmpty ?? true)
+
+    if !showReplies {
+      if status.inReplyToId != nil {
+        if status.inReplyToAccountId != status.account.id {
+          return true
+        }
+      }
+    }
+    if !showBoosts {
+      if status.reblog != nil {
+        return true
+      }
+    }
+    if !showThreads {
+      if status.inReplyToAccountId == status.account.id {
+        return true
+      }
+    }
+    if !showQuotePosts {
+      if hasQuote || hasLegacyQuoteLink {
+        return true
+      }
+    }
+
+    if hidePostsWithMedia {
+      var mediaEmpty = status.mediaAttachments.isEmpty
+      if let reblog = status.reblog {
+        if !reblog.mediaAttachments.isEmpty {
+          mediaEmpty = false
+        }
+      }
+      if !mediaEmpty { return true }
+    }
+
+    var requiresMedia = hidePostsWithoutMedia
+    if let override = isGalleryModeOverride {
+      if override { requiresMedia = true }
+    } else if isGalleryMode {
+      requiresMedia = true
+    }
+
+    var hasMedia = !status.mediaAttachments.isEmpty
+    if let reblog = status.reblog {
+      if !reblog.mediaAttachments.isEmpty {
+        hasMedia = true
+      }
+    }
+    if requiresMedia {
+      if !hasMedia {
+        return true
+      }
+    }
+
+    let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
+    if hidePostsFromBots {
+      if isBotAuthored {
+        return true
+      }
+    }
+
+    if hideOwnPosts {
+      if let currentAccountId {
+        if status.account.id == currentAccountId {
+          return true
+        }
+      }
+    }
+
+    return false
   }
 }

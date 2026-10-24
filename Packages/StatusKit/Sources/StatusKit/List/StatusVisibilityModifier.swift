@@ -10,6 +10,7 @@ public struct StatusVisibilityModifier: ViewModifier {
   let requiresMediaToLoad: Bool
 
   @State private var isVisible: Bool = false
+  @AppStorage("timeline_hidden_languages") private var hiddenLanguages: [String] = []
 
   public init(
     status: Status,
@@ -23,7 +24,36 @@ public struct StatusVisibilityModifier: ViewModifier {
     self.requiresMediaToLoad = requiresMediaToLoad
   }
 
+  private var isHiddenByLanguage: Bool {
+    guard !hiddenLanguages.isEmpty else { return false }
+    if let lang = status.language ?? status.reblog?.language {
+      if hiddenLanguages.contains(lang) {
+        return true
+      }
+    }
+    if hiddenLanguages.contains("ja") || hiddenLanguages.contains("zh") {
+      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
+      if isTextOnly {
+        let text = status.reblog?.content.asRawText ?? status.content.asRawText
+        if hiddenLanguages.contains("ja") {
+          if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
+            return true
+          }
+        }
+        if hiddenLanguages.contains("zh") {
+          if text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
   private var isHiddenByFilter: Bool {
+    if isHiddenByLanguage {
+      return true
+    }
     if let rowViewModel {
       if rowViewModel.isFiltered {
         return true
@@ -83,6 +113,15 @@ public struct StatusVisibilityModifier: ViewModifier {
           handleVisibilityChange(visible: true)
         } else {
           fetcher.statusDidDisappear(status: status)
+        }
+      }
+    }
+    .onChange(of: hiddenLanguages) { _, _ in
+      if isVisible {
+        if isHiddenByFilter {
+          fetcher.statusDidDisappear(status: status)
+        } else {
+          handleVisibilityChange(visible: true)
         }
       }
     }

@@ -246,32 +246,14 @@ actor TimelineDatasource {
   // MARK: - Private Helpers
 
   private func shouldShowStatus(_ status: Status, filter: TimelineContentFilter.Snapshot, isGalleryModeOverride: Bool? = nil, seen: Set<String>? = nil, currentAccountId: String? = nil, exempt: Set<String>? = nil) -> Bool {
-    let isHidden = if let filterContext {
-      status.isHidden(in: filterContext)
-    } else {
-      status.isHidden
+    if filter.isStatusFilteredOut(
+      status: status,
+      filterContext: filterContext,
+      currentAccountId: currentAccountId,
+      isGalleryModeOverride: isGalleryModeOverride
+    ) {
+      return false
     }
-    if isHidden { return false }
-
-    let isReblogHidden = if let filterContext {
-      status.reblog?.isHidden(in: filterContext) ?? false
-    } else {
-      status.reblog?.isHidden ?? false
-    }
-    if isReblogHidden { return false }
-
-    let showReplies = filter.showReplies
-    let showBoosts = filter.showBoosts
-    let showThreads = filter.showThreads
-    let showQuotePosts = filter.showQuotePosts
-    let hasQuote = status.quote?.quotedStatusId != nil
-      || status.quote?.quotedStatus != nil
-      || status.reblog?.quote?.quotedStatusId != nil
-      || status.reblog?.quote?.quotedStatus != nil
-    let hasLegacyQuoteLink = !status.content.statusesURLs.isEmpty
-      || !(status.reblog?.content.statusesURLs.isEmpty ?? true)
-
-    let isBotAuthored = status.reblog?.account.bot ?? status.account.bot
 
     let hideSeenPostsIncludeBoosts = filter.hideSeenPostsIncludeBoosts
 
@@ -291,65 +273,9 @@ actor TimelineDatasource {
         isSeen = true
       }
     }
-    
-    if filter.hideSensitivePosts && (status.sensitive || status.reblog?.sensitive == true) {
-      return false
-    }
-    var hideDueToLanguage = false
-    if !filter.hiddenLanguages.isEmpty, let lang = status.language ?? status.reblog?.language {
-      if filter.hiddenLanguages.contains(lang) {
-        hideDueToLanguage = true
-      }
-    }
-    
-    if !hideDueToLanguage && (filter.hiddenLanguages.contains("ja") || filter.hiddenLanguages.contains("zh")) {
-      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
-      if isTextOnly {
-        let text = status.reblog?.content.asRawText ?? status.content.asRawText
-        if filter.hiddenLanguages.contains("ja") && text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
-          hideDueToLanguage = true
-        } else if filter.hiddenLanguages.contains("zh") && text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
-          hideDueToLanguage = true
-        }
-      }
-    }
-    
 
-    
-    var requiresMedia = filter.hidePostsWithoutMedia
-    if let override = isGalleryModeOverride {
-      if override { requiresMedia = true }
-    } else if filter.isGalleryMode {
-      requiresMedia = true
-    }
-
-    
-    var hasMedia = !status.mediaAttachments.isEmpty
-    if let reblog = status.reblog, !reblog.mediaAttachments.isEmpty {
-      hasMedia = true
-    }
-
-    if hideDueToLanguage { return false }
-    if !showReplies, status.inReplyToId != nil, status.inReplyToAccountId != status.account.id { return false }
-    if !showBoosts, status.reblog != nil { return false }
-    if !showThreads, status.inReplyToAccountId == status.account.id { return false }
-    if !showQuotePosts, hasQuote || hasLegacyQuoteLink { return false }
-    
-    if filter.hidePostsWithMedia {
-      var mediaEmpty = status.mediaAttachments.isEmpty
-      if let reblog = status.reblog {
-          if !reblog.mediaAttachments.isEmpty {
-              mediaEmpty = false
-          }
-      }
-      if !mediaEmpty { return false }
-    }
-    
-    if requiresMedia, !hasMedia { return false }
-    if filter.hidePostsFromBots, isBotAuthored { return false }
     if filter.hideSeenPosts, isSeen { return false }
-    if filter.hideOwnPosts, status.account.id == currentAccountId { return false }
-    
+
     return true
   }
 }

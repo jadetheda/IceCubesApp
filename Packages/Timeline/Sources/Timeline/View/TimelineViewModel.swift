@@ -366,6 +366,8 @@ extension TimelineViewModel: GapLoadingFetcher {
 
   func refreshTimelineContentFilter() async {
     timelineTask?.cancel()
+    cancelAllSeenTimers()
+    visibleStatuses.removeAll(where: { isStatusFilteredOut($0) })
     if TimelineContentFilter.shared.hideSeenPosts {
       sessionSeenPosts = SeenPostsManager.shared.seenPosts
     }
@@ -708,6 +710,8 @@ extension TimelineViewModel: GapLoadingFetcher {
   func statusDidAppear(status: Status) {
     pendingStatusesObserver.removeStatus(status: status)
     
+    guard !isStatusFilteredOut(status) else { return }
+
     visibleStatusesCount[status.id, default: 0] += 1
     if !visibleStatuses.contains(where: { $0.id == status.id }) {
       visibleStatuses.insert(status, at: 0)
@@ -751,6 +755,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       guard !Task.isCancelled else { return }
       guard let self else { return }
       guard self.isTimelineTabActive else { return }
+      guard !self.isStatusFilteredOut(status) else { return }
       guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
 
       let threshold = prefs.hideSeenPostsThreshold
@@ -762,6 +767,7 @@ extension TimelineViewModel: GapLoadingFetcher {
       }
       guard !Task.isCancelled else { return }
       guard self.isTimelineTabActive else { return }
+      guard !self.isStatusFilteredOut(status) else { return }
       guard self.visibleStatuses.contains(where: { $0.id == status.id }) else { return }
 
       var idToMark = status.id
@@ -798,35 +804,14 @@ extension TimelineViewModel: GapLoadingFetcher {
   }
 
   private func isStatusFilteredOut(_ status: Status) -> Bool {
-    if status.isHidden {
-      return true
-    }
-    if let reblog = status.reblog {
-      if reblog.isHidden {
-        return true
-      }
-    }
-    if let filterContext = timeline.filterContext {
-      if status.isHidden(in: filterContext) {
-        return true
-      }
-      if let reblog = status.reblog {
-        if reblog.isHidden(in: filterContext) {
-          return true
-        }
-      }
-    }
-    if let filtered = status.filtered {
-      if filtered.contains(where: { $0.filter.filterAction == .hide }) {
-        return true
-      }
-    }
-    if let reblogFiltered = status.reblog?.filtered {
-      if reblogFiltered.contains(where: { $0.filter.filterAction == .hide }) {
-        return true
-      }
-    }
-    return false
+    let snapshot = TimelineContentFilter.shared.snapshot()
+    let currentAccountId = CurrentAccount.shared.account?.id
+    return snapshot.isStatusFilteredOut(
+      status: status,
+      filterContext: timeline.filterContext,
+      currentAccountId: currentAccountId,
+      isGalleryModeOverride: isGalleryMode
+    )
   }
 
   func statusDidDisappear(status: Status) {
@@ -1190,66 +1175,8 @@ extension TimelineViewModel {
     }
     
     if !isSeen {
-      let snapshot = TimelineContentFilter.shared.snapshot()
-      
-      let isHidden = if let filterContext = timeline.filterContext {
-        event.status.isHidden(in: filterContext)
-      } else {
-        event.status.isHidden
-      }
-      
-      let showReplies = snapshot.showReplies
-      let showBoosts = snapshot.showBoosts
-      let showThreads = snapshot.showThreads
-      let showQuotePosts = snapshot.showQuotePosts
-      
-      let hasQuote = event.status.quote?.quotedStatusId != nil
-        || event.status.quote?.quotedStatus != nil
-        || event.status.reblog?.quote?.quotedStatusId != nil
-        || event.status.reblog?.quote?.quotedStatus != nil
-        
-      let hasLegacyQuoteLink = !event.status.content.statusesURLs.isEmpty
-        || !(event.status.reblog?.content.statusesURLs.isEmpty ?? true)
-        
-      let isBotAuthored = event.status.reblog?.account.bot ?? event.status.account.bot
-      
-      var hideDueToLanguage = false
-      if !snapshot.hiddenLanguages.isEmpty, let lang = event.status.language ?? event.status.reblog?.language {
-        if snapshot.hiddenLanguages.contains(lang) {
-          hideDueToLanguage = true
-        }
-      }
-      
-      if !hideDueToLanguage && (snapshot.hiddenLanguages.contains("ja") || snapshot.hiddenLanguages.contains("zh")) {
-        let isTextOnly = event.status.mediaAttachments.isEmpty && (event.status.reblog?.mediaAttachments.isEmpty ?? true)
-        if isTextOnly {
-          let text = event.status.reblog?.content.asRawText ?? event.status.content.asRawText
-          if snapshot.hiddenLanguages.contains("ja") && text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
-            hideDueToLanguage = true
-          } else if snapshot.hiddenLanguages.contains("zh") && text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
-            hideDueToLanguage = true
-          }
-        }
-      }
-      
-      let willShow = !isHidden
-        && !hideDueToLanguage
-        && (showReplies || event.status.inReplyToId == nil || event.status.inReplyToAccountId == event.status.account.id)
-        && (showBoosts || event.status.reblog == nil)
-        && (showThreads || event.status.inReplyToAccountId != event.status.account.id)
-        && (showQuotePosts || (!hasQuote && !hasLegacyQuoteLink))
-        && (!snapshot.hidePostsWithMedia || (event.status.mediaAttachments.isEmpty && event.status.reblog?.mediaAttachments.isEmpty ?? true))
-        && (!snapshot.hidePostsWithoutMedia || (!event.status.mediaAttachments.isEmpty || event.status.reblog?.mediaAttachments.isEmpty == false))
-        && !(snapshot.hidePostsFromBots && isBotAuthored)
-        
-      var willShowInGallery = true
-      if snapshot.isGalleryMode {
-         if event.status.mediaAttachments.isEmpty && (event.status.reblog?.mediaAttachments.isEmpty ?? true) {
-            willShowInGallery = false
-         }
-      }
-        
-      if willShow && willShowInGallery {
+      let isFiltered = isStatusFilteredOut(event.status)
+      if !isFiltered {
         if let reblog = event.status.reblog {
           pendingStatusesObserver.reblogIds[event.status.id] = reblog.id
         }

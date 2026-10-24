@@ -1255,3 +1255,33 @@
 - **2026-10-20T08:21:00Z**:
   - **Description**: Production CI Build #39391224695 succeeded completely (All stages passed, unsigned IPA generated).
   - **Milestone**: Successfully compiled and archived the IceCubes iOS app for commit `7f1f07ee` in 12m28s. All 19 localizations for "Extract text from image" verified in production IPA build. Unsigned IPA artifact published.
+
+- **2026-10-23T22:15:00Z**:
+  - **Description**: Resolved Swift 6 strict concurrency compilation error with `TranslationSession` in Apple Translate service.
+  - **Details**: Added `@preconcurrency import Translation` and retroactive `@unchecked Sendable` conformance for `TranslationSession` in `AppleTranslationService.swift` on iOS 17.4+ to prevent actor isolation mismatches during translation tasks.
+  - **Impact**: Allowed the Apple Translate integration to build cleanly under Swift 6 language mode. Validated via CI build #40042782531.
+
+- **2026-10-23T22:50:00Z**:
+  - **Description**: Implemented high-fidelity Twitter-style inline translation UI with Apple neural language detection, bidirectional RTL/LTR support, interactive markdown parsing, and memory caching.
+  - **Details**:
+    - **Header & Toggle**: Configured inline translation header with `globe` icon, detected language label, and right-aligned "Show original / Translate" action buttons with `.layoutPriority(1)`. Omitted close button in inline mode for minimal footprint.
+    - **Language Detection**: Integrated Apple neural language identifier via `response.sourceLanguage.languageCode?.identifier` to display accurate source language in the translation header.
+    - **Text Directionality & Markdown**: Added dynamic text alignment based on translation language script (`.right` for Arabic/Hebrew/Persian/Urdu, `.left` otherwise) in `StatusRowTextView`. Enabled `parseMarkdown: true` so translated inline links remain clickable.
+    - **Caching**: Created thread-safe, bounded 500-item `StatusTranslationCache` in `Env` and preloaded cached translations into `StatusRowViewModel`.
+  - **Impact**: Provides instant, clean inline translation UX matching modern social app expectations without layout glitches. Validated via CI build #40046586921.
+
+- **2026-10-24T01:25:00Z**:
+  - **Description**: Standardized custom settings strings to sentence case and localized all additions across 19 languages.
+  - **Details**:
+    - Converted custom settings keys to sentence case in `ContentSettingsView.swift` and `DisplaySettingsView.swift` according to `settings_analysis.md` guidelines.
+    - Populated human translations for 14 custom keys across all 19 supported languages (22 locales) in `Localizable.xcstrings`.
+  - **Impact**: Complete localization coverage and consistency across the Settings surface. Validated via CI build #40049769012.
+
+- **2026-10-24T01:45:00Z**:
+  - **Description**: Prevented hidden posts from being detected as seen and replaced the binary "Like instead of favorite" toggle with a segmented picker.
+  - **Details**:
+    - **Seen Posts Filtering**: Added unified status filter inspection (`isStatusFilteredOut` and `isLanguageHidden`) in `TimelineContentFilter` and `TimelineContentFilter.Snapshot`. Updated `TimelineDatasource`, `TimelineViewModel`, and `StatusVisibilityModifier` to strictly exclude language-hidden posts, sensitive posts, bot posts, and media-filtered posts from `visibleStatuses`, latest seen cache, and seen timers in `SeenPostsManager`.
+    - **Dynamic Reactive Updates**: Extended `ContentFilterOnChangeModifier` in `TimelineView` to observe `hiddenLanguages`, `hideSensitivePosts`, and `hideOwnPosts`. When filter criteria change, `refreshTimelineContentFilter()` immediately cancels all active seen timers and purges filtered items.
+    - **Favorite Style Segmented Picker**: Replaced `Toggle("Like instead of favorite", isOn: $theme.actionIsLike)` in `DisplaySettingsView` with `favoriteStylePicker`, featuring a segmented picker with "Star (Favorite)" and "Heart (Like)" choices, cleanly mirroring the segmented style of translation settings.
+    - **Localization**: Added `"Favorite style"`, `"Star (Favorite)"`, and `"Heart (Like)"` with complete translations across all 19 supported languages in `Localizable.xcstrings`.
+  - **Impact**: Permanently prevents hidden posts from prematurely marking as seen or disappearing from timelines unread, and provides a clear, intuitive segmented UI for favorite vs. like style selection.

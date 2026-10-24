@@ -22,6 +22,9 @@ struct ContentFilterOnChangeModifier: ViewModifier {
       .onChange(of: contentFilter.hidePostsWithoutMedia) { _, _ in action() }
       .onChange(of: contentFilter.hidePostsFromBots) { _, _ in action() }
       .onChange(of: contentFilter.hideSeenPosts) { _, _ in action() }
+      .onChange(of: contentFilter.hideSensitivePosts) { _, _ in action() }
+      .onChange(of: contentFilter.hideOwnPosts) { _, _ in action() }
+      .onChange(of: contentFilter.hiddenLanguages) { _, _ in action() }
   }
 }
 
