@@ -21,7 +21,7 @@ import Models
     public let hideSeenPostsEnabled: Bool
     public let hideSeenPostsIncludeBoosts: Bool
 
-    public init(
+    public nonisolated init(
       showBoosts: Bool = true,
       showReplies: Bool = true,
       showThreads: Bool = true,
@@ -308,7 +308,7 @@ import Models
 }
 
 extension TimelineContentFilter.Snapshot {
-  public func isLanguageHidden(status: Status) -> Bool {
+  public nonisolated func isLanguageHidden(status: Status) -> Bool {
     guard !hiddenLanguages.isEmpty else { return false }
     if let lang = status.language ?? status.reblog?.language {
       if hiddenLanguages.contains(lang) {
@@ -334,7 +334,7 @@ extension TimelineContentFilter.Snapshot {
     return false
   }
 
-  public func isStatusFilteredOut(
+  public nonisolated func isStatusFilteredOut(
     status: Status,
     filterContext: Filter.Context? = nil,
     currentAccountId: String? = nil,
