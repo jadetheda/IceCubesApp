@@ -33,29 +33,7 @@ public struct StatusVisibilityModifier: ViewModifier {
   }
 
   private var isHiddenByLanguage: Bool {
-    guard !hiddenLanguages.isEmpty else { return false }
-    if let lang = status.language ?? status.reblog?.language {
-      if hiddenLanguages.contains(lang) {
-        return true
-      }
-    }
-    if hiddenLanguages.contains("ja") || hiddenLanguages.contains("zh") {
-      let isTextOnly = status.mediaAttachments.isEmpty && (status.reblog?.mediaAttachments.isEmpty ?? true)
-      if isTextOnly {
-        let text = status.reblog?.content.asRawText ?? status.content.asRawText
-        if hiddenLanguages.contains("ja") {
-          if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: .regularExpression) != nil {
-            return true
-          }
-        }
-        if hiddenLanguages.contains("zh") {
-          if text.range(of: "[\\u4E00-\\u9FFF]", options: .regularExpression) != nil {
-            return true
-          }
-        }
-      }
-    }
-    return false
+    isStatusHiddenByLanguage(status: status, hiddenLanguages: hiddenLanguages)
   }
 
   private var isHiddenByFilter: Bool {
