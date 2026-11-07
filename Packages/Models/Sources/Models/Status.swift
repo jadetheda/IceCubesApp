@@ -88,9 +88,13 @@ public final class Status: AnyStatus, Codable, Identifiable, Equatable, Hashable
     filtered?.first?.filter.filterAction == .hide
   }
 
+  /// Extracts visual media attachments (excluding audio or broken un-renderable attachments)
+  /// so gallery grids never allocate phantom column height or blank cells for non-visual items.
   public var asMediaStatus: [MediaStatus] {
     let attachments = mediaAttachments.isEmpty ? (reblog?.mediaAttachments ?? []) : mediaAttachments
-    return attachments.map { .init(status: self, attachment: $0) }
+    return attachments
+      .filter { $0.isVisualMedia }
+      .map { .init(status: self, attachment: $0) }
   }
 
   public init(

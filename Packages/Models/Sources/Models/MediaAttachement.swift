@@ -125,15 +125,35 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
   /// The aspect ratio of the media
   public var aspectRatio: CGFloat? {
     if let original = meta?.original {
-      if let aspect = original.aspect { return CGFloat(aspect) }
-      if let width = original.width, let height = original.height, height > 0 {
-        return CGFloat(width) / CGFloat(height)
+      if let aspect = original.aspect {
+        if aspect > 0 {
+          return CGFloat(aspect)
+        }
+      }
+      if let width = original.width {
+        if let height = original.height {
+          if width > 0 {
+            if height > 0 {
+              return CGFloat(width) / CGFloat(height)
+            }
+          }
+        }
       }
     }
     if let small = meta?.small {
-      if let aspect = small.aspect { return CGFloat(aspect) }
-      if let width = small.width, let height = small.height, height > 0 {
-        return CGFloat(width) / CGFloat(height)
+      if let aspect = small.aspect {
+        if aspect > 0 {
+          return CGFloat(aspect)
+        }
+      }
+      if let width = small.width {
+        if let height = small.height {
+          if width > 0 {
+            if height > 0 {
+              return CGFloat(width) / CGFloat(height)
+            }
+          }
+        }
       }
     }
     return nil
@@ -144,7 +164,33 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
   /// masonry/grid layouts that size cells from this value.
   public var clampedAspectRatio: CGFloat? {
     guard let ratio = aspectRatio else { return nil }
+    guard ratio > 0 else { return nil }
     return min(max(ratio, 0.5), 2.0)
+  }
+
+  /// Whether this attachment is a visual media type supported in Gallery Mode grids.
+  public var isVisualMedia: Bool {
+    guard let supportedType else { return false }
+    switch supportedType {
+    case .image, .gifv, .video:
+      if url != nil { return true }
+      if remoteUrl != nil { return true }
+      if previewUrl != nil { return true }
+      if previewRemoteUrl != nil { return true }
+      return false
+    case .audio:
+      return false
+    }
+  }
+
+  /// Deterministic aspect ratio used by Gallery Mode layout calculation and cell modifiers.
+  /// Always returns a bounded positive ratio in `[0.5, 2.0]` (or `1.0` when square cropping is enabled
+  /// or when server dimension metadata is absent), preventing post-load layout shifts.
+  public func galleryAspectRatio(isSquare: Bool) -> CGFloat {
+    if isSquare { return 1.0 }
+    guard let clamped = clampedAspectRatio else { return 1.0 }
+    guard clamped > 0 else { return 1.0 }
+    return clamped
   }
 
   public struct DisplayInfo: Sendable, Equatable {
@@ -173,10 +219,10 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
       fallbackUrl = nil
     }
 
-    var resolvedType = baseType
+    let resolvedType = baseType
 
     let pUrl = (useRemoteMedia ? (previewRemoteUrl ?? previewUrl) : previewUrl) ?? url
-    
+
     let pFallbackUrl: URL?
     if fallbackOnFail {
       let candidatePFallback = useRemoteMedia ? self.previewUrl : (previewRemoteUrl ?? self.previewUrl)

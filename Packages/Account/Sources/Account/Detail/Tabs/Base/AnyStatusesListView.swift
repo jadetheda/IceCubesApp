@@ -1,9 +1,9 @@
-import SwiftUI
-import StatusKit
-import NetworkClient
+import DesignSystem
 import Env
 import Models
-import DesignSystem
+import NetworkClient
+import StatusKit
+import SwiftUI
 import Timeline
 
 @MainActor
@@ -14,9 +14,7 @@ struct AnyStatusesListView: View {
   let isRemote: Bool
   let isMediaTab: Bool
   let showFilterWarning: Bool
-  // When false (default for profile tabs), this view does not observe or apply
-  // TimelineContentFilter.shared — preventing spurious re-renders from timeline-level
-  // toggles like hideSeenPosts from affecting the profile media view.
+
   init(
     fetcher: any StatusesFetcher,
     client: FediverseClient,
@@ -32,9 +30,9 @@ struct AnyStatusesListView: View {
     self.isMediaTab = isMediaTab
     self.showFilterWarning = showFilterWarning
   }
-  
+
   @Environment(Theme.self) private var theme
-  
+
   var contentFilter = TimelineContentFilter.shared
   private var shouldShowFilterWarningBanner: Bool {
     if !showFilterWarning { return false }
@@ -42,13 +40,16 @@ struct AnyStatusesListView: View {
     if contentFilter.hidePostsWithoutMedia { return true }
     return false
   }
-  
+
   var body: some View {
     if contentFilter.isGalleryMode {
+      if shouldShowFilterWarningBanner {
+        filterWarningBanner
+      }
       unboxedGallery(fetcher)
-      .listRowBackground(Color.clear)
-      .listRowInsets(EdgeInsets())
-      .listRowSeparator(.hidden)
+        .listRowBackground(theme.primaryBackgroundColor)
+        .listRowInsets(EdgeInsets())
+        .listRowSeparator(.hidden)
     } else {
       switch fetcher.statusesState {
       case .loading:
@@ -65,22 +66,9 @@ struct AnyStatusesListView: View {
         }
       case let .display(statuses, nextPageState):
         if shouldShowFilterWarningBanner {
-          HStack {
-            Image(systemName: "line.3.horizontal.decrease.circle")
-            Text("Some posts are hidden by your \(String(localized: "timeline.content-filter.title"))")
-            Spacer()
-            Button("Change") {
-              routerPath.presentedSheet = .timelineContentFilter
-            }
-            .buttonStyle(.bordered)
-            .buttonBorderShape(.capsule)
-          }
-          .font(.caption)
-          .foregroundStyle(.secondary)
-          .listRowBackground(theme.primaryBackgroundColor)
-          .listRowSeparator(.visible, edges: .all)
+          filterWarningBanner
         }
-        
+
         ForEach(filteredStatuses(statuses)) { status in
           StatusRowExternalView(
             viewModel: .init(
@@ -91,7 +79,7 @@ struct AnyStatusesListView: View {
           )
           .trackStatusVisibility(status: status, fetcher: fetcher, requiresMediaToLoad: true)
         }
-        
+
         if nextPageState == .hasNextPage {
           NextPageView {
             try await fetcher.fetchNextPage()
@@ -114,7 +102,25 @@ struct AnyStatusesListView: View {
       }
     }
   }
-  
+
+  @ViewBuilder
+  private var filterWarningBanner: some View {
+    HStack {
+      Image(systemName: "line.3.horizontal.decrease.circle")
+      Text("Some posts are hidden by your \(String(localized: "timeline.content-filter.title"))")
+      Spacer()
+      Button("Change") {
+        routerPath.presentedSheet = .timelineContentFilter
+      }
+      .buttonStyle(.bordered)
+      .buttonBorderShape(.capsule)
+    }
+    .font(.caption)
+    .foregroundStyle(.secondary)
+    .listRowBackground(theme.primaryBackgroundColor)
+    .listRowSeparator(.visible, edges: .all)
+  }
+
   private func filteredStatuses(_ statuses: [Status]) -> [Status] {
     return statuses.filter { status in
       if contentFilter.hidePostsWithMedia {
@@ -138,6 +144,9 @@ struct AnyStatusesListView: View {
     }
   }
 
+  /// Opens the existential `StatusesFetcher` without wrapping `GalleryStatusesListView` in unary
+  /// `.background(...)` or `.buttonStyle(...)` modifiers so SwiftUI's `List` forwards multi-row traits
+  /// (`ForEach` chunks and `NextPageView`) cleanly instead of collapsing them into one `UICollectionViewCell`.
   private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> AnyView {
     AnyView(
       GalleryStatusesListView(
@@ -147,9 +156,6 @@ struct AnyStatusesListView: View {
         isRemote: isRemote,
         filterContext: .account
       )
-      .buttonStyle(.borderless)
-      .background(theme.primaryBackgroundColor)
     )
   }
 }
-

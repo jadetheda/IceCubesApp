@@ -1,10 +1,224 @@
 import DesignSystem
 import Env
+import Foundation
+import MediaUI
 import Models
 import NetworkClient
-import MediaUI
 import NukeUI
 import SwiftUI
+
+/// Describes how a subview inside `GalleryMasonryLayout` should be positioned.
+public enum GalleryLayoutItemKind: Sendable, Equatable {
+  /// A media cell with a deterministic aspect ratio (`width / height`), placed into the target masonry column.
+  case media(aspectRatio: CGFloat)
+  /// A full-width banner or timeline gap loader that spans across all columns.
+  case fullWidth
+  /// A zero-height scroll anchor placed at the current minimum column offset without adding spacing.
+  case anchor
+}
+
+/// Layout value key used by `GalleryMasonryLayout` to classify child views without nested `LazyVStack` wrappers.
+public struct GalleryLayoutItemKindKey: LayoutValueKey {
+  public static let defaultValue: GalleryLayoutItemKind = .media(aspectRatio: 1.0)
+}
+
+public extension View {
+  /// Marks a subview's role inside `GalleryMasonryLayout`.
+  func galleryLayoutItemKind(_ kind: GalleryLayoutItemKind) -> some View {
+    layoutValue(key: GalleryLayoutItemKindKey.self, value: kind)
+  }
+}
+
+/// A deterministic 2D Waterfall/Masonry `Layout` that places items continuously based on running column Y-offsets.
+///
+/// Why this replaces `HStack { LazyVStack }`:
+/// 1. Eliminates double-nested `LazyVStack` virtualization conflicts inside `ScrollView` and `UICollectionView` (`List` rows).
+/// 2. Eliminates the `.frame(maxHeight: .infinity)` / `Spacer` column-stretching bug where shorter `LazyVStack` columns
+///    accepted the tallest column's height and vertically centered or separated their children with massive empty voids.
+/// 3. Computes exact pixel heights from `columnWidth / aspectRatio` (with `4pt` real pixel spacing rather than fake `+ 0.1`
+///    normalized ratios), guaranteeing zero height drift between column assignment math and rendered cells.
+public struct GalleryMasonryLayout: Layout {
+  public let columns: Int
+  public let spacing: CGFloat
+  public let optimizeLayout: Bool
+
+  public struct CacheData {
+    var width: CGFloat = -1
+    var subviewCount: Int = -1
+    var columns: Int = -1
+    var spacing: CGFloat = -1
+    var optimizeLayout: Bool = true
+    var frames: [CGRect] = []
+    var totalHeight: CGFloat = 0
+  }
+
+  public init(columns: Int, spacing: CGFloat = 4, optimizeLayout: Bool = true) {
+    self.columns = max(1, columns)
+    self.spacing = spacing
+    self.optimizeLayout = optimizeLayout
+  }
+
+  public func makeCache(subviews: Subviews) -> CacheData {
+    CacheData()
+  }
+
+  public func updateCache(_ cache: inout CacheData, subviews: Subviews) {
+    cache.width = -1
+  }
+
+  public func sizeThatFits(
+    proposal: ProposedViewSize,
+    subviews: Subviews,
+    cache: inout CacheData
+  ) -> CGSize {
+    guard !subviews.isEmpty else { return .zero }
+    let resolvedWidth = resolveAvailableWidth(from: proposal.width)
+    computeIfNeeded(availableWidth: resolvedWidth, subviews: subviews, cache: &cache)
+    return CGSize(width: resolvedWidth, height: cache.totalHeight)
+  }
+
+  public func placeSubviews(
+    in bounds: CGRect,
+    proposal: ProposedViewSize,
+    subviews: Subviews,
+    cache: inout CacheData
+  ) {
+    guard !subviews.isEmpty else { return }
+    let resolvedWidth = bounds.width > 0 ? bounds.width : resolveAvailableWidth(from: proposal.width)
+    computeIfNeeded(availableWidth: resolvedWidth, subviews: subviews, cache: &cache)
+
+    for (index, subview) in subviews.enumerated() {
+      guard index < cache.frames.count else { break }
+      let frame = cache.frames[index]
+      let origin = CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY)
+      let itemProposal = ProposedViewSize(width: frame.width, height: frame.height)
+      subview.place(at: origin, anchor: .topLeading, proposal: itemProposal)
+    }
+  }
+
+  private func resolveAvailableWidth(from proposedWidth: CGFloat?) -> CGFloat {
+    if let proposedWidth {
+      if proposedWidth.isFinite {
+        if proposedWidth > 0 {
+          return proposedWidth
+        }
+      }
+    }
+    return 390
+  }
+
+  private func computeIfNeeded(
+    availableWidth: CGFloat,
+    subviews: Subviews,
+    cache: inout CacheData
+  ) {
+    let safeColumns = max(1, columns)
+    if abs(cache.width - availableWidth) < 0.5 {
+      if cache.subviewCount == subviews.count {
+        if cache.columns == safeColumns {
+          if cache.spacing == spacing {
+            if cache.optimizeLayout == optimizeLayout {
+              return
+            }
+          }
+        }
+      }
+    }
+
+    let totalHorizontalSpacing = CGFloat(safeColumns - 1) * spacing
+    let usableWidth = max(0, availableWidth - totalHorizontalSpacing)
+    let columnWidth = usableWidth / CGFloat(safeColumns)
+
+    var columnHeights = Array(repeating: CGFloat(0), count: safeColumns)
+    var columnHasItems = Array(repeating: false, count: safeColumns)
+    var frames: [CGRect] = []
+    frames.reserveCapacity(subviews.count)
+    var mediaIndex = 0
+
+    for subview in subviews {
+      let kind = subview[GalleryLayoutItemKindKey.self]
+      switch kind {
+      case .anchor:
+        let minY = columnHeights.min() ?? 0
+        frames.append(CGRect(x: 0, y: minY, width: 0, height: 0))
+
+      case .fullWidth:
+        var maxY: CGFloat = 0
+        for col in 0..<safeColumns {
+          if columnHasItems[col] {
+            let bottom = max(0, columnHeights[col] - spacing)
+            if bottom > maxY {
+              maxY = bottom
+            }
+          } else if columnHeights[col] > maxY {
+            maxY = columnHeights[col]
+          }
+        }
+        if maxY > 0 {
+          maxY += spacing
+        }
+        let fullProposal = ProposedViewSize(width: availableWidth, height: nil)
+        let measured = subview.sizeThatFits(fullProposal)
+        let h = max(0, measured.height)
+        frames.append(CGRect(x: 0, y: maxY, width: availableWidth, height: h))
+        let nextY = maxY + h + spacing
+        for col in 0..<safeColumns {
+          columnHeights[col] = nextY
+          columnHasItems[col] = false
+        }
+
+      case .media(let aspectRatio):
+        let targetCol: Int
+        if optimizeLayout {
+          var shortestCol = 0
+          var shortestHeight = columnHeights[0]
+          for col in 1..<safeColumns {
+            if columnHeights[col] < shortestHeight {
+              shortestHeight = columnHeights[col]
+              shortestCol = col
+            }
+          }
+          targetCol = shortestCol
+        } else {
+          targetCol = mediaIndex % safeColumns
+        }
+
+        let safeRatio = aspectRatio > 0 ? aspectRatio : 1.0
+        let itemHeight = columnWidth / safeRatio
+        let x = CGFloat(targetCol) * (columnWidth + spacing)
+        let y = columnHeights[targetCol]
+        frames.append(CGRect(x: x, y: y, width: columnWidth, height: itemHeight))
+
+        columnHeights[targetCol] = y + itemHeight + spacing
+        columnHasItems[targetCol] = true
+        mediaIndex += 1
+      }
+    }
+
+    var maxBottom: CGFloat = 0
+    for col in 0..<safeColumns {
+      if columnHasItems[col] {
+        let bottom = max(0, columnHeights[col] - spacing)
+        if bottom > maxBottom {
+          maxBottom = bottom
+        }
+      } else if columnHeights[col] > maxBottom {
+        let bottom = max(0, columnHeights[col] - spacing)
+        if bottom > maxBottom {
+          maxBottom = bottom
+        }
+      }
+    }
+
+    cache.width = availableWidth
+    cache.subviewCount = subviews.count
+    cache.columns = safeColumns
+    cache.spacing = spacing
+    cache.optimizeLayout = optimizeLayout
+    cache.frames = frames
+    cache.totalHeight = maxBottom
+  }
+}
 
 @MainActor
 public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
@@ -20,48 +234,38 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   private let client: FediverseClient
   private let filterContext: Filter.Context?
 
-  public init(fetcher: Fetcher, client: FediverseClient, routerPath: RouterPath, isRemote: Bool = false, filterContext: Filter.Context? = nil) {
+  public init(
+    fetcher: Fetcher,
+    client: FediverseClient,
+    routerPath: RouterPath,
+    isRemote: Bool = false,
+    filterContext: Filter.Context? = nil
+  ) {
     _fetcher = .init(initialValue: fetcher)
     self.isRemote = isRemote
     self.client = client
     self.filterContext = filterContext
   }
 
-  private var columns: Int { UserPreferences.shared.galleryColumns }
+  private var columns: Int { max(1, userPreferences.galleryColumns) }
   private var itemsPerColumn: Int { horizontalSizeClass == .regular ? 6 : 4 }
-  private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
+  private var totalPlaceholderCount: Int { columns * itemsPerColumn }
+  private var isSquare: Bool { userPreferences.galleryCropToSquare }
+  private var optimizeLayout: Bool { userPreferences.galleryOptimizeItemLayout }
   private var placeholderRatios: [CGFloat] { isSquare ? [1.0] : [1.0, 1.5, 0.8, 1.2, 0.9, 1.3] }
+  private var cornerRadius: CGFloat { userPreferences.galleryRoundCorners ? 8 : 0 }
+  private var horizontalPadding: CGFloat { userPreferences.galleryAddThinMargins ? 4 : 0 }
 
-  private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
-    let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-    let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
-    return reblogContent ?? statusContent
+  private func placeholderRatio(at index: Int) -> CGFloat {
+    let ratios = placeholderRatios
+    guard !ratios.isEmpty else { return 1.0 }
+    return ratios[index % ratios.count]
   }
-
-  private var cornerRadius: CGFloat { UserPreferences.shared.galleryRoundCorners ? 8 : 0 }
-  private var horizontalPadding: CGFloat { UserPreferences.shared.galleryAddThinMargins ? 4 : 0 }
-
 
   public var body: some View {
     switch fetcher.statusesState {
     case .loading:
-      HStack(alignment: .top, spacing: 4) {
-        ForEach(0..<columns, id: \.self) { colIndex in
-          LazyVStack(spacing: 0) {
-            ForEach(0..<itemsPerColumn, id: \.self) { rowIndex in
-              RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(theme.secondaryBackgroundColor)
-                .aspectRatio(placeholderRatios[(colIndex + rowIndex) % placeholderRatios.count], contentMode: .fit)
-                .padding(.bottom, 4)
-            }
-          }
-          .frame(minWidth: 0, maxWidth: .infinity)
-        }
-      }
-      .frame(maxWidth: .infinity)
-      .redacted(reason: .placeholder)
-      .allowsHitTesting(false)
-      .listRowBackground(theme.primaryBackgroundColor)
+      loadingSkeletonGrid
     case .error:
       ErrorView(
         title: "status.error.title",
@@ -71,6 +275,7 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
         await fetcher.fetchNewestStatuses(pullToRefresh: false)
       }
       .listRowBackground(theme.primaryBackgroundColor)
+      .listRowSeparator(.hidden)
     case .display(let statuses, let nextPageState):
       makeGrid(for: statuses.map { TimelineItem.status($0) }, nextPageState: nextPageState)
     case .displayWithGaps(let items, let nextPageState):
@@ -78,154 +283,222 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
   }
 
+  @ViewBuilder
+  private var loadingSkeletonGrid: some View {
+    GalleryMasonryLayout(
+      columns: columns,
+      spacing: 4,
+      optimizeLayout: optimizeLayout
+    ) {
+      ForEach(0..<totalPlaceholderCount, id: \.self) { index in
+        RoundedRectangle(cornerRadius: cornerRadius)
+          .fill(theme.secondaryBackgroundColor)
+          .aspectRatio(placeholderRatio(at: index), contentMode: .fit)
+          .galleryLayoutItemKind(.media(aspectRatio: placeholderRatio(at: index)))
+      }
+    }
+    .padding(.horizontal, horizontalPadding)
+    .frame(maxWidth: .infinity)
+    .redacted(reason: .placeholder)
+    .allowsHitTesting(false)
+    .listRowBackground(theme.primaryBackgroundColor)
+    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+    .listRowSeparator(.hidden)
+  }
+
   private struct GalleryNode: Identifiable, Equatable {
     let id: String
     let mediaStatus: MediaStatus?
     let anchorIds: [String]
-    
+    let aspectRatio: CGFloat
+
     static func == (lhs: GalleryNode, rhs: GalleryNode) -> Bool {
-      lhs.id == rhs.id
+      lhs.id == rhs.id && lhs.aspectRatio == rhs.aspectRatio
     }
   }
 
   private struct GalleryChunk: Identifiable {
-    var id: String {
-      if let gap = gap { return gap.id }
-      return items.first?.id ?? UUID().uuidString
-    }
+    let id: String
     var items: [TimelineItem] = []
     var gap: TimelineGap? = nil
-    var isGap: Bool { gap != nil }
   }
 
   private func chunkItems(_ items: [TimelineItem]) -> [GalleryChunk] {
     var chunks: [GalleryChunk] = []
-    var currentChunk = GalleryChunk()
-    
-    for item in items {
+    var currentItems: [TimelineItem] = []
+    var usedChunkIds = Set<String>()
+
+    for (index, item) in items.enumerated() {
       switch item {
       case .gap(let gap):
-        if !currentChunk.items.isEmpty {
-          chunks.append(currentChunk)
-          currentChunk = GalleryChunk()
+        if !currentItems.isEmpty {
+          let rawId = currentItems.first?.id ?? "chunk-\(index)"
+          let chunkId = usedChunkIds.insert(rawId).inserted ? rawId : "\(rawId)-\(index)"
+          chunks.append(GalleryChunk(id: chunkId, items: currentItems, gap: nil))
+          currentItems = []
         }
-        chunks.append(GalleryChunk(gap: gap))
+        let gapId = usedChunkIds.insert(gap.id).inserted ? gap.id : "\(gap.id)-\(index)"
+        chunks.append(GalleryChunk(id: gapId, items: [], gap: gap))
       case .status:
-        currentChunk.items.append(item)
+        currentItems.append(item)
       }
     }
-    
-    if !currentChunk.items.isEmpty {
-      chunks.append(currentChunk)
+
+    if !currentItems.isEmpty {
+      let rawId = currentItems.first?.id ?? "chunk-tail"
+      let chunkId = usedChunkIds.insert(rawId).inserted ? rawId : "\(rawId)-tail"
+      chunks.append(GalleryChunk(id: chunkId, items: currentItems, gap: nil))
     }
-    
+
     return chunks
   }
 
-
-
-  private enum GallerySegment: Identifiable {
-    case grid(id: String, statuses: [Status])
-    case gap(TimelineGap)
-
-    var id: String {
-      switch self {
-      case .grid(let id, _):
-        return id
-      case .gap(let gap):
-        return gap.id
+  private func isStatusFiltered(_ status: Status) -> Bool {
+    if let filterContext {
+      if status.isHidden(in: filterContext) { return true }
+      if let reblog = status.reblog {
+        if reblog.isHidden(in: filterContext) { return true }
+      }
+    } else {
+      if status.isHidden { return true }
+      if let reblog = status.reblog {
+        if reblog.isHidden { return true }
       }
     }
+    if let filtered = status.filtered {
+      if filtered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    if let reblogFiltered = status.reblog?.filtered {
+      if reblogFiltered.contains(where: { $0.filter.filterAction == .hide }) {
+        return true
+      }
+    }
+    return false
   }
 
-  private func makeSegments(from items: [TimelineItem]) -> [GallerySegment] {
-    var segments: [GallerySegment] = []
-    var currentStatuses: [Status] = []
-    
+  private func countVisibleMedia(in items: [TimelineItem]) -> Int {
+    var total = 0
     for item in items {
-      switch item {
-      case .status(let status):
-        currentStatuses.append(status)
-      case .gap(let gap):
-        if !currentStatuses.isEmpty {
-          segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
-          currentStatuses = []
+      if case .status(let status) = item {
+        if !isStatusFiltered(status) {
+          total += status.asMediaStatus.count
         }
-        segments.append(.gap(gap))
       }
     }
-
-    if !currentStatuses.isEmpty {
-      segments.append(.grid(id: currentStatuses.first?.id ?? UUID().uuidString, statuses: currentStatuses))
-    }
-
-    return segments
+    return total
   }
 
   @ViewBuilder
-  private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
+  private func makeNextPageRow(nextPageState: StatusesState.PagingState, itemCount: Int) -> some View {
     if nextPageState == .hasNextPage {
       NextPageView {
         try await fetcher.fetchNextPage()
       }
+      .id("gallery-next-page-\(itemCount)")
       .padding(.vertical)
       .listRowBackground(theme.primaryBackgroundColor)
+      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+      .listRowSeparator(.hidden)
     }
   }
 
   @ViewBuilder
   private func makeGrid(for items: [TimelineItem], nextPageState: StatusesState.PagingState) -> some View {
     ForEach(chunkItems(items)) { chunk in
-      VStack(spacing: 0) {
-        if let gap = chunk.gap {
-          if let gapLoader = fetcher as? GapLoadingFetcher {
-            TimelineGapView(gap: gap) {
-              await gapLoader.loadGap(gap: gap)
-            }
-            .padding(.horizontal, .layoutPadding)
-            .padding(.vertical, 8)
+      if let gap = chunk.gap {
+        if let gapLoader = fetcher as? GapLoadingFetcher {
+          TimelineGapView(gap: gap) {
+            await gapLoader.loadGap(gap: gap)
           }
-        } else {
-          makeGridChunk(for: chunk.items)
+          .padding(.horizontal, .layoutPadding)
+          .padding(.vertical, 8)
+          .listRowBackground(theme.primaryBackgroundColor)
+          .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+          .listRowSeparator(.hidden)
         }
+      } else {
+        makeGridChunk(for: chunk.items)
+          .listRowBackground(theme.primaryBackgroundColor)
+          .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+          .listRowSeparator(.hidden)
       }
-      .listRowBackground(theme.primaryBackgroundColor)
-      .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
     }
     .task(id: items.count) {
-      let mediaCount = items.filter { if case .status(let status) = $0 { return !status.asMediaStatus.isEmpty }; return false }.count
-      let columns = UserPreferences.shared.galleryColumns
-      let itemsPerColumn = horizontalSizeClass == .regular ? 6 : 4
-      let targetMediaCount = columns * itemsPerColumn
-      
-      if mediaCount < targetMediaCount && nextPageState == .hasNextPage {
-        try? await fetcher.fetchNextPage()
+      let mediaCount = countVisibleMedia(in: items)
+      let targetMediaCount = totalPlaceholderCount
+      if mediaCount < targetMediaCount {
+        if nextPageState == .hasNextPage {
+          try? await fetcher.fetchNextPage()
+        }
       }
     }
-    
-    makeNextPageRow(nextPageState: nextPageState)
+
+    makeNextPageRow(nextPageState: nextPageState, itemCount: items.count)
   }
 
+  /// Converts a contiguous sequence of `TimelineItem`s into unique `GalleryNode`s.
+  ///
+  /// Guarantees:
+  /// 1. Every `GalleryNode.id` is strictly unique across the chunk (even if a status was boosted
+  ///    multiple times or duplicated in the initial seed).
+  /// 2. Anchor IDs are deduplicated and never collide with `node.id`, preventing SwiftUI `ForEach`
+  ///    identity collisions that previously caused missing cells and vertical voids.
   private func computeGalleryNodes(for items: [TimelineItem]) -> [GalleryNode] {
     var galleryNodes: [GalleryNode] = []
     var currentAnchors: [String] = []
+    var usedIds = Set<String>()
+    let cropSquare = isSquare
 
     for item in items {
       switch item {
       case .status(let status):
+        if isStatusFiltered(status) {
+          continue
+        }
         let mediaStatuses = status.asMediaStatus
         if mediaStatuses.isEmpty {
-          currentAnchors.append(status.id)
+          if usedIds.insert(status.id).inserted {
+            currentAnchors.append(status.id)
+          }
         } else {
           for (index, mediaStatus) in mediaStatuses.enumerated() {
-            var anchors = index == 0 ? currentAnchors : []
-            if index == 0 { anchors.append(status.id) }
-            galleryNodes.append(GalleryNode(
-              id: mediaStatus.id,
-              mediaStatus: mediaStatus,
-              anchorIds: anchors
-            ))
-            if index == 0 { currentAnchors = [] }
+            let baseId = mediaStatus.id
+            let uniqueNodeId: String
+            if usedIds.insert(baseId).inserted {
+              uniqueNodeId = baseId
+            } else {
+              let compositeId = "\(status.id)-\(baseId)"
+              if usedIds.insert(compositeId).inserted {
+                uniqueNodeId = compositeId
+              } else {
+                let indexedId = "\(compositeId)-\(galleryNodes.count)"
+                usedIds.insert(indexedId)
+                uniqueNodeId = indexedId
+              }
+            }
+
+            var anchors: [String] = []
+            if index == 0 {
+              anchors.append(contentsOf: currentAnchors)
+              if status.id != uniqueNodeId {
+                if usedIds.insert(status.id).inserted {
+                  anchors.append(status.id)
+                }
+              }
+              currentAnchors = []
+            }
+
+            let ratio = mediaStatus.attachment.galleryAspectRatio(isSquare: cropSquare)
+            galleryNodes.append(
+              GalleryNode(
+                id: uniqueNodeId,
+                mediaStatus: mediaStatus,
+                anchorIds: anchors,
+                aspectRatio: ratio
+              )
+            )
           }
         }
       case .gap:
@@ -234,95 +507,73 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
 
     if !currentAnchors.isEmpty {
-      galleryNodes.append(GalleryNode(
-        id: currentAnchors.first!,
-        mediaStatus: nil,
-        anchorIds: currentAnchors
-      ))
+      let firstAnchor = currentAnchors[0]
+      let remainingAnchors = Array(currentAnchors.dropFirst())
+      galleryNodes.append(
+        GalleryNode(
+          id: firstAnchor,
+          mediaStatus: nil,
+          anchorIds: remainingAnchors,
+          aspectRatio: 1.0
+        )
+      )
     }
 
     return galleryNodes
   }
 
-  private func computeColumnItems(from galleryNodes: [GalleryNode], columns: Int) -> [[GalleryNode]] {
-    var items: [[GalleryNode]] = Array(repeating: [], count: columns)
-    var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
-
-    var currentIndex = 0
-    for node in galleryNodes {
-      let targetColIndex: Int
-
-      if let mediaStatus = node.mediaStatus {
-        if UserPreferences.shared.galleryOptimizeItemLayout {
-          var shortestColIndex = 0
-          var shortestHeight = columnHeights[0]
-
-          for i in 1..<columns {
-            if columnHeights[i] < shortestHeight {
-              shortestHeight = columnHeights[i]
-              shortestColIndex = i
-            }
-          }
-          targetColIndex = shortestColIndex
-        } else {
-          targetColIndex = currentIndex % columns
-        }
-
-        items[targetColIndex].append(node)
-
-        let isSquare = UserPreferences.shared.galleryCropToSquare
-        let actualRatio = mediaStatus.attachment.aspectRatio
-        var aspectRatio = isSquare ? 1.0 : (actualRatio ?? 1.0)
-        if aspectRatio <= 0 { aspectRatio = 1.0 }
-        columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
-        currentIndex += 1
-      } else {
-        // Trailing anchors with no media
-        items[0].append(node)
-      }
-    }
-
-    return items
-  }
-
   @ViewBuilder
   private func makeGridChunk(for items: [TimelineItem]) -> some View {
-    makeGridChunkView(columnItems: computeColumnItems(from: computeGalleryNodes(for: items), columns: self.columns))
+    makeGridChunkView(nodes: computeGalleryNodes(for: items))
   }
 
   @ViewBuilder
-  private func makeGridChunkView(columnItems: [[GalleryNode]]) -> some View {
-    HStack(alignment: .top, spacing: 4) {
-      ForEach(0..<columnItems.count, id: \.self) { colIndex in
-        LazyVStack(spacing: 0) {
-          ForEach(columnItems[colIndex]) { node in
-            VStack(spacing: 0) {
-              ForEach(node.anchorIds, id: \.self) { anchorId in
-                Color.clear
-                  .frame(height: 0)
-                  .id(anchorId)
-              }
-              if let mediaStatus = node.mediaStatus {
-                GalleryMediaCell(
-                  mediaStatus: mediaStatus,
-                  routerPath: routerPath,
-                  client: client,
-                  isRemote: isRemote,
-                  filterContext: filterContext
-                )
-                .id(mediaStatus.id)
-                .padding(.bottom, 4)
-                .trackStatusVisibility(status: mediaStatus.status, fetcher: fetcher, requiresMediaToLoad: false)
-              }
-            }
-          }
-        }
-        .frame(minWidth: 0, maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+  private func makeGridChunkView(nodes: [GalleryNode]) -> some View {
+    GalleryMasonryLayout(
+      columns: columns,
+      spacing: 4,
+      optimizeLayout: optimizeLayout
+    ) {
+      ForEach(nodes) { node in
+        makeNodeView(for: node)
       }
     }
-    .frame(maxWidth: .infinity)
-    .clipped()
     .padding(.horizontal, horizontalPadding)
+    .frame(maxWidth: .infinity)
+  }
+
+  @ViewBuilder
+  private func makeNodeView(for node: GalleryNode) -> some View {
+    if let mediaStatus = node.mediaStatus {
+      GalleryMediaCell(
+        mediaStatus: mediaStatus,
+        routerPath: routerPath,
+        client: client,
+        isRemote: isRemote,
+        filterContext: filterContext
+      )
+      .background(alignment: .top) {
+        VStack(spacing: 0) {
+          ForEach(node.anchorIds, id: \.self) { anchorId in
+            Color.clear
+              .frame(width: 1, height: 0)
+              .id(anchorId)
+          }
+        }
+      }
+      .trackStatusVisibility(status: mediaStatus.status, fetcher: fetcher, requiresMediaToLoad: false)
+      .galleryLayoutItemKind(.media(aspectRatio: node.aspectRatio))
+    } else {
+      VStack(spacing: 0) {
+        ForEach(node.anchorIds, id: \.self) { anchorId in
+          Color.clear
+            .frame(width: 1, height: 0)
+            .id(anchorId)
+        }
+      }
+      .frame(width: 0, height: 0)
+      .galleryLayoutItemKind(.anchor)
+    }
   }
 }
 
@@ -334,7 +585,13 @@ public struct GalleryMediaCell: View {
   public let isRemote: Bool
   public let filterContext: Filter.Context?
 
-  public init(mediaStatus: MediaStatus, routerPath: RouterPath, client: FediverseClient, isRemote: Bool, filterContext: Filter.Context?) {
+  public init(
+    mediaStatus: MediaStatus,
+    routerPath: RouterPath,
+    client: FediverseClient,
+    isRemote: Bool,
+    filterContext: Filter.Context?
+  ) {
     self.mediaStatus = mediaStatus
     self.routerPath = routerPath
     self.client = client
@@ -351,22 +608,46 @@ public struct GalleryMediaCell: View {
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPreferences
   @Environment(CurrentAccount.self) private var currentAccount
+  @Environment(\.statusOnMediaLoaded) private var statusOnMediaLoaded
   @State private var loadTask: Task<Void, Never>? = nil
 
-  private var isSquare: Bool { UserPreferences.shared.galleryCropToSquare }
-  private var shouldAspectFit: Bool { mediaStatus.attachment.aspectRatio == nil && !isSquare }
-  
-  private var fallback: Bool { UserPreferences.shared.remoteMediaFallbackOnFail }
-  private var effectiveUseRemoteMedia: Bool { isRemote || UserPreferences.shared.remoteMediaAlwaysForce || autoFallbackTriggered }
-  
-  private var info: MediaAttachment.DisplayInfo? { mediaStatus.attachment.displayInfo(useRemoteMedia: effectiveUseRemoteMedia, fallbackOnFail: fallback, neverLoadVideo: false) }
+  private var isSquare: Bool { userPreferences.galleryCropToSquare }
+
+  /// Always returns a clamped, deterministic aspect ratio in `[0.5, 2.0]` (or `1.0` when square cropping
+  /// is enabled or when server metadata is missing), ensuring cells never jump in height after download.
+  private var effectiveAspectRatio: CGFloat {
+    mediaStatus.attachment.galleryAspectRatio(isSquare: isSquare)
+  }
+
+  private var fallback: Bool { userPreferences.remoteMediaFallbackOnFail }
+
+  private var effectiveUseRemoteMedia: Bool {
+    if isRemote { return true }
+    if userPreferences.remoteMediaAlwaysForce { return true }
+    if autoFallbackTriggered { return true }
+    return false
+  }
+
+  private var info: MediaAttachment.DisplayInfo? {
+    mediaStatus.attachment.displayInfo(
+      useRemoteMedia: effectiveUseRemoteMedia,
+      fallbackOnFail: fallback,
+      neverLoadVideo: false
+    )
+  }
+
   private var resolvedUrl: URL? { info?.url }
   private var fallbackUrl: URL? { info?.fallbackUrl }
   private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
-  private var resolvedLazyImageUrl: URL? { autoFallbackTriggered ? (fallbackUrl ?? resolvedUrl) : resolvedUrl }
-  private var cornerRadius: CGFloat { UserPreferences.shared.galleryRoundCorners ? 8 : 0 }
+  private var resolvedLazyImageUrl: URL? {
+    if autoFallbackTriggered {
+      return fallbackUrl ?? resolvedUrl
+    }
+    return resolvedUrl
+  }
 
+  private var cornerRadius: CGFloat { userPreferences.galleryRoundCorners ? 8 : 0 }
 
   private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
     let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
@@ -374,74 +655,70 @@ public struct GalleryMediaCell: View {
     return reblogContent ?? statusContent
   }
 
+  private func ensureViewModel() {
+    if viewModel == nil {
+      viewModel = StatusRowViewModel(
+        status: mediaStatus.status,
+        client: client,
+        routerPath: routerPath,
+        isRemote: isRemote,
+        filterContext: filterContext
+      )
+    }
+  }
+
   public var body: some View {
-    if let url = resolvedUrl {
+    if let url = resolvedLazyImageUrl {
       Button {
         if let viewModel {
           viewModel.navigateToDetail()
         } else {
-          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status))
+          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status))
         }
       } label: {
         Group {
           switch resolvedType {
           case .image:
-            if shouldAspectFit {
-              LazyImage(url: resolvedLazyImageUrl) { state in
-                if let image = state.image {
-                  image
-                    .resizable()
-                    .scaledToFit()
-                    .onAppear {
-                      DispatchQueue.main.async {
-                        if !imageLoaded { imageLoaded = true }
-                      }
+            LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
+              if let image = state.image {
+                image
+                  .resizable()
+                  .scaledToFill()
+                  .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+                  .clipped()
+                  .onAppear {
+                    if !imageLoaded {
+                      imageLoaded = true
                     }
-                } else if state.error != nil {
+                    statusOnMediaLoaded()
+                  }
+              } else {
+                ZStack {
                   Color.secondary.opacity(0.1)
-                    .aspectRatio(1, contentMode: .fit)
-                    .onAppear {
-                      if !autoFallbackTriggered && fallbackUrl != nil {
-                        DispatchQueue.main.async { autoFallbackTriggered = true }
-                      }
-                    }
-                } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
-                  .aspectRatio(1, contentMode: .fit)
+                  ProgressView()
                 }
               }
-              .transition(.opacity)
-            } else {
-              LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
-                if let image = state.image {
-                  image
-                    .resizable()
-                    .scaledToFill()
-                    .onAppear {
-                      DispatchQueue.main.async {
-                        if !imageLoaded { imageLoaded = true }
-                      }
-                    }
-                } else {
-                  ZStack {
-                    Color.secondary.opacity(0.1)
-                    ProgressView()
-                  }
-                }
-              }
-              .transition(.opacity)
             }
+            .transition(.opacity)
           case .gifv, .video:
-            MediaUIAttachmentVideoView(viewModel: .init(url: url, fallbackUrl: fallbackUrl))
-              .allowsHitTesting(false)
+            MediaUIAttachmentVideoView(
+              viewModel: .init(
+                url: url,
+                fallbackUrl: fallbackUrl,
+                onReady: {
+                  if !imageLoaded {
+                    imageLoaded = true
+                  }
+                  statusOnMediaLoaded()
+                }
+              )
+            )
+            .allowsHitTesting(false)
           default:
-            EmptyView()
+            Color.secondary.opacity(0.1)
           }
         }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: mediaStatus.attachment.aspectRatio))
+        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: effectiveAspectRatio))
         .clipped()
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
         .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
@@ -465,36 +742,34 @@ public struct GalleryMediaCell: View {
           }
         } else {
           ProgressView()
-        }
-      }
-      .onAppear {
-        if viewModel == nil {
-          viewModel = StatusRowViewModel(
-            status: mediaStatus.status,
-            client: client,
-            routerPath: routerPath,
-            isRemote: isRemote,
-            filterContext: filterContext
-          )
-        }
-        if UserPreferences.shared.remoteMediaAutoFallback && !effectiveUseRemoteMedia {
-            loadTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(UserPreferences.shared.remoteMediaAutoFallbackDelay * 1_000_000_000.0))
-                if !Task.isCancelled {
-                    if !imageLoaded {
-                        autoFallbackTriggered = true
-                    }
-                }
+            .onAppear {
+              ensureViewModel()
             }
         }
       }
+      .onAppear {
+        ensureViewModel()
+        if userPreferences.remoteMediaAutoFallback {
+          if !effectiveUseRemoteMedia {
+            loadTask = Task {
+              let delayNs = UInt64(userPreferences.remoteMediaAutoFallbackDelay * 1_000_000_000.0)
+              try? await Task.sleep(nanoseconds: delayNs)
+              if !Task.isCancelled {
+                if !imageLoaded {
+                  autoFallbackTriggered = true
+                }
+              }
+            }
+          }
+        }
+      }
       .onDisappear {
-          loadTask?.cancel()
+        loadTask?.cancel()
       }
       .onChange(of: imageLoaded) { _, newValue in
-          if newValue {
-              loadTask?.cancel()
-          }
+        if newValue {
+          loadTask?.cancel()
+        }
       }
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
@@ -567,16 +842,19 @@ public struct GalleryMediaCell: View {
       )
     }
   }
+
   private func makeShareAsImageSheet() -> some View {
     guard let viewModel else { return AnyView(EmptyView()) }
     let renderer = ImageRenderer(content: AnyView(shareCaptureView(viewModel: viewModel)))
     renderer.isOpaque = true
     renderer.scale = 3.0
-    return AnyView(StatusRowShareAsImageView(
-      viewModel: viewModel,
-      renderer: renderer
+    return AnyView(
+      StatusRowShareAsImageView(
+        viewModel: viewModel,
+        renderer: renderer
+      )
+      .tint(theme.tintColor)
     )
-    .tint(theme.tintColor))
   }
 
   private func shareCaptureView(viewModel: StatusRowViewModel) -> some View {
@@ -592,37 +870,33 @@ public struct GalleryMediaCell: View {
     .environment(StatusDataControllerProvider.shared.dataController(for: viewModel.finalStatus, client: client))
     .environment(currentAccount)
   }
-
 }
-
 
 public struct GalleryAspectRatioModifier: ViewModifier {
   public let isSquare: Bool
   public let aspectRatio: CGFloat?
-  
+
   public init(isSquare: Bool, aspectRatio: CGFloat?) {
     self.isSquare = isSquare
     self.aspectRatio = aspectRatio
-      }
-
-  public func body(content: Content) -> some View {
-    if isSquare {
-      Color.clear
-        .aspectRatio(1, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else if let aspectRatio = aspectRatio {
-      Color.clear
-        .aspectRatio(aspectRatio, contentMode: .fit)
-        .overlay {
-          content
-        }
-        .clipped()
-    } else {
-      content
-    }
   }
 
+  private var resolvedAspectRatio: CGFloat {
+    if isSquare { return 1.0 }
+    if let aspectRatio {
+      if aspectRatio > 0 {
+        return min(max(aspectRatio, 0.5), 2.0)
+      }
+    }
+    return 1.0
+  }
+
+  public func body(content: Content) -> some View {
+    Color.clear
+      .aspectRatio(resolvedAspectRatio, contentMode: .fit)
+      .overlay {
+        content
+      }
+      .clipped()
+  }
 }

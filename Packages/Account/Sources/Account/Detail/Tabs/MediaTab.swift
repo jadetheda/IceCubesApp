@@ -1,7 +1,9 @@
 import DesignSystem
 import Env
+import Foundation
 import Models
 import NetworkClient
+import Observation
 import StatusKit
 import SwiftUI
 
@@ -38,7 +40,7 @@ private class MediaTabFetcher: AccountTabFetcher {
   override func fetchNewestStatuses(pullToRefresh: Bool) async {
     do {
       statusesState = .loading
-      statuses = try await client.get(
+      let fetched: [Status] = try await client.get(
         endpoint: Accounts.statuses(
           id: accountId,
           sinceId: nil,
@@ -50,8 +52,9 @@ private class MediaTabFetcher: AccountTabFetcher {
         )
       )
 
+      statuses = AccountMediaFetcher.deduplicateStatuses(fetched)
       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
-      updateStatusesState(with: statuses, hasMore: statuses.count >= 20)
+      updateStatusesState(with: statuses, hasMore: !statuses.isEmpty)
     } catch {
       statusesState = .error(error: .noData)
     }
@@ -72,9 +75,17 @@ private class MediaTabFetcher: AccountTabFetcher {
       )
     )
 
-    statuses.append(contentsOf: newStatuses)
-    StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-    updateStatusesState(with: statuses, hasMore: newStatuses.count >= 20)
+    var existingIds = Set(statuses.map { $0.id })
+    var uniqueNewStatuses: [Status] = []
+    for status in newStatuses {
+      if existingIds.insert(status.id).inserted {
+        uniqueNewStatuses.append(status)
+      }
+    }
+
+    statuses.append(contentsOf: uniqueNewStatuses)
+    StatusDataControllerProvider.shared.updateDataControllers(for: uniqueNewStatuses, client: client)
+    updateStatusesState(with: statuses, hasMore: !uniqueNewStatuses.isEmpty)
   }
 }
 
@@ -85,6 +96,10 @@ private struct MediaTabView: View {
   let account: Account?
 
   @Environment(Theme.self) private var theme
+
+  private var isRemoteAccount: Bool {
+    account?.url?.host?.lowercased() != client.server.lowercased()
+  }
 
   var body: some View {
     Group {
@@ -114,7 +129,7 @@ private struct MediaTabView: View {
         fetcher: fetcher,
         client: client,
         routerPath: routerPath,
-        isRemote: account?.url?.host?.lowercased() != client.server.lowercased(),
+        isRemote: isRemoteAccount,
         isMediaTab: true
       )
     }

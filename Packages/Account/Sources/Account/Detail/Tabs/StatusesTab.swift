@@ -1,7 +1,9 @@
 import DesignSystem
 import Env
+import Foundation
 import Models
 import NetworkClient
+import Observation
 import StatusKit
 import SwiftUI
 import Timeline
@@ -64,7 +66,7 @@ private class StatusesTabFetcher: AccountTabFetcher {
       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
       StatusDataControllerProvider.shared.updateDataControllers(for: pinned, client: client)
 
-      updateStatusesState(with: statuses, hasMore: statuses.count >= 20)
+      updateStatusesState(with: statuses, hasMore: !statuses.isEmpty)
     } catch {
       statusesState = .error(error: .noData)
     }
@@ -87,11 +89,10 @@ private class StatusesTabFetcher: AccountTabFetcher {
 
     statuses.append(contentsOf: newStatuses)
     StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-    updateStatusesState(with: statuses, hasMore: newStatuses.count >= 20)
+    updateStatusesState(with: statuses, hasMore: !newStatuses.isEmpty)
   }
 
   override func handleEvent(event: any StreamEvent, currentAccount: CurrentAccount) {
-    // Handle pinned posts updates in addition to the base implementation
     super.handleEvent(event: event, currentAccount: currentAccount)
 
     if let event = event as? StreamEventDelete {
@@ -111,10 +112,68 @@ private struct StatusesTabView: View {
   let isRemote: Bool
 
   @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
   var contentFilter = TimelineContentFilter.shared
 
   private var shouldShowFilterWarning: Bool {
-    contentFilter.hidePostsWithMedia || contentFilter.hidePostsWithoutMedia
+    if contentFilter.hidePostsWithMedia { return true }
+    if contentFilter.hidePostsWithoutMedia { return true }
+    return false
+  }
+
+  private var isGalleryMode: Bool {
+    contentFilter.isGalleryMode
+  }
+
+  private var galleryColumns: Int {
+    max(1, userPreferences.galleryColumns)
+  }
+
+  private var isSquareCrop: Bool {
+    userPreferences.galleryCropToSquare
+  }
+
+  private var optimizeLayout: Bool {
+    userPreferences.galleryOptimizeItemLayout
+  }
+
+  private var galleryHorizontalPadding: CGFloat {
+    userPreferences.galleryAddThinMargins ? 4 : 0
+  }
+
+  private var shouldDisplayPinnedSection: Bool {
+    if isGalleryMode {
+      return !pinnedMediaItems.isEmpty
+    }
+    return !filteredPinned.isEmpty
+  }
+
+  private struct PinnedGalleryItem: Identifiable {
+    let id: String
+    let mediaStatus: MediaStatus
+    let aspectRatio: CGFloat
+  }
+
+  private var pinnedMediaItems: [PinnedGalleryItem] {
+    var result: [PinnedGalleryItem] = []
+    var usedIds = Set<String>()
+    let square = isSquareCrop
+    for status in filteredPinned {
+      for mediaStatus in status.asMediaStatus {
+        let baseId = mediaStatus.id
+        let uniqueId: String
+        if usedIds.insert(baseId).inserted {
+          uniqueId = baseId
+        } else {
+          let compositeId = "\(status.id)-\(baseId)"
+          usedIds.insert(compositeId)
+          uniqueId = compositeId
+        }
+        let ratio = mediaStatus.attachment.galleryAspectRatio(isSquare: square)
+        result.append(PinnedGalleryItem(id: uniqueId, mediaStatus: mediaStatus, aspectRatio: ratio))
+      }
+    }
+    return result
   }
 
   var body: some View {
@@ -138,7 +197,7 @@ private struct StatusesTabView: View {
         }
       }
 
-      if !filteredPinned.isEmpty {
+      if shouldDisplayPinnedSection {
         pinnedPostsView
       }
 
@@ -156,10 +215,14 @@ private struct StatusesTabView: View {
   private var filteredPinned: [Status] {
     fetcher.pinned.filter { status in
       if contentFilter.hidePostsWithMedia {
-        if !status.mediaAttachments.isEmpty || status.reblog?.mediaAttachments.isEmpty == false { return false }
+        if !status.mediaAttachments.isEmpty { return false }
+        if status.reblog?.mediaAttachments.isEmpty == false { return false }
       }
       if contentFilter.hidePostsWithoutMedia {
-        if status.mediaAttachments.isEmpty && status.reblog?.mediaAttachments.isEmpty ?? true { return false }
+        if status.mediaAttachments.isEmpty {
+          let reblogEmpty = status.reblog?.mediaAttachments.isEmpty ?? true
+          if reblogEmpty { return false }
+        }
       }
       return true
     }
@@ -184,65 +247,28 @@ private struct StatusesTabView: View {
         .listRowBackground(theme.primaryBackgroundColor)
       #endif
 
-    let contentFilter = TimelineContentFilter.shared
-    if contentFilter.isGalleryMode {
-      let mediaStatuses = filteredPinned.flatMap { $0.asMediaStatus }
-      let columns = UserPreferences.shared.galleryColumns
-      
-      let columnItems: [[MediaStatus]] = {
-        var items: [[MediaStatus]] = Array(repeating: [], count: columns)
-        var columnHeights: [CGFloat] = Array(repeating: 0, count: columns)
-        
-        var currentIndex = 0
-        for status in mediaStatuses {
-          let targetColIndex: Int
-          if UserPreferences.shared.galleryOptimizeItemLayout {
-            var shortestColIndex = 0
-            var shortestHeight = columnHeights[0]
-            
-            for i in 1..<columns {
-              if columnHeights[i] < shortestHeight {
-                shortestHeight = columnHeights[i]
-                shortestColIndex = i
-              }
-            }
-            targetColIndex = shortestColIndex
-          } else {
-            targetColIndex = currentIndex % columns
-          }
-          
-          items[targetColIndex].append(status)
-          
-          let isSquare = UserPreferences.shared.galleryCropToSquare
-          let aspectRatio = isSquare ? 1.0 : (status.attachment.clampedAspectRatio ?? 1.0)
-          columnHeights[targetColIndex] += (1.0 / aspectRatio) + 0.1
-          currentIndex += 1
-        }
-        
-        return items
-      }()
-      
-      HStack(alignment: .top, spacing: 4) {
-        ForEach(0..<columns, id: \.self) { colIndex in
-          LazyVStack(spacing: 4) {
-            ForEach(columnItems[colIndex]) { mediaStatus in
-              GalleryMediaCell(
-                mediaStatus: mediaStatus,
-                routerPath: routerPath,
-                client: client,
-                isRemote: isRemote,
-                filterContext: .account
-              )
-              .id(mediaStatus.status.id)
-            }
-            Spacer(minLength: 0)
-          }
-          .frame(minWidth: 0, maxWidth: .infinity)
+    if isGalleryMode {
+      GalleryMasonryLayout(
+        columns: galleryColumns,
+        spacing: 4,
+        optimizeLayout: optimizeLayout
+      ) {
+        ForEach(pinnedMediaItems) { item in
+          GalleryMediaCell(
+            mediaStatus: item.mediaStatus,
+            routerPath: routerPath,
+            client: client,
+            isRemote: isRemote,
+            filterContext: .account
+          )
+          .galleryLayoutItemKind(.media(aspectRatio: item.aspectRatio))
         }
       }
-      .padding(.horizontal, UserPreferences.shared.galleryAddThinMargins ? 4 : 0)
+      .padding(.horizontal, galleryHorizontalPadding)
+      .frame(maxWidth: .infinity)
       .listRowBackground(theme.primaryBackgroundColor)
       .listRowInsets(EdgeInsets())
+      .listRowSeparator(.hidden)
     } else {
       ForEach(filteredPinned) { status in
         StatusRowExternalView(

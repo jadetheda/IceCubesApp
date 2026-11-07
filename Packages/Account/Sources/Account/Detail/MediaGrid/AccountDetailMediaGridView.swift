@@ -1,41 +1,60 @@
 import DesignSystem
 import EmojiText
 import Env
+import Foundation
 import MediaUI
 import Models
 import NetworkClient
 import NukeUI
-import SwiftUI
-import StatusKit
 import Observation
+import StatusKit
+import SwiftUI
 
-/// `AccountMediaFetcher` provides a unified `StatusesFetcher` conforming interface for the 
-/// Profile Media Gallery. This eliminates the fragmentation of having a custom grid layout 
+/// `AccountMediaFetcher` provides a unified `StatusesFetcher` conforming interface for the
+/// Profile Media Gallery. This eliminates the fragmentation of having a custom grid layout
 /// just for profiles, allowing us to leverage `GalleryStatusesListView` natively.
 @MainActor
 @Observable
 public class AccountMediaFetcher: StatusesFetcher {
   public let accountId: String
   public var client: FediverseClient?
-  
+
   public var statusesState: StatusesState = .loading
   public var statuses: [Status] = []
-  
+
   public init(accountId: String, client: FediverseClient? = nil, initialStatuses: [Status] = []) {
     self.accountId = accountId
     self.client = client
-    if !initialStatuses.isEmpty {
-      self.statuses = initialStatuses
-      // Standardize the next page state based on the provided items
-      self.statusesState = .display(statuses: initialStatuses, nextPageState: initialStatuses.count >= 20 ? .hasNextPage : .none)
+    let uniqueStatuses = Self.deduplicateStatuses(initialStatuses)
+    if !uniqueStatuses.isEmpty {
+      self.statuses = uniqueStatuses
+      self.statusesState = .display(
+        statuses: uniqueStatuses,
+        nextPageState: .hasNextPage
+      )
     }
   }
-  
+
+  /// Deduplicates statuses by `id` while preserving chronological order.
+  /// Fixes the multi-attachment status duplication bug where `initialMediaStatuses.map { $0.status }`
+  /// produced N copies of the same `Status` for a post with N media attachments.
+  public static func deduplicateStatuses(_ input: [Status]) -> [Status] {
+    var seenIds = Set<String>()
+    var unique: [Status] = []
+    unique.reserveCapacity(input.count)
+    for status in input {
+      if seenIds.insert(status.id).inserted {
+        unique.append(status)
+      }
+    }
+    return unique
+  }
+
   public func fetchNewestStatuses(pullToRefresh: Bool) async {
     guard let client else { return }
     do {
       statusesState = .loading
-      let newStatuses: [Status] = try await client.get(
+      let fetchedStatuses: [Status] = try await client.get(
         endpoint: Accounts.statuses(
           id: accountId,
           sinceId: nil,
@@ -46,19 +65,23 @@ public class AccountMediaFetcher: StatusesFetcher {
           pinned: nil
         )
       )
-      
-      statuses = newStatuses
-      StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-      // Check for empty to determine pagination end safely
-      statusesState = .display(statuses: newStatuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
+
+      let uniqueStatuses = Self.deduplicateStatuses(fetchedStatuses)
+      statuses = uniqueStatuses
+      StatusDataControllerProvider.shared.updateDataControllers(for: uniqueStatuses, client: client)
+      statusesState = .display(
+        statuses: uniqueStatuses,
+        nextPageState: uniqueStatuses.isEmpty ? .none : .hasNextPage
+      )
     } catch {
       statusesState = .error(error: .noData)
     }
   }
-  
+
   public func fetchNextPage() async throws {
-    guard let client, let lastId = statuses.last?.id else { return }
-    
+    guard let client else { return }
+    guard let lastId = statuses.last?.id else { return }
+
     let newStatuses: [Status] = try await client.get(
       endpoint: Accounts.statuses(
         id: accountId,
@@ -70,13 +93,23 @@ public class AccountMediaFetcher: StatusesFetcher {
         pinned: nil
       )
     )
-    
-    statuses.append(contentsOf: newStatuses)
-    StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-    // Safely check if we're out of remote pages
-    statusesState = .display(statuses: statuses, nextPageState: newStatuses.isEmpty ? .none : .hasNextPage)
+
+    var existingIds = Set(statuses.map { $0.id })
+    var uniqueNewStatuses: [Status] = []
+    for status in newStatuses {
+      if existingIds.insert(status.id).inserted {
+        uniqueNewStatuses.append(status)
+      }
+    }
+
+    statuses.append(contentsOf: uniqueNewStatuses)
+    StatusDataControllerProvider.shared.updateDataControllers(for: uniqueNewStatuses, client: client)
+    statusesState = .display(
+      statuses: statuses,
+      nextPageState: uniqueNewStatuses.isEmpty ? .none : .hasNextPage
+    )
   }
-  
+
   public func statusDidAppear(status: Status) {}
   public func statusDidDisappear(status: Status) {}
 }
@@ -86,26 +119,30 @@ public struct AccountDetailMediaGridView: View {
   @Environment(Theme.self) private var theme
   @Environment(RouterPath.self) private var routerPath
   @Environment(FediverseClient.self) private var client
-  
+
   let account: Account
   @State private var fetcher: AccountMediaFetcher
-  
+
   private var isRemote: Bool {
     guard let host = account.url?.host else { return false }
     return host.lowercased() != client.server.lowercased()
   }
-  
+
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
     self.account = account
-    let initialStatuses = initialMediaStatuses.map { $0.status }
-    _fetcher = .init(initialValue: AccountMediaFetcher(accountId: account.id, initialStatuses: initialStatuses))
+    let rawStatuses = initialMediaStatuses.map { $0.status }
+    let uniqueStatuses = AccountMediaFetcher.deduplicateStatuses(rawStatuses)
+    _fetcher = .init(
+      initialValue: AccountMediaFetcher(
+        accountId: account.id,
+        initialStatuses: uniqueStatuses
+      )
+    )
   }
-  
+
   public var body: some View {
     ScrollView {
       LazyVStack(spacing: 0) {
-        // Reuse the exact same masonry gallery implementation from the Timeline
-        // This eliminates layout bugs and standardizes remote-media behavior.
         GalleryStatusesListView(
           fetcher: fetcher,
           client: client,
@@ -135,9 +172,6 @@ public struct AccountDetailMediaGridView: View {
     #if !os(visionOS)
       .background(theme.primaryBackgroundColor.ignoresSafeArea())
     #endif
-    .refreshable {
-      await fetcher.fetchNewestStatuses(pullToRefresh: true)
-    }
     .refreshable {
       await fetcher.fetchNewestStatuses(pullToRefresh: true)
     }
