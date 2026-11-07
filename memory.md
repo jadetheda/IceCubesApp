@@ -1329,3 +1329,9 @@
     - **Fullscreen Gallery Aspect Ratio**: Added flexible decoding for `MediaAttachment.MetaContainer` and `MetaContainer.Meta` to gracefully handle Fediverse servers returning root-level metadata or float dimensions without `original`/`small` sub-dictionaries. Added `@State private var loadedAspectRatio: CGFloat? = nil` in `GalleryMediaCell` to capture true natural aspect ratios from loaded `UIImage`s, preventing `effectiveAspectRatio` from defaulting to a 1:1 square when server metadata is absent or unparsed.
     - **Timeline Header Gradual Blur**: Added `.rootTabScrollEdgeEffect()` to `.timeline`, `.trending`, `.local`, and `.federated` tabs in `Tabs.swift`. Added dedicated `gradualBlurHeader` with masked `LinearGradient` ultra-thin material and `.toolbarBackground(.ultraThinMaterial, for: .navigationBar)` in `TimelineView` so iOS 17/18/26 renders a seamless gradual top blur. Removed `ignoresSafeArea()` from `TimelineListView` background to avoid obscuring the scroll-edge blur.
   - **Impact**: Restores proper non-square aspect ratios in the Fullscreen Gallery when square cropping is off, and restores Apple's signature gradual blur effect on Timeline navigation headers across all iOS versions.
+
+- **2026-11-07T06:47:00Z**:
+  - **Description**: Fixed Exit Code 65 compiler error from missing `MetaContainer` struct header in `MediaAttachement.swift`.
+  - **Details**:
+    - Restored `public struct MetaContainer: Codable, Equatable` enclosing declaration around `Meta`, restoring the proper struct nesting hierarchy and matching brace count.
+  - **Impact**: Clean compilation across the `Models` package.

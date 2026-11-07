@@ -294,6 +294,10 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: `StatusRowViewModel.finalStatus` is typed as the protocol existential `any AnyStatus`, whereas `status.reblogAsAsStatus ?? status` is typed as concrete `Status`. Writing `viewModel?.finalStatus ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status` inside a property returning `Status` widens the entire `??` chain to `any AnyStatus`, failing compilation with `cannot convert return expression of type 'any AnyStatus' to return type 'Status'` (Exit Code 65).
 - **Solution**: Use concrete `Status` properties across the nil-coalescing chain (`viewModel?.status.reblogAsAsStatus ?? viewModel?.status ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status`).
 
+**Nested Struct Header Missing in Model Replacement**
+- **Root Cause**: During targeted replacement of an inner struct (`Meta`) in a model file containing nested structs (`MediaAttachment.MetaContainer.Meta`), dropping the intermediate struct definition (`public struct MetaContainer: Codable, Equatable {`) caused the closing brace of the inner struct to prematurely terminate the outer enclosing `MediaAttachment` type. Subsequent initializers and static methods were diagnosed with `initializers may only be declared within a type`, `static methods may only be declared on a type`, and `extraneous '}' at top level` (Exit Code 65).
+- **Solution**: Always preserve the full enclosing hierarchy header when editing deeply nested types, and run automated brace-balance validation (`net braces = 0`) across all edited files before triggering CI.
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides
