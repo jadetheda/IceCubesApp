@@ -30,6 +30,21 @@ struct TimelineListView: View {
     return TimelineContentFilter.shared.isGalleryMode
   }
 
+  private var isRemoteTimeline: Bool {
+    if case .remoteLocal = viewModel.timeline {
+      return true
+    }
+    return false
+  }
+
+  private var isHomeTimeline: Bool {
+    timeline == .home
+  }
+
+  private var scrollToTopSpacerHeight: CGFloat {
+    pinnedFilters.isEmpty ? .layoutPadding : 0.5
+  }
+
   var body: some View {
     @Bindable var viewModel = viewModel
     ScrollViewReader { proxy in
@@ -38,7 +53,7 @@ struct TimelineListView: View {
           ScrollView {
             LazyVStack(spacing: 0) {
               ScrollToView()
-                .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
+                .frame(height: scrollToTopSpacerHeight)
                 .onAppear {
                   viewModel.scrollToTopVisible = true
                 }
@@ -47,55 +62,39 @@ struct TimelineListView: View {
                 }
               TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
               TimelineTagHeaderView(tag: $viewModel.tag)
-              
-              switch viewModel.timeline {
-              case .remoteLocal:
-                GalleryStatusesListView(
-                  fetcher: viewModel,
-                  client: client,
-                  routerPath: routerPath,
-                  isRemote: true,
-                  filterContext: timeline.filterContext)
-              default:
-                GalleryStatusesListView(
-                  fetcher: viewModel,
-                  client: client,
-                  routerPath: routerPath,
-                  filterContext: timeline.filterContext)
-                  .environment(\.isHomeTimeline, timeline == .home)
-              }
+
+              GalleryStatusesListView(
+                fetcher: viewModel,
+                client: client,
+                routerPath: routerPath,
+                isRemote: isRemoteTimeline,
+                filterContext: timeline.filterContext
+              )
+              .environment(\.isHomeTimeline, isHomeTimeline)
             }
           }
         } else {
           List {
             ScrollToView()
-              .frame(height: pinnedFilters.isEmpty ? .layoutPadding : 0.5)
+              .frame(height: scrollToTopSpacerHeight)
               .onAppear {
                 viewModel.scrollToTopVisible = true
               }
               .onDisappear {
                 viewModel.scrollToTopVisible = false
               }
-            
+
             TimelineTagGroupheaderView(group: $selectedTagGroup, timeline: $timeline)
             TimelineTagHeaderView(tag: $viewModel.tag)
-            
-            switch viewModel.timeline {
-            case .remoteLocal:
-              StatusesListView(
-                fetcher: viewModel,
-                client: client,
-                routerPath: routerPath,
-                isRemote: true,
-                filterContext: timeline.filterContext)
-            default:
-              StatusesListView(
-                fetcher: viewModel,
-                client: client,
-                routerPath: routerPath,
-                filterContext: timeline.filterContext)
-                .environment(\.isHomeTimeline, timeline == .home)
-            }
+
+            StatusesListView(
+              fetcher: viewModel,
+              client: client,
+              routerPath: routerPath,
+              isRemote: isRemoteTimeline,
+              filterContext: timeline.filterContext
+            )
+            .environment(\.isHomeTimeline, isHomeTimeline)
           }
         }
       }

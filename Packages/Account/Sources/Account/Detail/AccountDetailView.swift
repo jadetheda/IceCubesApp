@@ -73,25 +73,23 @@ public struct AccountDetailView: View {
       }
     }
     
-    do {
-      var topVisibleId: String? = nil
-      if let fetcher = tabManager?.currentTabFetcher as? AccountTabFetcher {
-        if case .display(let statuses, _) = fetcher.statusesState {
-          topVisibleId = statuses.map { $0.id }.first { fetcher.visibleStatusesCount[$0] != nil }
-        }
+    var topVisibleId: String? = nil
+    if let fetcher = tabManager?.currentTabFetcher as? AccountTabFetcher {
+      if case .display(let statuses, _) = fetcher.statusesState {
+        topVisibleId = statuses.map { $0.id }.first { fetcher.visibleStatusesCount[$0] != nil }
       }
-      
-      if let first = topVisibleId {
-        previousScrollPosition = first
-        undoTask?.cancel()
-        undoTask = Task {
-          try? await Task.sleep(for: .seconds(userPreferences.undoScrollToTopTimeout))
-          guard !Task.isCancelled else { return }
-          previousScrollPosition = nil
-        }
-      }
-      return nil
     }
+
+    if let first = topVisibleId {
+      previousScrollPosition = first
+      undoTask?.cancel()
+      undoTask = Task {
+        try? await Task.sleep(for: .seconds(userPreferences.undoScrollToTopTimeout))
+        guard !Task.isCancelled else { return }
+        previousScrollPosition = nil
+      }
+    }
+    return nil
   }
 
   public var body: some View {

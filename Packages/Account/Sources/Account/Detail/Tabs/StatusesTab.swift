@@ -23,7 +23,7 @@ struct StatusesTab {
   func makeView(
     fetcher: any StatusesFetcher, client: FediverseClient, routerPath: RouterPath, account: Account?
   ) -> some View {
-    let isRemote = account?.url?.host?.lowercased() != client.server.lowercased()
+    let isRemote = !client.isAuth
     return StatusesTabView(
       fetcher: fetcher as! StatusesTabFetcher, client: client, routerPath: routerPath, isRemote: isRemote)
   }
@@ -35,11 +35,12 @@ extension StatusesTab: @MainActor AccountTabProtocol {}
 @Observable
 private class StatusesTabFetcher: AccountTabFetcher {
   var pinned: [Status] = []
+  private var isFetchingNextPage = false
 
   override func fetchNewestStatuses(pullToRefresh: Bool) async {
     do {
       statusesState = .loading
-      statuses = try await client.get(
+      let fetched: [Status] = try await client.get(
         endpoint: Accounts.statuses(
           id: accountId,
           sinceId: nil,
@@ -50,8 +51,9 @@ private class StatusesTabFetcher: AccountTabFetcher {
           pinned: nil
         )
       )
+      statuses = AccountMediaFetcher.deduplicateStatuses(fetched)
 
-      pinned = try await client.get(
+      let fetchedPinned: [Status] = try await client.get(
         endpoint: Accounts.statuses(
           id: accountId,
           sinceId: nil,
@@ -62,6 +64,7 @@ private class StatusesTabFetcher: AccountTabFetcher {
           pinned: true
         )
       )
+      pinned = AccountMediaFetcher.deduplicateStatuses(fetchedPinned)
 
       StatusDataControllerProvider.shared.updateDataControllers(for: statuses, client: client)
       StatusDataControllerProvider.shared.updateDataControllers(for: pinned, client: client)
@@ -73,7 +76,10 @@ private class StatusesTabFetcher: AccountTabFetcher {
   }
 
   override func fetchNextPage() async throws {
+    guard !isFetchingNextPage else { return }
     guard let lastId = statuses.last?.id else { return }
+    isFetchingNextPage = true
+    defer { isFetchingNextPage = false }
 
     let newStatuses: [Status] = try await client.get(
       endpoint: Accounts.statuses(
@@ -87,9 +93,17 @@ private class StatusesTabFetcher: AccountTabFetcher {
       )
     )
 
-    statuses.append(contentsOf: newStatuses)
-    StatusDataControllerProvider.shared.updateDataControllers(for: newStatuses, client: client)
-    updateStatusesState(with: statuses, hasMore: !newStatuses.isEmpty)
+    var existingIds = Set(statuses.map { $0.id })
+    var uniqueNewStatuses: [Status] = []
+    for status in newStatuses {
+      if existingIds.insert(status.id).inserted {
+        uniqueNewStatuses.append(status)
+      }
+    }
+
+    statuses.append(contentsOf: uniqueNewStatuses)
+    StatusDataControllerProvider.shared.updateDataControllers(for: uniqueNewStatuses, client: client)
+    updateStatusesState(with: statuses, hasMore: !uniqueNewStatuses.isEmpty)
   }
 
   override func handleEvent(event: any StreamEvent, currentAccount: CurrentAccount) {

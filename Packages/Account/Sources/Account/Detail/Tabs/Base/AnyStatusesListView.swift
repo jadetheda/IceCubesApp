@@ -46,10 +46,13 @@ struct AnyStatusesListView: View {
       if shouldShowFilterWarningBanner {
         filterWarningBanner
       }
-      unboxedGallery(fetcher)
-        .listRowBackground(theme.primaryBackgroundColor)
-        .listRowInsets(EdgeInsets())
-        .listRowSeparator(.hidden)
+      GalleryStatusesListView(
+        fetcher: fetcher,
+        client: client,
+        routerPath: routerPath,
+        isRemote: isRemote,
+        filterContext: .account
+      )
     } else {
       switch fetcher.statusesState {
       case .loading:
@@ -142,20 +145,5 @@ struct AnyStatusesListView: View {
       }
       return true
     }
-  }
-
-  /// Opens the existential `StatusesFetcher` without wrapping `GalleryStatusesListView` in unary
-  /// `.background(...)` or `.buttonStyle(...)` modifiers so SwiftUI's `List` forwards multi-row traits
-  /// (`ForEach` chunks and `NextPageView`) cleanly instead of collapsing them into one `UICollectionViewCell`.
-  private func unboxedGallery<F: StatusesFetcher>(_ f: F) -> AnyView {
-    AnyView(
-      GalleryStatusesListView(
-        fetcher: f,
-        client: client,
-        routerPath: routerPath,
-        isRemote: isRemote,
-        filterContext: .account
-      )
-    )
   }
 }

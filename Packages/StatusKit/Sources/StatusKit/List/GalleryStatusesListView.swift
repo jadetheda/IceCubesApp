@@ -221,7 +221,7 @@ public nonisolated struct GalleryMasonryLayout: Layout {
 }
 
 @MainActor
-public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetcher {
+public struct GalleryStatusesListView: View {
   @Environment(Theme.self) private var theme
   @Environment(CurrentAccount.self) private var currentAccount
   @Environment(UserPreferences.self) private var userPreferences
@@ -229,13 +229,13 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
 
   @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
-  @State private var fetcher: Fetcher
+  @State private var fetcher: any StatusesFetcher
   private let isRemote: Bool
   private let client: FediverseClient
   private let filterContext: Filter.Context?
 
   public init(
-    fetcher: Fetcher,
+    fetcher: any StatusesFetcher,
     client: FediverseClient,
     routerPath: RouterPath,
     isRemote: Bool = false,
@@ -391,12 +391,11 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
   }
 
   @ViewBuilder
-  private func makeNextPageRow(nextPageState: StatusesState.PagingState, itemCount: Int) -> some View {
+  private func makeNextPageRow(nextPageState: StatusesState.PagingState) -> some View {
     if nextPageState == .hasNextPage {
       NextPageView {
         try await fetcher.fetchNextPage()
       }
-      .id("gallery-next-page-\(itemCount)")
       .padding(.vertical)
       .listRowBackground(theme.primaryBackgroundColor)
       .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
@@ -427,15 +426,14 @@ public struct GalleryStatusesListView<Fetcher>: View where Fetcher: StatusesFetc
     }
     .task(id: items.count) {
       let mediaCount = countVisibleMedia(in: items)
-      let targetMediaCount = totalPlaceholderCount
-      if mediaCount < targetMediaCount {
+      if mediaCount == 0 {
         if nextPageState == .hasNextPage {
           try? await fetcher.fetchNextPage()
         }
       }
     }
 
-    makeNextPageRow(nextPageState: nextPageState, itemCount: items.count)
+    makeNextPageRow(nextPageState: nextPageState)
   }
 
   /// Converts a contiguous sequence of `TimelineItem`s into unique `GalleryNode`s.
@@ -605,6 +603,7 @@ public struct GalleryMediaCell: View {
   @State private var isShareAsImageSheetPresented = false
   @State private var autoFallbackTriggered = false
   @State private var imageLoaded = false
+  @State private var staticPreviewFailed = false
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPreferences
   @Environment(CurrentAccount.self) private var currentAccount
@@ -640,19 +639,26 @@ public struct GalleryMediaCell: View {
   private var fallbackUrl: URL? { info?.fallbackUrl }
   private var resolvedType: MediaAttachment.SupportedType? { info?.type }
 
-  private var resolvedLazyImageUrl: URL? {
-    if autoFallbackTriggered {
-      return fallbackUrl ?? resolvedUrl
-    }
-    return resolvedUrl
+  /// For image thumbnails and static video previews, prefer `previewUrl` (~30 KB) over `url` (multi-MB original).
+  /// `info` already reflects `effectiveUseRemoteMedia` (including `autoFallbackTriggered`), so do not double-invert.
+  private var resolvedThumbnailUrl: URL? {
+    info?.previewUrl ?? info?.url
+  }
+
+  private var resolvedThumbnailFallbackUrl: URL? {
+    info?.previewFallbackUrl ?? info?.fallbackUrl
+  }
+
+  private var shouldUseStaticVideoPreview: Bool {
+    if staticPreviewFailed { return false }
+    guard let info else { return false }
+    return info.hasStaticPreviewImage
   }
 
   private var cornerRadius: CGFloat { userPreferences.galleryRoundCorners ? 8 : 0 }
 
-  private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
-    let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
-    let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
-    return reblogContent ?? statusContent
+  private var activeFinalStatus: Status {
+    viewModel?.finalStatus ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status
   }
 
   private func ensureViewModel() {
@@ -667,61 +673,120 @@ public struct GalleryMediaCell: View {
     }
   }
 
+  private func markMediaLoaded() {
+    if !imageLoaded {
+      imageLoaded = true
+    }
+    statusOnMediaLoaded?()
+  }
+
+  @ViewBuilder
+  private func makeThumbnailImage(url: URL, fallback: URL?, onFailure: (() -> Void)? = nil) -> some View {
+    LazyResizableImage(url: url, fallbackUrl: fallback) { state in
+      if let image = state.image {
+        image
+          .resizable()
+          .scaledToFill()
+          .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+          .clipped()
+          .onAppear {
+            markMediaLoaded()
+          }
+      } else if state.error != nil {
+        ZStack {
+          Color.secondary.opacity(0.1)
+          Image(systemName: "photo")
+            .foregroundStyle(.secondary)
+        }
+        .onAppear {
+          onFailure?()
+        }
+      } else {
+        ZStack {
+          Color.secondary.opacity(0.1)
+          ProgressView()
+        }
+      }
+    }
+    .transition(.opacity)
+  }
+
+  @ViewBuilder
+  private var videoBadgeOverlay: some View {
+    ZStack(alignment: .bottomTrailing) {
+      Color.clear
+      HStack(spacing: 4) {
+        if resolvedType == .gifv {
+          Text("GIF")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+        } else {
+          Image(systemName: "play.fill")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.white)
+        }
+      }
+      .padding(.horizontal, 6)
+      .padding(.vertical, 4)
+      .background(.ultraThinMaterial)
+      .clipShape(Capsule())
+      .padding(6)
+    }
+    .allowsHitTesting(false)
+  }
+
+  @ViewBuilder
+  private var cellMediaContent: some View {
+    switch resolvedType {
+    case .image:
+      if let thumbUrl = resolvedThumbnailUrl {
+        makeThumbnailImage(url: thumbUrl, fallback: resolvedThumbnailFallbackUrl)
+      } else {
+        Color.secondary.opacity(0.1)
+      }
+    case .gifv, .video:
+      if shouldUseStaticVideoPreview, let thumbUrl = resolvedThumbnailUrl {
+        makeThumbnailImage(
+          url: thumbUrl,
+          fallback: resolvedThumbnailFallbackUrl,
+          onFailure: { staticPreviewFailed = true }
+        )
+        .overlay {
+          videoBadgeOverlay
+        }
+      } else if let videoUrl = resolvedUrl {
+        MediaUIAttachmentVideoView(
+          viewModel: .init(
+            url: videoUrl,
+            fallbackUrl: fallbackUrl,
+            onReady: {
+              markMediaLoaded()
+            }
+          )
+        )
+        .allowsHitTesting(false)
+      } else {
+        Color.secondary.opacity(0.1)
+      }
+    default:
+      Color.secondary.opacity(0.1)
+    }
+  }
+
   public var body: some View {
-    if let url = resolvedLazyImageUrl {
+    if resolvedThumbnailUrl != nil || resolvedUrl != nil {
       Button {
         if let viewModel {
           viewModel.navigateToDetail()
         } else {
-          routerPath.navigate(to: .statusDetailWithStatus(status: mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status))
+          routerPath.navigate(to: .statusDetailWithStatus(status: activeFinalStatus))
         }
       } label: {
-        Group {
-          switch resolvedType {
-          case .image:
-            LazyResizableImage(url: url, fallbackUrl: fallbackUrl) { state in
-              if let image = state.image {
-                image
-                  .resizable()
-                  .scaledToFill()
-                  .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-                  .clipped()
-                  .onAppear {
-                    if !imageLoaded {
-                      imageLoaded = true
-                    }
-                    statusOnMediaLoaded?()
-                  }
-              } else {
-                ZStack {
-                  Color.secondary.opacity(0.1)
-                  ProgressView()
-                }
-              }
-            }
-            .transition(.opacity)
-          case .gifv, .video:
-            MediaUIAttachmentVideoView(
-              viewModel: .init(
-                url: url,
-                fallbackUrl: fallbackUrl,
-                onReady: {
-                  if !imageLoaded {
-                    imageLoaded = true
-                  }
-                  statusOnMediaLoaded?()
-                }
-              )
-            )
-            .allowsHitTesting(false)
-          default:
-            Color.secondary.opacity(0.1)
-          }
-        }
-        .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: effectiveAspectRatio))
-        .clipped()
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-        .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+        cellMediaContent
+          .modifier(GalleryAspectRatioModifier(isSquare: isSquare, aspectRatio: effectiveAspectRatio))
+          .clipped()
+          .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+          .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
       }
       .buttonStyle(.borderless)
       .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: cornerRadius))
@@ -748,7 +813,6 @@ public struct GalleryMediaCell: View {
         }
       }
       .onAppear {
-        ensureViewModel()
         if userPreferences.remoteMediaAutoFallback {
           if !effectiveUseRemoteMedia {
             loadTask = Task {
@@ -771,6 +835,45 @@ public struct GalleryMediaCell: View {
           loadTask?.cancel()
         }
       }
+      .modifier(
+        GalleryMediaCellModalsModifier(
+          viewModel: viewModel,
+          client: client,
+          showSelectableText: $showSelectableText,
+          isBlockConfirmationPresented: $isBlockConfirmationPresented,
+          isShareAsImageSheetPresented: $isShareAsImageSheetPresented
+        )
+      )
+      .environment(
+        StatusDataControllerProvider.shared.dataController(
+          for: activeFinalStatus,
+          client: client
+        )
+      )
+    }
+  }
+}
+
+@MainActor
+private struct GalleryMediaCellModalsModifier: ViewModifier {
+  let viewModel: StatusRowViewModel?
+  let client: FediverseClient
+  @Binding var showSelectableText: Bool
+  @Binding var isBlockConfirmationPresented: Bool
+  @Binding var isShareAsImageSheetPresented: Bool
+
+  @Environment(Theme.self) private var theme
+  @Environment(UserPreferences.self) private var userPreferences
+  @Environment(CurrentAccount.self) private var currentAccount
+
+  private func getSelectableTextContent(for viewModel: StatusRowViewModel) -> AttributedString {
+    let reblogContent = viewModel.status.reblog?.content.asSafeMarkdownAttributedString
+    let statusContent = viewModel.status.content.asSafeMarkdownAttributedString
+    return reblogContent ?? statusContent
+  }
+
+  func body(content: Content) -> some View {
+    content
       .sheet(isPresented: $showSelectableText) {
         if let viewModel {
           StatusRowSelectableTextView(
@@ -835,12 +938,6 @@ public struct GalleryMediaCell: View {
           }
         }
       }
-      .environment(
-        StatusDataControllerProvider.shared.dataController(
-          for: viewModel?.finalStatus ?? mediaStatus.status,
-          client: client)
-      )
-    }
   }
 
   private func makeShareAsImageSheet() -> some View {

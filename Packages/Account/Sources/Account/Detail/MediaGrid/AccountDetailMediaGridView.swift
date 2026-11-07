@@ -21,6 +21,7 @@ public class AccountMediaFetcher: StatusesFetcher {
 
   public var statusesState: StatusesState = .loading
   public var statuses: [Status] = []
+  private var isFetchingNextPage = false
 
   public init(accountId: String, client: FediverseClient? = nil, initialStatuses: [Status] = []) {
     self.accountId = accountId
@@ -80,7 +81,10 @@ public class AccountMediaFetcher: StatusesFetcher {
 
   public func fetchNextPage() async throws {
     guard let client else { return }
+    guard !isFetchingNextPage else { return }
     guard let lastId = statuses.last?.id else { return }
+    isFetchingNextPage = true
+    defer { isFetchingNextPage = false }
 
     let newStatuses: [Status] = try await client.get(
       endpoint: Accounts.statuses(
@@ -124,8 +128,7 @@ public struct AccountDetailMediaGridView: View {
   @State private var fetcher: AccountMediaFetcher
 
   private var isRemote: Bool {
-    guard let host = account.url?.host else { return false }
-    return host.lowercased() != client.server.lowercased()
+    !client.isAuth
   }
 
   public init(account: Account, initialMediaStatuses: [MediaStatus]) {
@@ -166,6 +169,8 @@ public struct AccountDetailMediaGridView: View {
           Task {
             await fetcher.fetchNewestStatuses(pullToRefresh: false)
           }
+        } else {
+          StatusDataControllerProvider.shared.updateDataControllers(for: fetcher.statuses, client: client)
         }
       }
     }

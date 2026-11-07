@@ -124,37 +124,11 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
   /// The aspect ratio of the media
   public var aspectRatio: CGFloat? {
-    if let original = meta?.original {
-      if let aspect = original.aspect {
-        if aspect > 0 {
-          return CGFloat(aspect)
-        }
-      }
-      if let width = original.width {
-        if let height = original.height {
-          if width > 0 {
-            if height > 0 {
-              return CGFloat(width) / CGFloat(height)
-            }
-          }
-        }
-      }
+    if let ratio = meta?.original?.resolvedAspectRatio {
+      return ratio
     }
-    if let small = meta?.small {
-      if let aspect = small.aspect {
-        if aspect > 0 {
-          return CGFloat(aspect)
-        }
-      }
-      if let width = small.width {
-        if let height = small.height {
-          if width > 0 {
-            if height > 0 {
-              return CGFloat(width) / CGFloat(height)
-            }
-          }
-        }
-      }
+    if let ratio = meta?.small?.resolvedAspectRatio {
+      return ratio
     }
     return nil
   }
@@ -199,6 +173,17 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     public let fallbackUrl: URL?
     public let previewUrl: URL?
     public let previewFallbackUrl: URL?
+
+    /// Returns `true` when a distinct static image thumbnail URL is available for `.video` or `.gifv` attachments.
+    public var hasStaticPreviewImage: Bool {
+      guard let previewUrl else { return false }
+      if previewUrl == url { return false }
+      let ext = previewUrl.pathExtension.lowercased()
+      if ext == "mp4" || ext == "m4v" || ext == "mov" || ext == "webm" {
+        return false
+      }
+      return true
+    }
   }
 
   public func displayInfo(
@@ -225,7 +210,12 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
 
     let pFallbackUrl: URL?
     if fallbackOnFail {
-      let candidatePFallback = useRemoteMedia ? self.previewUrl : (previewRemoteUrl ?? self.previewUrl)
+      let candidatePFallback: URL?
+      if useRemoteMedia {
+        candidatePFallback = self.previewUrl ?? self.url
+      } else {
+        candidatePFallback = previewRemoteUrl ?? remoteUrl ?? self.url
+      }
       pFallbackUrl = candidatePFallback == pUrl ? nil : candidatePFallback
     } else {
       pFallbackUrl = nil
@@ -238,6 +228,18 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
     return DisplayInfo(url: url, type: resolvedType, fallbackUrl: fallbackUrl, previewUrl: pUrl, previewFallbackUrl: pFallbackUrl)
   }
 
+}
+
+extension MediaAttachment.MetaContainer.Meta {
+  var resolvedAspectRatio: CGFloat? {
+    if let aspect, aspect > 0 {
+      return CGFloat(aspect)
+    }
+    if let width, let height, width > 0, height > 0 {
+      return CGFloat(width) / CGFloat(height)
+    }
+    return nil
+  }
 }
 
 extension MediaAttachment: Sendable {}

@@ -33,6 +33,8 @@ extension MediaTab: @MainActor AccountTabProtocol {}
 @MainActor
 @Observable
 private class MediaTabFetcher: AccountTabFetcher {
+  private var isFetchingNextPage = false
+
   var statusesMedias: [MediaStatus] {
     statuses.filter { !$0.mediaAttachments.isEmpty }.flatMap { $0.asMediaStatus }
   }
@@ -61,7 +63,10 @@ private class MediaTabFetcher: AccountTabFetcher {
   }
 
   override func fetchNextPage() async throws {
+    guard !isFetchingNextPage else { return }
     guard let lastId = statuses.last?.id else { return }
+    isFetchingNextPage = true
+    defer { isFetchingNextPage = false }
 
     let newStatuses: [Status] = try await client.get(
       endpoint: Accounts.statuses(
@@ -97,8 +102,8 @@ private struct MediaTabView: View {
 
   @Environment(Theme.self) private var theme
 
-  private var isRemoteAccount: Bool {
-    account?.url?.host?.lowercased() != client.server.lowercased()
+  private var isRemoteTimeline: Bool {
+    !client.isAuth
   }
 
   var body: some View {
@@ -129,7 +134,7 @@ private struct MediaTabView: View {
         fetcher: fetcher,
         client: client,
         routerPath: routerPath,
-        isRemote: isRemoteAccount,
+        isRemote: isRemoteTimeline,
         isMediaTab: true
       )
     }

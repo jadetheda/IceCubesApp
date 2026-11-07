@@ -33,48 +33,57 @@ public struct LazyResizableImage<Content: View>: View {
 
   public var body: some View {
     GeometryReader { proxy in
-      let sizeToUse = processorSize ?? proxy.size
-      
+      let resolvedSize = quantizedProcessorSize(for: processorSize ?? proxy.size)
+
       LazyImage(url: currentURL ?? primaryURL) { state in
-        if (state.error != nil || (!state.isLoading && state.image == nil)) && !hasFailed {
-          if let fallback = fallbackURL, !hasTriedFallback {
-            DispatchQueue.main.async {
-              self.currentURL = fallback
-              self.hasTriedFallback = true
-            }
-          } else if let error = state.error {
-            DispatchQueue.main.async {
-              self.hasFailed = true
-              ErrorService.shared.handle(
-                title: "Image Load Error", 
-                message: "Failed to load \(currentURL?.absoluteString ?? primaryURL?.absoluteString ?? "unknown"). Error: \(error.localizedDescription)", 
-                showPopup: false, 
-                log: true
-              )
-            }
-          } else {
-            DispatchQueue.main.async {
-              self.hasFailed = true
+        if let error = state.error {
+          if !hasFailed {
+            if let fallback = fallbackURL, !hasTriedFallback, currentURL != fallback {
+              DispatchQueue.main.async {
+                self.currentURL = fallback
+                self.hasTriedFallback = true
+              }
+            } else {
+              DispatchQueue.main.async {
+                self.hasFailed = true
+                ErrorService.shared.handle(
+                  title: "Image Load Error",
+                  message: "Failed to load \(currentURL?.absoluteString ?? primaryURL?.absoluteString ?? "unknown"). Error: \(error.localizedDescription)",
+                  showPopup: false,
+                  log: true
+                )
+              }
             }
           }
         }
         return content(state)
       }
-      .processors(sizeToUse.width > 0 && sizeToUse.height > 0 ? [.resize(size: sizeToUse)] : [])
+      .processors([.resize(size: resolvedSize)])
       .onChange(of: proxy.size, initial: true) { oldValue, newValue in
-        guard newValue.width > 0 && newValue.height > 0 else { return }
-        
+        guard newValue.width > 0, newValue.height > 0 else { return }
+        let quantized = quantizedProcessorSize(for: newValue)
         if processorSize == nil {
-            processorSize = newValue
-        } else if oldValue != newValue {
-            updateResizing(with: newValue)
+          processorSize = quantized
+        } else if oldValue != newValue, processorSize != quantized {
+          updateResizing(with: quantized)
         }
       }
       .onChange(of: primaryURL) { _, newValue in
         currentURL = newValue
         hasFailed = false
+        hasTriedFallback = false
       }
     }
+  }
+
+  private func quantizedProcessorSize(for size: CGSize) -> CGSize {
+    guard size.width.isFinite, size.height.isFinite, size.width > 0, size.height > 0 else {
+      return CGSize(width: 320, height: 320)
+    }
+    let step: CGFloat = 16
+    let w = max(step, ceil(size.width / step) * step)
+    let h = max(step, ceil(size.height / step) * step)
+    return CGSize(width: w, height: h)
   }
 
   private func updateResizing(with newSize: CGSize) {
