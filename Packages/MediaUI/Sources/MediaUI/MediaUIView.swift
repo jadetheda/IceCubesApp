@@ -229,14 +229,6 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
     return data
   }
 
-  private func uiimageFor(url: URL, fallbackUrl: URL?) async throws -> UIImage? {
-    let data = await imageData(url, fallbackUrl: fallbackUrl)
-    if let data {
-      return UIImage(data: data)
-    }
-    return nil
-  }
-
   @MainActor
   private func saveImage(url: URL, fallbackUrl: URL?) async -> Bool {
     guard let data = await imageData(url, fallbackUrl: fallbackUrl) else { return false }
@@ -250,10 +242,16 @@ var data = ImagePipeline.shared.cache.cachedData(for: .init(url: url))
     if status == .authorized {
       do {
         var finalData = data
-        if let exportMetadata = exportMetadata, let caption = MediaCaptionUtils.createCaption(from: exportMetadata, includeText: preferences.embedPostTextInMedia, includeTags: preferences.embedPostTagsInMedia, includeUrl: preferences.embedPostUrlInMedia) {
-            finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
+        if let exportMetadata = exportMetadata,
+           let caption = MediaCaptionUtils.createCaption(
+             from: exportMetadata,
+             includeText: preferences.embedPostTextInMedia,
+             includeTags: preferences.embedPostTagsInMedia,
+             includeUrl: preferences.embedPostUrlInMedia
+           ) {
+          finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
         }
-        let ext = url.pathExtension.isEmpty ? "jpg" : url.pathExtension
+        let ext = MediaCaptionUtils.preferredFileExtension(for: finalData, fallbackExtension: url.pathExtension)
         let tempFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
         try finalData.write(to: tempFile)
         try await Task.detached {

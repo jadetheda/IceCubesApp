@@ -56,10 +56,19 @@ public struct StatusRowCardView: View {
     guard let history = card.history else { return 0 }
     return history.compactMap { Int($0.accounts) }.reduce(0, +)
   }
+  private static let sitesWithIcons: Set<String> = [
+    "apps.apple.com", "music.apple.com", "podcasts.apple.com", "open.spotify.com",
+  ]
+
   private var isDesktopOrPadIdiom: Bool {
     UIDevice.current.userInterfaceIdiom == .pad ||
     UIDevice.current.userInterfaceIdiom == .mac ||
     UIDevice.current.userInterfaceIdiom == .vision
+  }
+
+  private func shouldUseIconPreview(for url: URL) -> Bool {
+    guard isDesktopOrPadIdiom, let host = url.host() else { return false }
+    return Self.sitesWithIcons.contains(host)
   }
 
   public var body: some View {
@@ -71,27 +80,16 @@ public struct StatusRowCardView: View {
       if let title = card.title {
         if let url = URL(string: card.url) {
           VStack(alignment: .leading, spacing: 0) {
-          let sitesWithIcons = [
-            "apps.apple.com", "music.apple.com", "podcasts.apple.com", "open.spotify.com",
-          ]
-          if isCompact {
-            compactLinkPreview(title, url)
-          } else if isDesktopOrPadIdiom {
-            if let host = url.host() {
-              if sitesWithIcons.contains(host) {
-                iconLinkPreview(title, url)
-              } else {
-                defaultLinkPreview(title, url)
-              }
+            if isCompact {
+              compactLinkPreview(title, url)
+            } else if shouldUseIconPreview(for: url) {
+              iconLinkPreview(title, url)
             } else {
               defaultLinkPreview(title, url)
             }
-          } else {
-            defaultLinkPreview(title, url)
           }
-        }
-        .frame(maxWidth: maxWidth)
-        .fixedSize(horizontal: false, vertical: true)
+          .frame(maxWidth: maxWidth)
+          .fixedSize(horizontal: false, vertical: true)
         #if os(visionOS)
           .if(
             !isCompact,

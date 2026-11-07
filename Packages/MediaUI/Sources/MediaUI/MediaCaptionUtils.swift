@@ -62,4 +62,25 @@ public struct MediaCaptionUtils {
     let trimmed = caption.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.isEmpty ? nil : trimmed
   }
+
+  public static func preferredFileExtension(for data: Data, fallbackExtension: String) -> String {
+    if let source = CGImageSourceCreateWithData(data as CFData, nil),
+       let uti = CGImageSourceGetType(source) as String? {
+      switch uti {
+      case "public.heic", "public.heif":
+        return "heic"
+      case "public.png":
+        return "png"
+      case "com.compuserve.gif":
+        return "gif"
+      case "org.webmproject.webp":
+        return "webp"
+      case "public.jpeg":
+        return "jpg"
+      default:
+        break
+      }
+    }
+    return fallbackExtension.isEmpty ? "jpg" : fallbackExtension
+  }
 }

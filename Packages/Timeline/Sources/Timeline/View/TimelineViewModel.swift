@@ -138,96 +138,72 @@ import Nuke
 
   var scrollToTopVisible: Bool = false
   var previousScrollPosition: String? = nil
-  var undoTimer: Timer? = nil
+  @ObservationIgnored private var undoTask: Task<Void, Never>?
 
   func handleScrollToTopTrigger() -> String? {
     guard UserPreferences.shared.undoScrollToTopEnabled else { return nil }
     let isAtTop = scrollToTopVisible || (getTopVisibleStatusId() == visibleStatuses.first?.id)
     if let previous = previousScrollPosition, isAtTop {
       previousScrollPosition = nil
-      undoTimer?.invalidate()
-      undoTimer = nil
+      undoTask?.cancel()
+      undoTask = nil
       return previous
     } else {
       let first = isGalleryMode ? getTopVisibleMediaStatusId() : getTopVisibleStatusId()
-      
-      if let first = first {
+
+      if let first {
         previousScrollPosition = first
-        undoTimer?.invalidate()
-        undoTimer = Timer.scheduledTimer(withTimeInterval: UserPreferences.shared.undoScrollToTopTimeout, repeats: false) { [weak self] _ in
-          DispatchQueue.main.async {
-            self?.previousScrollPosition = nil
-          }
+        undoTask?.cancel()
+        undoTask = Task { @MainActor [weak self] in
+          try? await Task.sleep(for: .seconds(UserPreferences.shared.undoScrollToTopTimeout))
+          guard !Task.isCancelled else { return }
+          self?.previousScrollPosition = nil
         }
       }
       return nil
     }
   }
 
-
   func getTopVisibleStatusId() -> String? {
-      if case .displayWithGaps(let items, _) = statusesState {
-          return items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
-      } else if case .display(let statuses, _) = statusesState {
-          return statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
-      }
-      return visibleStatuses.first?.id
+    if case .displayWithGaps(let items, _) = statusesState {
+      return items.compactMap { $0.status?.id }.first { visibleStatusesCount[$0] != nil }
+    } else if case .display(let statuses, _) = statusesState {
+      return statuses.map { $0.id }.first { visibleStatusesCount[$0] != nil }
+    }
+    return visibleStatuses.first?.id
   }
 
   func getTopVisibleMediaStatusId() -> String? {
-      var topVisibleStatusId: String? = nil
-      
-      if case .displayWithGaps(let items, _) = statusesState {
-          for item in items {
-              if let id = item.status?.id, visibleStatusesCount[id] != nil {
-                  topVisibleStatusId = id
-                  break
-              }
+    guard let topId = getTopVisibleStatusId() else { return nil }
+
+    if case .displayWithGaps(let items, _) = statusesState {
+      if let startIndex = items.firstIndex(where: { $0.status?.id == topId }) {
+        for item in items[startIndex...] {
+          if let mediaId = item.status?.asMediaStatus.first?.id {
+            return mediaId
           }
-      } else if case .display(let statuses, _) = statusesState {
-          for status in statuses {
-              if visibleStatusesCount[status.id] != nil {
-                  topVisibleStatusId = status.id
-                  break
-              }
-          }
-      } else {
-          topVisibleStatusId = visibleStatuses.first?.id
+        }
       }
-      
-      guard let topId = topVisibleStatusId else { return nil }
-      
-      if case .displayWithGaps(let items, _) = statusesState {
-          if let startIndex = items.firstIndex(where: { $0.status?.id == topId }) {
-              let itemsFromIndex = items[startIndex...]
-              for item in itemsFromIndex {
-                  if let status = item.status, !status.asMediaStatus.isEmpty {
-                      return (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id
-                  }
-              }
+    } else if case .display(let statuses, _) = statusesState {
+      if let startIndex = statuses.firstIndex(where: { $0.id == topId }) {
+        for status in statuses[startIndex...] {
+          if let mediaId = status.asMediaStatus.first?.id {
+            return mediaId
           }
-      } else if case .display(let statuses, _) = statusesState {
-          if let startIndex = statuses.firstIndex(where: { $0.id == topId }) {
-              let statusesFromIndex = statuses[startIndex...]
-              for status in statusesFromIndex {
-                  if !status.asMediaStatus.isEmpty {
-                      return (status.reblog?.mediaAttachments ?? status.mediaAttachments).first?.id
-                  }
-              }
-          }
+        }
       }
-      
-      return nil
+    }
+
+    return nil
   }
-  
+
   private func updateLastTopVisibleStatusId() {
-      if let id = getTopVisibleStatusId() {
-          lastTopVisibleStatusId = id
-      }
+    if let id = getTopVisibleStatusId() {
+      lastTopVisibleStatusId = id
+    }
   }
 
   var serverName: String {
-
     client?.server ?? "Error"
   }
 
@@ -258,7 +234,7 @@ import Nuke
         await self?.hideSeenPosts()
       }
     }
-    
+
     statusUpdatedObserver = NotificationCenter.default.addObserver(
       forName: .statusUpdated,
       object: nil,
@@ -604,43 +580,29 @@ extension TimelineViewModel: GapLoadingFetcher {
     })
     let isGalleryMode = self.isGalleryMode
 
+    let currentAccountId = CurrentAccount.shared.account?.id
+    let seenIds = SeenPostsManager.shared.seenPosts
     var filteredStatuses: [Status] = []
     for status in newStatuses {
       if !renderedStatusIds.contains(status.id) { continue }
-      
-      if isGalleryMode {
-        var mediaEmpty = status.mediaAttachments.isEmpty
-        if let reblog = status.reblog {
-            if !reblog.mediaAttachments.isEmpty {
-                mediaEmpty = false
-            }
-        }
-        if mediaEmpty { continue }
+
+      if isGalleryMode, status.asMediaStatus.isEmpty {
+        continue
       }
-      
+
       if !prefs.hideSeenPostsEnabled {
-          filteredStatuses.append(status)
-          continue
+        filteredStatuses.append(status)
+        continue
       }
-      
-      var isSeen = SeenPostsManager.shared.isSeen(id: status.id)
-      if !isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = status.reblog {
-        isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
-      }
-      if !isSeen, status.account.id == CurrentAccount.shared.account?.id {
-        isSeen = true
-      }
+
+      let isSeen = TimelineContentFilter.Snapshot.isStatusConsideredSeen(
+        status,
+        seenIds: seenIds,
+        includeBoosts: prefs.hideSeenPostsIncludeBoosts,
+        currentAccountId: currentAccountId
+      )
       if !isSeen {
-          if status.reblogged == true { isSeen = true }
-          else if status.favourited == true { isSeen = true }
-          else if let reblog = status.reblog {
-              if reblog.reblogged == true { isSeen = true }
-              else if reblog.favourited == true { isSeen = true }
-          }
-      }
-      
-      if !isSeen {
-          filteredStatuses.append(status)
+        filteredStatuses.append(status)
       }
     }
     
@@ -1160,19 +1122,14 @@ extension TimelineViewModel {
     else { return }
 
     let prefs = UserPreferences.shared
-    let isSeen: Bool
-    if prefs.hideSeenPostsEnabled {
-      var _isSeen = SeenPostsManager.shared.isSeen(id: event.status.id)
-      if !_isSeen, prefs.hideSeenPostsIncludeBoosts, let reblog = event.status.reblog {
-        _isSeen = SeenPostsManager.shared.isSeen(id: reblog.id)
-      }
-      if !_isSeen, event.status.account.id == CurrentAccount.shared.account?.id {
-        _isSeen = true
-      }
-      isSeen = _isSeen
-    } else {
-      isSeen = false
-    }
+    let isSeen = prefs.hideSeenPostsEnabled
+      ? TimelineContentFilter.Snapshot.isStatusConsideredSeen(
+        event.status,
+        seenIds: SeenPostsManager.shared.seenPosts,
+        includeBoosts: prefs.hideSeenPostsIncludeBoosts,
+        currentAccountId: CurrentAccount.shared.account?.id
+      )
+      : false
     
     if !isSeen {
       let isFiltered = isStatusFilteredOut(event.status)

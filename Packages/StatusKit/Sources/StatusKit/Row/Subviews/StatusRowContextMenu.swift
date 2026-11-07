@@ -33,9 +33,18 @@ struct StatusRowContextMenu: View {
   @Binding var showTextForSelection: Bool
   @Binding var isBlockConfirmationPresented: Bool
   @Binding var isShareAsImageSheetPresented: Bool
-    var boostLabel: some View {
-    if viewModel.status.visibility == .priv {
-      if viewModel.status.account.id == account.account?.id {
+
+  private var targetStatus: Status {
+    viewModel.status.reblogAsAsStatus ?? viewModel.status
+  }
+
+  private var operationAccount: Account {
+    viewModel.status.reblog?.account ?? viewModel.status.account
+  }
+
+  var boostLabel: some View {
+    if viewModel.finalStatus.visibility == .priv {
+      if viewModel.finalStatus.account.id == account.account?.id {
         if statusDataController.isReblogged {
           return Label("status.action.unboost", systemImage: "lock.rotation")
         }
@@ -43,6 +52,9 @@ struct StatusRowContextMenu: View {
       }
     }
 
+    if statusDataController.isReblogged {
+      return Label("status.action.unboost", systemImage: "arrow.2.squarepath")
+    }
     return Label("status.action.boost", systemImage: "arrow.2.squarepath")
   }
 
@@ -65,42 +77,24 @@ struct StatusRowContextMenu: View {
 
   private var favoriteTitle: LocalizedStringKey {
     if theme.actionIsLike {
-      if statusDataController.isFavorited {
-        return "Unlike"
-      } else {
-        return "Like"
-      }
-    } else {
-      if statusDataController.isFavorited {
-        return "status.action.unfavorite"
-      } else {
-        return "status.action.favorite"
-      }
+      return statusDataController.isFavorited ? "Unlike" : "Like"
     }
+    return statusDataController.isFavorited ? "status.action.unfavorite" : "status.action.favorite"
   }
 
   private var favoriteIcon: String {
     if theme.actionIsLike {
-      if statusDataController.isFavorited {
-        return "heart.fill"
-      } else {
-        return "heart"
-      }
-    } else {
-      if statusDataController.isFavorited {
-        return "star.fill"
-      } else {
-        return "star"
-      }
+      return statusDataController.isFavorited ? "heart.fill" : "heart"
     }
+    return statusDataController.isFavorited ? "star.fill" : "star"
   }
 
   private var statusSafeDisplayName: String {
-    viewModel.status.reblog?.account.safeDisplayName ?? viewModel.status.account.safeDisplayName
+    operationAccount.safeDisplayName
   }
 
   private var statusRawText: String {
-    viewModel.status.reblog?.content.asRawText ?? viewModel.status.content.asRawText
+    viewModel.finalStatus.content.asRawText
   }
 
   private var postLanguage: String? {
@@ -108,11 +102,11 @@ struct StatusRowContextMenu: View {
   }
 
   private var statusAccountId: String {
-    viewModel.status.reblog?.account.id ?? viewModel.status.account.id
+    operationAccount.id
   }
 
   private var statusAccountAcct: String {
-    viewModel.status.reblog?.account.acct ?? viewModel.status.account.acct
+    operationAccount.acct
   }
 
   private var alwaysForceRemoteMedia: Bool {
@@ -150,7 +144,6 @@ struct StatusRowContextMenu: View {
     if !viewModel.isRemote {
       ControlGroup {
         Button {
-          let targetStatus = viewModel.status.reblogAsAsStatus ?? viewModel.status
           #if targetEnvironment(macCatalyst) || os(visionOS)
             openWindow(value: WindowDestinationEditor.replyToStatusEditor(status: targetStatus))
           #else
@@ -197,7 +190,6 @@ struct StatusRowContextMenu: View {
       .controlGroupStyle(.compactMenu)
       if !isQuoteDisabled {
         Button {
-          let targetStatus = viewModel.status.reblogAsAsStatus ?? viewModel.status
           #if targetEnvironment(macCatalyst) || os(visionOS)
             openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: targetStatus))
           #else
@@ -225,7 +217,7 @@ struct StatusRowContextMenu: View {
           Label("status.action.share-link", systemImage: "link")
         }
 
-Button {
+        Button {
           isShareAsImageSheetPresented = true
         } label: {
           Label("status.action.share-image", systemImage: "photo")
@@ -266,7 +258,7 @@ Button {
       Label("status.action.select-text", systemImage: "selection.pin.in.out")
     }
 
-Button {
+    Button {
       UIPasteboard.general.string = viewModel.url?.absoluteString
     } label: {
       Label("status.action.copy-link", systemImage: "link")
@@ -301,11 +293,9 @@ Button {
           Button {
             #if targetEnvironment(macCatalyst) || os(visionOS)
               openWindow(
-                value: WindowDestinationEditor.editStatusEditor(
-                  status: viewModel.status.reblogAsAsStatus ?? viewModel.status))
+                value: WindowDestinationEditor.editStatusEditor(status: targetStatus))
             #else
-              viewModel.routerPath.presentedSheet = .editStatusEditor(
-                status: viewModel.status.reblogAsAsStatus ?? viewModel.status)
+              viewModel.routerPath.presentedSheet = .editStatusEditor(status: targetStatus)
             #endif
           } label: {
             Label("status.action.edit", systemImage: "pencil")
@@ -332,8 +322,6 @@ Button {
             Button {
               Task {
                 do {
-                  let operationAccount =
-                    viewModel.status.reblog?.account ?? viewModel.status.account
                   viewModel.authorRelationship = try await client.post(
                     endpoint: Accounts.unmute(id: operationAccount.id))
                 } catch {}
@@ -347,8 +335,6 @@ Button {
                 Button(duration.description) {
                   Task {
                     do {
-                      let operationAccount =
-                        viewModel.status.reblog?.account ?? viewModel.status.account
                       viewModel.authorRelationship = try await client.post(
                         endpoint: Accounts.mute(
                           id: operationAccount.id, json: MuteData(duration: duration.rawValue)))
@@ -372,8 +358,7 @@ Button {
       }
       Section {
         Button(role: .destructive) {
-          viewModel.routerPath.presentedSheet = .report(
-            status: viewModel.status.reblogAsAsStatus ?? viewModel.status)
+          viewModel.routerPath.presentedSheet = .report(status: targetStatus)
         } label: {
           Label("status.action.report", systemImage: "exclamationmark.bubble").tint(.red)
         }
@@ -387,11 +372,11 @@ Button {
       #if targetEnvironment(macCatalyst) || os(visionOS)
         openWindow(
           value: WindowDestinationEditor.mentionStatusEditor(
-            account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
+            account: operationAccount, visibility: .pub)
         )
       #else
         viewModel.routerPath.presentedSheet = .mentionStatusEditor(
-          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .pub)
+          account: operationAccount, visibility: .pub)
       #endif
     } label: {
       Label("status.action.mention", systemImage: "at")
@@ -400,12 +385,10 @@ Button {
       #if targetEnvironment(macCatalyst) || os(visionOS)
         openWindow(
           value: WindowDestinationEditor.mentionStatusEditor(
-            account: viewModel.status.reblog?.account ?? viewModel.status.account,
-            visibility: .direct))
+            account: operationAccount, visibility: .direct))
       #else
         viewModel.routerPath.presentedSheet = .mentionStatusEditor(
-          account: viewModel.status.reblog?.account ?? viewModel.status.account, visibility: .direct
-        )
+          account: operationAccount, visibility: .direct)
       #endif
     } label: {
       Label("status.action.message", systemImage: "tray.full")
@@ -414,7 +397,6 @@ Button {
       Button {
         Task {
           do {
-            let operationAccount = viewModel.status.reblog?.account ?? viewModel.status.account
             viewModel.authorRelationship = try await client.post(
               endpoint: Accounts.unblock(id: operationAccount.id))
           } catch {}
@@ -491,8 +473,10 @@ Button {
               if let caption = MediaCaptionUtils.createCaption(from: exportMetadata, includeText: preferences.embedPostTextInMedia, includeTags: preferences.embedPostTagsInMedia, includeUrl: preferences.embedPostUrlInMedia) {
                 finalData = MediaCaptionUtils.embedCaption(into: data, caption: caption)
               }
-              let rawExt = attachment.url?.pathExtension ?? ""
-              let ext = rawExt.isEmpty ? "jpg" : rawExt
+              let ext = MediaCaptionUtils.preferredFileExtension(
+                for: finalData,
+                fallbackExtension: attachment.url?.pathExtension ?? ""
+              )
               let tempImgFile = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension(ext)
               try finalData.write(to: tempImgFile)
               try await Task.detached {

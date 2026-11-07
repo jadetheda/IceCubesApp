@@ -390,7 +390,12 @@ public struct StatusRowView: View {
   }
 
   private var canQuote: Bool {
-    viewModel.status.visibility != .direct && viewModel.status.visibility != .priv
+    let finalStatus = viewModel.finalStatus
+    return finalStatus.visibility == .pub && finalStatus.quoteApproval?.currentUser != .denied
+  }
+
+  private var targetStatus: Status {
+    viewModel.status.reblogAsAsStatus ?? viewModel.status
   }
 
   @ViewBuilder
@@ -398,12 +403,12 @@ public struct StatusRowView: View {
     // Add reply and quote, which are lost when the swipe actions are removed
     Button("status.action.reply") {
       HapticManager.shared.fireHaptic(.notification(.success))
-      viewModel.routerPath.presentedSheet = .replyToStatusEditor(status: viewModel.status)
+      viewModel.routerPath.presentedSheet = .replyToStatusEditor(status: targetStatus)
     }
 
     Button("settings.swipeactions.status.action.quote") {
       HapticManager.shared.fireHaptic(.notification(.success))
-      viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: viewModel.status)
+      viewModel.routerPath.presentedSheet = .quoteStatusEditor(status: targetStatus)
     }
     .disabled(!canQuote)
 

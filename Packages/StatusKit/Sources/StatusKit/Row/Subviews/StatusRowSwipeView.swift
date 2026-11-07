@@ -15,9 +15,13 @@ struct StatusRowSwipeView: View {
     case leading, trailing
   }
 
+  private var targetStatus: Status {
+    viewModel.status.reblogAsAsStatus ?? viewModel.status
+  }
+
   func privateBoost() -> Bool {
-    viewModel.status.visibility == .priv
-      && viewModel.status.account.id == currentAccount.account?.id
+    viewModel.finalStatus.visibility == .priv
+      && viewModel.finalStatus.account.id == currentAccount.account?.id
   }
 
   var viewModel: StatusRowViewModel
@@ -33,53 +37,49 @@ struct StatusRowSwipeView: View {
   }
 
   private func isBoostDisabled() -> Bool {
-    if viewModel.status.visibility == .direct { return true }
-    if viewModel.status.visibility == .priv && viewModel.status.account.id != currentAccount.account?.id { return true }
-    return false
+    switch viewModel.finalStatus.visibility {
+    case .pub:
+      return false
+    case .priv:
+      return viewModel.finalStatus.account.id != currentAccount.account?.id
+    case .unlisted, .direct:
+      return true
+    }
+  }
+
+  private func swipeTintColor(for action: StatusAction, outside: Bool) -> Color {
+    action.color(
+      themeTintColor: theme.tintColor,
+      useThemeColor: preferences.swipeActionsUseThemeColor,
+      outside: outside,
+      actionFavoriteColor: theme.actionFavoriteColor,
+      actionLikeColor: theme.actionLikeColor,
+      actionBoostColor: theme.actionBoostColor,
+      actionBookmarkColor: theme.actionBookmarkColor,
+      isLikeAction: theme.actionIsLike
+    )
+  }
+
+  @ViewBuilder
+  private func configuredSwipeButton(action: StatusAction, outside: Bool) -> some View {
+    if action != .none {
+      if !viewModel.isRemote {
+        makeSwipeButton(action: action)
+          .tint(swipeTintColor(for: action, outside: outside))
+      }
+    }
   }
 
   @ViewBuilder
   private var trailingSwipeActions: some View {
-    if preferences.swipeActionsStatusTrailingRight != StatusAction.none {
-      if !viewModel.isRemote {
-      makeSwipeButton(action: preferences.swipeActionsStatusTrailingRight)
-        .tint(
-          preferences.swipeActionsStatusTrailingRight.color(
-            themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
-      }
-    }
-    if preferences.swipeActionsStatusTrailingLeft != StatusAction.none {
-      if !viewModel.isRemote {
-      makeSwipeButton(action: preferences.swipeActionsStatusTrailingLeft)
-        .tint(
-          preferences.swipeActionsStatusTrailingLeft.color(
-            themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
-      }
-    }
+    configuredSwipeButton(action: preferences.swipeActionsStatusTrailingRight, outside: true)
+    configuredSwipeButton(action: preferences.swipeActionsStatusTrailingLeft, outside: false)
   }
 
   @ViewBuilder
   private var leadingSwipeActions: some View {
-    if preferences.swipeActionsStatusLeadingLeft != StatusAction.none {
-      if !viewModel.isRemote {
-      makeSwipeButton(action: preferences.swipeActionsStatusLeadingLeft)
-        .tint(
-          preferences.swipeActionsStatusLeadingLeft.color(
-            themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: true, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
-      }
-    }
-    if preferences.swipeActionsStatusLeadingRight != StatusAction.none {
-      if !viewModel.isRemote {
-      makeSwipeButton(action: preferences.swipeActionsStatusLeadingRight)
-        .tint(
-          preferences.swipeActionsStatusLeadingRight.color(
-            themeTintColor: theme.tintColor, useThemeColor: preferences.swipeActionsUseThemeColor,
-            outside: false, actionFavoriteColor: theme.actionFavoriteColor, actionLikeColor: theme.actionLikeColor, actionBoostColor: theme.actionBoostColor, actionBookmarkColor: theme.actionBookmarkColor, isLikeAction: theme.actionIsLike))
-      }
-    }
+    configuredSwipeButton(action: preferences.swipeActionsStatusLeadingLeft, outside: true)
+    configuredSwipeButton(action: preferences.swipeActionsStatusLeadingRight, outside: false)
   }
 
   private func isQuoteDisabled() -> Bool {
@@ -94,10 +94,10 @@ struct StatusRowSwipeView: View {
     switch action {
     case .reply:
       makeSwipeButtonForRouterPath(
-        action: action, destination: .replyToStatusEditor(status: viewModel.status))
+        action: action, destination: .replyToStatusEditor(status: targetStatus))
     case .quote:
       makeSwipeButtonForRouterPath(
-        action: action, destination: .quoteStatusEditor(status: viewModel.status)
+        action: action, destination: .quoteStatusEditor(status: targetStatus)
       )
       .disabled(isQuoteDisabled())
     case .favorite:
@@ -156,6 +156,26 @@ struct StatusRowSwipeView: View {
     }
   }
 
+  private func swipeLabelTitle(for action: StatusAction, privateBoost: Bool) -> LocalizedStringKey {
+    action.displayName(
+      isReblogged: statusDataController.isReblogged,
+      isFavorited: statusDataController.isFavorited,
+      isBookmarked: statusDataController.isBookmarked,
+      privateBoost: privateBoost,
+      isLikeAction: theme.actionIsLike
+    )
+  }
+
+  private func swipeLabelIcon(for action: StatusAction, privateBoost: Bool) -> String {
+    action.iconName(
+      isReblogged: statusDataController.isReblogged,
+      isFavorited: statusDataController.isFavorited,
+      isBookmarked: statusDataController.isBookmarked,
+      privateBoost: privateBoost,
+      isLikeAction: theme.actionIsLike
+    )
+  }
+
   @ViewBuilder
   private func makeSwipeLabel(
     action: StatusAction, style: UserPreferences.SwipeActionsIconStyle, privateBoost: Bool = false
@@ -163,31 +183,15 @@ struct StatusRowSwipeView: View {
     switch style {
     case .iconOnly:
       Label(
-        action.displayName(
-          isReblogged: statusDataController.isReblogged,
-          isFavorited: statusDataController.isFavorited,
-          isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost, isLikeAction: theme.actionIsLike),
-        imageNamed: action.iconName(
-          isReblogged: statusDataController.isReblogged,
-          isFavorited: statusDataController.isFavorited,
-          isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
+        swipeLabelTitle(for: action, privateBoost: privateBoost),
+        imageNamed: swipeLabelIcon(for: action, privateBoost: privateBoost)
       )
       .labelStyle(.iconOnly)
       .environment(\.symbolVariants, .none)
     case .iconWithText:
       Label(
-        action.displayName(
-          isReblogged: statusDataController.isReblogged,
-          isFavorited: statusDataController.isFavorited,
-          isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost, isLikeAction: theme.actionIsLike),
-        imageNamed: action.iconName(
-          isReblogged: statusDataController.isReblogged,
-          isFavorited: statusDataController.isFavorited,
-          isBookmarked: statusDataController.isBookmarked,
-          privateBoost: privateBoost, isLikeAction: theme.actionIsLike)
+        swipeLabelTitle(for: action, privateBoost: privateBoost),
+        imageNamed: swipeLabelIcon(for: action, privateBoost: privateBoost)
       )
       .labelStyle(.titleAndIcon)
       .environment(\.symbolVariants, .none)

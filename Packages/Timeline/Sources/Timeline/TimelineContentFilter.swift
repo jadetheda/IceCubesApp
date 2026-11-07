@@ -430,4 +430,37 @@ extension TimelineContentFilter.Snapshot {
 
     return false
   }
+
+  public nonisolated static func isStatusConsideredSeen(
+    _ status: Status,
+    seenIds: Set<String>?,
+    includeBoosts: Bool,
+    currentAccountId: String?,
+    exemptIds: Set<String>? = nil
+  ) -> Bool {
+    if let seenIds {
+      if seenIds.contains(status.id) {
+        return true
+      }
+      if includeBoosts, let reblog = status.reblog, seenIds.contains(reblog.id) {
+        return true
+      }
+    }
+    if let currentAccountId, status.account.id == currentAccountId {
+      return true
+    }
+    if status.reblogged == true
+      || status.favourited == true
+      || status.reblog?.reblogged == true
+      || status.reblog?.favourited == true
+    {
+      if let exemptIds,
+         exemptIds.contains(status.id) || (status.reblog.map { exemptIds.contains($0.id) } ?? false)
+      {
+        return false
+      }
+      return true
+    }
+    return false
+  }
 }

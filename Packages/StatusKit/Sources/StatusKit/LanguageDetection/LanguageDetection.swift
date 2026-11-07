@@ -2,19 +2,24 @@ import Foundation
 import Models
 import NaturalLanguage
 
+private let languageStripRegex: NSRegularExpression? = try? NSRegularExpression(
+  pattern: "https?://\\S+|#[\\w]+|:\\w+:|@[\\w.\\-]+",
+  options: [.caseInsensitive]
+)
+private let japaneseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
+  pattern: "[\\u3040-\\u309F\\u30A0-\\u30FF]"
+)
+private let chineseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
+  pattern: "[\\u4E00-\\u9FFF]"
+)
+
 private nonisolated func stripToPureLanguage(inText: String) -> String {
-  let hashtagRegex = try! Regex("#[\\w]*")
-  let emojiRegex = try! Regex(":\\w*:")
-  let atRegex = try! Regex("@\\w*")
-
-  var resultStr = inText
-
-  for regex in [hashtagRegex, emojiRegex, atRegex] {
-    let splitArray = resultStr.split(separator: regex, omittingEmptySubsequences: true)
-    resultStr = splitArray.joined() as String
+  guard let regex = languageStripRegex else {
+    return inText.trimmingCharacters(in: .whitespacesAndNewlines)
   }
-
-  return resultStr.trimmingCharacters(in: .whitespacesAndNewlines)
+  let nsRange = NSRange(inText.startIndex..<inText.endIndex, in: inText)
+  let stripped = regex.stringByReplacingMatches(in: inText, options: [], range: nsRange, withTemplate: " ")
+  return stripped.trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
 public nonisolated func detectLanguage(text: String, minConfidence: Double = 0.65) -> String? {
@@ -84,15 +89,14 @@ public nonisolated func isStatusHiddenByLanguage(
   // 2. Untagged post fallback: on-device language analysis
   let text = targetStatus.content.asRawText.isEmpty ? status.content.asRawText : targetStatus.content.asRawText
   if !text.isEmpty {
-    if normalizedHidden.contains("ja") {
-      if text.range(of: "[\\u3040-\\u309F\\u30A0-\\u30FF]", options: String.CompareOptions.regularExpression) != nil {
-        return true
-      }
+    let textRange = NSRange(text.startIndex..<text.endIndex, in: text)
+    if normalizedHidden.contains("ja"),
+       japaneseScriptRegex?.firstMatch(in: text, options: [], range: textRange) != nil {
+      return true
     }
-    if normalizedHidden.contains("zh") {
-      if text.range(of: "[\\u4E00-\\u9FFF]", options: String.CompareOptions.regularExpression) != nil {
-        return true
-      }
+    if normalizedHidden.contains("zh"),
+       chineseScriptRegex?.firstMatch(in: text, options: [], range: textRange) != nil {
+      return true
     }
 
     if let detected = detectLanguage(text: text) {

@@ -117,48 +117,38 @@ public struct TimelineView: View {
     preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts
   }
 
+  private var isCurrentTimelineInGalleryMode: Bool {
+    if case .list(let list) = timeline, preferences.listsGalleryMode.contains(list.id) {
+      return true
+    }
+    return contentFilter.isGalleryMode
+  }
+
   private var galleryModeBinding: Binding<Bool> {
     Binding(
-      get: { 
+      get: { isCurrentTimelineInGalleryMode },
+      set: { newValue in
         if case .list(let list) = timeline {
-            if preferences.listsGalleryMode.contains(list.id) {
-                return true
+          if newValue {
+            if !preferences.listsGalleryMode.contains(list.id) {
+              preferences.listsGalleryMode.append(list.id)
             }
-        }
-        return contentFilter.isGalleryMode 
-      },
-      set: { newValue in 
-        if case .list(let list) = timeline {
-            if newValue {
-                if !preferences.listsGalleryMode.contains(list.id) {
-                    preferences.listsGalleryMode.append(list.id)
-                }
-            } else {
-                preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
-                contentFilter.isGalleryMode = false
-            }
+          } else {
+            preferences.listsGalleryMode.removeAll(where: { $0 == list.id })
+            contentFilter.isGalleryMode = false
+          }
         } else {
-            contentFilter.isGalleryMode = newValue
+          contentFilter.isGalleryMode = newValue
         }
       }
     )
   }
 
-  @ViewBuilder
   private var galleryModeLabel: some View {
-    if case .list(let list) = timeline {
-      if preferences.listsGalleryMode.contains(list.id) {
-        Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-      } else if contentFilter.isGalleryMode {
-        Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-      } else {
-        Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
-      }
-    } else if contentFilter.isGalleryMode {
-      Label("Exit Gallery Mode", systemImage: "rectangle.grid.1x2")
-    } else {
-      Label("Gallery Mode", systemImage: "rectangle.grid.1x2")
-    }
+    Label(
+      isCurrentTimelineInGalleryMode ? "Exit Gallery Mode" : "Gallery Mode",
+      systemImage: "rectangle.grid.1x2"
+    )
   }
 
   private var streamingIcon: String {
@@ -332,14 +322,6 @@ public struct TimelineView: View {
       timeline = newValue
     }
     .modifier(ContentFilterOnChangeModifier(contentFilter: contentFilter, action: refreshContentFilter))
-    .onReceive(NotificationCenter.default.publisher(for: .hideSeenPosts)) { _ in
-      Task {
-        await viewModel.hideSeenPosts()
-      }
-    }
-    .onChange(of: contentFilter.hidePostsFromBots) { _, _ in
-      refreshContentFilter()
-    }
     .onChange(of: isTabSelected) { _, isSelected in
       viewModel.isTimelineTabActive = isSelected
       if !isSelected {

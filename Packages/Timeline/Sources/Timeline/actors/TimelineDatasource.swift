@@ -26,22 +26,7 @@ actor TimelineDatasource {
   func getFiltered(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [Status] {
     let contentFilter = await TimelineContentFilter.shared
     let snapshot = await contentFilter.snapshot()
-    let currentAccount = await CurrentAccount.shared.account
-    let currentAccountId = currentAccount?.id
-
-    let actualSeen: Set<String>? = seen
-
-    var filtered: [Status] = []
-    var realIds: Set<String> = []
-    for item in items {
-      guard case .status(let status) = item else { continue }
-      let realId = status.reblog?.id ?? status.id
-      if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
-        filtered.append(status)
-        realIds.insert(realId)
-      }
-    }
-    return filtered
+    return await getFiltered(using: snapshot, isGalleryMode: isGalleryMode, seen: seen, exempt: exempt)
   }
 
   func getFilteredItems(isGalleryMode: Bool? = nil, seen: Set<String>? = nil, exempt: Set<String>? = nil) async -> [TimelineItem] {
@@ -49,8 +34,6 @@ actor TimelineDatasource {
     let snapshot = await contentFilter.snapshot()
     let currentAccount = await CurrentAccount.shared.account
     let currentAccountId = currentAccount?.id
-
-    let actualSeen = seen
 
     var filtered: [TimelineItem] = []
     var realIds: Set<String> = []
@@ -60,7 +43,7 @@ actor TimelineDatasource {
         filtered.append(item)
       case .status(let status):
         let realId = status.reblog?.id ?? status.id
-        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: actualSeen, currentAccountId: currentAccountId, exempt: exempt) {
+        if !realIds.contains(realId), shouldShowStatus(status, filter: snapshot, isGalleryModeOverride: isGalleryMode, seen: seen, currentAccountId: currentAccountId, exempt: exempt) {
           filtered.append(item)
           realIds.insert(realId)
         }
@@ -123,21 +106,13 @@ actor TimelineDatasource {
     let currentAccount = await CurrentAccount.shared.account
     let currentAccountId = currentAccount?.id
     items.removeAll { item in
-      if case .status(let status) = item {
-        if seen.contains(status.id) {
-          return true
-        }
-        if includeBoosts, let reblog = status.reblog, seen.contains(reblog.id) {
-          return true
-        }
-        if status.account.id == currentAccountId {
-          return true
-        }
-        if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
-          return true
-        }
-      }
-      return false
+      guard case .status(let status) = item else { return false }
+      return TimelineContentFilter.Snapshot.isStatusConsideredSeen(
+        status,
+        seenIds: seen,
+        includeBoosts: includeBoosts,
+        currentAccountId: currentAccountId
+      )
     }
   }
 
@@ -255,26 +230,16 @@ actor TimelineDatasource {
       return false
     }
 
-    let hideSeenPostsIncludeBoosts = filter.hideSeenPostsIncludeBoosts
-
-    var isSeen = seen?.contains(status.id) ?? false
-    if hideSeenPostsIncludeBoosts, let reblog = status.reblog {
-      if seen?.contains(reblog.id) == true {
-        isSeen = true
-      }
+    if filter.hideSeenPosts {
+      let isSeen = TimelineContentFilter.Snapshot.isStatusConsideredSeen(
+        status,
+        seenIds: seen,
+        includeBoosts: filter.hideSeenPostsIncludeBoosts,
+        currentAccountId: currentAccountId,
+        exemptIds: exempt
+      )
+      if isSeen { return false }
     }
-    if status.account.id == currentAccountId {
-      isSeen = true
-    }
-    if status.reblogged == true || status.favourited == true || status.reblog?.reblogged == true || status.reblog?.favourited == true {
-      if let exempt, exempt.contains(status.id) || (status.reblog.map { exempt.contains($0.id) } ?? false) {
-        // Exempt from being treated as seen dynamically in this session
-      } else {
-        isSeen = true
-      }
-    }
-
-    if filter.hideSeenPosts, isSeen { return false }
 
     return true
   }

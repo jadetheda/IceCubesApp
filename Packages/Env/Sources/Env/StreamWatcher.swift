@@ -85,7 +85,11 @@ import Observation
     }
   }
 
+  private var reconnectTask: Task<Void, Never>?
+
   public func stopWatching() {
+    reconnectTask?.cancel()
+    reconnectTask = nil
     task?.cancel()
     task = nil
   }
@@ -107,7 +111,8 @@ import Observation
   }
 
   private func receiveMessage() {
-    task?.receive(completionHandler: { [weak self] result in
+    let activeTask = task
+    activeTask?.receive(completionHandler: { [weak self] result in
       guard let self else { return }
       switch result {
       case let .success(message):
@@ -147,17 +152,29 @@ import Observation
           break
         }
 
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+          guard let self, self.task === activeTask else { return }
+          self.retryDelay = 10
           self.receiveMessage()
         }
 
-      case .failure:
-        Task { @MainActor in
-          try? await Task.sleep(for: .seconds(self.retryDelay))
-          self.retryDelay += 30
-          self.stopWatching()
-          self.connect()
-          self.watch(streams: self.watchedStreams)
+      case let .failure(error):
+        if (error as? URLError)?.code == .cancelled {
+          return
+        }
+        Task { @MainActor [weak self] in
+          guard let self, self.task === activeTask else { return }
+          self.reconnectTask?.cancel()
+          self.reconnectTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .seconds(self.retryDelay))
+            guard !Task.isCancelled else { return }
+            self.retryDelay = min(self.retryDelay + 30, 300)
+            self.task?.cancel()
+            self.task = nil
+            self.connect()
+            self.watch(streams: self.watchedStreams)
+          }
         }
       }
     })
