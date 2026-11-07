@@ -26,38 +26,24 @@ import SwiftUI
     self.forceAutoPlay = forceAutoPlay
   }
 
-  func preparePlayer(autoPlay: Bool, isCompact: Bool, loopVideo: Bool) {
-    let asset: AVURLAsset
-    let activeUrl = (hasFalledBack && fallbackUrl != nil) ? fallbackUrl! : url
-    if activeUrl.pathExtension.isEmpty || activeUrl.pathExtension.lowercased() == "gif" {
-      asset = AVURLAsset(url: activeUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
-    } else {
-      asset = AVURLAsset(url: activeUrl)
+  private func makeAsset(for targetUrl: URL) -> AVURLAsset {
+    let ext = targetUrl.pathExtension.lowercased()
+    if ext.isEmpty || ext == "gif" {
+      return AVURLAsset(url: targetUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
     }
-    let item = AVPlayerItem(asset: asset)
-    player = .init(playerItem: item)
-    player?.audiovisualBackgroundPlaybackPolicy = .pauses
-    #if !os(visionOS)
-      player?.preventsDisplaySleepDuringVideoPlayback = false
-    #endif
-    if autoPlay || forceAutoPlay, !isCompact {
-      player?.play()
-      isPlaying = true
-    } else {
-      player?.pause()
-      isPlaying = false
-    }
-    
-    setupObserver(for: player?.currentItem)
+    return AVURLAsset(url: targetUrl)
+  }
 
-    guard let player else { return }
+  private func registerLoopObserver(for item: AVPlayerItem?) {
     if let playbackEndObserver {
       NotificationCenter.default.removeObserver(playbackEndObserver)
+      self.playbackEndObserver = nil
     }
-    self.loopVideo = loopVideo
+    guard let item else { return }
     playbackEndObserver = NotificationCenter.default.addObserver(
       forName: .AVPlayerItemDidPlayToEndTime,
-      object: player.currentItem, queue: .main
+      object: item,
+      queue: .main
     ) { [weak self] _ in
       Task { @MainActor in
         guard let self else { return }
@@ -66,6 +52,34 @@ import SwiftUI
         }
       }
     }
+  }
+
+  func preparePlayer(autoPlay: Bool, isCompact: Bool, loopVideo: Bool) {
+    let activeUrl = (hasFalledBack && fallbackUrl != nil) ? fallbackUrl! : url
+    let asset = makeAsset(for: activeUrl)
+    let item = AVPlayerItem(asset: asset)
+    player = .init(playerItem: item)
+    player?.audiovisualBackgroundPlaybackPolicy = .pauses
+    #if !os(visionOS)
+      player?.preventsDisplaySleepDuringVideoPlayback = false
+    #endif
+    let shouldPlay = autoPlay || forceAutoPlay
+    if shouldPlay {
+      if !isCompact {
+        player?.play()
+        isPlaying = true
+      } else {
+        player?.pause()
+        isPlaying = false
+      }
+    } else {
+      player?.pause()
+      isPlaying = false
+    }
+
+    self.loopVideo = loopVideo
+    setupObserver(for: item)
+    registerLoopObserver(for: item)
   }
 
   func mute(_ mute: Bool) {
@@ -104,42 +118,24 @@ import SwiftUI
     observer = item?.observe(\.status, options: [.new, .initial]) { [weak self] item, _ in
       if item.status == .failed {
         Task { @MainActor [weak self] in
-          guard let self = self else { return }
-          if let fallbackUrl = self.fallbackUrl, self.hasFalledBack == false {
+          guard let self else { return }
+          if let fallbackUrl = self.fallbackUrl, !self.hasFalledBack {
             self.hasFalledBack = true
             let wasPlaying = self.isPlaying
-            let fallbackAsset: AVURLAsset
-            if fallbackUrl.pathExtension.isEmpty || fallbackUrl.pathExtension.lowercased() == "gif" {
-              fallbackAsset = AVURLAsset(url: fallbackUrl, options: ["AVURLAssetOutOfBandMIMETypeKey": "video/mp4"])
-            } else {
-              fallbackAsset = AVURLAsset(url: fallbackUrl)
-            }
+            let fallbackAsset = self.makeAsset(for: fallbackUrl)
             let newItem = AVPlayerItem(asset: fallbackAsset)
             self.player?.replaceCurrentItem(with: newItem)
             self.setupObserver(for: newItem)
-            
-            if let playbackEndObserver = self.playbackEndObserver {
-              NotificationCenter.default.removeObserver(playbackEndObserver)
-            }
-            self.playbackEndObserver = NotificationCenter.default.addObserver(
-              forName: .AVPlayerItemDidPlayToEndTime,
-              object: newItem, queue: .main
-            ) { [weak self] _ in
-              Task { @MainActor in
-                guard let self else { return }
-                if self.loopVideo { self.play() }
-              }
-            }
-            
+            self.registerLoopObserver(for: newItem)
             if wasPlaying {
               self.player?.play()
             }
           } else {
             self.isDead = true
             ErrorService.shared.handle(
-              title: "Video Load Error", 
-              message: "Failed to load video: \(item.error?.localizedDescription ?? "Unknown error"). URL: \(self.url.absoluteString)", 
-              showPopup: false, 
+              title: "Video Load Error",
+              message: "Failed to load video: \(item.error?.localizedDescription ?? "Unknown error"). URL: \(self.url.absoluteString)",
+              showPopup: false,
               log: true
             )
           }
@@ -175,6 +171,31 @@ public struct MediaUIAttachmentVideoView: View {
     _viewModel = .init(wrappedValue: viewModel)
   }
 
+  private var shouldAutoPlayOnAppear: Bool {
+    isFullScreen ? true : preferences.autoPlayVideo
+  }
+
+  private var shouldResumeOnActive: Bool {
+    if isCompact { return false }
+    if preferences.autoPlayVideo { return true }
+    if viewModel.forceAutoPlay { return true }
+    if isFullScreen { return true }
+    return false
+  }
+
+  private var shouldShowManualPlayButton: Bool {
+    if preferences.autoPlayVideo { return false }
+    if viewModel.forceAutoPlay { return false }
+    if isFullScreen { return false }
+    if viewModel.isPlaying { return false }
+    if isCompact { return false }
+    return true
+  }
+
+  private var playerViewId: String {
+    "\(viewModel.url.absoluteString)-\(viewModel.hasFalledBack)-\(viewModel.player != nil)"
+  }
+
   public var body: some View {
     videoView
       .overlay(content: {
@@ -185,9 +206,11 @@ public struct MediaUIAttachmentVideoView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .contentShape(Rectangle())
             .onTapGesture {
-              if !preferences.autoPlayVideo && !viewModel.isPlaying {
-                viewModel.play()
-                return
+              if !preferences.autoPlayVideo {
+                if !viewModel.isPlaying {
+                  viewModel.play()
+                  return
+                }
               }
               #if targetEnvironment(macCatalyst)
                 viewModel.pause()
@@ -203,7 +226,7 @@ public struct MediaUIAttachmentVideoView: View {
       })
       .onAppear {
         viewModel.preparePlayer(
-          autoPlay: isFullScreen ? true : preferences.autoPlayVideo,
+          autoPlay: shouldAutoPlayOnAppear,
           isCompact: isCompact,
           loopVideo: preferences.loopVideo)
         viewModel.mute(preferences.muteVideo)
@@ -220,7 +243,7 @@ public struct MediaUIAttachmentVideoView: View {
         case .background, .inactive:
           viewModel.pause()
         case .active:
-          if (preferences.autoPlayVideo || viewModel.forceAutoPlay || isFullScreen) && !isCompact {
+          if shouldResumeOnActive {
             viewModel.play()
           }
         default:
@@ -273,6 +296,18 @@ public struct MediaUIAttachmentVideoView: View {
     }
   }
 
+  private var playButtonFont: Font {
+    isCompact ? .body : .largeTitle
+  }
+
+  private var playButtonPadding: CGFloat? {
+    isCompact ? 6 : nil
+  }
+
+  private var playButtonOuterPadding: CGFloat {
+    theme.statusDisplayStyle == .compact ? 0 : 10
+  }
+
   private var videoView: some View {
     VideoPlayer(
       player: viewModel.player,
@@ -284,29 +319,27 @@ public struct MediaUIAttachmentVideoView: View {
               .font(.largeTitle)
               .foregroundColor(.white)
           }
-        } else if !preferences.autoPlayVideo,
-          !viewModel.forceAutoPlay,
-          !isFullScreen,
-          !viewModel.isPlaying,
-          !isCompact
-        {
+        } else if shouldShowManualPlayButton {
           Button(
             action: {
               viewModel.play()
             },
             label: {
               Image(systemName: "play.fill")
-                .font(isCompact ? .body : .largeTitle)
+                .font(playButtonFont)
                 .foregroundColor(theme.tintColor)
-                .padding(.all, isCompact ? 6 : nil)
+                .padding(.all, playButtonPadding)
                 .background(Circle().fill(.thinMaterial))
-                .padding(theme.statusDisplayStyle == .compact ? 0 : 10)
+                .padding(playButtonOuterPadding)
             })
         }
       }
     )
     .accessibilityAddTraits(.startsMediaSession)
-    // loading), updating the state to a non-nil AVPlayer frequently fails to trigger a redraw,
-    // The `.id()` modifier forces SwiftUI's diffing engine to completely destroy the stale
+    // On iOS 17/18, when VideoPlayer initializes with a nil AVPlayer (while the asset is
+    // loading), updating the state to a non-nil AVPlayer frequently fails to trigger a redraw.
+    // The `.id()` modifier forces SwiftUI's diffing engine to recreate the underlying
+    // AVPlayerViewController when the player instance or fallback URL changes.
+    .id(playerViewId)
   }
 }

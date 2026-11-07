@@ -16,6 +16,9 @@ struct CustomEmojisLayoutSettingsView: View {
       } footer: {
         Text("settings.display.custom-emojis-layout.footer")
       }
+      #if !os(visionOS)
+        .listRowBackground(theme.primaryBackgroundColor)
+      #endif
     }
     .navigationTitle("settings.display.custom-emojis-layout")
     #if !os(visionOS)

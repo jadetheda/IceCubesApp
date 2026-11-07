@@ -268,10 +268,6 @@ private struct MediaPreview: View {
         height: previewFrameHeight
       )
   }
-  
-  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
-    isStandaloneOverride || attachmentsCount == 1
-  }
 
   var body: some View {
     if let namespace = quickLook.namespace {
@@ -628,10 +624,6 @@ private struct FeaturedImagePreView: View {
   private var originalHeight: CGFloat {
     CGFloat(attachment.meta?.original?.height ?? 300)
   }
-  
-  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
-    isStandaloneOverride || attachmentsCount == 1
-  }
 
   var body: some View {
     Group {
@@ -885,11 +877,7 @@ private struct MediaGridCell: View {
     image
       .resizable()
       .aspectRatio(contentMode: .fill)
-      .frame(
-        maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? .infinity : nil
-      )
-      .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
+      .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
   }
 
   private var appliedContentMode: ContentMode {
@@ -898,10 +886,6 @@ private struct MediaGridCell: View {
 
   private var appliedAspectRatio: CGFloat? {
     isStandalone ? currentAspectRatio : nil
-  }
-  
-  private func calculateIsStandalone(isStandaloneOverride: Bool, attachmentsCount: Int) -> Bool {
-    isStandaloneOverride || attachmentsCount == 1
   }
 
   var body: some View {
@@ -954,11 +938,7 @@ private struct MediaGridCell: View {
       }
       .matchedTransitionSource(id: displayData.id, in: namespace)
       .aspectRatio(appliedAspectRatio, contentMode: appliedContentMode)
-      .frame(
-        maxWidth: isStandalone ? .infinity : nil,
-        maxHeight: isStandalone ? .infinity : nil
-      )
-      .frame(minWidth: 0, maxWidth: isStandalone ? nil : .infinity, minHeight: 0, maxHeight: isStandalone ? nil : .infinity)
+      .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
       .clipped()
       .contentShape(Rectangle())
       .accessibilityElement(children: .ignore)
