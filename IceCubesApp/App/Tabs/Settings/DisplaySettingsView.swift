@@ -319,34 +319,38 @@ struct DisplaySettingsView: View {
         }
       }
     }
-    
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
 
-      Section {
-        Toggle(isOn: $userPreferences.showHidePostsWithoutMediaToggle) {
-          Label("settings.content.timeline.gallery-toggle", systemImage: "photo.on.rectangle.angled")
-        }
-      } header: {
-        Text("Toolbar & Filter Menu")
-      } footer: {
-        Text("settings.content.timeline.gallery-toggle-footer")
+    Section {
+      Toggle(isOn: $userPreferences.showHidePostsWithoutMediaToggle) {
+        Label("settings.content.timeline.gallery-toggle", systemImage: "photo.on.rectangle.angled")
       }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
-      
-      Section {
-        NavigationLink(destination: GallerySettingsView()) {
-          Label("settings.display.gallery.title", systemImage: "rectangle.grid.2x2")
-        }
-      }
-      
-      Section("settings.display.undo-scroll.title") {
-        Toggle("settings.display.undo-scroll.enable", isOn: $userPreferences.undoScrollToTopEnabled)
-        if userPreferences.undoScrollToTopEnabled {
-          Stepper(String(format: NSLocalizedString("settings.display.undo-scroll.timeout", comment: ""), userPreferences.undoScrollToTopTimeout), value: $userPreferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
-        }
-      }
+    } header: {
+      Text("Toolbar & Filter Menu")
+    } footer: {
+      Text("settings.content.timeline.gallery-toggle-footer")
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
 
+    Section {
+      NavigationLink(destination: GallerySettingsView()) {
+        Label("settings.display.gallery.title", systemImage: "rectangle.grid.2x2")
+      }
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
+
+    Section("settings.display.undo-scroll.title") {
+      Toggle("settings.display.undo-scroll.enable", isOn: $userPreferences.undoScrollToTopEnabled)
+      if userPreferences.undoScrollToTopEnabled {
+        Stepper(String(format: NSLocalizedString("settings.display.undo-scroll.timeout", comment: ""), userPreferences.undoScrollToTopTimeout), value: $userPreferences.undoScrollToTopTimeout, in: 1...60, step: 1.0)
+      }
+    }
     #if !os(visionOS)
       .listRowBackground(theme.primaryBackgroundColor)
     #endif

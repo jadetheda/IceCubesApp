@@ -37,90 +37,86 @@ public struct PluraldawnDecoder {
         "scratchupload.xyz", "scratchupload.org", "files.y2k.diy", "exa.y2k.diy"
     ]
 
+    private static let ihdrChunk = Data([0x49, 0x48, 0x44, 0x52])
+    private static let idatChunk = Data([0x49, 0x44, 0x41, 0x54])
+    private static let iendChunk = Data([0x49, 0x45, 0x4E, 0x44])
+
+    private static func fetchImageData(from url: URL) async -> Data? {
+        guard let (data, response) = try? await URLSession.shared.data(from: url) else {
+            return nil
+        }
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            return nil
+        }
+        return data
+    }
+
     public static func decode(from url: URL) async -> PluraldawnSystem? {
+        await decodeWithStatus(from: url).system
+    }
+
+    static func decodeWithStatus(from url: URL) async -> (system: PluraldawnSystem?, shouldCache: Bool) {
         let resolvedURL = resolveOriginalAvatarURL(url)
-        var downloadedData: Data? = nil
-        if let (data, response) = try? await URLSession.shared.data(from: resolvedURL) {
-            if let http = response as? HTTPURLResponse {
-                if http.statusCode == 200 {
-                    downloadedData = data
-                }
-            } else {
-                downloadedData = data
-            }
+        var downloadedData = await fetchImageData(from: resolvedURL)
+        if downloadedData == nil, resolvedURL != url {
+            downloadedData = await fetchImageData(from: url)
         }
-        if downloadedData == nil {
-            if resolvedURL != url {
-                if let (data, response) = try? await URLSession.shared.data(from: url) {
-                    if let http = response as? HTTPURLResponse {
-                        if http.statusCode == 200 {
-                            downloadedData = data
-                        }
-                    } else {
-                        downloadedData = data
-                    }
-                }
-            }
+        guard let data = downloadedData else {
+            return (nil, false)
         }
-        guard let data = downloadedData else { return nil }
-        
+
         // 1. Try bit-exact PNG chunk decode first to bypass CoreGraphics gamma/color alteration
-        if let (pixels, bpp) = decodePNGPixels(from: data) {
-            if let system = extractFromPixels(pixels, bpp: bpp) {
-                return system
-            }
+        if let (pixels, bpp) = decodePNGPixels(from: data),
+           let system = extractFromPixels(pixels, bpp: bpp) {
+            return (system, true)
         }
-        
+
         // 2. Fall back to CGImage decode
-        guard let dataProvider = CGDataProvider(data: data as CFData) else { return nil }
-        var optionalImage: CGImage? = CGImage(pngDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
-        if optionalImage == nil {
-            optionalImage = CGImage(jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+        guard let dataProvider = CGDataProvider(data: data as CFData) else {
+            return (nil, true)
         }
-        
+        let optionalImage =
+            CGImage(pngDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+            ?? CGImage(jpegDataProviderSource: dataProvider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+
         if let unwrappedImage = optionalImage {
-            return extractFromCGImage(unwrappedImage)
+            return (extractFromCGImage(unwrappedImage), true)
         }
-        
+
         #if canImport(UIKit)
-        guard let uiImage = UIImage(data: data) else { return nil }
-        guard let cgImage = uiImage.cgImage else { return nil }
-        return extractFromCGImage(cgImage)
+        guard let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage else {
+            return (nil, true)
+        }
+        return (extractFromCGImage(cgImage), true)
         #else
-        return nil
+        return (nil, true)
         #endif
     }
-    
+
     static func resolveOriginalAvatarURL(_ url: URL) -> URL {
         var currentURL = url
         // 1. If it's a proxy with an encoded original URL in query parameters (?url=https%3A%2F%2F...)
         // (Used by Misskey, IceShrimp, Sharkey, Firefish, etc.)
-        if let components = URLComponents(url: currentURL, resolvingAgainstBaseURL: false) {
-            if let queryItems = components.queryItems {
-                for item in queryItems {
-                    if item.name == "url" {
-                        if let targetStr = item.value {
-                            if let targetURL = URL(string: targetStr) {
-                                if targetURL.scheme != nil {
-                                    if targetURL != currentURL {
-                                        currentURL = targetURL
-                                        break
-                                    }
-                                }
-                            }
-                        }
-                    }
+        if let components = URLComponents(url: currentURL, resolvingAgainstBaseURL: false),
+           let queryItems = components.queryItems {
+            for item in queryItems where item.name == "url" {
+                if let targetStr = item.value,
+                   let targetURL = URL(string: targetStr),
+                   targetURL.scheme != nil,
+                   targetURL != currentURL {
+                    currentURL = targetURL
+                    break
                 }
             }
         }
-        
+
         var str = currentURL.absoluteString
-        
+
         // Upgrade thumbnails / small variants to original full-resolution
         if str.contains("/attachment/small/") {
             str = str.replacingOccurrences(of: "/attachment/small/", with: "/attachment/original/")
         }
-        
+
         if str.contains("/accounts/avatars/") {
             if str.contains("/small/") {
                 str = str.replacingOccurrences(of: "/small/", with: "/original/")
@@ -132,66 +128,59 @@ public struct PluraldawnDecoder {
                 str = str.replacingOccurrences(of: "/small.webp", with: "/original.png")
             }
         }
-        
+
         // Replace webp proxies and endpoints with lossless png
         if str.contains("/proxy/avatar.webp") {
             str = str.replacingOccurrences(of: "/proxy/avatar.webp", with: "/proxy/avatar.png")
         } else if str.contains("/avatar.webp") {
             str = str.replacingOccurrences(of: "/avatar.webp", with: "/avatar.png")
         }
-        
+
         if str.contains("/proxy/image.webp") {
             str = str.replacingOccurrences(of: "/proxy/image.webp", with: "/proxy/image.png")
         } else if str.contains("/image.webp") {
             str = str.replacingOccurrences(of: "/image.webp", with: "/image.png")
         }
-        
-        if str.contains("/attachment/original/") {
-            if str.hasSuffix(".webp") {
-                str = String(str.dropLast(5)) + ".png"
-            }
+
+        if str.contains("/attachment/original/"), str.hasSuffix(".webp") {
+            str = String(str.dropLast(5)) + ".png"
         }
-        
+
         // Mastodon v2 cache API original format request
-        if str.contains("/api/v2/cache/avatar/") {
-            if !str.contains("format=original") {
-                let separator = str.contains("?") ? "&" : "?"
-                str = str + separator + "format=original"
-            }
+        if str.contains("/api/v2/cache/avatar/"), !str.contains("format=original") {
+            let separator = str.contains("?") ? "&" : "?"
+            str = str + separator + "format=original"
         }
-        
-        if let newUrl = URL(string: str) {
-            return newUrl
-        }
-        return currentURL
+
+        return URL(string: str) ?? currentURL
     }
-    
+
     // Direct PNG chunk pixel decoder: uncompresses IDAT scanlines and reverses PNG filters
     // without any color profile conversion, ensuring LSB data remains intact.
     private static func decodePNGPixels(from data: Data) -> (pixels: [UInt8], bpp: Int)? {
         guard data.count > 8 else { return nil }
         let data = data.startIndex == 0 ? data : Data(data)
         let pngHeader: [UInt8] = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]
-        for idx in 0..<8 {
-            if data[idx] != pngHeader[idx] { return nil }
+        for idx in 0..<8 where data[idx] != pngHeader[idx] {
+            return nil
         }
-        
+
         var pos = 8
         var idat = Data()
         var width: Int = 0
         var height: Int = 0
         var colorType: UInt8 = 0
-        
+
         while pos + 8 <= data.count {
             let length = Int(UInt32(data[pos]) << 24 | UInt32(data[pos+1]) << 16 | UInt32(data[pos+2]) << 8 | UInt32(data[pos+3]))
             if length < 0 || length > data.count - pos - 12 { break }
             let chunkType = data.subdata(in: (pos + 4)..<(pos + 8))
             pos += 8
-            
+
             let chunkData = data.subdata(in: pos..<(pos + length))
             pos += length + 4 // skip CRC
-            
-            if chunkType == "IHDR".data(using: .ascii) {
+
+            if chunkType == ihdrChunk {
                 guard chunkData.count >= 13 else { return nil }
                 width = Int(UInt32(chunkData[0]) << 24 | UInt32(chunkData[1]) << 16 | UInt32(chunkData[2]) << 8 | UInt32(chunkData[3]))
                 height = Int(UInt32(chunkData[4]) << 24 | UInt32(chunkData[5]) << 16 | UInt32(chunkData[6]) << 8 | UInt32(chunkData[7]))
@@ -204,10 +193,10 @@ public struct PluraldawnDecoder {
                 if colorType != 2 && colorType != 6 { return nil }
                 if compressionMethod != 0 || filterMethod != 0 { return nil }
                 if interlaceMethod != 0 { return nil } // Fall back to CGImage decode for Adam7
-            } else if chunkType == "IDAT".data(using: .ascii) {
+            } else if chunkType == idatChunk {
                 if idat.count > 10 * 1024 * 1024 { return nil }
                 idat.append(chunkData)
-            } else if chunkType == "IEND".data(using: .ascii) {
+            } else if chunkType == iendChunk {
                 break
             }
         }
@@ -367,6 +356,16 @@ public struct PluraldawnDecoder {
         return nil
     }
 
+    private static func isPermittedAvatar(_ member: PluraldawnMember) -> Bool {
+        if member.avatar == "emoji" {
+            return true
+        }
+        guard let host = member.avatarURL?.host else {
+            return false
+        }
+        return whitelistHosts.contains(host)
+    }
+
     private static func parsePlDw2(_ data: Data) -> PluraldawnSystem? {
         var offset = 0
         guard let ids = readGroup(data: data, offset: &offset, prefixes: nil) else { return nil }
@@ -374,10 +373,10 @@ public struct PluraldawnDecoder {
         guard let indicators = readGroup(data: data, offset: &offset, prefixes: nil) else { return nil }
         guard let avatars = readGroup(data: data, offset: &offset, prefixes: permittedAvatarOrigins) else { return nil }
         let fonts = readGroup(data: data, offset: &offset, prefixes: fontStyleNames)
-        
+
         let count = min(ids.count, names.count, indicators.count, avatars.count)
         guard count > 0 else { return nil }
-        
+
         var members: [PluraldawnMember] = []
         for i in 0..<count {
             let id = ids[i].first ?? ""
@@ -385,26 +384,14 @@ public struct PluraldawnDecoder {
             let name = names[i].first ?? ""
             let emojiList = indicators[i].filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
             let avatar = avatars[i].first ?? ""
-            var font = "normal"
-            if let fontsList = fonts {
-                if i < fontsList.count {
-                    font = fontsList[i].first ?? "normal"
-                }
-            }
-            
+            let font = (fonts != nil && i < fonts!.count) ? (fonts![i].first ?? "normal") : "normal"
+
             let member = PluraldawnMember(id: id, name: name, emoji: emojiList, avatar: avatar, font: font)
-            
-            if avatar == "emoji" {
+            if isPermittedAvatar(member) {
                 members.append(member)
-            } else if let url = member.avatarURL {
-                if let host = url.host {
-                    if whitelistHosts.contains(host) {
-                        members.append(member)
-                    }
-                }
             }
         }
-        
+
         guard !members.isEmpty else { return nil }
         return PluraldawnSystem(members: members)
     }
@@ -486,24 +473,17 @@ public struct PluraldawnDecoder {
     private static func parsePlDon(_ data: Data) -> PluraldawnSystem? {
         guard let decoded = try? JSONDecoder().decode(PlDonFormat.self, from: data),
               let rawMembers = decoded.members else { return nil }
-        
+
         var members: [PluraldawnMember] = []
         for m in rawMembers {
-            guard let id = m.id else { continue }
-            guard !id.isEmpty else { continue }
-            guard let name = m.name else { continue }
-            guard let avatar = m.avatar else { continue }
+            guard let id = m.id, !id.isEmpty,
+                  let name = m.name,
+                  let avatar = m.avatar else { continue }
             let emoji = m.emoji?.list ?? []
             let font = m.font ?? "normal"
             let member = PluraldawnMember(id: id, name: name, emoji: emoji, avatar: avatar, font: font)
-            if avatar == "emoji" {
+            if isPermittedAvatar(member) {
                 members.append(member)
-            } else if let url = member.avatarURL {
-                if let host = url.host {
-                    if whitelistHosts.contains(host) {
-                        members.append(member)
-                    }
-                }
             }
         }
         guard !members.isEmpty else { return nil }

@@ -117,6 +117,7 @@ public struct ConversationsListView: View {
       .onChange(of: client) { oldValue, newValue in
       guard oldValue.id != newValue.id else { return }
       dataSource.reset()
+      visibleConversationsCount.removeAll()
       viewState = .loading
       Task {
         await fetchConversations()
@@ -164,7 +165,11 @@ public struct ConversationsListView: View {
             visibleConversationsCount[conversation.id, default: 0] += 1
           }
           .onDisappear {
-            visibleConversationsCount[conversation.id, default: 0] -= 1
+            if let count = visibleConversationsCount[conversation.id], count > 1 {
+              visibleConversationsCount[conversation.id] = count - 1
+            } else {
+              visibleConversationsCount.removeValue(forKey: conversation.id)
+            }
           }
         }
         .listSectionSeparator(.hidden, edges: .top)

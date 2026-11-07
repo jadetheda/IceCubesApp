@@ -109,7 +109,6 @@ struct ContentSettingsView: View {
             userPreferences.appAutoExpandMedia = userPreferences.autoExpandMedia
             userPreferences.appDefaultPostsSensitive = userPreferences.postIsSensitive
             userPreferences.appDefaultPostVisibility = userPreferences.postVisibility
-            userPreferences.appRequireAltText = userPreferences.appRequireAltText
           }
         }
       }

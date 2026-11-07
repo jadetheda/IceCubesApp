@@ -333,7 +333,11 @@ public struct NotificationsListView: View {
             visibleNotificationsCount[notification.id, default: 0] += 1
           }
           .onDisappear {
-            visibleNotificationsCount[notification.id, default: 0] -= 1
+            if let count = visibleNotificationsCount[notification.id], count > 1 {
+              visibleNotificationsCount[notification.id] = count - 1
+            } else {
+              visibleNotificationsCount.removeValue(forKey: notification.id)
+            }
           }
           .listRowInsets(
             .init(
@@ -356,7 +360,6 @@ public struct NotificationsListView: View {
               notification.type == .mention && lockedType != .mention
                 ? theme.secondaryBackgroundColor : theme.primaryBackgroundColor)
           #endif
-          .id(notification.id)
         }
 
         switch nextPageState {
@@ -398,6 +401,7 @@ public struct NotificationsListView: View {
 extension NotificationsListView {
   private func refreshFiltered() {
     dataSource.reset()
+    visibleNotificationsCount.removeAll()
     viewState = .loading
     Task {
       await fetchNotifications()
@@ -407,6 +411,7 @@ extension NotificationsListView {
   private func applyFilter(type: Models.Notification.NotificationType?) {
     selectedType = type
     dataSource.reset()
+    visibleNotificationsCount.removeAll()
     viewState = .loading
 
     Task {
