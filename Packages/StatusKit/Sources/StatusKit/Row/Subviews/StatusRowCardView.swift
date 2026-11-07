@@ -218,7 +218,7 @@ public struct StatusRowCardView: View {
               .lineLimit(1)
           }
         }
-        if let history = card.history {
+        if card.history != nil {
           HStack(spacing: 4) {
             Button {
               if currentInstance.isLinkTimelineSupported {

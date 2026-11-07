@@ -515,11 +515,11 @@ import SwiftUI
     for mention in finalStatus.mentions {
       let acctDisplay = mention.acct.hasPrefix("@") ? mention.acct : "@\(mention.acct)"
       if !result.contains(where: { $0.displayString.caseInsensitiveCompare(acctDisplay) == .orderedSame }) {
-        result.append(HTMLString.Link(mention.url, displayString: acctDisplay, classOverride: "u-url mention"))
+        result.append(HTMLString.Link(mention.url, displayString: acctDisplay, typeOverride: .mention))
       }
       let userDisplay = mention.username.hasPrefix("@") ? mention.username : "@\(mention.username)"
       if !result.contains(where: { $0.displayString.caseInsensitiveCompare(userDisplay) == .orderedSame }) {
-        result.append(HTMLString.Link(mention.url, displayString: userDisplay, classOverride: "u-url mention"))
+        result.append(HTMLString.Link(mention.url, displayString: userDisplay, typeOverride: .mention))
       }
     }
     for tag in finalStatus.tags {
@@ -527,7 +527,7 @@ import SwiftUI
       if !result.contains(where: { $0.displayString.caseInsensitiveCompare(tagDisplay) == .orderedSame }) {
         let tagURL = URL(string: tag.url) ?? URL(string: "https://\(client.server)/tags/\(tag.name)")
         if let tagURL {
-          result.append(HTMLString.Link(tagURL, displayString: tagDisplay, classOverride: "mention hashtag"))
+          result.append(HTMLString.Link(tagURL, displayString: tagDisplay, typeOverride: .hashtag))
         }
       }
     }

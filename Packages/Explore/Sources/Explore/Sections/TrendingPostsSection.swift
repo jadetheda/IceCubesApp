@@ -65,11 +65,11 @@ struct TrendingPostsSection: View {
 
   private var galleryPreviewGrid: some View {
     let prefs = UserPreferences.shared
+    let cropSquare = prefs.galleryCropToSquare
     return GalleryMasonryLayout(
       columns: max(1, prefs.galleryColumns),
       spacing: 4,
-      optimizeLayout: prefs.galleryOptimizeItemLayout,
-      cropToSquare: prefs.galleryCropToSquare
+      optimizeLayout: prefs.galleryOptimizeItemLayout
     ) {
       ForEach(displayedMediaStatuses) { mediaStatus in
         GalleryMediaCell(
@@ -78,6 +78,9 @@ struct TrendingPostsSection: View {
           client: client,
           isRemote: !client.isAuth,
           filterContext: .pub
+        )
+        .galleryLayoutItemKind(
+          .media(aspectRatio: mediaStatus.attachment.galleryAspectRatio(isSquare: cropSquare))
         )
         .id(mediaStatus.id)
       }

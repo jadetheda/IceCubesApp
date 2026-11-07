@@ -286,6 +286,14 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: Invoking an optional closure property from `@Environment(\.statusOnMediaLoaded)` directly as `statusOnMediaLoaded()` without optional chaining causes a compiler error: `value of optional type '(() -> ())?' must be unwrapped to a value of type '() -> ()'` (Exit Code 65).
 - **Solution**: Always invoke optional `@Environment` closures using optional chaining (`statusOnMediaLoaded?()`).
 
+**Swift 6 Top-Level `let` Constants in `.defaultIsolation(MainActor.self)` Packages**
+- **Root Cause**: In Swift packages configured with `.defaultIsolation(MainActor.self)` (such as `StatusKit`, `Timeline`, `Account`, `Explore`, `Notifications`, `Conversations`, `Lists`, `MediaUI`, and `DesignSystem`), top-level `private let` constants (e.g., `private let languageStripRegex: NSRegularExpression?`) implicitly inherit `@MainActor` isolation. Referencing them inside a `nonisolated` function causes an Exit Code 65 error: `main actor-isolated let '...' can not be referenced from a nonisolated context`.
+- **Solution**: Explicitly mark top-level immutable constants referenced by `nonisolated` functions as `private nonisolated let`.
+
+**Nil-Coalescing `any AnyStatus` with Concrete `Status`**
+- **Root Cause**: `StatusRowViewModel.finalStatus` is typed as the protocol existential `any AnyStatus`, whereas `status.reblogAsAsStatus ?? status` is typed as concrete `Status`. Writing `viewModel?.finalStatus ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status` inside a property returning `Status` widens the entire `??` chain to `any AnyStatus`, failing compilation with `cannot convert return expression of type 'any AnyStatus' to return type 'Status'` (Exit Code 65).
+- **Solution**: Use concrete `Status` properties across the nil-coalescing chain (`viewModel?.status.reblogAsAsStatus ?? viewModel?.status ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status`).
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides

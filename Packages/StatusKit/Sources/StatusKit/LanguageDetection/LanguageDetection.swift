@@ -2,14 +2,14 @@ import Foundation
 import Models
 import NaturalLanguage
 
-private let languageStripRegex: NSRegularExpression? = try? NSRegularExpression(
+private nonisolated let languageStripRegex: NSRegularExpression? = try? NSRegularExpression(
   pattern: "https?://\\S+|#[\\w]+|:\\w+:|@[\\w.\\-]+",
   options: [.caseInsensitive]
 )
-private let japaneseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
+private nonisolated let japaneseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
   pattern: "[\\u3040-\\u309F\\u30A0-\\u30FF]"
 )
-private let chineseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
+private nonisolated let chineseScriptRegex: NSRegularExpression? = try? NSRegularExpression(
   pattern: "[\\u4E00-\\u9FFF]"
 )
 

@@ -658,7 +658,7 @@ public struct GalleryMediaCell: View {
   private var cornerRadius: CGFloat { userPreferences.galleryRoundCorners ? 8 : 0 }
 
   private var activeFinalStatus: Status {
-    viewModel?.finalStatus ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status
+    viewModel?.status.reblogAsAsStatus ?? viewModel?.status ?? mediaStatus.status.reblogAsAsStatus ?? mediaStatus.status
   }
 
   private func ensureViewModel() {
