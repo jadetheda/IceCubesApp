@@ -79,6 +79,29 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
         super.init(server: server, version: version, oauthToken: oauthToken)
     }
 
+    private static let videoExtensions: Set<String> = ["mp4", "m4v", "mov", "webm"]
+
+    private func promoteVideoAttachments(in status: Status) {
+        for i in 0..<status.mediaAttachments.count {
+            let ext = status.mediaAttachments[i].url?.pathExtension.lowercased()
+                ?? status.mediaAttachments[i].remoteUrl?.pathExtension.lowercased()
+                ?? ""
+            if Self.videoExtensions.contains(ext) {
+                status.mediaAttachments[i].type = "video"
+            }
+        }
+        if let reblog = status.reblog {
+            for i in 0..<reblog.mediaAttachments.count {
+                let ext = reblog.mediaAttachments[i].url?.pathExtension.lowercased()
+                    ?? reblog.mediaAttachments[i].remoteUrl?.pathExtension.lowercased()
+                    ?? ""
+                if Self.videoExtensions.contains(ext) {
+                    reblog.mediaAttachments[i].type = "video"
+                }
+            }
+        }
+    }
+
     open override func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
         // IceShrimp does not support the Trends endpoint, so short-circuit to empty arrays
         // to avoid crashing the UI when the trends tab is shown.
@@ -111,17 +134,19 @@ open class IceShrimpBackend: MastodonBackend, @unchecked Sendable {
         // player UI renders correctly.
         if let statuses = entity as? [Status] {
             for status in statuses {
-                for i in 0..<status.mediaAttachments.count {
-                    if status.mediaAttachments[i].url?.pathExtension.lowercased() == "mp4" {
-                        status.mediaAttachments[i].type = "video"
-                    }
-                }
+                promoteVideoAttachments(in: status)
             }
+        } else if let status = entity as? Status {
+            promoteVideoAttachments(in: status)
         }
         return entity
     }
     
     open override func post<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version? = nil) async throws -> Entity {
+        let path = endpoint.path()
+        if path.hasSuffix("/translate") && path.hasPrefix("statuses/") {
+            throw FediverseClient.ClientError.unexpectedRequest
+        }
         var overridingEndpoint = endpoint
         if let statusesEndpoint = endpoint as? Statuses,
            case let .postStatus(data) = statusesEndpoint,

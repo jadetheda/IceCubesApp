@@ -493,12 +493,15 @@ extension TimelineFilter {
 
     if self == .trending, client.isIceShrimpWorkaroundsEnabled,
       algorithm == .simpleScore {
-      var statuses: [Status] = []
-      do {
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: true, limit: UserPreferences.shared.trendingSimpleScoreSearchLimit))
-      } catch {
-        return []
-      }
+      let statuses: [Status] = try await client.get(
+        endpoint: Timelines.pub(
+          sinceId: sinceId,
+          maxId: maxId,
+          minId: minId,
+          local: true,
+          limit: UserPreferences.shared.trendingSimpleScoreSearchLimit
+        )
+      )
       
       var scoredStatuses: [(Status, Int)] = []
       for status in statuses {
@@ -514,13 +517,16 @@ extension TimelineFilter {
 
     if self == .trending, client.isIceShrimpWorkaroundsEnabled,
       algorithm == .decayingScore {
-      var statuses: [Status] = []
-      do {
-        // Fetch up to 40 public statuses to evaluate
-        statuses = try await client.get(endpoint: Timelines.pub(sinceId: sinceId, maxId: maxId, minId: minId, local: true, limit: limit ?? 40))
-      } catch {
-        return []
-      }
+      // Fetch up to 40 public statuses to evaluate
+      let statuses: [Status] = try await client.get(
+        endpoint: Timelines.pub(
+          sinceId: sinceId,
+          maxId: maxId,
+          minId: minId,
+          local: true,
+          limit: limit ?? 40
+        )
+      )
       
       let threshold = Double(UserPreferences.shared.iceShrimpTrendingThreshold)
       let halfLife = UserPreferences.shared.iceShrimpTrendingHalfLife
@@ -553,11 +559,14 @@ extension TimelineFilter {
     if case let .tagGroup(_, tags, _) = self, client.isIceShrimpWorkaroundsEnabled {
       var uniqueStatuses: [Status] = []
       var seenIds = Set<String>()
+      var lastError: Error?
+      var anySucceeded = false
       
       for tag in tags {
         let cleanTag = tag.replacingOccurrences(of: "#", with: "")
         do {
           let statuses: [Status] = try await client.get(endpoint: Timelines.hashtag(tag: cleanTag, additional: nil, maxId: maxId, minId: minId))
+          anySucceeded = true
           for status in statuses {
             if !seenIds.contains(status.id) {
               seenIds.insert(status.id)
@@ -565,8 +574,13 @@ extension TimelineFilter {
             }
           }
         } catch {
+          lastError = error
           continue
         }
+      }
+      
+      if !anySucceeded, let lastError {
+        throw lastError
       }
       
       uniqueStatuses.sort { $0.id > $1.id }

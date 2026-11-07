@@ -190,14 +190,19 @@ public enum SettingsStartingPoint {
   }
 
   public func handleStatus(status: AnyStatus, url: URL) -> OpenURLAction.Result {
+    let urlHost = url.host()?.lowercased()
+    let accountHost = status.account.url?.host()?.lowercased()
+    let clientHost = client?.server.lowercased()
+    let isKnownTagHost = (urlHost != nil) && (urlHost == accountHost || urlHost == clientHost)
+
     if url.pathComponents.count == 3,
       url.pathComponents[1] == "tags" || url.pathComponents[1] == "tag",
-      url.host() == status.account.url?.host(),
+      isKnownTagHost,
       let last = url.pathComponents.last, last != "tags", last != "tag"
     {
       // OK this test looks weird but it's
       // A 3 component path i.e. ["/", "tags", "tagname"]
-      // That is on the same host as the person that posted the tag,
+      // That is on the same host as the person that posted the tag (or the active client server),
       // i.e. not a link that matches the pattern but elsewhere on the internet
       // In those circumstances, hijack the link and goto the tags page instead
       // The second is "tags" on Mastodon and "tag" on Akkoma.
@@ -206,16 +211,31 @@ public enum SettingsStartingPoint {
     } else if url.pathComponents.count == 4,
       url.pathComponents[1] == "discover",
       url.pathComponents[2] == "tags",
-      url.host() == status.account.url?.host(),
+      isKnownTagHost,
       let last = url.pathComponents.last, last != "tags"
     {
       // Similar to above, but for ["/", "discover", "tags", "tagname"]
       // as used in Pixelfed
       navigate(to: .hashTag(tag: last, account: nil))
       return .handled
-    } else if let mention = status.mentions.first(where: { $0.url == url }) {
+    } else if let mention = status.mentions.first(where: {
+      $0.url == url || $0.url.absoluteString.caseInsensitiveCompare(url.absoluteString) == .orderedSame
+    }) {
       navigate(to: .accountDetail(id: mention.id))
       return .handled
+    } else if let client,
+      client.isAuth,
+      url.pathComponents.count >= 2 && url.pathComponents[url.pathComponents.count - 2] == "notes",
+      let noteId = url.pathComponents.last, !noteId.isEmpty
+    {
+      if !StatusEmbedCache.shared.badStatusesURLs.contains(url) {
+        if urlHost == clientHost {
+          navigate(to: .statusDetail(id: noteId))
+        } else {
+          navigate(to: .remoteStatusDetail(url: url))
+        }
+        return .handled
+      }
     } else if let client,
       client.isAuth,
       client.hasConnection(with: url),
@@ -281,6 +301,16 @@ public enum SettingsStartingPoint {
       let acct = "\(url.lastPathComponent)@\(host)"
       Task {
         await navigateToAccountFrom(acct: acct, url: url)
+      }
+      return .handled
+    } else if client.isAuth,
+      url.pathComponents.count >= 2 && url.pathComponents[url.pathComponents.count - 2] == "notes",
+      let noteId = url.pathComponents.last, !noteId.isEmpty
+    {
+      if url.host()?.lowercased() == client.server.lowercased() {
+        navigate(to: .statusDetail(id: noteId))
+      } else {
+        navigate(to: .remoteStatusDetail(url: url))
       }
       return .handled
     } else if client.isAuth,
