@@ -70,7 +70,7 @@ public struct StatusVisibilityModifier: ViewModifier {
     Group {
       if #available(iOS 18.0, visionOS 2.0, macOS 15.0, *) {
         content
-          .onScrollVisibilityChange(threshold: 0.5) { visible in
+          .onScrollVisibilityChange(threshold: 0.1) { visible in
             isVisible = visible
             handleVisibilityChange(visible: visible)
           }

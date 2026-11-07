@@ -52,7 +52,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     }
   }
 
-  private mutating func parseHTML(_ html: String) {
+  private mutating func parseHTML(_ html: String, originalLinks: [Link] = []) {
     // https://daringfireball.net/projects/markdown/syntax
     // Pre-escape \ ` _ * ~ and [ as these are the only
     // characters the markdown parser uses when it renders
@@ -93,8 +93,8 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
       // Remove trailing hashtags
       removeTrailingTags(doc: document)
 
-      // Autolink any bare URLs that were not wrapped in <a> tags
-      let autolinkResult = Self.autolink(text: asMarkdown)
+      // Autolink any bare URLs or originalLinks that were not wrapped in <a> tags
+      let autolinkResult = Self.autolink(text: asMarkdown, originalLinks: originalLinks)
       if autolinkResult.markdown != asMarkdown {
         asMarkdown = autolinkResult.markdown
         for l in autolinkResult.links {
@@ -125,6 +125,34 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     }
   }
 
+  private static let bidiAndWhitespaceSet: CharacterSet = {
+    var set = CharacterSet.whitespacesAndNewlines
+    set.insert(charactersIn: "\u{200B}\u{200C}\u{200D}\u{200E}\u{200F}\u{202A}\u{202B}\u{202C}\u{202D}\u{202E}\u{2066}\u{2067}\u{2068}\u{2069}\u{FEFF}")
+    return set
+  }()
+
+  private static func unescapeMarkdown(_ input: String) -> String {
+    var out = input.trimmingCharacters(in: bidiAndWhitespaceSet)
+    for ch in ["_", "*", "`", "~", "[", "\\"] {
+      out = out.replacingOccurrences(of: "\\\(ch)", with: ch)
+    }
+    return out
+  }
+
+  private static func buildFlexibleBodyPattern(_ body: String) -> String {
+    var pattern = ""
+    for ch in body {
+      if ch == "_" {
+        pattern += #"\\?_"#
+      } else if ch == "@" || ch == "＠" {
+        pattern += #"[@＠][ \t\u{00A0}]*"#
+      } else {
+        pattern += NSRegularExpression.escapedPattern(for: String(ch))
+      }
+    }
+    return pattern
+  }
+
   public static func autolink(
     text: String,
     originalLinks: [Link] = []
@@ -153,15 +181,35 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
       }
     }
 
-    // Step 1: Detect existing Markdown links: [display](url)
-    var protectedRanges: [Range<String.Index>] = []
-    if let mdRegex = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#) {
-      let nsString = result as NSString
-      let matches = mdRegex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length))
+    let mdLinkRegex = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#)
+
+    func currentProtectedRanges(in str: String) -> [Range<String.Index>] {
+      guard let mdLinkRegex else { return [] }
+      let nsString = str as NSString
+      let matches = mdLinkRegex.matches(
+        in: str,
+        options: [],
+        range: NSRange(location: 0, length: nsString.length)
+      )
+      var ranges: [Range<String.Index>] = []
       for match in matches {
-        if let fullRange = Range(match.range, in: result) {
-          protectedRanges.append(fullRange)
+        if let r = Range(match.range, in: str) {
+          ranges.append(r)
         }
+      }
+      return ranges
+    }
+
+    // Step 1: Detect existing Markdown links: [display](url)
+    var protectedRanges = currentProtectedRanges(in: result)
+    if let mdLinkRegex {
+      let nsString = result as NSString
+      let matches = mdLinkRegex.matches(
+        in: result,
+        options: [],
+        range: NSRange(location: 0, length: nsString.length)
+      )
+      for match in matches {
         let displayStr = nsString.substring(with: match.range(at: 1))
         let urlStr = nsString.substring(with: match.range(at: 2))
         var url = URL(string: urlStr)
@@ -179,42 +227,115 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     }
 
     // Step 2: Match mentions and hashtags from originalLinks
+    // Expand mentions that have @user@domain so both @user@domain and @user can match,
+    // and sort longer targets first to prevent partial prefix matches.
+    struct CandidateLink {
+      let link: Link
+      let cleanTarget: String
+      let body: String
+    }
+
+    var candidates: [CandidateLink] = []
     for origLink in originalLinks {
-      if origLink.type == .mention || origLink.type == .hashtag {
-        let target = origLink.displayString
-        if !target.isEmpty {
-          let escaped = NSRegularExpression.escapedPattern(for: target)
-          let pattern = #"(?:^|[\s\(\[\{])("# + escaped + #")(?=$|[\s\)\]\}\.\,\!\?\;\:])"#
-          if let regex = try? NSRegularExpression(pattern: pattern) {
-            let nsString = result as NSString
-            let matches = regex.matches(in: result, options: [], range: NSRange(location: 0, length: nsString.length)).reversed()
-            for match in matches {
-              let targetNSRange = match.range(at: 1)
-              guard let targetRange = Range(targetNSRange, in: result) else { continue }
-              let overlaps = protectedRanges.contains { protected in
-                targetRange.lowerBound < protected.upperBound && targetRange.upperBound > protected.lowerBound
-              }
-              if !overlaps {
-                let replacement = "[\(target)](\(origLink.url.absoluteString))"
-                result.replaceSubrange(targetRange, with: replacement)
-                if !discoveredLinks.contains(where: { $0.url == origLink.url }) {
-                  discoveredLinks.append(origLink)
-                }
-                registerStatusURLIfNeeded(origLink.url)
-              }
-            }
-            // Re-scan protected ranges
-            protectedRanges.removeAll()
-            if let mdRegex = try? NSRegularExpression(pattern: #"\[([^\]]+)\]\(([^)]+)\)"#) {
-              let rescanned = mdRegex.matches(in: result, options: [], range: NSRange(location: 0, length: (result as NSString).length))
-              for m in rescanned {
-                if let r = Range(m.range, in: result) {
-                  protectedRanges.append(r)
-                }
-              }
+      guard origLink.type == .mention || origLink.type == .hashtag else { continue }
+      let unescaped = unescapeMarkdown(origLink.displayString)
+      guard !unescaped.isEmpty else { continue }
+
+      if origLink.type == .mention {
+        var body = unescaped
+        while let first = body.first, first == "@" || first == "＠" {
+          body.removeFirst()
+        }
+        body = body.trimmingCharacters(in: bidiAndWhitespaceSet)
+        guard !body.isEmpty else { continue }
+        let fullTarget = "@\(body)"
+        if !candidates.contains(where: { $0.cleanTarget.lowercased() == fullTarget.lowercased() }) {
+          candidates.append(CandidateLink(link: origLink, cleanTarget: fullTarget, body: body))
+        }
+        if let atIdx = body.firstIndex(where: { $0 == "@" || $0 == "＠" }) {
+          let shortBody = String(body[..<atIdx])
+          if !shortBody.isEmpty {
+            let shortTarget = "@\(shortBody)"
+            if !candidates.contains(where: { $0.cleanTarget.lowercased() == shortTarget.lowercased() }) {
+              candidates.append(
+                CandidateLink(
+                  link: Link(origLink.url, displayString: shortTarget, typeOverride: .mention),
+                  cleanTarget: shortTarget,
+                  body: shortBody
+                )
+              )
             }
           }
         }
+      } else {
+        var body = unescaped
+        while let first = body.first, first == "#" || first == "＃" {
+          body.removeFirst()
+        }
+        body = body.trimmingCharacters(in: bidiAndWhitespaceSet)
+        guard !body.isEmpty else { continue }
+        let fullTarget = "#\(body)"
+        if !candidates.contains(where: { $0.cleanTarget.lowercased() == fullTarget.lowercased() }) {
+          candidates.append(CandidateLink(link: origLink, cleanTarget: fullTarget, body: body))
+        }
+      }
+    }
+
+    candidates.sort { $0.body.count > $1.body.count }
+
+    for candidate in candidates {
+      let origLink = candidate.link
+      let bodyPattern = buildFlexibleBodyPattern(candidate.body)
+      let pattern: String
+      if origLink.type == .mention {
+        // Match @username or @ username (split by translator) or ＠username, case-insensitively,
+        // including optional @domain suffix if the text has full acct.
+        let hasDomainInBody = candidate.body.contains("@") || candidate.body.contains("＠")
+        let optionalDomainSuffix = hasDomainInBody ? "" : #"(?:[@＠][A-Za-z0-9_.\-]+(?:\.[A-Za-z0-9_.\-]+)+)?"#
+        pattern = #"(?<![A-Za-z0-9_.\-@＠])([@＠][ \t\u{00A0}]*"# + bodyPattern + optionalDomainSuffix + #")(?![A-Za-z0-9_])"#
+      } else {
+        pattern = #"(?<![A-Za-z0-9_&/#＃])([#＃][ \t\u{00A0}]*"# + bodyPattern + #")(?![A-Za-z0-9_])"#
+      }
+
+      if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+        let nsString = result as NSString
+        let matches = regex.matches(
+          in: result,
+          options: [],
+          range: NSRange(location: 0, length: nsString.length)
+        ).reversed()
+
+        for match in matches {
+          let targetNSRange = match.range(at: 1)
+          guard let targetRange = Range(targetNSRange, in: result) else { continue }
+          protectedRanges = currentProtectedRanges(in: result)
+          let overlaps = protectedRanges.contains { protected in
+            targetRange.lowerBound < protected.upperBound && targetRange.upperBound > protected.lowerBound
+          }
+          if !overlaps {
+            let matchedRaw = String(result[targetRange])
+            // Normalize any translator-inserted whitespace after @ or # while preserving case
+            let prefixSymbol = origLink.type == .mention ? "@" : "#"
+            var matchedBody = matchedRaw
+            if let first = matchedBody.first, "@＠#＃".contains(first) {
+              matchedBody.removeFirst()
+            }
+            matchedBody = matchedBody.trimmingCharacters(in: .whitespaces)
+            var displayLabel = "\(prefixSymbol)\(matchedBody)"
+            // If displayLabel contains multiple unescaped underscores, escape them so Markdown parser doesn't italicize
+            let unescapedUnderscoreCount = displayLabel.components(separatedBy: "_").count - 1
+            if unescapedUnderscoreCount >= 2 && !displayLabel.contains("\\_") {
+              displayLabel = displayLabel.replacingOccurrences(of: "_", with: "\\_")
+            }
+            let replacement = "[\(displayLabel)](\(origLink.url.absoluteString))"
+            result.replaceSubrange(targetRange, with: replacement)
+            if !discoveredLinks.contains(where: { $0.url == origLink.url }) {
+              discoveredLinks.append(origLink)
+            }
+            registerStatusURLIfNeeded(origLink.url)
+          }
+        }
+        protectedRanges = currentProtectedRanges(in: result)
       }
     }
 
@@ -226,6 +347,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
       for match in matches {
         let matchNSRange = match.range
         guard let matchRange = Range(matchNSRange, in: result) else { continue }
+        protectedRanges = currentProtectedRanges(in: result)
         let overlaps = protectedRanges.contains { protected in
           matchRange.lowerBound < protected.upperBound && matchRange.upperBound > protected.lowerBound
         }
@@ -302,7 +424,7 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     if parseMarkdown {
       let hasHTML = stringValue.contains("<p") || stringValue.contains("<a ") || stringValue.contains("<br") || stringValue.contains("<div>")
       if hasHTML {
-        parseHTML(stringValue)
+        parseHTML(stringValue, originalLinks: originalLinks)
       } else {
         let autolinkResult = Self.autolink(text: stringValue, originalLinks: originalLinks)
         asMarkdown = autolinkResult.markdown
@@ -481,8 +603,16 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
         }
         if let linkUrl = url {
           linkRef = linkUrl.absoluteString
-          let displayString = asMarkdown[start..<finish]
-          links.append(Link(linkUrl, displayString: String(displayString)))
+          let displayString = String(asMarkdown[start..<finish])
+          let cls = (try? node.attr("class")) ?? ""
+          let rel = (try? node.attr("rel")) ?? ""
+          var typeOverride: Link.LinkType? = nil
+          if cls.contains("hashtag") || rel.contains("tag") {
+            typeOverride = .hashtag
+          } else if cls.contains("mention") {
+            typeOverride = .mention
+          }
+          links.append(Link(linkUrl, displayString: displayString, typeOverride: typeOverride))
         }
 
         asMarkdown += "]("
@@ -594,18 +724,47 @@ public struct HTMLString: Codable, Equatable, Hashable, @unchecked Sendable {
     public let type: LinkType
     public let title: String
 
-    public init(_ url: URL, displayString: String) {
+    public init(_ url: URL, displayString: String, typeOverride: LinkType? = nil) {
       self.url = url
       self.displayString = displayString
 
-      switch displayString.first {
-      case "@":
+      var cleaned = HTMLString.unescapeMarkdown(displayString)
+      while let first = cleaned.first, first == "*" || first == "_" || first == "~" || first == "`" {
+        cleaned.removeFirst()
+      }
+      while let last = cleaned.last, last == "*" || last == "_" || last == "~" || last == "`" {
+        cleaned.removeLast()
+      }
+      cleaned = cleaned.trimmingCharacters(in: HTMLString.bidiAndWhitespaceSet)
+
+      if cleaned.first == "@" || cleaned.first == "＠" {
         type = .mention
-        title = displayString
-      case "#":
+        let body = String(cleaned.dropFirst()).trimmingCharacters(in: .whitespaces)
+        title = "@\(body)"
+      } else if cleaned.first == "#" || cleaned.first == "＃" {
         type = .hashtag
-        title = String(displayString.dropFirst())
-      default:
+        title = String(cleaned.dropFirst()).trimmingCharacters(in: .whitespaces)
+      } else if let typeOverride {
+        type = typeOverride
+        switch typeOverride {
+        case .mention:
+          title = cleaned.isEmpty ? displayString : "@\(cleaned)"
+        case .hashtag:
+          title = cleaned
+        case .url:
+          var hostNameUrl = url.host ?? url.absoluteString
+          if hostNameUrl.hasPrefix("www.") {
+            hostNameUrl = String(hostNameUrl.dropFirst(4))
+          }
+          title = hostNameUrl
+        }
+      } else if !cleaned.isEmpty,
+        !cleaned.lowercased().hasPrefix("http"),
+        url.lastPathComponent.hasPrefix("@")
+      {
+        type = .mention
+        title = "@\(cleaned)"
+      } else {
         type = .url
         var hostNameUrl = url.host ?? url.absoluteString
         if hostNameUrl.hasPrefix("www.") {

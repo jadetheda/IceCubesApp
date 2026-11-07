@@ -6,6 +6,8 @@ import SwiftUI
 @MainActor
 public enum DeepLUserAPIHandler {
   private static let key = "DeepL"
+  private static let fallbackDefaultsKey = "deepl_user_api_key_fallback"
+
   private static var keychain: KeychainSwift {
     let keychain = KeychainSwift()
     #if !DEBUG && !targetEnvironment(simulator)
@@ -14,12 +16,23 @@ public enum DeepLUserAPIHandler {
     return keychain
   }
 
+  private static var localKeychain: KeychainSwift {
+    KeychainSwift()
+  }
+
   public static func write(value: String) {
-    keychain.synchronizable = true
-    if !value.isEmpty {
-      keychain.set(value, forKey: key)
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    let kc = keychain
+    kc.synchronizable = true
+    let localKc = localKeychain
+    if !trimmed.isEmpty {
+      kc.set(trimmed, forKey: key)
+      localKc.set(trimmed, forKey: key)
+      UserPreferences.sharedDefault?.set(trimmed, forKey: fallbackDefaultsKey)
     } else {
-      keychain.delete(key)
+      kc.delete(key)
+      localKc.delete(key)
+      UserPreferences.sharedDefault?.removeObject(forKey: fallbackDefaultsKey)
     }
   }
 
@@ -34,8 +47,18 @@ public enum DeepLUserAPIHandler {
   }
 
   private static func readKeyInternal() -> String? {
-    keychain.synchronizable = true
-    return keychain.get(key)
+    let kc = keychain
+    kc.synchronizable = true
+    if let val = kc.get(key)?.trimmingCharacters(in: .whitespacesAndNewlines), !val.isEmpty {
+      return val
+    }
+    if let localVal = localKeychain.get(key)?.trimmingCharacters(in: .whitespacesAndNewlines), !localVal.isEmpty {
+      return localVal
+    }
+    if let fallbackVal = UserPreferences.sharedDefault?.string(forKey: fallbackDefaultsKey)?.trimmingCharacters(in: .whitespacesAndNewlines), !fallbackVal.isEmpty {
+      return fallbackVal
+    }
+    return nil
   }
 
   public static func deactivateToggleIfNoKey() {

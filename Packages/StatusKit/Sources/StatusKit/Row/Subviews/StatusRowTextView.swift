@@ -45,7 +45,7 @@ struct StatusRowTextView: View {
         return Locale.current.language.languageCode?.identifier
       }
     }
-    return viewModel.finalStatus.language
+    return viewModel.getStatusLang() ?? viewModel.finalStatus.language
   }
 
   private var translatedFromText: String {

@@ -290,6 +290,7 @@ import SwiftUI
 
     collapseLongPosts = UserPreferences.shared.collapseLongPosts
     recalcCollapse()
+    updatePreferredTranslation()
   }
 
   func navigateToDetail() {
@@ -509,6 +510,30 @@ import SwiftUI
     }
   }
 
+  var translationLinks: [HTMLString.Link] {
+    var result = finalStatus.content.links
+    for mention in finalStatus.mentions {
+      let acctDisplay = mention.acct.hasPrefix("@") ? mention.acct : "@\(mention.acct)"
+      if !result.contains(where: { $0.displayString.caseInsensitiveCompare(acctDisplay) == .orderedSame }) {
+        result.append(HTMLString.Link(mention.url, displayString: acctDisplay, classOverride: "u-url mention"))
+      }
+      let userDisplay = mention.username.hasPrefix("@") ? mention.username : "@\(mention.username)"
+      if !result.contains(where: { $0.displayString.caseInsensitiveCompare(userDisplay) == .orderedSame }) {
+        result.append(HTMLString.Link(mention.url, displayString: userDisplay, classOverride: "u-url mention"))
+      }
+    }
+    for tag in finalStatus.tags {
+      let tagDisplay = tag.name.hasPrefix("#") ? tag.name : "#\(tag.name)"
+      if !result.contains(where: { $0.displayString.caseInsensitiveCompare(tagDisplay) == .orderedSame }) {
+        let tagURL = URL(string: tag.url) ?? URL(string: "https://\(client.server)/tags/\(tag.name)")
+        if let tagURL {
+          result.append(HTMLString.Link(tagURL, displayString: tagDisplay, classOverride: "mention hashtag"))
+        }
+      }
+    }
+    return result
+  }
+
   var translationText: String {
     var text = finalStatus.content.asRawText
     for link in finalStatus.content.links {
@@ -536,21 +561,52 @@ import SwiftUI
   }
 
   func getStatusLang() -> String? {
+    if UserPreferences.shared.autoDetectPostLanguage {
+      if let detected = detectLanguage(text: finalStatus.content.asRawText), !detected.isEmpty {
+        return detected
+      }
+    }
     if let lang = finalStatus.language {
-      if !lang.isEmpty {
-        return lang
+      let trimmed = lang.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      if !trimmed.isEmpty {
+        if trimmed != "und" {
+          if trimmed != "zxx" {
+            return lang
+          }
+        }
       }
     }
     return detectLanguage(text: finalStatus.content.asRawText)
   }
 
-  func translate(userLang: String) async {
+  var isAutoTranslating: Bool = false
+  @ObservationIgnored
+  var hasAttemptedAutoTranslate: Bool = false
+  @ObservationIgnored
+  private var autoTranslateTask: Task<Void, Never>?
+  @ObservationIgnored
+  private var activeTranslationTask: Task<Void, Never>?
+
+  func translate(userLang: String, isAutoTranslate: Bool = false) async {
+    if let cached = StatusTranslationCache.shared.get(statusId: finalStatus.id) {
+      withAnimation {
+        self.translation = cached
+        self.isLoadingTranslation = false
+        self.triggerAppleInlineTranslation = false
+      }
+      return
+    }
+
     userDismissedTranslation = false
     showOriginalText = false
+    isAutoTranslating = isAutoTranslate
     updatePreferredTranslation()
+
     if preferredTranslationType == .useApple {
       #if targetEnvironment(macCatalyst) || os(visionOS)
-        showAppleTranslation = true
+        if !isAutoTranslate {
+          showAppleTranslation = true
+        }
       #else
         withAnimation {
           isLoadingTranslation = true
@@ -560,20 +616,51 @@ import SwiftUI
       return
     }
 
-    if preferredTranslationType != .useDeepl {
-      await translateWithInstance(userLang: userLang)
+    withAnimation {
+      isLoadingTranslation = true
+    }
 
-      if translation == nil || translation?.content.asRawText.isEmpty == true {
+    var wasCancelled = false
+
+    if preferredTranslationType != .useDeepl {
+      let instanceCancelled = await translateWithInstance(userLang: userLang)
+      if instanceCancelled || Task.isCancelled {
+        wasCancelled = true
+      } else if translation == nil || translation?.content.asRawText.isEmpty == true {
         translation = nil
-        await translateWithDeepL(userLang: userLang)
+        if DeepLUserAPIHandler.readKeyIfAllowed() != nil || !DeepLUserAPIHandler.readKey().isEmpty {
+          let deeplCancelled = await translateWithDeepL(userLang: userLang)
+          if deeplCancelled || Task.isCancelled {
+            wasCancelled = true
+          }
+        }
       }
     } else {
-      await translateWithDeepL(userLang: userLang)
-
-      if translation == nil || translation?.content.asRawText.isEmpty == true {
+      let deeplCancelled = await translateWithDeepL(userLang: userLang)
+      if deeplCancelled || Task.isCancelled {
+        wasCancelled = true
+      } else if translation == nil || translation?.content.asRawText.isEmpty == true {
         translation = nil
-        await translateWithInstance(userLang: userLang)
+        let instanceCancelled = await translateWithInstance(userLang: userLang)
+        if instanceCancelled || Task.isCancelled {
+          wasCancelled = true
+        }
       }
+    }
+
+    if wasCancelled || Task.isCancelled {
+      withAnimation {
+        isLoadingTranslation = false
+      }
+      return
+    }
+
+    if let translation, !translation.content.asRawText.isEmpty {
+      StatusTranslationCache.shared.set(statusId: finalStatus.id, translation: translation)
+      withAnimation {
+        isLoadingTranslation = false
+      }
+      return
     }
 
     var hasShown = false
@@ -587,67 +674,83 @@ import SwiftUI
           hasShown = true
         #else
           if #available(iOS 17.4, *) {
-            showAppleTranslation = true
-            hasShown = true
+            if !isAutoTranslate {
+              showAppleTranslation = true
+              hasShown = true
+            }
           }
         #endif
       }
     #endif
 
     if !hasShown {
+      withAnimation {
+        isLoadingTranslation = false
+      }
       if translation == nil {
-        if preferredTranslationType == .useDeepl {
-          deeplTranslationError = true
-        } else {
-          instanceTranslationError = true
+        if !isAutoTranslate {
+          if preferredTranslationType == .useDeepl {
+            deeplTranslationError = true
+          } else {
+            instanceTranslationError = true
+          }
         }
       }
     }
   }
 
-  func translateWithDeepL(userLang: String) async {
-    withAnimation {
-      isLoadingTranslation = true
-    }
-
+  @discardableResult
+  func translateWithDeepL(userLang: String) async -> Bool {
     let deepLClient = getDeepLClient()
-    let translation = try? await deepLClient.request(
-      target: userLang,
-      text: translationText,
-      originalLinks: finalStatus.content.links)
-    withAnimation {
-      self.translation = translation
-      isLoadingTranslation = false
-    }
-    if let translation {
-      StatusTranslationCache.shared.set(statusId: finalStatus.id, translation: translation)
-    }
-  }
-
-  func translateWithInstance(userLang: String) async {
-    withAnimation {
-      isLoadingTranslation = true
-    }
-
-    let translation: Translation? = try? await client.post(
-      endpoint: Statuses.translate(
-        id: finalStatus.id,
-        lang: userLang))
-
-    withAnimation {
-      self.translation = translation
-      isLoadingTranslation = false
-    }
-    if let translation {
-      StatusTranslationCache.shared.set(statusId: finalStatus.id, translation: translation)
+    do {
+      let result = try await deepLClient.request(
+        target: userLang,
+        text: translationText,
+        originalLinks: translationLinks)
+      withAnimation {
+        self.translation = result
+      }
+      return false
+    } catch is CancellationError {
+      return true
+    } catch let urlError as URLError where urlError.code == .cancelled {
+      return true
+    } catch {
+      return Task.isCancelled
     }
   }
 
-  private var autoTranslateTask: Task<Void, Never>?
+  @discardableResult
+  func translateWithInstance(userLang: String) async -> Bool {
+    do {
+      let rawTranslation: Translation = try await client.post(
+        endpoint: Statuses.translate(
+          id: finalStatus.id,
+          lang: userLang))
+      let hydrated = Translation(
+        content: rawTranslation.content.htmlValue.isEmpty
+          ? rawTranslation.content.asRawText
+          : rawTranslation.content.htmlValue,
+        detectedSourceLanguage: rawTranslation.detectedSourceLanguage,
+        provider: rawTranslation.provider,
+        originalLinks: translationLinks)
+      withAnimation {
+        self.translation = hydrated
+      }
+      return false
+    } catch is CancellationError {
+      return true
+    } catch let urlError as URLError where urlError.code == .cancelled {
+      return true
+    } catch {
+      return Task.isCancelled
+    }
+  }
 
   func autoTranslateIfNeeded(userLang: String) {
     guard UserPreferences.shared.autoTranslateForeignPosts else { return }
     guard !userDismissedTranslation else { return }
+    guard !hasAttemptedAutoTranslate else { return }
     updatePreferredTranslation()
     #if targetEnvironment(macCatalyst) || os(visionOS)
     guard preferredTranslationType != .useApple else { return }
@@ -674,7 +777,12 @@ import SwiftUI
         guard !Task.isCancelled else { return }
         guard let self else { return }
         guard self.translation == nil else { return }
-        await self.translate(userLang: userLang)
+        guard !self.isLoadingTranslation else { return }
+        self.hasAttemptedAutoTranslate = true
+        self.activeTranslationTask = Task { @MainActor [weak self] in
+          guard let self else { return }
+          await self.translate(userLang: userLang, isAutoTranslate: true)
+        }
       } catch {
         // Cancelled before dwell elapsed
       }
@@ -687,9 +795,14 @@ import SwiftUI
   }
 
   func dismissTranslation() {
+    autoTranslateTask?.cancel()
+    autoTranslateTask = nil
+    activeTranslationTask?.cancel()
+    activeTranslationTask = nil
     userDismissedTranslation = true
     translation = nil
     showOriginalText = false
+    isLoadingTranslation = false
     triggerAppleInlineTranslation = false
   }
 

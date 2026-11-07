@@ -221,3 +221,24 @@ func testHTMLStringInit_statusURLDetected() throws {
   #expect(1 == htmlString.statusesURLs.count)
   #expect("https://mastodon.social/@user/1123456789" == htmlString.statusesURLs[0].absoluteString)
 }
+
+@Test
+func testHTMLStringInit_translatedMentionsAutolinking() throws {
+  let decoder = JSONDecoder()
+  let originalHTML = "\"<p>Hello <span class=\\\"h-card\\\"><a href=\\\"https://mastodon.social/@alice_smith\\\" class=\\\"u-url mention\\\">@<span>alice_smith</span></a></span> and <a href=\\\"https://iceshrimp.net/@bob\\\" class=\\\"u-url mention\\\">@<span>bob@iceshrimp.net</span></a> check <a href=\\\"https://mastodon.social/tags/SwiftUI\\\" class=\\\"mention hashtag\\\">#<span>SwiftUI</span></a>!</p>\""
+  let parsedOriginal = try decoder.decode(HTMLString.self, from: Data(originalHTML.utf8))
+  #expect(3 == parsedOriginal.links.count)
+
+  // Translators often capitalize @Alice_Smith, insert space after @ ("@ bob"), or alter hashtag case
+  let translatedText = "Bonjour @Alice_Smith et @ bob, regardez #swiftui!"
+  let translatedHTML = HTMLString(
+    stringValue: translatedText,
+    parseMarkdown: true,
+    originalLinks: parsedOriginal.links
+  )
+
+  #expect(translatedHTML.links.contains(where: { $0.url.absoluteString == "https://mastodon.social/@alice_smith" && $0.type == .mention }))
+  #expect(translatedHTML.links.contains(where: { $0.url.absoluteString == "https://iceshrimp.net/@bob" && $0.type == .mention }))
+  #expect(translatedHTML.links.contains(where: { $0.url.absoluteString == "https://mastodon.social/tags/SwiftUI" && $0.type == .hashtag }))
+}
+

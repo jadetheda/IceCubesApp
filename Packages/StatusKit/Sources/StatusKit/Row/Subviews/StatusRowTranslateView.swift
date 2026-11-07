@@ -140,30 +140,73 @@ struct StatusRowTranslateView: View {
       await performAppleTranslation(session: session)
     }
     #endif
-    #if !os(visionOS)
-    .onScrollVisibilityChange(threshold: 0.5) { visible in
-      if visible {
-        triggerAutoTranslate()
-      } else {
-        viewModel.cancelAutoTranslate()
-      }
-    }
-    #endif
-    .onAppear {
-      triggerAutoTranslate()
-    }
-    .onDisappear {
-      viewModel.cancelAutoTranslate()
-    }
   }
 
   #if canImport(Translation) && !os(visionOS) && !targetEnvironment(macCatalyst)
+  private func normalizedLocaleLanguage(_ code: String) -> Locale.Language {
+    let cleaned = code.replacingOccurrences(of: "_", with: "-").trimmingCharacters(in: .whitespacesAndNewlines)
+    let lower = cleaned.lowercased()
+    if lower == "zh" || lower == "zh-cn" || lower == "zh-sg" || lower.hasPrefix("zh-hans") {
+      return Locale.Language(identifier: "zh-Hans")
+    }
+    if lower == "zh-tw" || lower == "zh-hk" || lower == "zh-mo" || lower.hasPrefix("zh-hant") {
+      return Locale.Language(identifier: "zh-Hant")
+    }
+    return Locale.Language(identifier: cleaned)
+  }
+
   private func handleAppleTranslationTrigger(_ shouldTrigger: Bool) {
-    if shouldTrigger {
-      let targetLang = Locale.Language(identifier: effectiveUserLang)
-      let sourceLang = viewModel.getStatusLang().map { Locale.Language(identifier: $0) }
+    guard shouldTrigger else { return }
+    let targetLang = normalizedLocaleLanguage(effectiveUserLang)
+    let targetPrefix = targetLang.languageCode?.identifier.lowercased() ?? effectiveUserLang.prefix(2).lowercased()
+
+    var sourceLang: Locale.Language? = nil
+    if let rawSource = viewModel.getStatusLang(), !rawSource.isEmpty {
+      let candidate = normalizedLocaleLanguage(rawSource)
+      let sourcePrefix = candidate.languageCode?.identifier.lowercased() ?? rawSource.prefix(2).lowercased()
+      if sourcePrefix != targetPrefix {
+        sourceLang = candidate
+      }
+    }
+
+    if viewModel.isAutoTranslating {
+      let resolvedSource = sourceLang
+      Task { @MainActor in
+        let availability = LanguageAvailability()
+        if let resolvedSource {
+          let status = await availability.status(from: resolvedSource, to: targetLang)
+          guard status == .installed else {
+            withAnimation {
+              viewModel.isLoadingTranslation = false
+              viewModel.triggerAppleInlineTranslation = false
+            }
+            return
+          }
+        } else {
+          let textSample = viewModel.translationText
+          let status = try? await availability.status(for: textSample, to: targetLang)
+          guard status == .installed else {
+            withAnimation {
+              viewModel.isLoadingTranslation = false
+              viewModel.triggerAppleInlineTranslation = false
+            }
+            return
+          }
+        }
+        applyTranslationConfig(source: resolvedSource, target: targetLang)
+      }
+    } else {
+      applyTranslationConfig(source: sourceLang, target: targetLang)
+    }
+  }
+
+  private func applyTranslationConfig(source: Locale.Language?, target: Locale.Language) {
+    if translationConfig == nil {
+      translationConfig = .init(source: source, target: target)
+    } else if translationConfig?.source == source && translationConfig?.target == target {
       translationConfig?.invalidate()
-      translationConfig = .init(source: sourceLang, target: targetLang)
+    } else {
+      translationConfig = .init(source: source, target: target)
     }
   }
 
@@ -171,6 +214,7 @@ struct StatusRowTranslateView: View {
     let text = viewModel.translationText
     let sourceLang = viewModel.getStatusLang() ?? ""
     let statusId = viewModel.finalStatus.id
+    let links = viewModel.translationLinks
     guard !text.isEmpty else {
       withAnimation {
         viewModel.isLoadingTranslation = false
@@ -185,7 +229,7 @@ struct StatusRowTranslateView: View {
         content: response.targetText,
         detectedSourceLanguage: detectedLang,
         provider: "Apple",
-        originalLinks: viewModel.finalStatus.content.links
+        originalLinks: links
       )
       withAnimation {
         viewModel.translation = translation
@@ -201,10 +245,4 @@ struct StatusRowTranslateView: View {
     }
   }
   #endif
-
-  private func triggerAutoTranslate() {
-    if !isInCaptureMode {
-      viewModel.autoTranslateIfNeeded(userLang: effectiveUserLang)
-    }
-  }
 }
