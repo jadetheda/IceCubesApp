@@ -8,7 +8,7 @@ import NukeUI
 import SwiftUI
 
 /// Describes how a subview inside `GalleryMasonryLayout` should be positioned.
-public enum GalleryLayoutItemKind: Sendable, Equatable {
+public nonisolated enum GalleryLayoutItemKind: Sendable, Equatable {
   /// A media cell with a deterministic aspect ratio (`width / height`), placed into the target masonry column.
   case media(aspectRatio: CGFloat)
   /// A full-width banner or timeline gap loader that spans across all columns.
@@ -18,7 +18,7 @@ public enum GalleryLayoutItemKind: Sendable, Equatable {
 }
 
 /// Layout value key used by `GalleryMasonryLayout` to classify child views without nested `LazyVStack` wrappers.
-public struct GalleryLayoutItemKindKey: LayoutValueKey {
+public nonisolated struct GalleryLayoutItemKindKey: LayoutValueKey {
   public static let defaultValue: GalleryLayoutItemKind = .media(aspectRatio: 1.0)
 }
 
@@ -37,7 +37,7 @@ public extension View {
 ///    accepted the tallest column's height and vertically centered or separated their children with massive empty voids.
 /// 3. Computes exact pixel heights from `columnWidth / aspectRatio` (with `4pt` real pixel spacing rather than fake `+ 0.1`
 ///    normalized ratios), guaranteeing zero height drift between column assignment math and rendered cells.
-public struct GalleryMasonryLayout: Layout {
+public nonisolated struct GalleryMasonryLayout: Layout {
   public let columns: Int
   public let spacing: CGFloat
   public let optimizeLayout: Bool
@@ -690,7 +690,7 @@ public struct GalleryMediaCell: View {
                     if !imageLoaded {
                       imageLoaded = true
                     }
-                    statusOnMediaLoaded()
+                    statusOnMediaLoaded?()
                   }
               } else {
                 ZStack {
@@ -709,7 +709,7 @@ public struct GalleryMediaCell: View {
                   if !imageLoaded {
                     imageLoaded = true
                   }
-                  statusOnMediaLoaded()
+                  statusOnMediaLoaded?()
                 }
               )
             )

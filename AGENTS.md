@@ -278,6 +278,14 @@ Without a local compiler, agents are prone to introducing the very typos that ca
 - **Root Cause**: In Swift 6 with strict concurrency and Foundation extensions, passing `.regularExpression` shorthand to `String.range(of:options:)` can fail type inference with `cannot infer contextual base in reference to member 'regularExpression'` (Exit Code 65).
 - **Solution**: Explicitly qualify the type as `String.CompareOptions.regularExpression`.
 
+**Swift 6 DefaultIsolation LayoutValueKey Conformance in Nonisolated Context**
+- **Root Cause**: In packages configured with `.defaultIsolation(MainActor.self)` (such as `StatusKit`), types declared without explicit isolation inherit `@MainActor`. Declaring a `LayoutValueKey` struct or `Layout` struct without `nonisolated` causes the protocol conformance to become `@MainActor`-isolated. When the nonisolated SwiftUI `Layout` protocol methods (`placeSubviews`, `sizeThatFits`) access `subview[Key.self]`, the compiler fails with `error: main actor-isolated conformance of '...' to 'LayoutValueKey' cannot be used in nonisolated context` (Exit Code 65).
+- **Solution**: Explicitly mark both the `LayoutValueKey` struct, the custom `Layout` struct, and any layout item classification enums as `public nonisolated struct ...` / `public nonisolated enum ...`.
+
+**Optional Environment Closure Invocation Without Chaining**
+- **Root Cause**: Invoking an optional closure property from `@Environment(\.statusOnMediaLoaded)` directly as `statusOnMediaLoaded()` without optional chaining causes a compiler error: `value of optional type '(() -> ())?' must be unwrapped to a value of type '() -> ()'` (Exit Code 65).
+- **Solution**: Always invoke optional `@Environment` closures using optional chaining (`statusOnMediaLoaded?()`).
+
 # 4. Architecture & Build Guidelines
 
 ## ⚠️ Agent Overrides
