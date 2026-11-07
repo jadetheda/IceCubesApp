@@ -130,12 +130,16 @@ enum AppTab: Identifiable, Hashable, CaseIterable, Codable {
       TimelineFilterTab(initialFilter: filter)
     case .timeline:
       TimelineTab(canFilterTimeline: true, timeline: homeTimeline, pinedFilters: pinnedFilters)
+        .rootTabScrollEdgeEffect()
     case .trending:
       TimelineTab(timeline: .constant(.trending))
+        .rootTabScrollEdgeEffect()
     case .local:
       TimelineTab(timeline: .constant(.local))
+        .rootTabScrollEdgeEffect()
     case .federated:
       TimelineTab(timeline: .constant(.federated))
+        .rootTabScrollEdgeEffect()
     case .notifications:
       NotificationsTab(selectedTab: selectedTab, lockedType: nil)
     case .mentions:

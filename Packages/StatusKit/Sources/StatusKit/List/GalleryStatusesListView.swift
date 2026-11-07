@@ -604,6 +604,7 @@ public struct GalleryMediaCell: View {
   @State private var autoFallbackTriggered = false
   @State private var imageLoaded = false
   @State private var staticPreviewFailed = false
+  @State private var loadedAspectRatio: CGFloat? = nil
   @Environment(Theme.self) private var theme
   @Environment(UserPreferences.self) private var userPreferences
   @Environment(CurrentAccount.self) private var currentAccount
@@ -615,7 +616,18 @@ public struct GalleryMediaCell: View {
   /// Always returns a clamped, deterministic aspect ratio in `[0.5, 2.0]` (or `1.0` when square cropping
   /// is enabled or when server metadata is missing), ensuring cells never jump in height after download.
   private var effectiveAspectRatio: CGFloat {
-    mediaStatus.attachment.galleryAspectRatio(isSquare: isSquare)
+    if isSquare { return 1.0 }
+    if let known = mediaStatus.attachment.aspectRatio {
+      if known > 0 {
+        return min(max(known, 0.5), 2.0)
+      }
+    }
+    if let loaded = loadedAspectRatio {
+      if loaded > 0 {
+        return min(max(loaded, 0.5), 2.0)
+      }
+    }
+    return mediaStatus.attachment.galleryAspectRatio(isSquare: isSquare)
   }
 
   private var fallback: Bool { userPreferences.remoteMediaFallbackOnFail }
@@ -690,6 +702,16 @@ public struct GalleryMediaCell: View {
           .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
           .clipped()
           .onAppear {
+            if let uiImage = state.imageContainer?.image {
+              if uiImage.size.width > 0 {
+                if uiImage.size.height > 0 {
+                  let naturalRatio = uiImage.size.width / uiImage.size.height
+                  if loadedAspectRatio != naturalRatio {
+                    loadedAspectRatio = naturalRatio
+                  }
+                }
+              }
+            }
             markMediaLoaded()
           }
       } else if state.error != nil {

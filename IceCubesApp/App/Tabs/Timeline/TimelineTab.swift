@@ -58,6 +58,7 @@ struct TimelineTab: View {
       .toolbar {
         toolbarView
       }
+      .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
       .id(client.id)
     }
     .onAppear {

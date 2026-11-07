@@ -1,7 +1,6 @@
 import Foundation
 
 public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
-  public struct MetaContainer: Codable, Equatable {
     public struct Meta: Codable, Equatable {
       public let width: Int?
       public let height: Int?
@@ -22,14 +21,67 @@ public struct MediaAttachment: Codable, Identifiable, Hashable, Equatable {
         self.duration = duration
         self.frameRate = frameRate
       }
+
+      enum CodingKeys: String, CodingKey {
+        case width, height, aspect, duration, frameRate
+        case frame_rate
+      }
+
+      public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        if let w = try? container.decodeIfPresent(Int.self, forKey: .width) {
+          self.width = w
+        } else if let w = try? container.decodeIfPresent(Double.self, forKey: .width) {
+          self.width = Int(w)
+        } else {
+          self.width = nil
+        }
+
+        if let h = try? container.decodeIfPresent(Int.self, forKey: .height) {
+          self.height = h
+        } else if let h = try? container.decodeIfPresent(Double.self, forKey: .height) {
+          self.height = Int(h)
+        } else {
+          self.height = nil
+        }
+
+        if let a = try? container.decodeIfPresent(Double.self, forKey: .aspect) {
+          self.aspect = a
+        } else if let a = try? container.decodeIfPresent(Int.self, forKey: .aspect) {
+          self.aspect = Double(a)
+        } else {
+          self.aspect = nil
+        }
+
+        self.duration = try? container.decodeIfPresent(Double.self, forKey: .duration)
+        self.frameRate = (try? container.decodeIfPresent(String.self, forKey: .frameRate)) ?? (try? container.decodeIfPresent(String.self, forKey: .frame_rate))
+      }
     }
 
     public let original: Meta?
     public let small: Meta?
 
+    enum CodingKeys: String, CodingKey {
+      case original, small
+    }
+
     public init(original: Meta?, small: Meta? = nil) {
       self.original = original
       self.small = small
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      var parsedOriginal = try? container.decodeIfPresent(Meta.self, forKey: .original)
+      let parsedSmall = try? container.decodeIfPresent(Meta.self, forKey: .small)
+
+      if parsedOriginal == nil {
+        parsedOriginal = try? Meta(from: decoder)
+      }
+
+      self.original = parsedOriginal
+      self.small = parsedSmall
     }
   }
 

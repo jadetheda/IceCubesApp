@@ -103,7 +103,7 @@ struct TimelineListView: View {
       .listStyle(.plain)
       #if !os(visionOS)
         .scrollContentBackground(.hidden)
-        .background(theme.primaryBackgroundColor.ignoresSafeArea())
+        .background(theme.primaryBackgroundColor)
       #endif
       .onChange(of: isGalleryMode) { oldValue, newValue in
         if oldValue != newValue {

@@ -93,7 +93,11 @@ public struct TimelineView: View {
         #endif
     } else {
       timelineView
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .toolbarBackground(toolbarBackgroundVisibility, for: .navigationBar)
+        .overlay(alignment: .top) {
+          gradualBlurHeader
+        }
         .safeAreaInset(edge: .top, spacing: 0) {
           if canFilterTimeline {
             if !pinnedFilters.isEmpty {
@@ -111,6 +115,26 @@ public struct TimelineView: View {
           }
         }
     }
+  }
+
+  @ViewBuilder
+  private var gradualBlurHeader: some View {
+    Rectangle()
+      .fill(.ultraThinMaterial)
+      .mask(
+        LinearGradient(
+          stops: [
+            .init(color: .black, location: 0),
+            .init(color: .black, location: 0.55),
+            .init(color: .clear, location: 1.0)
+          ],
+          startPoint: .top,
+          endPoint: .bottom
+        )
+      )
+      .frame(height: 70)
+      .ignoresSafeArea(edges: .top)
+      .allowsHitTesting(false)
   }
 
   private var isHideSeenPostsEyeVisible: Bool {
