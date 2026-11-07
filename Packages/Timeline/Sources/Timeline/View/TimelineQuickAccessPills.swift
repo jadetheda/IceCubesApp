@@ -75,33 +75,41 @@ public struct TimelineQuickAccessPills: View {
     }
   }
 
+  private func iconName(for filter: TimelineFilter) -> String {
+    preferences.showPinnedItemsSymbol ? filter.iconName() : ""
+  }
+
+  @ViewBuilder
+  private func pillLabel(for filter: TimelineFilter) -> some View {
+    switch filter {
+    case .hashtag:
+      if preferences.showPinnedItemsSymbol {
+        Label(filter.title.replacingOccurrences(of: "#", with: ""), systemImage: filter.iconName())
+      } else {
+        Text(filter.title.replacingOccurrences(of: "#", with: ""))
+      }
+    case let .list(list):
+      if let list = currentAccount.lists.first(where: { $0.id == list.id }) {
+        if preferences.showPinnedItemsSymbol {
+          Label(list.title, systemImage: filter.iconName())
+        } else {
+          Text(list.title)
+        }
+      }
+    default:
+      if preferences.showPinnedItemsSymbol {
+        Label(filter.localizedTitle(), systemImage: filter.iconName())
+      } else {
+        Text(filter.localizedTitle())
+      }
+    }
+  }
+
   private func makeButton(_ filter: TimelineFilter) -> some View {
     Button {
       timeline = filter
     } label: {
-      let icon = preferences.showPinnedItemsSymbol ? filter.iconName() : ""
-      switch filter {
-      case .hashtag:
-        if icon.isEmpty {
-          Text(filter.title.replacingOccurrences(of: "#", with: ""))
-        } else {
-          Label(filter.title.replacingOccurrences(of: "#", with: ""), systemImage: icon)
-        }
-      case let .list(list):
-        if let list = currentAccount.lists.first(where: { $0.id == list.id }) {
-          if icon.isEmpty {
-            Text(list.title)
-          } else {
-            Label(list.title, systemImage: icon)
-          }
-        }
-      default:
-        if icon.isEmpty {
-          Text(filter.localizedTitle())
-        } else {
-          Label(filter.localizedTitle(), systemImage: icon)
-        }
-      }
+      pillLabel(for: filter)
     }
     .transition(.push(from: .leading).combined(with: .opacity))
     .onDrag {

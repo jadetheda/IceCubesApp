@@ -52,6 +52,8 @@ public class SeenPostsManager {
   }
 
   public func clear() {
+    saveTask?.cancel()
+    saveTask = nil
     seenPosts.removeAll()
     seenPostsQueue.removeAll()
     save()
@@ -85,8 +87,10 @@ public class SeenPostsManager {
 
   private func load() {
     if let saved = UserDefaults.standard.array(forKey: userDefaultsKey) as? [String] {
-      seenPostsQueue = saved
-      seenPosts = Set(saved)
+      var unique = Set<String>()
+      seenPostsQueue = saved.filter { unique.insert($0).inserted }
+      seenPosts = unique
+      trimIfNeeded()
     }
   }
 }

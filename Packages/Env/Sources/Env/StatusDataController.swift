@@ -25,13 +25,13 @@ public final class StatusDataControllerProvider {
   public static let shared = StatusDataControllerProvider()
 
   private var cache: [CacheKey: StatusDataController] = [:]
+  private var keyOrder: [CacheKey] = []
+  private let maxCapacity = 2000
 
   private struct CacheKey: Hashable {
     let statusId: String
     let client: FediverseClient
   }
-
-
 
   public func dataController(for status: any AnyStatus, client: FediverseClient)
     -> StatusDataController
@@ -40,8 +40,13 @@ public final class StatusDataControllerProvider {
     if let controller = cache[key] {
       return controller
     }
+    if keyOrder.count >= maxCapacity {
+      let oldest = keyOrder.removeFirst()
+      cache.removeValue(forKey: oldest)
+    }
     let controller = StatusDataController(status: status, client: client)
     cache[key] = controller
+    keyOrder.append(key)
     return controller
   }
 
@@ -127,8 +132,9 @@ public final class StatusDataControllerProvider {
     }
     do {
       let status: Status = try await client.post(endpoint: endpoint)
-      updateFrom(status: status)
-      NotificationCenter.default.post(name: .statusUpdated, object: status)
+      let realStatus = status.reblogAsAsStatus ?? status
+      updateFrom(status: realStatus)
+      NotificationCenter.default.post(name: .statusUpdated, object: realStatus)
     } catch {
       withAnimation(.default) {
         isFavorited.toggle()
@@ -167,8 +173,9 @@ public final class StatusDataControllerProvider {
     }
     do {
       let status: Status = try await client.post(endpoint: endpoint)
-      updateFrom(status: status)
-      NotificationCenter.default.post(name: .statusUpdated, object: status)
+      let realStatus = status.reblogAsAsStatus ?? status
+      updateFrom(status: realStatus)
+      NotificationCenter.default.post(name: .statusUpdated, object: realStatus)
     } catch {
       withAnimation(.default) {
         isBookmarked.toggle()

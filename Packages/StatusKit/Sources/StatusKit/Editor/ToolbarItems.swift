@@ -44,11 +44,7 @@ extension StatusEditor {
         .tint(.label)
         .accessibilityLabel("accessibility.editor.button.drafts")
         .sheet(isPresented: $isDraftsSheetDisplayed) {
-          if UIDevice.current.userInterfaceIdiom == .phone {
-            draftsListView
-          } else {
-            draftsListView
-          }
+          draftsListView
         }
       }
 

@@ -27,15 +27,12 @@ public struct MediaUIAttachmentImageView: View {
   }
 
   private func extractGifData(from state: LazyImageState) -> Data? {
-    if let container = state.imageContainer {
-      if container.type == .gif {
-        if let data = container.data {
-          return data
-        }
-      }
+    if let container = state.imageContainer, container.type == .gif, let data = container.data {
+      return data
     }
     let targetUrl = activeURL
-    if targetUrl.pathExtension.lowercased() == "gif" {
+    let isGifContainer = state.imageContainer?.type == .gif
+    if isGifContainer || targetUrl.pathExtension.lowercased() == "gif" {
       if let cached = ImagePipeline.shared.cache.cachedData(for: .init(url: targetUrl)) {
         return cached
       }
@@ -43,43 +40,20 @@ public struct MediaUIAttachmentImageView: View {
         return cached
       }
     }
-    if let container = state.imageContainer {
-      if container.type == .gif {
-        if let cached = ImagePipeline.shared.cache.cachedData(for: .init(url: targetUrl)) {
-          return cached
-        }
-        if let cached = ImagePipeline.shared.cache.cachedData(for: .init(url: url)) {
-          return cached
-        }
-      }
-    }
     return nil
   }
 
   private func evaluateFailure(for state: LazyImageState) {
-    if hasFailed {
+    guard !hasFailed, state.error != nil else { return }
+    if !hasTriedFallback, let fallback = fallbackUrl, fallback != activeURL {
+      DispatchQueue.main.async {
+        self.currentURL = fallback
+        self.hasTriedFallback = true
+      }
       return
     }
-    let isError = state.error != nil
-    var isMissing = false
-    if !state.isLoading {
-      if state.image == nil {
-        isMissing = true
-      }
-    }
-    if isError || isMissing {
-      if !hasTriedFallback {
-        if let fallback = fallbackUrl {
-          DispatchQueue.main.async {
-            self.currentURL = fallback
-            self.hasTriedFallback = true
-          }
-          return
-        }
-      }
-      DispatchQueue.main.async {
-        self.hasFailed = true
-      }
+    DispatchQueue.main.async {
+      self.hasFailed = true
     }
   }
 
@@ -101,7 +75,7 @@ public struct MediaUIAttachmentImageView: View {
             evaluateFailure(for: state)
           }
       }
-      .draggable(MediaUIImageTransferable(url: url))
+      .draggable(MediaUIImageTransferable(url: activeURL))
       .contextMenu {
         contextMenu
       }
@@ -121,11 +95,11 @@ public struct MediaUIAttachmentImageView: View {
       image
         .resizable()
         .scaledToFit()
-    } else if state.isLoading {
-      ProgressView()
-        .progressViewStyle(.circular)
     } else if hasFailed {
       failureView
+    } else {
+      ProgressView()
+        .progressViewStyle(.circular)
     }
   }
 
@@ -134,56 +108,31 @@ public struct MediaUIAttachmentImageView: View {
       .aspectRatio(gifAspectRatio(from: state, data: data), contentMode: .fit)
   }
 
+  private func validAspectRatio(width: CGFloat, height: CGFloat) -> CGFloat? {
+    guard width > 0, height > 0 else { return nil }
+    let aspect = width / height
+    return (aspect > 0 && aspect.isFinite) ? aspect : nil
+  }
+
   private func gifAspectRatio(from state: LazyImageState, data: Data) -> CGFloat? {
-    if let container = state.imageContainer {
-      let size = container.image.size
-      if size.width > 0 {
-        if size.height > 0 {
-          let aspect = size.width / size.height
-          if aspect > 0 {
-            if aspect.isFinite {
-              return aspect
-            }
-          }
-        }
-      }
+    if let size = state.imageContainer?.image.size,
+       let aspect = validAspectRatio(width: size.width, height: size.height) {
+      return aspect
     }
     if data.count >= 10 {
       let start = data.startIndex
-      let b0 = data[start]
-      let b1 = data[start + 1]
-      let b2 = data[start + 2]
-      if b0 == 0x47 {
-        if b1 == 0x49 {
-          if b2 == 0x46 {
-            let w = UInt16(data[start + 6]) | (UInt16(data[start + 7]) << 8)
-            let h = UInt16(data[start + 8]) | (UInt16(data[start + 9]) << 8)
-            if w > 0 {
-              if h > 0 {
-                let aspect = CGFloat(w) / CGFloat(h)
-                if aspect > 0 {
-                  if aspect.isFinite {
-                    return aspect
-                  }
-                }
-              }
-            }
-          }
+      // GIF87a / GIF89a header starts with "GIF" (0x47, 0x49, 0x46) followed by 3 version bytes and 16-bit LE width/height
+      if data[start] == 0x47, data[start + 1] == 0x49, data[start + 2] == 0x46 {
+        let w = UInt16(data[start + 6]) | (UInt16(data[start + 7]) << 8)
+        let h = UInt16(data[start + 8]) | (UInt16(data[start + 9]) << 8)
+        if let aspect = validAspectRatio(width: CGFloat(w), height: CGFloat(h)) {
+          return aspect
         }
       }
     }
-    if let uiImage = UIImage(data: data) {
-      let size = uiImage.size
-      if size.width > 0 {
-        if size.height > 0 {
-          let aspect = size.width / size.height
-          if aspect > 0 {
-            if aspect.isFinite {
-              return aspect
-            }
-          }
-        }
-      }
+    if let size = UIImage(data: data)?.size,
+       let aspect = validAspectRatio(width: size.width, height: size.height) {
+      return aspect
     }
     return nil
   }
@@ -203,7 +152,7 @@ public struct MediaUIAttachmentImageView: View {
       }
       .buttonStyle(.bordered)
       .sheet(isPresented: $showSafari) {
-        SafariView(url: url)
+        SafariView(url: activeURL)
           .ignoresSafeArea()
       }
     }
@@ -211,10 +160,11 @@ public struct MediaUIAttachmentImageView: View {
 
   @ViewBuilder
   private var contextMenu: some View {
-    MediaUIShareLink(url: url, type: .image)
+    MediaUIShareLink(url: activeURL, type: .image)
     Button {
+      let targetURL = activeURL
       Task {
-        let transferable = MediaUIImageTransferable(url: url)
+        let transferable = MediaUIImageTransferable(url: targetURL)
         let data = await transferable.fetchData()
         UIPasteboard.general.image = UIImage(data: data)
       }
@@ -222,7 +172,7 @@ public struct MediaUIAttachmentImageView: View {
       Label("status.media.contextmenu.copy", systemImage: "doc.on.doc")
     }
     Button {
-      UIPasteboard.general.url = url
+      UIPasteboard.general.url = activeURL
     } label: {
       Label("status.action.copy-link", systemImage: "link")
     }

@@ -45,9 +45,13 @@ struct StatusActionButton: View {
           theme: theme))
   }
 
+  private var shouldShowBoostMenu: Bool {
+    configuration.showsMenu && configuration.trigger == .boost
+  }
+
   @ViewBuilder
   private var actionView: some View {
-    if configuration.showsMenu && configuration.trigger == .boost {
+    if shouldShowBoostMenu {
       Menu {
         Button {
           handleAction(.boost)
@@ -67,31 +71,27 @@ struct StatusActionButton: View {
         .disabled(isQuoteDisabled)
         .opacity(isQuoteDisabled ? 0.35 : 1)
       } label: {
-        HStack(spacing: 2) {
-          actionImage(for: configuration.display)
-          if let count = countValue {
-            countView(count)
-          }
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .contentShape(Rectangle())
+        actionLabelContent
       }
     } else {
       Button {
         handleAction(configuration.trigger)
       } label: {
-        HStack(spacing: 2) {
-          actionImage(for: configuration.display)
-          if let count = countValue {
-            countView(count)
-          }
-        }
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .contentShape(Rectangle())
+        actionLabelContent
       }
     }
+  }
+
+  private var actionLabelContent: some View {
+    HStack(spacing: 2) {
+      actionImage(for: configuration.display)
+      if let count = countValue {
+        countView(count)
+      }
+    }
+    .padding(.vertical, 6)
+    .padding(.horizontal, 8)
+    .contentShape(Rectangle())
   }
 
   @ViewBuilder

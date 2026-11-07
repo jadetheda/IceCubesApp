@@ -37,8 +37,8 @@ struct StatusRowActionsView: View {
   }
 
   func privateBoost() -> Bool {
-    viewModel.status.visibility == .priv
-      && viewModel.status.account.id == currentAccount.account?.id
+    viewModel.finalStatus.visibility == .priv
+      && viewModel.finalStatus.account.id == currentAccount.account?.id
   }
 
   @MainActor
@@ -183,11 +183,13 @@ struct StatusRowActionsView: View {
     }
   }
 
+  private var shareURL: URL? {
+    viewModel.finalStatus.url.flatMap(URL.init(string:))
+  }
+
   @ViewBuilder
   private var shareSlotContent: some View {
-    if let urlString = viewModel.finalStatus.url,
-      let url = URL(string: urlString)
-    {
+    if let url = shareURL {
       shareLink(for: url, action: .share)
     } else {
       shareSlotPlaceholder
@@ -328,13 +330,12 @@ struct StatusRowActionsView: View {
     return false
   }
 
-  @ViewBuilder
   private func actionButton(action: Action) -> some View {
     let configuration = configuration(for: action)
     let finalStatus = viewModel.finalStatus
     let shouldDisableAction = shouldDisable(action: configuration.trigger, for: finalStatus)
 
-    StatusActionButton(
+    return StatusActionButton(
       configuration: configuration,
       statusDataController: statusDataController,
       status: viewModel.status,
@@ -364,6 +365,11 @@ struct StatusRowActionsView: View {
     }
   }
 
+  private var interactionTargetStatus: Status {
+    (viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus)
+      ?? (viewModel.status.reblogAsAsStatus ?? viewModel.status)
+  }
+
   private func handleAction(action: Action) {
     Task {
       if viewModel.isRemote, viewModel.localStatusId == nil || viewModel.localStatus == nil {
@@ -375,7 +381,7 @@ struct StatusRowActionsView: View {
       switch action {
       case .respond:
         SoundEffectManager.shared.playSound(.share)
-        let targetStatus = (viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus) ?? (viewModel.status.reblogAsAsStatus ?? viewModel.status)
+        let targetStatus = interactionTargetStatus
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(
             value: WindowDestinationEditor.replyToStatusEditor(
@@ -395,7 +401,7 @@ struct StatusRowActionsView: View {
         await statusDataController.toggleReblog(remoteStatus: viewModel.localStatusId)
       case .quote:
         SoundEffectManager.shared.playSound(.boost)
-        let targetStatus = (viewModel.localStatus?.reblogAsAsStatus ?? viewModel.localStatus) ?? (viewModel.status.reblogAsAsStatus ?? viewModel.status)
+        let targetStatus = interactionTargetStatus
         #if targetEnvironment(macCatalyst) || os(visionOS)
           openWindow(value: WindowDestinationEditor.quoteStatusEditor(status: targetStatus))
         #else
