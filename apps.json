@@ -1,0 +1,19 @@
+{
+  "name": "Ice Cubes: Community Edition",
+  "identifier": "com.jadetheda.icecubes.repo",
+  "apps": [
+    {
+      "name": "Ice Cubes",
+      "bundleIdentifier": "com.thomasricouard.IceCubesApp",
+      "developerName": "Jade",
+      "version": "build-test-1794060772807",
+      "versionDate": "2026-11-07T14:12:53Z",
+      "versionDescription": "Automated test build from audit/codebase-review (commit d891505a)",
+      "downloadURL": "https://github.com/jadetheda/IceCubesApp/releases/download/build-test-1794060772807/IceCubesApp.ipa",
+      "localizedDescription": "IceCubesApp is an open-source application for accessing the decentralized social network Mastodon! It's built entirely in SwiftUI, making it fast, lightweight, and easy to use.\n\nCommunity Edition takes this app to the next-level, implementing feature requests & bug fixes as suggested by the community.",
+      "iconURL": "https://raw.githubusercontent.com/jadetheda/IceCubesApp/main/IceCubesApp/Assets.xcassets/Icon.appiconset/AppIcon.png",
+      "tintColor": "FF0000",
+      "size": 104042146
+    }
+  ]
+}
