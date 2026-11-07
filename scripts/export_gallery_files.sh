@@ -99,84 +99,134 @@ copy_rel() {
 
 echo "==> Writing BUG_REPORT_GALLERY_GAPS.md..."
 cat << 'EOF' > "$STAGE_DIR/BUG_REPORT_GALLERY_GAPS.md"
-# Gallery Mode Gaps & Layout Desynchronization Bug Dossier
+# Gallery Mode Thumbnail Loading & Layout Dossier (Post-Overhaul)
 
 > **CRITICAL DISCLAIMER FOR ARGON:**
-> The root cause theories, layout explanations, and architectural guesses in this document are **unverified hypotheses** from previous AI agents that repeatedly tried and **FAILED** to permanently fix this bug. The user explicitly cautions you **NOT to trust these guesses as settled fact**. Treat them strictly as observations of what previous attempts explored, look at the code with fresh eyes, and form your own independent diagnosis.
+> The root cause theories, media pipeline explanations, and architectural guesses in this document are **unverified hypotheses** from the assistant agent that has failed to solve these nuances in the past. The user explicitly cautions you **NOT to trust these guesses as settled fact**. Treat them strictly as background context and observations, look at the code with fresh eyes, and form your own independent diagnosis.
 
 ---
 
-## 1. Verified Symptoms & Problem Statement
-In IceCubesApp (SwiftUI, targeting iOS 17 & 18), **Gallery Mode** provides a multi-column masonry grid layout for media-rich statuses. While it is somewhat usable in the general timeline, a severe **gaps and layout desynchronization bug** stubbornly persists—most visibly in the **Profile Media Tab grid** (`AccountDetailView` -> `MediaTab` -> `AnyStatusesListView` / `AccountDetailMediaGridView`).
+## 1. Current Verified Symptoms & Problem Statement
+Following your architectural overhaul in commit `5b1fbfb8` (which introduced `GalleryMasonryLayout`, bounded aspect ratios `[0.5, 2.0]`, and post deduplication), layout gaps and column voids are significantly improved!
+
+However, the user reports a severe new/persisting issue:
+> **"the thumbnails wont load, or if they do they take forever in gallery mode (at least within the same media tab popup context)."**
 
 Observed symptoms:
-1. **Vertical Voids & Disconnected Cards**: Large, irregular vertical empty spaces (gaps) appear between items or underneath columns in the grid.
-2. **Column Height Imbalance**: One column will suddenly cut off or have a huge void of dead whitespace before the next row or batch of images appears.
-3. **Layout Jumping on Image Load**: Posts with media that do not have pre-fetched aspect ratio metadata from the server jump in size and disrupt spacing once the image downloads.
-4. **List vs ScrollView Inconsistencies**: The bug appears differently depending on where Gallery Mode is rendered (e.g. standalone in a `ScrollView` vs embedded inside an account profile's parent `List`).
+1. **Thumbnails Fail or Take Forever to Load**: In Gallery Mode—especially when opening the fullscreen media grid from an account's profile Media tab (`AccountDetailView` -> `MediaTab` -> "Fullscreen media" button (`square.grid.2x2`) -> `AccountDetailMediaGridView`)—thumbnails either fail to load completely (staying on progress spinners / secondary background) or load extremely slowly.
+2. **Context-Specific Behavior**: In the "same media tab popup context" (`AccountDetailMediaGridView` pushed via `routerPath.navigate(to: .accountMediaGridView(account: account, initialMediaStatuses: fetcher.statusesMedias))`), media loading latency is particularly pronounced.
+3. **Bandwidth / Decoding Contention**: When multiple cells appear, they seem to stall each other out or take an excessively long time before rendering.
 
 ---
 
 ## 2. Core Source Files Included in this Dossier
 
-### Grid Layout Implementation
-- `Packages/StatusKit/Sources/StatusKit/List/GalleryStatusesListView.swift`: The primary gallery grid view (`GalleryStatusesListView`), chunking logic (`chunkItems`), column balancing math (`computeColumnItems`), and thumbnail cell (`GalleryMediaCell`).
+### Grid Layout & Thumbnail Cell Implementation
+- `Packages/StatusKit/Sources/StatusKit/List/GalleryStatusesListView.swift`: Contains `GalleryMasonryLayout` (custom SwiftUI Layout protocol struct), `GalleryMediaCell` (thumbnail cell view using `LazyResizableImage` and `MediaUIAttachmentVideoView`), aspect ratio modifiers, and context menus.
 
-### Profile Media Views & Tabs
-- `Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift`: Fullscreen profile media gallery view.
-- `Packages/Account/Sources/Account/Detail/Tabs/MediaTab.swift`: Profile Media tab definition and fetcher.
+### Profile Media Views & Navigation
+- `Packages/Account/Sources/Account/Detail/MediaGrid/AccountDetailMediaGridView.swift`: The fullscreen profile media view (`AccountDetailMediaGridView`) with `AccountMediaFetcher`.
+- `Packages/Account/Sources/Account/Detail/Tabs/MediaTab.swift`: Profile Media tab definition (`MediaTabView`), hosting the "Fullscreen media" button and `AnyStatusesListView`.
 - `Packages/Account/Sources/Account/Detail/Tabs/Base/AnyStatusesListView.swift`: Base list view hosting `unboxedGallery` inside account profile tabs.
-- `Packages/Account/Sources/Account/Detail/Tabs/StatusesTab.swift`: Contains an independent inline duplicate of the gallery grid for pinned posts (lines 188–245).
-- `Packages/Account/Sources/Account/Detail/AccountDetailView.swift`: The parent view hosting all profile tabs inside a root SwiftUI `List`.
+- `Packages/Account/Sources/Account/Detail/Tabs/StatusesTab.swift`: Pinned posts gallery integration in user profiles.
+- `Packages/Account/Sources/Account/Detail/AccountDetailView.swift`: Parent profile view.
+- `IceCubesApp/App/Router/AppRegistry.swift` & `Packages/Env/Sources/Env/Router.swift`: Navigation routing for `.accountMediaGridView`.
+
+### Image Loading & Video Playback
+- `Packages/DesignSystem/Sources/DesignSystem/Views/LazyResizableImage.swift`: NukeUI `LazyImage` wrapper with `GeometryReader` and `.resize` image processor.
+- `Packages/MediaUI/Sources/MediaUI/MediaUIAttachmentVideoView.swift`: Video player component used for video/gifv attachments.
+
+### Media Models & Metadata
+- `Packages/Models/Sources/Models/MediaAttachement.swift`: Attachment model, `displayInfo` URL resolution, `previewUrl`, `remoteUrl`, `aspectRatio`, and `galleryAspectRatio`.
+- `Packages/Models/Sources/Models/MediaStatus.swift`: Wrapper connecting `Status` and `MediaAttachment`.
+- `Packages/Models/Sources/Models/Status.swift`: Status model with `asMediaStatus` visual media filtering.
+- `Packages/Models/Sources/Models/Timeline/TimelineItem.swift`: Timeline model.
 
 ### Timeline & Preferences
-- `Packages/Timeline/Sources/Timeline/View/TimelineListView.swift`: Timeline view hosting `GalleryStatusesListView` inside a `ScrollView`.
+- `Packages/Timeline/Sources/Timeline/View/TimelineListView.swift`: Timeline view hosting `GalleryStatusesListView`.
 - `Packages/Timeline/Sources/Timeline/TimelineContentFilter.swift`: Handles `isGalleryMode` filter state.
-- `Packages/Env/Sources/Env/UserPreferences.swift`: Preferences controlling columns (`galleryColumns`), square cropping (`galleryCropToSquare`), margins, and layout optimization (`galleryOptimizeItemLayout`).
-
-### Media & Model Helpers
-- `Packages/MediaUI/Sources/MediaUI/LazyResizableImage.swift` & `MediaUIAttachmentVideoView.swift`: Media loaders used by `GalleryMediaCell`.
-- `Packages/Models/Sources/Models/MediaAttachment.swift`, `Status.swift`, `TimelineItem.swift`: Data models and attachment aspect ratio properties.
+- `Packages/Env/Sources/Env/UserPreferences.swift`: Preferences controlling columns, square crop, remote media fallback, and delays.
 
 ---
 
-## 3. History of Past Failed Attempts (From Git Log)
-Here is what past agents attempted, what happened, and why the bug was not solved:
-
-1. **Commit `f71b6d31` ("fix: Resolve massive vertical gaps in gallery mode by aligning LazyVStack to top")**:
-   - *What was tried*: Added `.frame(maxHeight: .infinity, alignment: .top)` to the inner `LazyVStack` columns inside `GalleryStatusesListView.swift`.
-   - *Agent's hypothesis at the time*: Thought `LazyVStack` was vertically centering its items when the parent `HStack` expanded to the tallest column.
-   - *Outcome*: Gaps still persist, especially between chunk boundaries and in profile media grids.
-
-2. **Commits `bbb5f76d` & `75abd5f9` ("fix: Fully rip out gallery chunking to restore single continuous masonry grid" -> REVERTED)**:
-   - *What was tried*: Ripped out `GalleryChunk`, `chunkItems`, and `makeGridChunk` to make one single continuous `HStack` masonry grid.
-   - *Outcome*: Quickly reverted (`75abd5f9`) because `TimelineGap` items (loading markers in timelines) had no clean way to render full-width across multi-column layouts without chunking, or caused other regressions.
-
-3. **Commit `64deb6af` ("fix: Restore dynamic sizing for gallery media without aspect ratio metadata")**:
-   - *What was tried*: Changed `GalleryMediaCell` to use `LazyImage` with `.scaledToFit()` when `aspectRatio == nil && !isSquare`, and made `GalleryAspectRatioModifier` return raw `content` instead of defaulting to a 1:1 aspect container.
-   - *Outcome*: Items without aspect ratios now display, but cause unexpected column height recalculations when the image actually finishes loading.
-
-4. **Commit `af35366f` ("fix: prevent list row from capturing context menu bounding box in profile gallery")**:
-   - *What was tried*: Added `.buttonStyle(.borderless)` to thumbnail buttons and `.listRowBackground(Color.clear)` to `AnyStatusesListView`.
-   - *Outcome*: Fixed context menu highlighting, but the underlying layout gaps remained.
+## 3. Recent Commit History
+- **`5b1fbfb8`**: Integrated Argon's initial overhaul:
+  * Replaced `HStack { LazyVStack }` with `GalleryMasonryLayout: Layout`.
+  * Added `AccountMediaFetcher.deduplicateStatuses` to eliminate $N \times N$ status duplication.
+  * Bounded aspect ratios in `[0.5, 2.0]` via `MediaAttachment.galleryAspectRatio(isSquare:)`.
+  * Filtered `.audio` attachments from `Status.asMediaStatus`.
+  * Removed unary modifiers on `unboxedGallery` in `AnyStatusesListView`.
+- **`95973adc`**: Resolved Swift 6 `.defaultIsolation(MainActor.self)` on `GalleryLayoutItemKindKey` / `GalleryMasonryLayout` by marking them `public nonisolated`, and added optional chaining to `statusOnMediaLoaded?()`. (CI Build #42363077422 passed in 10m22s).
 
 ---
 
 ## 4. Agent's Unverified Hypotheses (READ WITH SKEPTICISM!)
-*Reminder: These are only guesses from the previous agent. Do not assume they are correct.*
+*Reminder: These are solely speculative guesses from the assistant agent. Do NOT treat them as verified facts!*
 
-- **Hypothesis A (List Container Mismatch)**: The main timeline renders `GalleryStatusesListView` inside a `ScrollView { LazyVStack { ... } }`. But on user profiles, `AccountDetailView` hosts tabs inside a parent SwiftUI `List`. `AnyStatusesListView` renders `unboxedGallery` as a single `List` row. Embedding a multi-column `HStack` with nested `LazyVStack`s inside a `List` cell may be confusing `UICollectionView`'s height estimator.
-- **Hypothesis B (Chunk-Boundary Holes)**: `chunkItems` splits the timeline items whenever a gap or section break occurs. If Chunk 1's left column ends at height 900pt and its right column ends at height 500pt, Chunk 2 starts below the 900pt mark, leaving a 400pt void under the right column.
-- **Hypothesis C (Aspect Ratio Balancing vs Render Reality)**: `computeColumnItems` estimates heights using `1.0 / (aspectRatio ?? 1.0)`. If metadata lacks aspect ratios, it guesses 1.0. When an image turns out to be a tall 9:16 portrait, the actual rendered height diverges from what the greedy column-packing algorithm calculated.
-- **Hypothesis D (StatusesTab Duplicate Code)**: `StatusesTab.swift` (lines 188–245) has a completely separate, duplicate copy of the masonry layout for pinned posts that did not receive the fixes applied to `GalleryStatusesListView.swift`.
+### Hypothesis A: Full-Resolution Image URLs vs Thumbnail Preview URLs
+In `GalleryStatusesListView.swift` (`GalleryMediaCell`):
+```swift
+private var info: MediaAttachment.DisplayInfo? {
+  mediaStatus.attachment.displayInfo(
+    useRemoteMedia: effectiveUseRemoteMedia,
+    fallbackOnFail: fallback,
+    neverLoadVideo: false
+  )
+}
+private var resolvedUrl: URL? { info?.url }
+private var resolvedLazyImageUrl: URL? { ... return resolvedUrl }
+```
+In `MediaAttachment.displayInfo`:
+- `info.url` is the **original full-size master image URL** (which can be a 10MB–20MB 4K/8K uncompressed file).
+- `info.previewUrl` (or `attachment.previewUrl`) is the **server-scaled small thumbnail URL** (typically a fast ~30KB–50KB WebP/JPEG generated by the Fediverse instance).
+- If `GalleryMediaCell` is loading `info.url` instead of `info.previewUrl`, loading 20+ full-resolution photos simultaneously will saturate network bandwidth and memory, causing thumbnails to take forever or fail.
+
+### Hypothesis B: Video Cells Instantiating Full AVPlayers
+In `GalleryMediaCell`:
+`neverLoadVideo: false` is passed to `displayInfo`. When a post has `.video` or `.gifv`:
+```swift
+case .gifv, .video:
+  MediaUIAttachmentVideoView(...)
+```
+This mounts an `AVPlayer` streaming the full video file in every video cell in the grid simultaneously, rather than showing a static video preview thumbnail (`previewUrl`).
+
+### Hypothesis C: Remote Server Bypassing & Auto-Fallback Timer Thrashing
+In `AccountDetailMediaGridView`:
+```swift
+private var isRemote: Bool {
+  guard let host = account.url?.host else { return false }
+  return host.lowercased() != client.server.lowercased()
+}
+```
+If viewing a remote user's profile, `isRemote` is `true`. This causes `effectiveUseRemoteMedia` to be `true`, bypassing the local instance's cached proxy and attempting direct HTTPS connections to third-party Fediverse servers (which may be slow, rate-limited, or blocked).
+Furthermore, `autoFallbackTriggered` runs a 3-second sleep task: if an image hasn't loaded in 3 seconds, it flips `autoFallbackTriggered = true`, triggering a view re-render and restarting the image request from scratch.
+
+### Hypothesis D: LazyResizableImage Initial Size (0, 0) Processor Bypass
+In `LazyResizableImage.swift`:
+```swift
+.processors(sizeToUse.width > 0 && sizeToUse.height > 0 ? [.resize(size: sizeToUse)] : [])
+```
+On initial layout within a custom `Layout` or `ScrollView`, `proxy.size` may evaluate to `(0, 0)`. When width/height are 0, Nuke's resize processor is skipped (`[]`), causing Nuke to decode full unscaled bitmaps into memory.
+
+### Hypothesis E: Client Nil in AccountDetailMediaGridView Initialization
+In `AccountDetailMediaGridView.swift`:
+```swift
+public init(account: Account, initialMediaStatuses: [MediaStatus]) {
+  self.account = account
+  let rawStatuses = initialMediaStatuses.map { $0.status }
+  let uniqueStatuses = AccountMediaFetcher.deduplicateStatuses(rawStatuses)
+  _fetcher = .init(initialValue: AccountMediaFetcher(accountId: account.id, initialStatuses: uniqueStatuses))
+}
+```
+`AccountMediaFetcher` is initialized without a `client` (since `client` is an `@Environment` property only available in `body`). In `AccountMediaFetcher.init`, `StatusDataControllerProvider.shared.updateDataControllers(for: uniqueStatuses, client: client)` cannot run because `client` is nil, and `fetcher.client = client` is only attached in `.onAppear`.
 
 ---
 
-## 5. Potential Directions to Explore
-Argon, feel free to discard any or all of the above guesses. Some potential clean-slate directions you might consider:
-- Investigating whether an iOS 16+ custom `Layout` protocol (e.g. `MasonryLayout: Layout`) would avoid `HStack` + `LazyVStack` sizing traps entirely.
-- Checking how `AccountDetailView` can host the profile Media tab in a native `ScrollView` instead of jamming it into a `List` row.
-- Checking if fixed/clamped placeholder aspect ratios prevent jumping when remote images load.
+## 5. Potential Directions for Argon to Explore
+- Check whether `GalleryMediaCell` should request thumbnail/preview URLs (`previewUrl` / `previewRemoteUrl`) instead of full `url`.
+- Check whether video/gifv attachments in gallery grid cells should display static preview image thumbnails (`previewUrl`) with a play icon badge rather than spawning active `MediaUIAttachmentVideoView` / `AVPlayer` instances.
+- Inspect `LazyResizableImage` and `NukeUI` caching/pipeline configuration.
+- Check `AccountDetailMediaGridView` client attachment and initial status population.
 EOF
 
 echo "==> Copying documentation and agent context..."
@@ -200,6 +250,10 @@ copy_rel "Packages/Account/Sources/Account/Detail/Tabs/Base/AnyStatusesListView.
 copy_rel "Packages/Account/Sources/Account/Detail/Tabs/Base/AccountTabProtocol.swift"
 copy_rel "Packages/Account/Sources/Account/Detail/AccountDetailView.swift"
 copy_rel "Packages/Account/Sources/Account/StatusesLists/AccountStatusesListView.swift"
+
+echo "==> Copying App & Router files..."
+copy_rel "IceCubesApp/App/Router/AppRegistry.swift"
+copy_rel "Packages/Env/Sources/Env/Router.swift"
 
 echo "==> Copying Timeline gallery integration..."
 copy_rel "Packages/Timeline/Sources/Timeline/View/TimelineListView.swift"
@@ -231,4 +285,8 @@ with zipfile.ZipFile(zip_out, 'w', compression=zipfile.ZIP_DEFLATED) as z:
             z.write(full, rel)
 "
 
+# Also maintain a stable symlink/copy for easy attachment
+cp -f "$ZIP_PATH" "${DOWNLOADS_DIR}/icecubes_gallery_mode_dossier.zip"
+
 echo "==> Success! Exported archive: ${ZIP_PATH} ($(du -h "$ZIP_PATH" | cut -f1))"
+echo "==> Updated stable shortcut: ${DOWNLOADS_DIR}/icecubes_gallery_mode_dossier.zip"
