@@ -24,20 +24,23 @@ open class PixelfedBackend: MastodonBackend, @unchecked Sendable {
     public override func get<Entity: Decodable>(endpoint: Endpoint, forceVersion: FediverseClient.Version?) async throws -> Entity {
         let path = endpoint.path()
         if path == "trends/tags" || path == "trends/links" {
-            // Pixelfed doesn't support tags or links trending in the Mastodon format, return empty array to prevent UI errors
-            let empty: [String] = [] // The caller expects an array of tags or links, but returning empty array JSON is safe
-            let data = try! JSONEncoder().encode(empty)
-            return try JSONDecoder().decode(Entity.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try decoder.decode(Entity.self, from: Data("[]".utf8))
         } else if path == "trends/statuses" {
-            // Map trending statuses to Pixelfed's discover endpoint
-            let url = URL(string: "https://\(server)/api/pixelfed/v2/discover/posts/trending")!
+            guard let url = URL(string: "https://\(server)/api/pixelfed/v2/discover/posts/trending") else {
+                throw FediverseClient.ClientError.unexpectedRequest
+            }
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
+            request.setValue("IceCubesApp/1.0", forHTTPHeaderField: "User-Agent")
             if let oauthToken = self.oauthToken {
                 request.setValue("Bearer \(oauthToken.accessToken)", forHTTPHeaderField: "Authorization")
             }
             let (data, _) = try await URLSession.shared.data(for: request)
-            return try JSONDecoder().decode(Entity.self, from: data)
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return try decoder.decode(Entity.self, from: data)
         }
         
         return try await super.get(endpoint: endpoint, forceVersion: forceVersion)

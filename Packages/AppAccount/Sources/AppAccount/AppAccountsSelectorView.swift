@@ -110,23 +110,35 @@ public struct AppAccountsSelectorView: View {
     }
   }
 
+  private var shouldShowBadgeDot: Bool {
+    accountCreationEnabled && (!currentAccount.followRequests.isEmpty || showNotificationBadge)
+  }
+
   @ViewBuilder
   private var labelView: some View {
     Group {
-      if let account = currentAccount.account, !currentAccount.isLoadingAccount {
-        AvatarView(account.avatar, config: avatarConfig)
+      if let account = currentAccount.account {
+        if !currentAccount.isLoadingAccount {
+          AvatarView(account.avatar, config: avatarConfig)
+        } else {
+          placeholderAvatarView
+        }
       } else {
-        AvatarView(config: avatarConfig)
-          .redacted(reason: .placeholder)
-          .allowsHitTesting(false)
+        placeholderAvatarView
       }
     }.overlay(alignment: .topTrailing) {
-      if !currentAccount.followRequests.isEmpty || showNotificationBadge, accountCreationEnabled {
+      if shouldShowBadgeDot {
         Circle()
           .fill(Color.red)
           .frame(width: 9, height: 9)
       }
     }
+  }
+
+  private var placeholderAvatarView: some View {
+    AvatarView(config: avatarConfig)
+      .redacted(reason: .placeholder)
+      .allowsHitTesting(false)
   }
 
   private var accountsView: some View {
@@ -137,7 +149,7 @@ public struct AppAccountsSelectorView: View {
             viewModel in
             AppAccountView(viewModel: viewModel, isParentPresented: $isPresented)
           }
-          addAccountButton
+          sheetNavigationButton("app-account.button.add", systemImage: "person.badge.plus", sheet: .addAccount)
             .foregroundStyle(theme.labelColor)
         }
         #if !os(visionOS)
@@ -146,9 +158,9 @@ public struct AppAccountsSelectorView: View {
 
         if accountCreationEnabled {
           Section {
-            settingsButton
-            aboutButton
-            supportButton
+            sheetNavigationButton("tab.settings", systemImage: "gear", sheet: .settings)
+            sheetNavigationButton("settings.app.about", systemImage: "info.circle", sheet: .about)
+            sheetNavigationButton("settings.app.support", systemImage: "wand.and.stars", sheet: .support)
           }
           #if os(visionOS)
             .foregroundStyle(theme.labelColor)
@@ -184,60 +196,25 @@ public struct AppAccountsSelectorView: View {
     }
   }
 
-  private var addAccountButton: some View {
+  private func sheetNavigationButton(
+    _ title: LocalizedStringKey,
+    systemImage: String,
+    sheet: SheetDestination
+  ) -> some View {
     Button {
       isPresented = false
       HapticManager.shared.fireHaptic(.buttonPress)
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        routerPath.presentedSheet = .addAccount
+        routerPath.presentedSheet = sheet
       }
     } label: {
-      Label("app-account.button.add", systemImage: "person.badge.plus")
-    }
-  }
-
-  private var settingsButton: some View {
-    Button {
-      isPresented = false
-      HapticManager.shared.fireHaptic(.buttonPress)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        routerPath.presentedSheet = .settings
-      }
-    } label: {
-      Label("tab.settings", systemImage: "gear")
-    }
-  }
-
-  private var supportButton: some View {
-    Button {
-      isPresented = false
-      HapticManager.shared.fireHaptic(.buttonPress)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        routerPath.presentedSheet = .support
-      }
-    } label: {
-      Label("settings.app.support", systemImage: "wand.and.stars")
-    }
-  }
-
-  private var aboutButton: some View {
-    Button {
-      isPresented = false
-      HapticManager.shared.fireHaptic(.buttonPress)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-        routerPath.presentedSheet = .about
-      }
-    } label: {
-      Label("settings.app.about", systemImage: "info.circle")
+      Label(title, systemImage: systemImage)
     }
   }
 
   private func refreshAccounts() {
-    accountsViewModel = []
-    for account in appAccounts.availableAccounts {
-      let viewModel: AppAccountViewModel = .init(
-        appAccount: account, isInSettings: false, showBadge: true)
-      accountsViewModel.append(viewModel)
+    accountsViewModel = appAccounts.availableAccounts.map {
+      AppAccountViewModel(appAccount: $0, isInSettings: false, showBadge: true)
     }
   }
 }

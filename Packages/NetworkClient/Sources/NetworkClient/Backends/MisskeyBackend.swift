@@ -756,17 +756,22 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
 
         // --- Polls ---
         } else if path.hasPrefix("polls/") {
-            // Misskey polls are embedded in notes; we fetch the note and return an empty Poll stub.
             let id = path.replacingOccurrences(of: "polls/", with: "").replacingOccurrences(of: "/votes", with: "")
-            if path.hasSuffix("/votes") {
-                if let choices = params["choices"] as? [Int], let first = choices.first {
-                    let _ = try? await makeMisskeyRequest(path: "notes/polls/vote", params: ["noteId": id, "choice": first])
+            if path.hasSuffix("/votes"), let choices = params["choices"] as? [Int] {
+                for choice in choices {
+                    let _ = try? await makeMisskeyRequest(path: "notes/polls/vote", params: ["noteId": id, "choice": choice])
                 }
             }
-            // Return the note's status (poll data embedded) rather than crashing.
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus(server: self.server) as! Entity
+            let status = note.toStatus(server: self.server)
+            if let poll = status.poll as? Entity {
+                return poll
+            }
+            if let statusEntity = status as? Entity {
+                return statusEntity
+            }
+            throw FediverseClient.ClientError.unexpectedRequest
 
         // --- Tags ---
         } else if path.hasPrefix("tags/") {
@@ -947,13 +952,21 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
 
         } else if path.hasPrefix("polls/") && path.hasSuffix("/votes") {
             let id = path.replacingOccurrences(of: "polls/", with: "").replacingOccurrences(of: "/votes", with: "")
-            if let choices = params["choices"] as? [Int], let first = choices.first {
-                let _ = try? await makeMisskeyRequest(path: "notes/polls/vote", params: ["noteId": id, "choice": first])
+            if let choices = params["choices"] as? [Int] {
+                for choice in choices {
+                    let _ = try? await makeMisskeyRequest(path: "notes/polls/vote", params: ["noteId": id, "choice": choice])
+                }
             }
-            // Return the note status since Misskey has no separate poll object endpoint.
             let data = try await makeMisskeyRequest(path: "notes/show", params: ["noteId": id])
             let note = try JSONDecoder().decode(MisskeyNote.self, from: data)
-            return note.toStatus(server: self.server) as! Entity
+            let status = note.toStatus(server: self.server)
+            if let poll = status.poll as? Entity {
+                return poll
+            }
+            if let statusEntity = status as? Entity {
+                return statusEntity
+            }
+            throw FediverseClient.ClientError.unexpectedRequest
 
         } else if path.hasPrefix("tags/") && (path.hasSuffix("/follow") || path.hasSuffix("/unfollow")) {
             let tagName = path
@@ -1089,6 +1102,12 @@ public final class MisskeyBackend: FediverseBackend, @unchecked Sendable {
             params["userId"] = id
             let _ = try? await makeMisskeyRequest(path: "blocking/create", params: params)
             return Relationship(id: id, following: false, showingReblogs: false, followedBy: false, blocking: true, blockedBy: false, muting: false, mutingNotifications: false, requested: false, domainBlocking: false, endorsed: false, note: "", notifying: false) as! Entity
+
+        } else if path.hasSuffix("/unblock") && path.hasPrefix("accounts/") {
+            let id = path.replacingOccurrences(of: "accounts/", with: "").replacingOccurrences(of: "/unblock", with: "")
+            params["userId"] = id
+            let _ = try? await makeMisskeyRequest(path: "blocking/delete", params: params)
+            return emptyRelationship(id: id) as! Entity
 
         } else if path.hasSuffix("/translate") && path.hasPrefix("statuses/") {
             // Misskey has no Mastodon-compatible translation endpoint. Throw

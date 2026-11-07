@@ -205,6 +205,7 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
     
     if cachedFilters == nil || (lastFetched != nil && now.timeIntervalSince(lastFetched!) > 300) {
       critical.withLock { $0.isFetchingFilters = true }
+      defer { critical.withLock { $0.isFetchingFilters = false } }
       do {
         let url = try makeURL(endpoint: ServerFilters.filters, forceVersion: .v2)
         let request = makeURLRequest(url: url, endpoint: ServerFilters.filters, httpMethod: "GET")
@@ -218,34 +219,55 @@ open class MastodonBackend: FediverseBackend, @unchecked Sendable {
       } catch {
         // Ignore errors to not block timeline fetching
       }
-      critical.withLock { $0.isFetchingFilters = false }
     }
     
     guard let filters = cachedFilters, !filters.isEmpty else { return statuses }
+    let activeFilters = filters.filter { !$0.isExpired() }
+    guard !activeFilters.isEmpty else { return statuses }
+
+    let compiledFilters: [(filter: ServerFilter, matchers: [(raw: String, lowered: String, regex: NSRegularExpression?)])] = activeFilters.map { filter in
+      let matchers = filter.keywords.map { kw -> (raw: String, lowered: String, regex: NSRegularExpression?) in
+        let lowered = kw.keyword.lowercased()
+        let regex = kw.wholeWord
+          ? (try? NSRegularExpression(pattern: "\\b\\Q\(lowered)\\E\\b", options: [.caseInsensitive]))
+          : nil
+        return (kw.keyword, lowered, regex)
+      }
+      return (filter, matchers)
+    }
     
     for status in statuses {
       var matchedFilters: [Filtered] = status.filtered ?? []
       let text = status.content.asRawText.lowercased()
       let spoilerText = status.spoilerText.asRawText.lowercased()
       let combined = text + " " + spoilerText
+      let fullRange = NSRange(location: 0, length: combined.utf16.count)
       
-      for filter in filters {
-        if filter.isExpired() { continue }
-        
+      for (filter, matchers) in compiledFilters {
         var matches: [String] = []
-        for keyword in filter.keywords {
-           if keyword.wholeWord {
-               let regex = try? NSRegularExpression(pattern: "\\b\\Q\(keyword.keyword.lowercased())\\E\\b", options: [.caseInsensitive])
-               if regex?.firstMatch(in: combined, range: NSRange(location: 0, length: combined.utf16.count)) != nil {
-                   matches.append(keyword.keyword)
-               }
-           } else if combined.contains(keyword.keyword.lowercased()) {
-               matches.append(keyword.keyword)
-           }
+        for matcher in matchers {
+          if let regex = matcher.regex {
+            if regex.firstMatch(in: combined, range: fullRange) != nil {
+              matches.append(matcher.raw)
+            }
+          } else if !matcher.lowered.isEmpty && combined.contains(matcher.lowered) {
+            matches.append(matcher.raw)
+          }
         }
         
         if !matches.isEmpty {
-           matchedFilters.append(Filtered(filter: Filter(id: filter.id, title: filter.title, context: filter.context.map(\.rawValue), filterAction: Filter.Action(rawValue: filter.filterAction.rawValue)!), keywordMatches: matches))
+          let action = Filter.Action(rawValue: filter.filterAction.rawValue) ?? .warn
+          matchedFilters.append(
+            Filtered(
+              filter: Filter(
+                id: filter.id,
+                title: filter.title,
+                context: filter.context.map(\.rawValue),
+                filterAction: action
+              ),
+              keywordMatches: matches
+            )
+          )
         }
       }
       if !matchedFilters.isEmpty {

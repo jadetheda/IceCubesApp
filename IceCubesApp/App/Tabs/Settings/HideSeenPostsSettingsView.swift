@@ -34,6 +34,9 @@ public struct HideSeenPostsSettingsView: View {
       } header: {
         Text("settings.experimental.hide-seen-posts")
       }
+      #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+      #endif
     }
     .navigationTitle("settings.experimental.hide-seen-posts")
     .scrollContentBackground(.hidden)

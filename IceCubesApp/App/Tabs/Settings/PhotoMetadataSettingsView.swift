@@ -1,8 +1,10 @@
 import SwiftUI
 import Env
+import DesignSystem
 
 public struct PhotoMetadataSettingsView: View {
   @Environment(UserPreferences.self) private var preferences
+  @Environment(Theme.self) private var theme
 
   public init() {}
 
@@ -16,8 +18,15 @@ public struct PhotoMetadataSettingsView: View {
       } footer: {
         Text("settings.content.media.embed-metadata.footer")
       }
+      #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+      #endif
     }
     .navigationTitle("settings.content.media.embed-metadata.title")
     .navigationBarTitleDisplayMode(.inline)
+    #if !os(visionOS)
+    .scrollContentBackground(.hidden)
+    .background(theme.secondaryBackgroundColor)
+    #endif
   }
 }

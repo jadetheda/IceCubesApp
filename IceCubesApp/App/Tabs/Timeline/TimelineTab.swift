@@ -126,6 +126,10 @@ struct TimelineTab: View {
     preferences.hideSeenPostsEnabled && !preferences.hideSeenPostsShowInHeader
   }
 
+  private var isShowingSeenPostsInToggleMode: Bool {
+    preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts
+  }
+
   @ViewBuilder
   private var timelineFilterButton: some View {
     headerGroup
@@ -133,10 +137,14 @@ struct TimelineTab: View {
       Button {
         if preferences.hideSeenPostsIsToggle {
           contentFilter.hideSeenPosts.toggle()
+        } else {
+          NotificationCenter.default.post(name: .hideSeenPosts, object: nil)
         }
-        NotificationCenter.default.post(name: .hideSeenPosts, object: nil)
       } label: {
-        Label((preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "timeline.filter.show-seen-posts" : "timeline.filter.hide-seen-posts", systemImage: (preferences.hideSeenPostsIsToggle && contentFilter.hideSeenPosts) ? "eye" : "eye.slash")
+        Label(
+          isShowingSeenPostsInToggleMode ? "timeline.filter.show-seen-posts" : "timeline.filter.hide-seen-posts",
+          systemImage: isShowingSeenPostsInToggleMode ? "eye" : "eye.slash"
+        )
       }
       Divider()
     }
@@ -279,7 +287,7 @@ struct TimelineTab: View {
         }
       }
     } label: {
-      if index != nil {
+      if pinnedFilterIndex != nil {
         Label("status.action.unpin", systemImage: "pin.slash")
       } else {
         Label("status.action.pin", systemImage: "pin")

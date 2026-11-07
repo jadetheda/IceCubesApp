@@ -137,22 +137,30 @@ struct AboutView: View {
 
   @ViewBuilder
   private var followAccountsSection: some View {
-    if let iceCubesAccount, let dimillianAccount {
-      Section {
-        AccountsListRow(viewModel: iceCubesAccount)
-        AccountsListRow(viewModel: dimillianAccount)
+    if let iceCubesAccount {
+      if let dimillianAccount {
+        Section {
+          AccountsListRow(viewModel: iceCubesAccount)
+          AccountsListRow(viewModel: dimillianAccount)
+        }
+        #if !os(visionOS)
+          .listRowBackground(theme.primaryBackgroundColor)
+        #endif
+      } else {
+        loadingAccountsSection
       }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
     } else {
-      Section {
-        ProgressView()
-      }
-      #if !os(visionOS)
-        .listRowBackground(theme.primaryBackgroundColor)
-      #endif
+      loadingAccountsSection
     }
+  }
+
+  private var loadingAccountsSection: some View {
+    Section {
+      ProgressView()
+    }
+    #if !os(visionOS)
+      .listRowBackground(theme.primaryBackgroundColor)
+    #endif
   }
 
   private func fetchAccounts() async {
