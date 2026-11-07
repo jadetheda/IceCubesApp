@@ -150,6 +150,14 @@ final class PluraldawnTests: XCTestCase {
       members: members
     )
     XCTAssertEqual(m4?.id, "alice")
+
+    // Inline MFM tag wrapping suffix at end of post
+    let m5 = PluraldawnSystemMatcher.findMatch(
+      rawText: "Hello world $[jelly [Alice]]",
+      mentions: [],
+      members: members
+    )
+    XCTAssertEqual(m5?.id, "alice")
   }
 
   func testMatcherDisambiguation() {

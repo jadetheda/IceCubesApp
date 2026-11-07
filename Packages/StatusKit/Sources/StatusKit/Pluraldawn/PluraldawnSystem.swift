@@ -51,12 +51,15 @@ public struct PluraldawnSystemMatcher: Sendable {
       }
     }
     
-    // Strip trailing MFM closing brackets corresponding to opened MFM tags
-    var mfmCleanedEnd = cleanText
+    // Strip trailing MFM closing brackets corresponding to opened MFM tags (both leading and inline)
+    let totalMfmOpenCount = max(mfmTagCount, cleanText.components(separatedBy: "$[").count - 1)
+    var mfmEndCandidates: [String] = [cleanText]
+    var currentEnd = cleanText
     var closedMfmCount = 0
-    while closedMfmCount < mfmTagCount {
-      if mfmCleanedEnd.hasSuffix("]") {
-        mfmCleanedEnd = String(mfmCleanedEnd.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+    while closedMfmCount < totalMfmOpenCount {
+      if currentEnd.hasSuffix("]") {
+        currentEnd = String(currentEnd.dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
+        mfmEndCandidates.append(currentEnd)
         closedMfmCount += 1
       } else {
         break
@@ -95,22 +98,20 @@ public struct PluraldawnSystemMatcher: Sendable {
           break
         }
         
-        // 2. Suffix match (standard or MFM-wrapped)
-        if cleanText.hasSuffix(indicator) {
-          matched = true
-          break
+        // 2. Suffix match (standard or MFM-wrapped, including inline MFM at end of post)
+        for candidateEnd in mfmEndCandidates {
+          if candidateEnd.hasSuffix(indicator) {
+            matched = true
+            break
+          }
+          let trimmedDashes = candidateEnd
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-–— \t\n\r"))
+          if trimmedDashes.hasSuffix(indicator) {
+            matched = true
+            break
+          }
         }
-        if mfmCleanedEnd.hasSuffix(indicator) {
-          matched = true
-          break
-        }
-        
-        let trimmedDashes = mfmCleanedEnd
-          .trimmingCharacters(in: CharacterSet(charactersIn: "-–— \t\n\r"))
-        if trimmedDashes.hasSuffix(indicator) {
-          matched = true
-          break
-        }
+        if matched { break }
         
         // 3. Mention in reply
         for mention in mentions {

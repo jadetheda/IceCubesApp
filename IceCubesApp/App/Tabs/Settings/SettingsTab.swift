@@ -438,13 +438,27 @@ struct SettingsTabs: View {
     #endif
   }
 
+  private static let excludedBackupKeys: Set<String> = [
+    "deepl_user_api_key_fallback"
+  ]
+
+  private static func isExcludedBackupKey(_ key: String) -> Bool {
+    if excludedBackupKeys.contains(key) { return true }
+    if key.hasPrefix("Apple") { return true }
+    if key.hasPrefix("NS") { return true }
+    if key.hasPrefix("WebKit") { return true }
+    if key.hasPrefix("UI") { return true }
+    if key.hasPrefix("Metal") { return true }
+    if key.hasPrefix("com.apple") { return true }
+    return false
+  }
+
   private func prepareExport() {
     var values: [String: AnyCodable] = [:]
     let defaults = UserDefaults.standard.dictionaryRepresentation()
       .merging(UserPreferences.sharedDefault?.dictionaryRepresentation() ?? [:]) { first, _ in first }
     for (key, value) in defaults {
-      guard !key.hasPrefix("Apple"), !key.hasPrefix("NS"), !key.hasPrefix("WebKit"),
-        !key.hasPrefix("UI"), !key.hasPrefix("Metal"), !key.hasPrefix("com.apple"),
+      guard !Self.isExcludedBackupKey(key),
         let codableValue = AnyCodable.parse(value)
       else { continue }
       values[key] = codableValue
@@ -462,6 +476,7 @@ struct SettingsTabs: View {
 
   private func applyExport(_ export: AppExport) {
     for (key, value) in export.userDefaults {
+      guard !Self.isExcludedBackupKey(key) else { continue }
       UserDefaults.standard.set(value.value, forKey: key)
       UserPreferences.sharedDefault?.set(value.value, forKey: key)
     }
@@ -562,6 +577,16 @@ struct SettingsTabs: View {
 
     static func parse(_ value: Any) -> AnyCodable? {
       if let value = value as? String { return .string(value) }
+      if let number = value as? NSNumber {
+        if CFGetTypeID(number) == CFBooleanGetTypeID() {
+          return .boolean(number.boolValue)
+        }
+        let objCType = String(cString: number.objCType)
+        if objCType == "f" || objCType == "d" {
+          return .double(number.doubleValue)
+        }
+        return .integer(number.intValue)
+      }
       if let value = value as? Bool { return .boolean(value) }
       if let value = value as? Int { return .integer(value) }
       if let value = value as? Double { return .double(value) }
